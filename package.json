@@ -1,0 +1,59 @@
+{
+  "name": "phoenix-wing",
+  "version": "0.1.0",
+  "description": "Phoenix Wing 共享 TypeScript 工具库 — 纯逻辑、Vue3 控件、算法",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./components/*": "./src/components/*",
+    "./composables/*": "./src/composables/*",
+    "./stores/*": "./src/stores/*",
+    "./types/*": "./src/types/*",
+    "./utils/*": "./src/utils/*"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "dev": "vitest"
+  },
+  "peerDependencies": {
+    "element-plus": "^2.0.0",
+    "pinia": "^2.0.0 || ^3.0.0",
+    "vue": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
+    "pinia": {
+      "optional": true
+    },
+    "element-plus": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "phoenix",
+    "utils",
+    "vue3",
+    "typescript",
+    "components"
+  ],
+  "author": "Phoenix Wing",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/PhoenixWing321/phoenix-wing.git"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "element-plus": "^2.14.2",
+    "pinia": "^3.0.4",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

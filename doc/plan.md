@@ -1,56 +1,53 @@
-# phoenix-wing npm 包创建计划
+# phoenix-wing 计划
 
-## 目标
+## 项目定位
 
-从 phoenix-desk-tools 提取可复用的 TypeScript 纯逻辑（utils、types、算法），做成独立 npm 包 `phoenix-wing`，供多个项目共享。
-
-## 步骤
-
-### 1. npm init
-
-在 `/Users/kathy/phoenix/phoenix-wing/` 执行 `npm init`，包名 `phoenix-wing`。
-
-### 2. TypeScript 骨架
-
-参考 `phoenix-desk-tools/packages/catdlg-core/` 的结构：
-- `tsconfig.json`
-- `src/index.ts` 统一导出入口
-- `package.json` 配置 `main` / `types` / `exports` 字段
-
-### 3. 搬入可复用模块
-
-优先搬**纯逻辑、零框架依赖**的模块：
-
-**第一批 — 纯工具函数**（`phoenix-desk-tools/web-ui/src/utils/` 中无 Vue/DOM 依赖的）：
-- `asyncProgress.ts` / `asyncProgressTypes.ts` — 异步任务状态机
-- `scheduleDebounced.ts` — 防抖调度
-- `pointerDrag.ts` — 指针拖拽计算
-- `colorScheme.ts` — 色彩方案解析
-- `phoenixBrowserStorage.ts` — localStorage 封装
-- `pagePropertySchema.ts` — 声明式属性表 schema 构建器
-- 其他无副作用的纯函数工具
-
-**第二批 — 类型定义**（`phoenix-desk-tools/web-ui/src/types/`）：
-- `pageProperties.ts` — 属性表类型系统
-- 其他通用类型
-
-**第三批 — CAA 相关**（可选：如果 `@phoenix/catdlg-core` 不单独维护，可合并进来）
-
-### 4. 在 phoenix-desk-tools 中引用
-
-- 将 `phoenix-wing` 加入 pnpm workspace
-- web-ui 通过 `workspace:*` 引用
-- 替换原来对本地 utils/types 的直接引用
-
-### 5. 发布到 npm
-
-```bash
-npm login
-npm publish
-```
-
-代码托管在 Gitee 完全没问题，npm 和 Git 是两套独立系统。
+从 phoenix-desk-tools 提取可复用的 TypeScript 纯逻辑、Vue3 控件、算法，
+做成独立 npm 包 `phoenix-wing`，供 Phoenix 生态多个项目共享。
 
 ## 核心理念
 
-`phoenix-wing` = 纯 TypeScript 工具库，零框架依赖，只做纯逻辑。
+- 纯逻辑零框架依赖，可独立单测
+- Vue3 控件通过 peerDependency 解耦
+- 先小后大、先简后繁，每批迁移后立即在 desk-tools 验证
+
+## 迁移策略
+
+### Phase 1: 项目骨架 ✅
+- `npm init` + package.json
+- TypeScript 配置（NodeNext）
+- 目录结构 + pnpm workspace
+
+### Phase 2: 纯工具函数 ✅
+- asyncProgress — 异步任务进度状态机
+- scheduleDebounced — 防抖调度
+- colorScheme — 色彩方案解析
+- pointerDrag — 指针拖拽
+- phoenixBrowserStorage — 浏览器存储
+
+### Phase 3: Vue3 控件 ✅
+- AppModalOverlay — 全屏模态框
+- ChoiceDialogHost — 选择对话框
+- ComboTextInput — 组合输入框
+- ExpandCaret — 展开三角图标
+- AsyncProgressOverlay — 任务进度浮层
+
+### Phase 4: 类型系统 ✅
+- pagePropertySchema — 属性表 schema 构建器
+- pageProperties — 属性面板类型系统
+- comboTypes — 下拉选项类型
+
+### Phase 5: 验证 & 发布
+- [x] desk-tools 导入验证 — `asyncTasks.ts` + `AsyncProgressOverlay.vue` build 通过
+- [ ] npm publish v0.1.0
+
+## 技术栈
+
+- TypeScript ES2022 / NodeNext 模块解析
+- 测试: Vitest
+- Vue 3 / Pinia / Element Plus (peerDependencies)
+
+## 仓库
+
+- Gitee: https://gitee.com/PhoenixWing321/phoenix-wing
+- npm: phoenix-wing

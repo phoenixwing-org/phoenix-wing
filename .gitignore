@@ -1,0 +1,10 @@
+.obsidian
+# temp/
+.venv-desktop/
+.venv/
+dist/
+build/
+node_modules/
+web-ui/dist
+.phoenix
+.npmrc
