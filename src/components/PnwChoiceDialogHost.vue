@@ -5,7 +5,7 @@ import {
   pnwChoiceDialogRequest,
   pnwResolveChoice,
   type PnwChoiceDialogOption,
-} from "../composables/choiceDialog";
+} from "../composables/pnwChoiceDialog";
 
 const open = pnwChoiceDialogOpen;
 const request = pnwChoiceDialogRequest;
@@ -152,7 +152,7 @@ onUnmounted(() => {
             v-for="opt in choices"
             :key="opt.id"
             type="button"
-            class="btn choice-btn"
+            class="btn pnw-choice-btn"
             :class="{
               primary: opt.variant === 'primary',
               danger: opt.variant === 'danger',

@@ -56,3 +56,29 @@ export function pnwResolveChoice(id: string | null, checkedIds: string[] = []) {
   pendingResolve?.({ choiceId: id, checkedIds });
   pendingResolve = null;
 }
+
+/** 简单消息弹窗（替代 ElMessageBox.alert） */
+export function pnwAlert(title: string, message: string): Promise<void> {
+  return pnwPromptChoice({
+    title,
+    message,
+    choices: [{ id: 'ok', label: '知道了', variant: 'primary' }],
+    defaultChoiceId: 'ok',
+  }).then(() => undefined)
+}
+
+/** 文本输入对话框（替代 ElMessageBox.prompt） */
+export function pnwPromptInput(
+  title: string,
+  message: string,
+  opts?: { placeholder?: string; defaultValue?: string },
+): Promise<string | null> {
+  return pnwPromptChoice({
+    title,
+    message: `${message}\n\n（输入框待 PnwChoiceDialogHost 支持，当前仅返回确认）`,
+    choices: [
+      { id: 'confirm', label: '确认', variant: 'primary' },
+      { id: 'cancel', label: '取消' },
+    ],
+  }).then(r => (r.choiceId === 'confirm' ? opts?.defaultValue ?? '' : null))
+}

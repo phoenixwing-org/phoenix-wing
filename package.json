@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./components/*": "./src/components/*",
+    "./layout/*": "./src/layout/*",
     "./composables/*": "./src/composables/*",
     "./stores/*": "./src/stores/*",
     "./types/*": "./src/types/*",

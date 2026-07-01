@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import type { PnwComboOption } from "../types/comboTypes";
+import type { PnwComboOption } from "../types/pnwComboTypes";
 
 const model = defineModel<string>({ default: "" });
 

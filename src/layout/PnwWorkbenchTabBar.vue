@@ -1,0 +1,188 @@
+<script setup lang="ts">
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import type { Component } from "vue";
+
+const props = withDefaults(
+  defineProps<{
+    /** Tab 列表 */
+    tabs: { id: string; pageId: string; title: string; dirty: boolean; subtitle?: string }[];
+    /** 当前激活 Tab ID */
+    activeTabId: string;
+    /** pageId → 图标组件 */
+    pageIcon?: (pageId: string) => Component | undefined;
+    /** 是否嵌入 header 模式 */
+    inHeader?: boolean;
+    /** 可否新建 Tab */
+    canAdd?: boolean;
+    /** 可否关闭全部 */
+    canCloseAll?: boolean;
+    /** 全部关闭中 */
+    closingAll?: boolean;
+  }>(),
+  {
+    inHeader: false,
+    canAdd: false,
+    canCloseAll: false,
+    closingAll: false,
+  },
+);
+
+const emit = defineEmits<{
+  select: [tabId: string];
+  close: [tabId: string];
+  closeAll: [];
+  newTab: [];
+}>();
+
+const scrollEl = ref<HTMLElement | null>(null);
+const tabEls = new Map<string, HTMLElement>();
+
+function setTabRef(tabId: string, el: Element | null) {
+  if (el instanceof HTMLElement) tabEls.set(tabId, el);
+  else tabEls.delete(tabId);
+}
+
+function scrollActiveIntoView(behavior: ScrollBehavior = "smooth") {
+  const id = props.activeTabId;
+  if (!id) return;
+  const container = scrollEl.value;
+  const el = tabEls.get(id);
+  if (!container || !el) return;
+  const pad = 6;
+  const tabLeft = el.offsetLeft;
+  const tabRight = tabLeft + el.offsetWidth;
+  const viewLeft = container.scrollLeft;
+  const viewRight = viewLeft + container.clientWidth;
+  if (tabLeft < viewLeft + pad) {
+    container.scrollTo({ left: Math.max(0, tabLeft - pad), behavior });
+  } else if (tabRight > viewRight - pad) {
+    container.scrollTo({ left: tabRight - container.clientWidth + pad, behavior });
+  }
+}
+
+watch(() => props.activeTabId, () => { void nextTick(() => scrollActiveIntoView()); });
+watch(() => props.tabs, () => { void nextTick(() => scrollActiveIntoView("auto")); }, { deep: true });
+onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
+</script>
+
+<template>
+  <div class="pnw-tab-bar" :class="{ 'pnw-tab-bar-header': inHeader }">
+    <div ref="scrollEl" class="pnw-tab-scroll" role="tablist" aria-label="已打开页面">
+      <span v-if="inHeader" class="pnw-tab-scroll-edge" aria-hidden="true" />
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        :ref="(el) => setTabRef(tab.id, el as Element | null)"
+        type="button"
+        class="pnw-tab-item"
+        :class="{ active: tab.id === activeTabId, dirty: tab.dirty }"
+        role="tab"
+        :aria-selected="tab.id === activeTabId"
+        :title="tab.subtitle || tab.title"
+        @click="emit('select', tab.id)"
+      >
+        <span v-if="pageIcon" class="pnw-tab-icon" aria-hidden="true">
+          <component :is="pageIcon(tab.pageId)" />
+        </span>
+        <span class="pnw-tab-title">{{ tab.title }}</span>
+        <span v-if="tab.dirty" class="pnw-tab-dot" aria-label="未保存">●</span>
+        <span class="pnw-tab-close" title="关闭" @click.stop="emit('close', tab.id)">×</span>
+      </button>
+      <span v-if="inHeader" class="pnw-tab-scroll-edge" aria-hidden="true" />
+    </div>
+    <button
+      v-if="canCloseAll"
+      type="button"
+      class="pnw-tab-close-all"
+      :disabled="closingAll"
+      title="关闭全部"
+      @click="emit('closeAll')"
+    >✕</button>
+    <button
+      v-if="canAdd"
+      type="button"
+      class="pnw-tab-add"
+      title="新建"
+      @click="emit('newTab')"
+    >+</button>
+  </div>
+</template>
+
+<style scoped>
+.pnw-tab-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 36px;
+  padding: 4px 8px 0;
+  background: var(--shell-bg, #f1f5f9);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  overflow: hidden;
+}
+
+.pnw-tab-scroll {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  padding-right: 2px;
+}
+
+.pnw-tab-item {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  padding: 6px 8px 6px 12px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--muted, #64748b);
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pnw-tab-item:hover { background: var(--nav-hover, rgba(148,163,184,.15)); color: var(--text, #334155); }
+.pnw-tab-item.active { background: var(--page-bg, #fff); border-color: var(--border, #e2e8f0); color: var(--text, #0f172a); margin-bottom: -1px; padding-bottom: 7px; }
+
+.pnw-tab-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pnw-tab-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; flex-shrink: 0; color: #94a3b8; }
+.pnw-tab-icon :deep(svg) { width: 14px; height: 14px; }
+.pnw-tab-item.active .pnw-tab-icon { color: #3b82f6; }
+.pnw-tab-dot { color: #f59e0b; font-size: .65rem; line-height: 1; }
+.pnw-tab-close { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 2px; border-radius: 4px; font-size: 1rem; line-height: 1; opacity: .55; }
+.pnw-tab-close:hover { opacity: 1; background: rgba(148,163,184,.25); }
+
+.pnw-tab-close-all, .pnw-tab-add {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  align-self: center; width: 28px; height: 28px; margin-left: 8px; padding: 0;
+  border-radius: 6px; cursor: pointer;
+}
+.pnw-tab-close-all { border: 1px solid var(--border); background: var(--shell-bg); color: var(--muted); }
+.pnw-tab-close-all:hover:not(:disabled) { border-color: #f87171; color: #b91c1c; background: #fef2f2; }
+.pnw-tab-close-all:disabled { opacity: .55; cursor: default; }
+.pnw-tab-add { border: 1px dashed var(--border); background: var(--shell-bg); color: var(--muted); }
+.pnw-tab-add:hover { border-color: var(--accent, #3b82f6); color: var(--accent, #3b82f6); }
+
+/* header mode */
+.pnw-tab-bar-header { flex: 1; min-width: 0; min-height: 0; height: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 2px 0 0; background: transparent; border-bottom: none; }
+.pnw-tab-bar-header .pnw-tab-scroll { flex: 1 1 auto; width: 100%; max-width: 100%; min-width: 0; align-items: center; justify-content: flex-start; gap: 5px; min-height: 36px; padding: 4px 6px; border-radius: var(--phoenix-radius-md, 8px); background: var(--phoenix-ribbon-tab-track, rgba(15,23,42,.055)); box-shadow: inset 0 1px 2px var(--phoenix-border-subtle, rgba(15,23,42,.05)); }
+.pnw-tab-bar-header .pnw-tab-item { max-width: 240px; height: 28px; padding: 0 10px 0 11px; gap: 6px; margin: 0; border-radius: calc(var(--phoenix-radius-md, 8px) - 2px); font-size: .74rem; font-weight: 500; transform: scale(.96); }
+.pnw-tab-bar-header .pnw-tab-item:hover:not(.active) { background: var(--phoenix-ribbon-tab-hover, rgba(255,255,255,.72)); border-color: rgba(148,163,184,.28); color: var(--phoenix-text-secondary, #334155); transform: scale(.98); }
+.pnw-tab-bar-header .pnw-tab-item.active { height: 32px; padding: 0 15px 0 13px; font-size: .78rem; font-weight: 600; margin-bottom: 0; padding-bottom: 0; transform: scale(1); z-index: 1; background: var(--phoenix-ribbon-tab-active-bg, #fff); border-color: var(--phoenix-border-subtle, #c8d3e0); color: var(--phoenix-text, #0f172a); box-shadow: var(--phoenix-shadow-sm, 0 1px 3px rgba(15,23,42,.1)), inset 0 0 0 1px rgba(255,255,255,.65)); }
+.pnw-tab-bar-header .pnw-tab-icon { width: 16px; height: 16px; }
+.pnw-tab-bar-header .pnw-tab-icon :deep(svg) { width: 16px; height: 16px; }
+.pnw-tab-bar-header .pnw-tab-item.active .pnw-tab-icon { color: var(--phoenix-accent-hover, #2563eb); }
+.pnw-tab-bar-header .pnw-tab-close { width: 16px; height: 16px; margin-left: 0; border-radius: 4px; font-size: .92rem; opacity: .45; }
+.pnw-tab-bar-header .pnw-tab-item.active .pnw-tab-close { opacity: .6; }
+.pnw-tab-bar-header .pnw-tab-close:hover { opacity: 1; background: rgba(148,163,184,.22); color: #334155; }
+.pnw-tab-scroll-edge { flex: 1 1 0; min-width: 0; max-width: 48vw; pointer-events: none; }
+</style>

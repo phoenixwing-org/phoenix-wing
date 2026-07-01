@@ -11,7 +11,7 @@ import type {
   PnwPagePropertySelectOptionsSource,
   PnwPagePropertyStringField,
   PnwPagePropertiesSheet,
-} from "../types/pageProperties.js";
+} from "../types/pnwPageProperties.js";
 
 type ReactiveBool = Ref<boolean> | ComputedRef<boolean>;
 type ReactiveStr = Ref<string> | ComputedRef<string>;

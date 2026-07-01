@@ -2,8 +2,8 @@
 /** 异步任务进度浮层 — 纯视图。 */
 
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { usePnwAsyncTaskStore } from "../stores/asyncTasks";
-import { pnwAverageFileDuration, pnwFastestFileDuration, pnwSlowestFileDuration, pnwFormatDuration } from "../utils/asyncProgress";
+import { usePnwAsyncTaskStore } from "../stores/pnwAsyncTasks";
+import { pnwAverageFileDuration, pnwFastestFileDuration, pnwSlowestFileDuration, pnwFormatDuration } from "../utils/pnwAsyncProgress";
 
 const store = usePnwAsyncTaskStore();
 const expandedTaskId = ref<string | null>(null);
@@ -40,7 +40,7 @@ watch(
 const toast = ref<{ taskName: string; status: string } | null>(null);
 const toastTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 watch(() => store.hasRunning, (running, old) => {
-  if (old && !running && store.taskList.length > 0 && store.pnw-overlayMinimized) {
+  if (old && !running && store.taskList.length > 0 && store.overlayMinimized) {
     const last = store.taskList[store.taskList.length - 1];
     if (last) {
       toast.value = { taskName: last.taskName, status: last.status };
@@ -104,23 +104,23 @@ function elapsed(t: any): string {
   <Teleport to="body">
     <!-- ====== 全屏 ====== -->
     <Transition name="fade">
-      <div v-if="visible && store.fullscreen" class="backdrop" @click.self="minimizeFromFullscreen">
-        <div class="fs-panel">
-          <div class="fs-head">
+      <div v-if="visible && store.fullscreen" class="pnw-backdrop" @click.self="minimizeFromFullscreen">
+        <div class="pnw-fs-panel">
+          <div class="pnw-fs-head">
             <span class="pnw-title">后台任务</span>
             <button class="pnw-btn-icon" title="恢复" @click="minimizeFromFullscreen">⤡</button>
           </div>
           <div class="pnw-list">
-            <div v-for="t in store.taskList" :key="t.taskId" class="pnw-card" :class="['card-'+t.status]">
+            <div v-for="t in store.taskList" :key="t.taskId" class="pnw-card" :class="['pnw-card-'+t.status]">
               <div class="pnw-row" @click="toggleExpand(t.taskId)">
                 <span class="pnw-badge">{{ label(t.kind) }}</span>
                 <span class="pnw-name">{{ t.taskName }}</span>
                 <el-progress :percentage="t.progressPercent" :stroke-width="6" :show-text="true" class="pnw-bar"
                   :status="t.status==='error'?'exception':t.status==='done'?'success':undefined" />
-                <span class="pnw-sts" :class="'sts-'+t.status">{{ statusTxt(t.status) }}</span>
+                <span class="pnw-sts" :class="'pnw-sts-'+t.status">{{ statusTxt(t.status) }}</span>
                 <span class="pnw-arrow">{{ expandedTaskId===t.taskId ? '▾' : '▸' }}</span>
               </div>
-              <div v-if="subLine(t)" class="sub">{{ subLine(t) }}</div>
+              <div v-if="subLine(t)" class="pnw-sub">{{ subLine(t) }}</div>
               <div v-if="expandedTaskId===t.taskId" class="pnw-detail">
                 <div v-for="s in t.steps" :key="s.index" class="pnw-step">
                   <span class="pnw-si">{{ s.status==='done'?'✓':s.status==='active'?'⟳':s.status==='error'?'✗':'○' }}</span>
@@ -130,8 +130,8 @@ function elapsed(t: any): string {
                 </div>
                 <div v-if="t.steps.some((s) => s.errors.length)" class="pnw-errs">
                   <div v-for="s in t.steps.filter((s:any)=>s.errors.length)" :key="'e'+s.index">
-                    <div v-for="(e, i) in s.errors.slice(0, 5)" :key="i" class="err">
-                      <span class="pnw-ef">{{ e.file }}</span><span class="em">{{ e.error }}</span>
+                    <div v-for="(e, i) in s.errors.slice(0, 5)" :key="i" class="pnw-err">
+                      <span class="pnw-ef">{{ e.file }}</span><span class="pnw-em">{{ e.error }}</span>
                     </div>
                     <div v-if="s.errors.length>5" class="pnw-emore">... 还有 {{ s.errors.length-5 }} 个</div>
                   </div>
@@ -139,7 +139,7 @@ function elapsed(t: any): string {
                 <div v-if="t.logs?.length" class="pnw-logs">
                   <div v-for="(l,i) in t.logs.slice(-30)" :key="i" class="pnw-logln">{{ l }}</div>
                 </div>
-                <div v-if="store.fullscreen && t.fileTimings?.length" class="timing-block">
+                <div v-if="store.fullscreen && t.fileTimings?.length" class="pnw-timing-block">
                   <div class="pnw-timing-head" @click="showTiming = !showTiming">
                     <span>进度条目 ({{ t.fileTimings.length }})</span>
                     <span class="pnw-timing-summary">平均 {{ pnwFormatDuration(pnwAverageFileDuration(t.fileTimings)) }} · 最快 {{ pnwFormatDuration(pnwFastestFileDuration(t.fileTimings)) }} · 最慢 {{ pnwFormatDuration(pnwSlowestFileDuration(t.fileTimings)) }}</span>
@@ -166,7 +166,7 @@ function elapsed(t: any): string {
 
     <!-- ====== 浮动 ====== -->
     <Transition name="fade">
-      <div v-if="visible && !store.pnw-overlayMinimized && !store.fullscreen" class="pnw-overlay">
+      <div v-if="visible && !store.overlayMinimized && !store.fullscreen" class="pnw-overlay">
         <div class="pnw-panel">
           <div class="pnw-head">
             <span class="pnw-title">后台任务 ({{ store.taskList.length }})</span>
@@ -176,16 +176,16 @@ function elapsed(t: any): string {
             </div>
           </div>
           <div class="pnw-list">
-            <div v-for="t in store.taskList" :key="t.taskId" class="pnw-card" :class="['card-'+t.status]">
+            <div v-for="t in store.taskList" :key="t.taskId" class="pnw-card" :class="['pnw-card-'+t.status]">
               <div class="pnw-row" @click="toggleExpand(t.taskId)">
                 <span class="pnw-badge">{{ label(t.kind) }}</span>
                 <span class="pnw-name">{{ t.taskName }}</span>
                 <el-progress :percentage="t.progressPercent" :stroke-width="6" :show-text="true" class="pnw-bar"
                   :status="t.status==='error'?'exception':t.status==='done'?'success':undefined" />
-                <span class="pnw-sts" :class="'sts-'+t.status">{{ statusTxt(t.status) }}</span>
+                <span class="pnw-sts" :class="'pnw-sts-'+t.status">{{ statusTxt(t.status) }}</span>
                 <span class="pnw-arrow">{{ expandedTaskId===t.taskId ? '▾' : '▸' }}</span>
               </div>
-              <div v-if="subLine(t)" class="sub">{{ subLine(t) }}</div>
+              <div v-if="subLine(t)" class="pnw-sub">{{ subLine(t) }}</div>
               <div v-if="expandedTaskId===t.taskId" class="pnw-detail">
                 <div v-for="s in t.steps" :key="s.index" class="pnw-step">
                   <span class="pnw-si">{{ s.status==='done'?'✓':s.status==='active'?'⟳':s.status==='error'?'✗':'○' }}</span>
@@ -195,8 +195,8 @@ function elapsed(t: any): string {
                 </div>
                 <div v-if="t.steps.some((s) => s.errors.length)" class="pnw-errs">
                   <div v-for="s in t.steps.filter((s:any)=>s.errors.length)" :key="'e'+s.index">
-                    <div v-for="(e, i) in s.errors.slice(0, 5)" :key="i" class="err">
-                      <span class="pnw-ef">{{ e.file }}</span><span class="em">{{ e.error }}</span>
+                    <div v-for="(e, i) in s.errors.slice(0, 5)" :key="i" class="pnw-err">
+                      <span class="pnw-ef">{{ e.file }}</span><span class="pnw-em">{{ e.error }}</span>
                     </div>
                     <div v-if="s.errors.length>5" class="pnw-emore">... 还有 {{ s.errors.length-5 }} 个</div>
                   </div>
@@ -204,7 +204,7 @@ function elapsed(t: any): string {
                 <div v-if="t.logs?.length" class="pnw-logs">
                   <div v-for="(l,i) in t.logs.slice(-30)" :key="i" class="pnw-logln">{{ l }}</div>
                 </div>
-                <div v-if="store.fullscreen && t.fileTimings?.length" class="timing-block">
+                <div v-if="store.fullscreen && t.fileTimings?.length" class="pnw-timing-block">
                   <div class="pnw-timing-head" @click="showTiming = !showTiming">
                     <span>进度条目 ({{ t.fileTimings.length }})</span>
                     <span class="pnw-timing-summary">平均 {{ pnwFormatDuration(pnwAverageFileDuration(t.fileTimings)) }} · 最快 {{ pnwFormatDuration(pnwFastestFileDuration(t.fileTimings)) }} · 最慢 {{ pnwFormatDuration(pnwSlowestFileDuration(t.fileTimings)) }}</span>
@@ -231,9 +231,9 @@ function elapsed(t: any): string {
 
     <!-- ====== 最小化 ====== -->
     <Transition name="fade">
-      <div v-if="visible && store.pnw-overlayMinimized && !store.fullscreen" class="pnw-minibar">
-        <span class="mi">⏳</span>
-        <span class="mt">{{ store.activeTasks.length }} 个任务</span>
+      <div v-if="visible && store.overlayMinimized && !store.fullscreen" class="pnw-minibar">
+        <span class="pnw-mi">⏳</span>
+        <span class="pnw-mt">{{ store.activeTasks.length }} 个任务</span>
         <span v-for="t in store.activeTasks.slice(0,2)" :key="t.taskId" class="pnw-mtask">{{ t.progressPercent }}%</span>
         <button class="pnw-mbtn" title="最大化查看" @click="openFullscreen(store.activeTasks[0]?.taskId||'')">□</button>
       </div>
@@ -241,7 +241,7 @@ function elapsed(t: any): string {
 
     <!-- ====== 完成 Toast ====== -->
     <Transition name="fade">
-      <div v-if="toast" class="toast" @click="dismissToast">
+      <div v-if="toast" class="pnw-toast" @click="dismissToast">
         <span class="pnw-toast-icon">{{ toast.status === 'done' ? '✓' : toast.status === 'error' ? '✗' : '⊗' }}</span>
         <span class="pnw-toast-msg">{{ toast.taskName }} {{ toast.status === 'done' ? '完成' : toast.status === 'error' ? '失败' : '结束' }}</span>
         <button class="pnw-toast-btn" @click.stop="store.setFullscreen(true); dismissToast()">查看</button>
@@ -259,51 +259,51 @@ function elapsed(t: any): string {
 
 /* 浮动 */
 .pnw-overlay { position:fixed; right:24px; top:80px; z-index:9998; max-height:70vh; }
-.panel { width:420px; max-height:70vh; background:var(--page-bg,#fff); border:1px solid var(--border,#dcdfe6); border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,.12); display:flex; flex-direction:column; overflow:hidden; }
+.pnw-panel { width:420px; max-height:70vh; background:var(--page-bg,#fff); border:1px solid var(--border,#dcdfe6); border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,.12); display:flex; flex-direction:column; overflow:hidden; }
 
-.head { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border,#ebeef5); flex-shrink:0; }
-.title { font-size:14px; font-weight:600; color:var(--text,#303133); }
-.btns { display:flex; gap:4px; }
+.pnw-head { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border,#ebeef5); flex-shrink:0; }
+.pnw-title { font-size:14px; font-weight:600; color:var(--text,#303133); }
+.pnw-btns { display:flex; gap:4px; }
 .pnw-btn-icon { width:28px; height:24px; border:none; background:none; font-size:15px; cursor:pointer; color:var(--muted,#909399); border-radius:4px; display:flex; align-items:center; justify-content:center; line-height:1; }
 .pnw-btn-icon:hover { background:var(--hover-bg,#f5f7fa); color:var(--text,#303133); }
 
 /* 列表 */
-.list { overflow-y:auto; flex:1; padding:8px; }
-.card { border:1px solid var(--border,#ebeef5); border-radius:6px; margin-bottom:8px; overflow:hidden; border-left:3px solid transparent; }
-.card-running { border-left-color:var(--accent,#409eff); background:var(--accent-soft,#ecf5ff); }
-.card-done { border-left-color:#67c23a; }
-.card-error { border-left-color:#f56c6c; }
-.card-cancelled, .card-orphaned { opacity:.7; }
+.pnw-list { overflow-y:auto; flex:1; padding:8px; }
+.pnw-card { border:1px solid var(--border,#ebeef5); border-radius:6px; margin-bottom:8px; overflow:hidden; border-left:3px solid transparent; }
+.pnw-card-running { border-left-color:var(--accent,#409eff); background:var(--accent-soft,#ecf5ff); }
+.pnw-card-done { border-left-color:#67c23a; }
+.pnw-card-error { border-left-color:#f56c6c; }
+.pnw-card-cancelled, .pnw-card-orphaned { opacity:.7; }
 
 /* 摘要 */
-.row { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; user-select:none; }
-.row:hover { background:var(--hover-bg,#f5f7fa); }
-.badge { font-size:11px; padding:1px 6px; border-radius:3px; background:var(--accent-soft,#ecf5ff); color:var(--accent,#409eff); flex-shrink:0; }
-.name { font-size:13px; font-weight:500; color:var(--text,#303133); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.bar { flex:1; min-width:60px; }
-.sts { font-size:12px; flex-shrink:0; }
+.pnw-row { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; user-select:none; }
+.pnw-row:hover { background:var(--hover-bg,#f5f7fa); }
+.pnw-badge { font-size:11px; padding:1px 6px; border-radius:3px; background:var(--accent-soft,#ecf5ff); color:var(--accent,#409eff); flex-shrink:0; }
+.pnw-name { font-size:13px; font-weight:500; color:var(--text,#303133); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pnw-bar { flex:1; min-width:60px; }
+.pnw-sts { font-size:12px; flex-shrink:0; }
 .pnw-sts-running { color:var(--accent,#409eff); } .pnw-sts-done { color:#67c23a; } .pnw-sts-error { color:#f56c6c; } .pnw-sts-cancelled,.pnw-sts-orphaned { color:var(--muted,#909399); }
-.arrow { font-size:12px; color:var(--muted,#909399); flex-shrink:0; }
-.sub { font-size:11px; font-family:monospace; color:var(--muted,#909399); padding:0 12px 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pnw-arrow { font-size:12px; color:var(--muted,#909399); flex-shrink:0; }
+.pnw-sub { font-size:11px; font-family:monospace; color:var(--muted,#909399); padding:0 12px 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 /* 详情 */
-.detail { border-top:1px solid var(--border,#ebeef5); padding:8px 12px; }
-.step { display:flex; align-items:center; gap:6px; padding:3px 0; }
-.si { width:16px; font-size:12px; text-align:center; flex-shrink:0; }
-.sl { font-size:12px; color:var(--text,#303133); width:80px; flex-shrink:0; }
-.sb { flex:1; min-width:40px; }
-.sn { font-size:11px; color:var(--muted,#909399); flex-shrink:0; }
+.pnw-detail { border-top:1px solid var(--border,#ebeef5); padding:8px 12px; }
+.pnw-step { display:flex; align-items:center; gap:6px; padding:3px 0; }
+.pnw-si { width:16px; font-size:12px; text-align:center; flex-shrink:0; }
+.pnw-sl { font-size:12px; color:var(--text,#303133); width:80px; flex-shrink:0; }
+.pnw-sb { flex:1; min-width:40px; }
+.pnw-sn { font-size:11px; color:var(--muted,#909399); flex-shrink:0; }
 
 /* 错误 */
-.errs { margin-top:6px; font-size:11px; }
-.err { display:flex; gap:6px; padding:2px 0; }
-.ef { color:var(--text,#303133); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
-.em { color:#f56c6c; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.emore { color:var(--muted,#909399); padding-top:2px; }
+.pnw-errs { margin-top:6px; font-size:11px; }
+.pnw-err { display:flex; gap:6px; padding:2px 0; }
+.pnw-ef { color:var(--text,#303133); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
+.pnw-em { color:#f56c6c; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pnw-emore { color:var(--muted,#909399); padding-top:2px; }
 
 /* 日志 */
-.logs { margin-top:8px; max-height:140px; overflow-y:auto; background:#1e1e1e; border-radius:4px; padding:6px 8px; font-family:monospace; font-size:11px; line-height:1.5; }
-.logln { color:#d4d4d4; white-space:pre-wrap; word-break:break-all; }
+.pnw-logs { margin-top:8px; max-height:140px; overflow-y:auto; background:#1e1e1e; border-radius:4px; padding:6px 8px; font-family:monospace; font-size:11px; line-height:1.5; }
+.pnw-logln { color:#d4d4d4; white-space:pre-wrap; word-break:break-all; }
 
 /* 耗时表格 */
 .pnw-timing-block { margin-top:8px; border-top:1px solid var(--border,#ebeef5); padding-top:6px; }
@@ -320,25 +320,25 @@ function elapsed(t: any): string {
 .pnw-timing-table .failed { background:#fef2f2; }
 
 /* 操作 */
-.acts { margin-top:8px; display:flex; gap:6px; justify-content:flex-end; }
-.abtn { font-size:11px; padding:2px 10px; border:1px solid var(--border,#dcdfe6); border-radius:3px; background:none; cursor:pointer; color:var(--muted,#909399); }
-.abtn:hover { background:var(--hover-bg,#f5f7fa); color:var(--text,#303133); }
-.abtn.pause { border-color:#e6a23c; color:#e6a23c; }
-.abtn.pause:hover { background:#fdf6ec; }
-.abtn.resume { border-color:var(--accent,#409eff); color:var(--accent,#409eff); }
-.abtn.resume:hover { background:var(--accent-soft,#ecf5ff); }
-.abtn.confirm { border-color:#67c23a; color:#67c23a; }
-.abtn.confirm:hover { background:#f0f9eb; }
-.abtn.dismiss:hover { border-color:#f56c6c; color:#f56c6c; }
+.pnw-acts { margin-top:8px; display:flex; gap:6px; justify-content:flex-end; }
+.pnw-abtn { font-size:11px; padding:2px 10px; border:1px solid var(--border,#dcdfe6); border-radius:3px; background:none; cursor:pointer; color:var(--muted,#909399); }
+.pnw-abtn:hover { background:var(--hover-bg,#f5f7fa); color:var(--text,#303133); }
+.pnw-abtn.pause { border-color:#e6a23c; color:#e6a23c; }
+.pnw-abtn.pause:hover { background:#fdf6ec; }
+.pnw-abtn.resume { border-color:var(--accent,#409eff); color:var(--accent,#409eff); }
+.pnw-abtn.resume:hover { background:var(--accent-soft,#ecf5ff); }
+.pnw-abtn.confirm { border-color:#67c23a; color:#67c23a; }
+.pnw-abtn.confirm:hover { background:#f0f9eb; }
+.pnw-abtn.dismiss:hover { border-color:#f56c6c; color:#f56c6c; }
 
 /* 最小化 */
 .pnw-minibar { position:fixed; bottom:12px; right:12px; height:34px; z-index:9999; display:flex; align-items:center; gap:8px; padding:0 10px 0 14px; background:#303133; color:#fff; font-size:12px; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,.3); user-select:none; }
-.mi { font-size:14px; } .mt { font-weight:500; } .mtask { opacity:.8; font-size:11px; }
-.mbtn { width:22px; height:22px; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:13px; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px; }
-.mbtn:hover { background:rgba(255,255,255,.25); }
+.pnw-mi { font-size:14px; } .pnw-mt { font-weight:500; } .pnw-mtask { opacity:.8; font-size:11px; }
+.pnw-mbtn { width:22px; height:22px; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:13px; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:4px; }
+.pnw-mbtn:hover { background:rgba(255,255,255,.25); }
 
 /* Toast */
-.toast { position:fixed; bottom:60px; right:16px; z-index:10001; display:flex; align-items:center; gap:8px; padding:10px 14px; background:#fff; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.15); font-size:13px; cursor:pointer; max-width:360px; }
+.pnw-toast { position:fixed; bottom:60px; right:16px; z-index:10001; display:flex; align-items:center; gap:8px; padding:10px 14px; background:#fff; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.15); font-size:13px; cursor:pointer; max-width:360px; }
 .pnw-toast-icon { font-size:16px; } .pnw-toast-icon:first-child { color:#67c23a; }
 .pnw-toast-msg { color:var(--text,#303133); flex:1; }
 .pnw-toast-btn { font-size:11px; padding:2px 8px; border:1px solid var(--accent,#409eff); border-radius:3px; background:none; color:var(--accent,#409eff); cursor:pointer; }
