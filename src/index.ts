@@ -188,6 +188,8 @@ export {
   pnwChoiceDialogRequest,
   pnwPromptChoice,
   pnwResolveChoice,
+  pnwAlert,
+  pnwPromptInput,
 } from './composables/pnwChoiceDialog.js'
 
 // 壳层组件从子路径导入:
