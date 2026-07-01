@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from "vue";
 import {
-  choiceDialogOpen,
-  choiceDialogRequest,
-  resolveChoice,
-  type ChoiceDialogOption,
+  pnwChoiceDialogOpen,
+  pnwChoiceDialogRequest,
+  pnwResolveChoice,
+  type PnwChoiceDialogOption,
 } from "../composables/choiceDialog";
 
-const open = choiceDialogOpen;
-const request = choiceDialogRequest;
+const open = pnwChoiceDialogOpen;
+const request = pnwChoiceDialogRequest;
 
 const checkedIds = ref<string[]>([]);
 
@@ -69,7 +69,7 @@ function initCheckedIds() {
     defaults?.length ? defaults.filter((id) => all.includes(id)) : [...all];
 }
 
-function isChoiceDisabled(opt: ChoiceDialogOption): boolean {
+function isChoiceDisabled(opt: PnwChoiceDialogOption): boolean {
   if (opt.disabled) return true;
   if (hasCheckboxes.value && opt.id === "adopt-selected" && checkedIds.value.length === 0) {
     return true;
@@ -77,13 +77,13 @@ function isChoiceDisabled(opt: ChoiceDialogOption): boolean {
   return false;
 }
 
-function onChoose(opt: ChoiceDialogOption) {
+function onChoose(opt: PnwChoiceDialogOption) {
   if (isChoiceDisabled(opt)) return;
-  resolveChoice(opt.id, [...checkedIds.value]);
+  pnwResolveChoice(opt.id, [...checkedIds.value]);
 }
 
 function onCancel() {
-  resolveChoice(null, [...checkedIds.value]);
+  pnwResolveChoice(null, [...checkedIds.value]);
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -109,21 +109,21 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="open && request" class="choice-overlay" @click.self="onCancel">
-      <div class="choice-dialog" role="dialog" aria-modal="true" :aria-label="request.title">
-        <h2 class="choice-title">{{ request.title }}</h2>
-        <div class="choice-message">
+    <div v-if="open && request" class="pnw-choice-overlay" @click.self="onCancel">
+      <div class="pnw-choice-dialog" role="dialog" aria-modal="true" :aria-label="request.title">
+        <h2 class="pnw-choice-title">{{ request.title }}</h2>
+        <div class="pnw-choice-message">
           <template v-for="(line, idx) in messageLines" :key="idx">
-            <details v-if="line && isLongPathLine(line)" class="choice-path-fold">
-              <summary class="choice-path-summary">{{ pathSummary(line) }}</summary>
-              <pre class="choice-path-body">{{ line.trim() }}</pre>
+            <details v-if="line && isLongPathLine(line)" class="pnw-choice-path-fold">
+              <summary class="pnw-choice-path-summary">{{ pathSummary(line) }}</summary>
+              <pre class="pnw-choice-path-body">{{ line.trim() }}</pre>
             </details>
-            <p v-else-if="line" class="choice-message-line">{{ line }}</p>
+            <p v-else-if="line" class="pnw-choice-message-line">{{ line }}</p>
           </template>
         </div>
 
-        <div v-if="hasCheckboxes" class="choice-checkboxes">
-          <div class="choice-check-toolbar">
+        <div v-if="hasCheckboxes" class="pnw-choice-checkboxes">
+          <div class="pnw-choice-check-toolbar">
             <el-checkbox
               v-model="allChecked"
               :indeterminate="someChecked"
@@ -131,23 +131,23 @@ onUnmounted(() => {
             >
               全选
             </el-checkbox>
-            <span class="choice-check-count muted small">
+            <span class="pnw-choice-check-count muted small">
               已选 {{ checkedIds.length }} / {{ allCheckboxIds.length }}
             </span>
           </div>
-          <el-checkbox-group v-model="checkedIds" class="choice-check-list">
+          <el-checkbox-group v-model="checkedIds" class="pnw-choice-check-list">
             <el-checkbox
               v-for="item in checkboxItems"
               :key="item.id"
               :value="item.id"
-              class="choice-check-item"
+              class="pnw-choice-check-item"
             >
-              <span class="choice-check-label">{{ item.label }}</span>
+              <span class="pnw-choice-check-label">{{ item.label }}</span>
             </el-checkbox>
           </el-checkbox-group>
         </div>
 
-        <div class="choice-actions">
+        <div class="pnw-choice-actions">
           <button
             v-for="opt in choices"
             :key="opt.id"
@@ -170,7 +170,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.choice-overlay {
+.pnw-choice-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -180,7 +180,7 @@ onUnmounted(() => {
   background: rgba(15, 23, 42, 0.45);
 }
 
-.choice-dialog {
+.pnw-choice-dialog {
   width: min(560px, calc(100vw - 48px));
   max-height: min(80vh, 640px);
   overflow: auto;
@@ -191,27 +191,27 @@ onUnmounted(() => {
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
 }
 
-.choice-title {
+.pnw-choice-title {
   margin: 0 0 10px;
   font-size: 1.05rem;
 }
 
-.choice-message {
+.pnw-choice-message {
   margin: 0 0 14px;
   font-size: 0.88rem;
   line-height: 1.55;
   color: var(--text, #0f172a);
 }
 
-.choice-message-line {
+.pnw-choice-message-line {
   margin: 0 0 8px;
 }
 
-.choice-message-line:last-child {
+.pnw-choice-message-line:last-child {
   margin-bottom: 0;
 }
 
-.choice-checkboxes {
+.pnw-choice-checkboxes {
   margin: 0 0 16px;
   padding: 10px 12px;
   border: 1px solid var(--border, #e2e8f0);
@@ -219,7 +219,7 @@ onUnmounted(() => {
   background: var(--el-fill-color-lighter, #f8fafc);
 }
 
-.choice-check-toolbar {
+.pnw-choice-check-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -229,11 +229,11 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--border, #e2e8f0);
 }
 
-.choice-check-count {
+.pnw-choice-check-count {
   font-size: 0.75rem;
 }
 
-.choice-check-list {
+.pnw-choice-check-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -241,31 +241,31 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.choice-check-item {
+.pnw-choice-check-item {
   margin-right: 0;
   height: auto;
   align-items: flex-start;
 }
 
-.choice-check-item :deep(.el-checkbox__label) {
+.pnw-choice-check-item :deep(.el-checkbox__label) {
   line-height: 1.4;
   white-space: normal;
   word-break: break-word;
 }
 
-.choice-check-label {
+.pnw-choice-check-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.82rem;
 }
 
-.choice-path-fold {
+.pnw-choice-path-fold {
   margin: 0 0 10px;
   border: 1px solid var(--el-border-color-lighter, #e2e8f0);
   border-radius: 6px;
   background: var(--el-fill-color-blank, #fff);
 }
 
-.choice-path-summary {
+.pnw-choice-path-summary {
   cursor: pointer;
   padding: 8px 10px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -276,11 +276,11 @@ onUnmounted(() => {
   word-break: break-all;
 }
 
-.choice-path-summary:hover {
+.pnw-choice-path-summary:hover {
   color: var(--el-text-color-primary, #0f172a);
 }
 
-.choice-path-body {
+.pnw-choice-path-body {
   margin: 0;
   padding: 8px 10px 10px;
   border-top: 1px solid var(--el-border-color-lighter, #e2e8f0);
@@ -295,30 +295,30 @@ onUnmounted(() => {
   color: var(--el-text-color-primary, #0f172a);
 }
 
-.choice-actions {
+.pnw-choice-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.choice-btn {
+.pnw-choice-btn {
   width: 100%;
   text-align: center;
   padding: 10px 14px;
 }
 
-.choice-btn:disabled {
+.pnw-choice-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.choice-btn.danger {
+.pnw-choice-btn.danger {
   background: #fef2f2;
   border-color: #fecaca;
   color: #b91c1c;
 }
 
-.choice-btn.danger:hover:not(:disabled) {
+.pnw-choice-btn.danger:hover:not(:disabled) {
   background: #fee2e2;
 }
 </style>

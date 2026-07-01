@@ -1,2 +1,2 @@
 /** 下拉选项 */
-export type ComboOption = { value: string; label: string };
+export type PnwComboOption = { value: string; label: string };

@@ -5,11 +5,11 @@
 */
 
 import { defineStore } from "pinia";
-import type { AsyncTaskState } from "../utils/asyncProgressTypes.js";
+import type { PnwAsyncTaskState } from "../utils/asyncProgressTypes.js";
 import {
-  filterActiveTasks,
-  hasRunningTasks,
-  sortTasksByTime,
+  pnwFilterActiveTasks,
+  pnwHasRunningTasks,
+  pnwSortTasksByTime,
 } from "../utils/asyncProgress.js";
 
 const STORAGE_KEY = "phoenix-async-tasks-v1";
@@ -17,10 +17,10 @@ const STORAGE_KEY = "phoenix-async-tasks-v1";
 /** 任务取消防函数注册表（不持久化） */
 const _cancelFns: Record<string, () => Promise<unknown>> = {};
 
-export const useAsyncTaskStore = defineStore("asyncTasks", {
+export const usePnwAsyncTaskStore = defineStore("asyncTasks", {
   state: () => ({
     /** taskId → AsyncTaskState */
-    tasks: {} as Record<string, AsyncTaskState>,
+    tasks: {} as Record<string, PnwAsyncTaskState>,
     /** 浮层面板是否最小化 */
     overlayMinimized: false,
     /** 是否全屏遮罩模式 */
@@ -31,13 +31,13 @@ export const useAsyncTaskStore = defineStore("asyncTasks", {
 
   getters: {
     /** 运行中的任务列表 */
-    activeTasks: (s) => filterActiveTasks(Object.values(s.tasks)),
+    activeTasks: (s) => pnwFilterActiveTasks(Object.values(s.tasks)),
 
     /** 全部任务按时间倒序 */
-    taskList: (s) => sortTasksByTime(Object.values(s.tasks)),
+    taskList: (s) => pnwSortTasksByTime(Object.values(s.tasks)),
 
     /** 是否有运行中的任务 */
-    hasRunning: (s) => hasRunningTasks(Object.values(s.tasks)),
+    hasRunning: (s) => pnwHasRunningTasks(Object.values(s.tasks)),
   },
 
   actions: {
@@ -49,7 +49,7 @@ export const useAsyncTaskStore = defineStore("asyncTasks", {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const data = JSON.parse(raw) as {
-            tasks?: Record<string, AsyncTaskState>;
+            tasks?: Record<string, PnwAsyncTaskState>;
             overlayMinimized?: boolean;
             fullscreen?: boolean;
           };
@@ -94,7 +94,7 @@ export const useAsyncTaskStore = defineStore("asyncTasks", {
     },
 
     /** 添加或更新一个任务 */
-    upsertTask(task: AsyncTaskState) {
+    upsertTask(task: PnwAsyncTaskState) {
       this.tasks[task.taskId] = task;
       this._persist();
     },

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import type { ComboOption } from "../types/comboTypes";
+import type { PnwComboOption } from "../types/comboTypes";
 
 const model = defineModel<string>({ default: "" });
 
 const props = withDefaults(
   defineProps<{
-    options?: ComboOption[];
+    options?: PnwComboOption[];
     disabled?: boolean;
     readonly?: boolean;
     placeholder?: string;
@@ -37,7 +37,7 @@ function onInputFocus() {
   setOpen(true);
 }
 
-function pick(opt: ComboOption) {
+function pick(opt: PnwComboOption) {
   model.value = opt.value;
   setOpen(false);
 }
@@ -64,11 +64,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="combo-wrap">
-    <div class="combo-field">
+  <div ref="root" class="pnw-combo-wrap">
+    <div class="pnw-combo-field">
       <input
         v-model="model"
-        class="combo-text-input"
+        class="pnw-combo-text-input"
         :class="{ readonly }"
         :disabled="disabled"
         :readonly="readonly"
@@ -79,7 +79,7 @@ onUnmounted(() => {
       <button
         v-if="options.length"
         type="button"
-        class="combo-toggle"
+        class="pnw-combo-toggle"
         :disabled="disabled || readonly"
         :aria-expanded="open"
         aria-haspopup="listbox"
@@ -91,7 +91,7 @@ onUnmounted(() => {
         ▾
       </button>
     </div>
-    <ul v-show="open" class="combo-menu" role="listbox">
+    <ul v-show="open" class="pnw-combo-menu" role="listbox">
       <li
         v-for="opt in options"
         :key="opt.value"
@@ -99,28 +99,28 @@ onUnmounted(() => {
         :class="{ active: (model ?? '').trim().toUpperCase() === opt.value.toUpperCase() }"
         @mousedown.prevent="pick(opt)"
       >
-        <span class="combo-opt-val">{{ opt.value }}</span>
-        <span class="combo-opt-label">{{ opt.label }}</span>
+        <span class="pnw-combo-opt-val">{{ opt.value }}</span>
+        <span class="pnw-combo-opt-label">{{ opt.label }}</span>
       </li>
     </ul>
   </div>
 </template>
 
 <style scoped>
-.combo-wrap {
+.pnw-combo-wrap {
   position: relative;
   display: block;
   width: 100%;
   min-width: 0;
 }
 
-.combo-field {
+.pnw-combo-field {
   display: flex;
   align-items: stretch;
   width: 100%;
 }
 
-.combo-text-input {
+.pnw-combo-text-input {
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
@@ -131,16 +131,16 @@ onUnmounted(() => {
   color: inherit;
 }
 
-.combo-field:has(.combo-toggle) .combo-text-input {
+.pnw-combo-field:has(.pnw-combo-toggle) .pnw-combo-text-input {
   border-right: none;
   border-radius: 6px 0 0 6px;
 }
 
-.combo-field:not(:has(.combo-toggle)) .combo-text-input {
+.pnw-combo-field:not(:has(.pnw-combo-toggle)) .pnw-combo-text-input {
   border-radius: 6px;
 }
 
-.combo-toggle {
+.pnw-combo-toggle {
   flex-shrink: 0;
   width: 28px;
   padding: 0;
@@ -154,26 +154,26 @@ onUnmounted(() => {
   line-height: 1;
 }
 
-.combo-toggle:hover:not(:disabled) {
+.pnw-combo-toggle:hover:not(:disabled) {
   background: #eef2ff;
   color: var(--text);
 }
 
-.combo-toggle:disabled {
+.pnw-combo-toggle:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.combo-text-input.readonly {
+.pnw-combo-text-input.readonly {
   background: #f3f4f6;
 }
 
-.combo-text-input:disabled {
+.pnw-combo-text-input:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.combo-menu {
+.pnw-combo-menu {
   position: absolute;
   z-index: 40;
   left: 0;
@@ -190,7 +190,7 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.combo-menu li {
+.pnw-combo-menu li {
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -199,18 +199,18 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.combo-menu li:hover,
-.combo-menu li.active {
+.pnw-combo-menu li:hover,
+.pnw-combo-menu li.active {
   background: #eff6ff;
 }
 
-.combo-opt-val {
+.pnw-combo-opt-val {
   font-weight: 600;
   font-family: ui-monospace, monospace;
   min-width: 1.2em;
 }
 
-.combo-opt-label {
+.pnw-combo-opt-label {
   color: var(--muted);
 }
 </style>

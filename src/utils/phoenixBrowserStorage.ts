@@ -13,7 +13,7 @@ function collectKeys(store: Storage): string[] {
   return keys;
 }
 
-export function clearPhoenixBrowserStorage(): number {
+export function pnwClearPhoenixBrowserStorage(): number {
   let removed = 0;
   for (const store of [localStorage, sessionStorage]) {
     try {

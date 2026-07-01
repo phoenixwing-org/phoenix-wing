@@ -49,14 +49,14 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <Transition name="app-modal-fade">
+    <Transition name="pnw-modal-fade">
       <div
         v-if="open"
-        class="app-modal-overlay"
+        class="pnw-modal-overlay"
         @click.self="onBackdropClick"
       >
         <div
-          class="app-modal-panel"
+          class="pnw-modal-panel"
           :class="panelClass"
           role="dialog"
           aria-modal="true"
@@ -70,7 +70,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.app-modal-overlay {
+.pnw-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 9000;
@@ -81,7 +81,7 @@ onUnmounted(() => {
   backdrop-filter: blur(2px);
 }
 
-.app-modal-panel {
+.pnw-modal-panel {
   width: min(720px, 100%);
   max-height: min(88vh, 920px);
   overflow: auto;
@@ -93,25 +93,25 @@ onUnmounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
-.app-modal-fade-enter-active,
-.app-modal-fade-leave-active {
+.pnw-modal-fade-enter-active,
+.pnw-modal-fade-leave-active {
   transition: opacity 0.18s ease;
 }
 
-.app-modal-fade-enter-active .app-modal-panel,
-.app-modal-fade-leave-active .app-modal-panel {
+.pnw-modal-fade-enter-active .pnw-modal-panel,
+.pnw-modal-fade-leave-active .pnw-modal-panel {
   transition:
     transform 0.18s ease,
     opacity 0.18s ease;
 }
 
-.app-modal-fade-enter-from,
-.app-modal-fade-leave-to {
+.pnw-modal-fade-enter-from,
+.pnw-modal-fade-leave-to {
   opacity: 0;
 }
 
-.app-modal-fade-enter-from .app-modal-panel,
-.app-modal-fade-leave-to .app-modal-panel {
+.pnw-modal-fade-enter-from .pnw-modal-panel,
+.pnw-modal-fade-leave-to .pnw-modal-panel {
   opacity: 0;
   transform: translateY(8px) scale(0.98);
 }

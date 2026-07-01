@@ -1,16 +1,16 @@
 import type { ComputedRef, Ref } from "vue";
 import type {
-  PagePropertyBooleanField,
-  PagePropertyField,
-  PagePropertyGroup,
-  PagePropertyInfoField,
-  PagePropertyNumberField,
-  PagePropertyPathField,
-  PagePropertySelectField,
-  PagePropertySelectOption,
-  PagePropertySelectOptionsSource,
-  PagePropertyStringField,
-  PagePropertiesSheet,
+  PnwPagePropertyBooleanField,
+  PnwPagePropertyField,
+  PnwPagePropertyGroup,
+  PnwPagePropertyInfoField,
+  PnwPagePropertyNumberField,
+  PnwPagePropertyPathField,
+  PnwPagePropertySelectField,
+  PnwPagePropertySelectOption,
+  PnwPagePropertySelectOptionsSource,
+  PnwPagePropertyStringField,
+  PnwPagePropertiesSheet,
 } from "../types/pageProperties.js";
 
 type ReactiveBool = Ref<boolean> | ComputedRef<boolean>;
@@ -20,12 +20,12 @@ type MaybeHidden = Ref<boolean> | ComputedRef<boolean> | undefined;
 type MaybeHint = string | ComputedRef<string> | undefined;
 
 /** 折叠分组（FreeCAD 属性段） */
-export function propGroup(
+export function pnwPropGroup(
   id: string,
   label: string,
-  fields: PagePropertyField[],
+  fields: PnwPagePropertyField[],
   opts?: { defaultCollapsed?: boolean; description?: string; hidden?: MaybeHidden },
-): PagePropertyGroup {
+): PnwPagePropertyGroup {
   return {
     id,
     label,
@@ -37,7 +37,7 @@ export function propGroup(
 }
 
 /** AppPropertyBool — 布尔 */
-export function propBool(
+export function pnwPropBool(
   id: string,
   label: string,
   opts: {
@@ -48,45 +48,45 @@ export function propBool(
     hidden?: MaybeHidden;
     labelTone?: "default" | "emphasis";
   },
-): PagePropertyBooleanField {
+): PnwPagePropertyBooleanField {
   return { id, label, kind: "boolean", ...opts };
 }
 
 /** AppPropertyEnum — 枚举下拉（含原 radio 场景，统一 combo） */
-export function propEnum(
+export function pnwPropEnum(
   id: string,
   label: string,
   opts: {
     value: ReactiveStr;
-    options: PagePropertySelectOptionsSource;
+    options: PnwPagePropertySelectOptionsSource;
     onChange?: (value: string) => void;
     hint?: MaybeHint;
     disabled?: MaybeHidden;
     hidden?: MaybeHidden;
     labelTone?: "default" | "emphasis";
   },
-): PagePropertySelectField {
+): PnwPagePropertySelectField {
   return { id, label, kind: "select", ...opts };
 }
 
 /** @deprecated 请用 propEnum；属性面板不支持 radio，等效为下拉 */
-export function propRadio(
+export function pnwPropRadio(
   id: string,
   label: string,
   opts: {
     value: ReactiveStr;
-    options: PagePropertySelectOption[];
+    options: PnwPagePropertySelectOption[];
     onChange?: (value: string) => void;
     hint?: string;
     disabled?: MaybeHidden;
     hidden?: MaybeHidden;
   },
-): PagePropertySelectField {
-  return propEnum(id, label, opts);
+): PnwPagePropertySelectField {
+  return pnwPropEnum(id, label, opts);
 }
 
 /** AppPropertyString */
-export function propString(
+export function pnwPropString(
   id: string,
   label: string,
   opts: {
@@ -98,12 +98,12 @@ export function propString(
     disabled?: MaybeHidden;
     hidden?: MaybeHidden;
   },
-): PagePropertyStringField {
+): PnwPagePropertyStringField {
   return { id, label, kind: "string", ...opts };
 }
 
 /** AppPropertyInt / Float */
-export function propNumber(
+export function pnwPropNumber(
   id: string,
   label: string,
   opts: {
@@ -116,12 +116,12 @@ export function propNumber(
     disabled?: MaybeHidden;
     hidden?: MaybeHidden;
   },
-): PagePropertyNumberField {
+): PnwPagePropertyNumberField {
   return { id, label, kind: "number", ...opts };
 }
 
 /** 相对工作空间路径（mono + 可选浏览） */
-export function propPath(
+export function pnwPropPath(
   id: string,
   label: string,
   opts: {
@@ -134,12 +134,12 @@ export function propPath(
     disabled?: MaybeHidden;
     hidden?: MaybeHidden;
   },
-): PagePropertyPathField {
+): PnwPagePropertyPathField {
   return { id, label, kind: "path", browse: opts.browse ?? true, ...opts };
 }
 
 /** AppPropertyString 只读 */
-export function propReadonly(
+export function pnwPropReadonly(
   id: string,
   label: string,
   opts: {
@@ -150,14 +150,14 @@ export function propReadonly(
     hidden?: MaybeHidden;
     labelTone?: "default" | "emphasis";
   },
-): PagePropertyInfoField {
+): PnwPagePropertyInfoField {
   return { id, label, kind: "info", ...opts };
 }
 
 /** 组装一页属性表（不含 pageId，供 usePagePropertySheet 使用） */
-export function propSheet(
-  groups: PagePropertyGroup[],
-  opts?: Pick<PagePropertiesSheet, "title" | "schemaVersion">,
-): Omit<PagePropertiesSheet, "pageId"> {
+export function pnwPropSheet(
+  groups: PnwPagePropertyGroup[],
+  opts?: Pick<PnwPagePropertiesSheet, "title" | "schemaVersion">,
+): Omit<PnwPagePropertiesSheet, "pageId"> {
   return { groups, ...opts };
 }

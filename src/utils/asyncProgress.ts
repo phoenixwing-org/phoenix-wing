@@ -5,12 +5,12 @@
 */
 
 import type {
-  AsyncProgressStep,
-  AsyncTaskState,
-  StepStatus,
-  TaskStatus,
+  PnwAsyncProgressStep,
+  PnwAsyncTaskState,
+  PnwStepStatus,
+  PnwTaskStatus,
 } from "./asyncProgressTypes.js";
-import { SCAN_STEP_LABELS, TEST_STEP_LABEL } from "./asyncProgressTypes.js";
+import { PNW_SCAN_STEP_LABELS, PNW_TEST_STEP_LABEL } from "./asyncProgressTypes.js";
 
 // 后端类型内联（避免 utils 依赖 api.ts）
 interface ScanPhaseDict {
@@ -41,7 +41,7 @@ interface ScanProgressPayload {
 // ---------------------------------------------------------------------------
 
 /** 为 fcstd-scan 创建初始任务状态（3 个 pending 步骤）。 */
-export function createScanTaskState(taskId: string, taskName?: string): AsyncTaskState {
+export function pnwCreateScanTaskState(taskId: string, taskName?: string): PnwAsyncTaskState {
   const now = new Date().toISOString();
   return {
     taskId,
@@ -53,10 +53,10 @@ export function createScanTaskState(taskId: string, taskName?: string): AsyncTas
     startedAt: now,
     logs: [],
     fileTimings: [],
-    steps: SCAN_STEP_LABELS.map((label: string, i: number) => ({
+    steps: PNW_SCAN_STEP_LABELS.map((label: string, i: number) => ({
       index: i,
       label,
-      status: (i === 0 ? "active" : "pending") as StepStatus,
+      status: (i === 0 ? "active" : "pending") as PnwStepStatus,
       percent: 0,
       processed: 0,
       total: 0,
@@ -66,11 +66,11 @@ export function createScanTaskState(taskId: string, taskName?: string): AsyncTas
 }
 
 /** 为 unit-test 创建初始任务状态。 */
-export function createTestTaskState(
+export function pnwCreateTestTaskState(
   taskId: string,
   totalModules?: number,
   taskName?: string,
-): AsyncTaskState {
+): PnwAsyncTaskState {
   const now = new Date().toISOString();
   return {
     taskId,
@@ -85,7 +85,7 @@ export function createTestTaskState(
     steps: [
       {
         index: 0,
-        label: TEST_STEP_LABEL,
+        label: PNW_TEST_STEP_LABEL,
         status: "active",
         percent: 0,
         processed: 0,
@@ -101,7 +101,7 @@ export function createTestTaskState(
 // ---------------------------------------------------------------------------
 
 /** 根据当前步骤索引和步骤自身数据，返回该步骤应显示的状态。 */
-export function computeStepStatus(step: AsyncProgressStep, currentStepIndex: number): StepStatus {
+export function pnwComputeStepStatus(step: PnwAsyncProgressStep, currentStepIndex: number): PnwStepStatus {
   if (step.status === "error") return "error";
   if (step.percent >= 100 && step.processed > 0) return "done";
   if (step.index === currentStepIndex) return "active";
@@ -116,7 +116,7 @@ export function computeStepStatus(step: AsyncProgressStep, currentStepIndex: num
 // ---------------------------------------------------------------------------
 
 /** 从步骤列表计算总进度百分比（等权平均）。 */
-export function computeProgressPercent(steps: AsyncProgressStep[]): number {
+export function pnwComputeProgressPercent(steps: PnwAsyncProgressStep[]): number {
   if (steps.length === 0) return 0;
   const sum = steps.reduce((acc, s) => acc + Math.min(100, Math.max(0, s.percent)), 0);
   return Math.round(sum / steps.length);
@@ -127,7 +127,7 @@ export function computeProgressPercent(steps: AsyncProgressStep[]): number {
 // ---------------------------------------------------------------------------
 
 /** 返回 status 是否为终态（不再轮询）。 */
-export function isTerminal(status: TaskStatus): boolean {
+export function pnwIsTerminal(status: PnwTaskStatus): boolean {
   return status === "done" || status === "error" || status === "cancelled" || status === "orphaned";
 }
 
@@ -136,19 +136,19 @@ export function isTerminal(status: TaskStatus): boolean {
 // ---------------------------------------------------------------------------
 
 /** 过滤出活跃（running）任务。 */
-export function filterActiveTasks(tasks: AsyncTaskState[]): AsyncTaskState[] {
+export function pnwFilterActiveTasks(tasks: PnwAsyncTaskState[]): PnwAsyncTaskState[] {
   return tasks.filter((t) => t.status === "running");
 }
 
 /** 按 startedAt 倒序排序（最新的在前）。 */
-export function sortTasksByTime(tasks: AsyncTaskState[]): AsyncTaskState[] {
+export function pnwSortTasksByTime(tasks: PnwAsyncTaskState[]): PnwAsyncTaskState[] {
   return [...tasks].sort(
     (a, b) => (b.startedAt || "").localeCompare(a.startedAt || ""),
   );
 }
 
 /** 是否存在运行中的任务。 */
-export function hasRunningTasks(tasks: AsyncTaskState[]): boolean {
+export function pnwHasRunningTasks(tasks: PnwAsyncTaskState[]): boolean {
   return tasks.some((t) => t.status === "running");
 }
 
@@ -159,7 +159,7 @@ export function hasRunningTasks(tasks: AsyncTaskState[]): boolean {
 const MAX_LOGS = 200;
 
 /** 追加一条日志到任务状态（不可变）。超过 MAX_LOGS 时截断旧日志。 */
-export function appendTaskLog(prev: AsyncTaskState, message: string): AsyncTaskState {
+export function pnwAppendTaskLog(prev: PnwAsyncTaskState, message: string): PnwAsyncTaskState {
   const logs = [...prev.logs, `[${new Date().toLocaleTimeString()}] ${message}`];
   if (logs.length > MAX_LOGS) {
     logs.splice(0, logs.length - MAX_LOGS);
@@ -171,7 +171,7 @@ export function appendTaskLog(prev: AsyncTaskState, message: string): AsyncTaskS
 // 轮询结果 → TaskState 更新（不可变）
 // ---------------------------------------------------------------------------
 
-function _phaseToStep(payload: ScanPhaseDict, label: string, index: number): AsyncProgressStep {
+function _phaseToStep(payload: ScanPhaseDict, label: string, index: number): PnwAsyncProgressStep {
   const total = payload.total || 0;
   const processed = (payload.processed || 0) + (payload.skipped || 0);
   const failed = payload.failed || 0;
@@ -189,14 +189,14 @@ function _phaseToStep(payload: ScanPhaseDict, label: string, index: number): Asy
 }
 
 /** 将 ScanProgressPayload 映射为更新后的 AsyncTaskState（不可变）。 */
-export function updateTaskFromPoll(
-  prev: AsyncTaskState,
+export function pnwUpdateTaskFromPoll(
+  prev: PnwAsyncTaskState,
   payload: ScanProgressPayload,
-): AsyncTaskState {
+): PnwAsyncTaskState {
   // 已终态（取消/完成/错误）不再被后端新消息覆盖
-  if (isTerminal(prev.status)) return prev;
+  if (pnwIsTerminal(prev.status)) return prev;
   const phaseNames = ["walk", "bom", "xref"] as const;
-  const steps: AsyncProgressStep[] = SCAN_STEP_LABELS.map((label: string, i: number) => {
+  const steps: PnwAsyncProgressStep[] = PNW_SCAN_STEP_LABELS.map((label: string, i: number) => {
     const phaseKey = phaseNames[i];
     const phaseData = (payload as unknown as Record<string, ScanPhaseDict>)[phaseKey];
     if (!phaseData) {
@@ -204,7 +204,7 @@ export function updateTaskFromPoll(
       return prev.steps[i] || {
         index: i,
         label,
-        status: "pending" as StepStatus,
+        status: "pending" as PnwStepStatus,
         percent: 0,
         processed: 0,
         total: 0,
@@ -219,16 +219,16 @@ export function updateTaskFromPoll(
 
   // 更新步骤状态
   for (const step of steps) {
-    step.status = computeStepStatus(step, currentStep);
+    step.status = pnwComputeStepStatus(step, currentStep);
   }
 
-  const status = payload.status as TaskStatus;
-  const progressPercent = computeProgressPercent(steps);
+  const status = payload.status as PnwTaskStatus;
+  const progressPercent = pnwComputeProgressPercent(steps);
 
   // 阶段切换日志
   let logs = prev.logs;
   if (currentStep !== prev.currentStep) {
-    const stepLabel = SCAN_STEP_LABELS[currentStep] || `步骤 ${currentStep}`;
+    const stepLabel = PNW_SCAN_STEP_LABELS[currentStep] || `步骤 ${currentStep}`;
     logs = [...logs, `[${new Date().toLocaleTimeString()}] → ${stepLabel}`];
     if (logs.length > MAX_LOGS) logs = logs.slice(-MAX_LOGS);
   }
@@ -241,7 +241,7 @@ export function updateTaskFromPoll(
     steps,
     logs,
     error: payload.error || undefined,
-    finishedAt: isTerminal(status) ? new Date().toISOString() : prev.finishedAt,
+    finishedAt: pnwIsTerminal(status) ? new Date().toISOString() : prev.finishedAt,
   };
 }
 
@@ -301,13 +301,13 @@ type StreamEvent =
 
   调用方每次收到一个事件就调用一次，传入上一步的 state。
 */
-export function updateTaskFromStreamEvent(
-  prev: AsyncTaskState,
+export function pnwUpdateTaskFromStreamEvent(
+  prev: PnwAsyncTaskState,
   event: StreamEvent,
-): AsyncTaskState {
+): PnwAsyncTaskState {
   // 已终态不再被新事件覆盖（cancel 后再来事件应忽略）
-  if (isTerminal(prev.status)) return prev;
-  const steps = prev.steps.map((s: AsyncProgressStep) => ({ ...s, errors: [...s.errors] }));
+  if (pnwIsTerminal(prev.status)) return prev;
+  const steps = prev.steps.map((s: PnwAsyncProgressStep) => ({ ...s, errors: [...s.errors] }));
 
   switch (event.type) {
     case "start": {
@@ -321,7 +321,7 @@ export function updateTaskFromStreamEvent(
     }
     case "module_start": {
       // 仅更新当前模块名，不修改进度数字（避免与 case_done 冲突）
-      const active = steps.find((s: AsyncProgressStep) => s.status === "active");
+      const active = steps.find((s: PnwAsyncProgressStep) => s.status === "active");
       if (active) {
         active.currentFile = event.module;
       }
@@ -334,7 +334,7 @@ export function updateTaskFromStreamEvent(
         step.processed = event.completed;
         step.percent = Math.round((event.completed / step.total) * 100);
       }
-      return { ...prev, steps, progressPercent: computeProgressPercent(steps) };
+      return { ...prev, steps, progressPercent: pnwComputeProgressPercent(steps) };
     }
     case "case_start":
       // case_start 不影响进度，仅作为信息事件忽略
@@ -346,12 +346,12 @@ export function updateTaskFromStreamEvent(
         step.percent = 100;
         step.status = "done";
       }
-      return { ...prev, steps, progressPercent: computeProgressPercent(steps) };
+      return { ...prev, steps, progressPercent: pnwComputeProgressPercent(steps) };
     }
     case "done": {
-      const finishedSteps = steps.map((s: AsyncProgressStep) => ({
+      const finishedSteps = steps.map((s: PnwAsyncProgressStep) => ({
         ...s,
-        status: "done" as StepStatus,
+        status: "done" as PnwStepStatus,
         percent: 100,
       }));
       return {
@@ -367,7 +367,7 @@ export function updateTaskFromStreamEvent(
         ...prev,
         status: "cancelled",
         finishedAt: new Date().toISOString(),
-        progressPercent: computeProgressPercent(steps),
+        progressPercent: pnwComputeProgressPercent(steps),
       };
     }
     case "error": {
@@ -376,7 +376,7 @@ export function updateTaskFromStreamEvent(
         status: "error",
         error: event.message,
         finishedAt: new Date().toISOString(),
-        progressPercent: computeProgressPercent(steps),
+        progressPercent: pnwComputeProgressPercent(steps),
       };
     }
     default:
@@ -388,58 +388,58 @@ export function updateTaskFromStreamEvent(
 // 文件耗时统计（纯函数）
 // ---------------------------------------------------------------------------
 
-import type { FileTimingRecord } from "./asyncProgressTypes.js";
+import type { PnwFileTimingRecord } from "./asyncProgressTypes.js";
 
 /** 追加一条文件处理耗时记录。不可变更新，超 500 条截头。 */
-export function recordFileTiming(
-  prev: AsyncTaskState,
+export function pnwRecordFileTiming(
+  prev: PnwAsyncTaskState,
   file: string,
   phase: string,
   duration: number,
   success: boolean,
   error?: string,
-): AsyncTaskState {
+): PnwAsyncTaskState {
   if (!file) return prev;
-  const record: FileTimingRecord = { file, phase, duration, success, ...(error ? { error } : {}) };
+  const record: PnwFileTimingRecord = { file, phase, duration, success, ...(error ? { error } : {}) };
   const timings = [...prev.fileTimings, record];
   if (timings.length > 500) timings.splice(0, timings.length - 500);
   return { ...prev, fileTimings: timings };
 }
 
 /** 平均耗时 (ms)，空返回 0 */
-export function averageFileDuration(timings: FileTimingRecord[]): number {
+export function pnwAverageFileDuration(timings: PnwFileTimingRecord[]): number {
   if (timings.length === 0) return 0;
   const sum = timings.reduce((a, t) => a + t.duration, 0);
   return Math.round(sum / timings.length);
 }
 
 /** 最快耗时 (ms)，空返回 0 */
-export function fastestFileDuration(timings: FileTimingRecord[]): number {
+export function pnwFastestFileDuration(timings: PnwFileTimingRecord[]): number {
   if (timings.length === 0) return 0;
   return timings.reduce((min, t) => Math.min(min, t.duration), Infinity);
 }
 
 /** 最慢耗时 (ms)，空返回 0 */
-export function slowestFileDuration(timings: FileTimingRecord[]): number {
+export function pnwSlowestFileDuration(timings: PnwFileTimingRecord[]): number {
   if (timings.length === 0) return 0;
   return timings.reduce((max, t) => Math.max(max, t.duration), -Infinity);
 }
 
 /** 预估剩余时间 (秒)，基于平均耗时 × 剩余文件数 */
-export function estimateRemaining(timings: FileTimingRecord[], remaining: number): number {
+export function pnwEstimateRemaining(timings: PnwFileTimingRecord[], remaining: number): number {
   if (timings.length === 0 || remaining <= 0) return 0;
-  return Math.round((averageFileDuration(timings) * remaining) / 1000);
+  return Math.round((pnwAverageFileDuration(timings) * remaining) / 1000);
 }
 
 /** 格式化毫秒为可读字符串 */
-export function formatDuration(ms: number): string {
+export function pnwFormatDuration(ms: number): string {
   if (ms <= 0) return "0";
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
 /** 格式化秒为 XmXs */
-export function formatSeconds(sec: number): string {
+export function pnwFormatSeconds(sec: number): string {
   if (sec <= 0) return "0s";
   if (sec < 60) return `${sec}s`;
   const m = Math.floor(sec / 60);

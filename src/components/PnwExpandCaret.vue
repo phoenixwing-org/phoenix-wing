@@ -8,8 +8,8 @@ defineProps<{
 
 <template>
   <span
-    class="phoenix-expand-twistie"
-    :class="{ 'is-expanded': expanded, 'phoenix-expand-twistie-inline': inline }"
+    class="pnw-expand-twistie"
+    :class="{ 'pnw-is-expanded': expanded, 'pnw-expand-twistie-inline': inline }"
     aria-hidden="true"
   />
 </template>

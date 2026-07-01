@@ -1,6 +1,6 @@
 import { ref } from "vue";
 
-export type ChoiceDialogOption = {
+export type PnwChoiceDialogOption = {
   id: string;
   label: string;
   variant?: "primary" | "danger" | "default";
@@ -8,51 +8,51 @@ export type ChoiceDialogOption = {
   disabled?: boolean;
 };
 
-export type ChoiceDialogCheckboxItem = {
+export type PnwChoiceDialogCheckboxItem = {
   id: string;
   label: string;
 };
 
-export type ChoiceDialogCheckboxes = {
-  items: ChoiceDialogCheckboxItem[];
+export type PnwChoiceDialogCheckboxes = {
+  items: PnwChoiceDialogCheckboxItem[];
   /** 默认勾选 id；缺省为全部 */
   defaultSelectedIds?: string[];
 };
 
-export type ChoiceDialogRequest = {
+export type PnwChoiceDialogRequest = {
   title: string;
   message: string;
-  choices: ChoiceDialogOption[];
+  choices: PnwChoiceDialogOption[];
   /** 打开时聚焦的按钮（建议危险操作用 `"cancel"`） */
   defaultChoiceId?: string;
-  checkboxes?: ChoiceDialogCheckboxes;
+  checkboxes?: PnwChoiceDialogCheckboxes;
 };
 
-export type ChoiceDialogResult = {
+export type PnwChoiceDialogResult = {
   choiceId: string | null;
   checkedIds: string[];
 };
 
-export const choiceDialogOpen = ref(false);
-export const choiceDialogRequest = ref<ChoiceDialogRequest | null>(null);
+export const pnwChoiceDialogOpen = ref(false);
+export const pnwChoiceDialogRequest = ref<PnwChoiceDialogRequest | null>(null);
 
-let pendingResolve: ((value: ChoiceDialogResult) => void) | null = null;
+let pendingResolve: ((value: PnwChoiceDialogResult) => void) | null = null;
 
 /** 单次弹出，多按钮选择；有 checkboxes 时 checkedIds 为当前勾选 id */
-export function promptChoice(req: ChoiceDialogRequest): Promise<ChoiceDialogResult> {
+export function pnwPromptChoice(req: PnwChoiceDialogRequest): Promise<PnwChoiceDialogResult> {
   if (pendingResolve) {
     pendingResolve({ choiceId: null, checkedIds: [] });
   }
-  choiceDialogRequest.value = req;
-  choiceDialogOpen.value = true;
+  pnwChoiceDialogRequest.value = req;
+  pnwChoiceDialogOpen.value = true;
   return new Promise((resolve) => {
     pendingResolve = resolve;
   });
 }
 
-export function resolveChoice(id: string | null, checkedIds: string[] = []) {
-  choiceDialogOpen.value = false;
-  choiceDialogRequest.value = null;
+export function pnwResolveChoice(id: string | null, checkedIds: string[] = []) {
+  pnwChoiceDialogOpen.value = false;
+  pnwChoiceDialogRequest.value = null;
   pendingResolve?.({ choiceId: id, checkedIds });
   pendingResolve = null;
 }

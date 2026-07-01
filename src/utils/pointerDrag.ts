@@ -1,5 +1,5 @@
 /** 侧栏/表格拖拽调节：pointer capture + Esc 取消，避免 mouseup 丢失后卡死 */
-export function bindPointerDrag(
+export function pnwBindPointerDrag(
   e: PointerEvent,
   opts: {
     cursor?: string;
