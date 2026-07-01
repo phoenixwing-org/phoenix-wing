@@ -5,12 +5,12 @@
 */
 
 import { defineStore } from "pinia";
-import type { PnwAsyncTaskState } from "../utils/asyncProgressTypes.js";
+import type { PnwAsyncTaskState } from "../utils/pnwAsyncProgressTypes.js";
 import {
   pnwFilterActiveTasks,
   pnwHasRunningTasks,
   pnwSortTasksByTime,
-} from "../utils/asyncProgress.js";
+} from "../utils/pnwAsyncProgress.js";
 
 const STORAGE_KEY = "phoenix-async-tasks-v1";
 

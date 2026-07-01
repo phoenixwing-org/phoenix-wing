@@ -16,7 +16,7 @@ export {
   type PnwFileTimingRecord,
   PNW_SCAN_STEP_LABELS,
   PNW_TEST_STEP_LABEL,
-} from './utils/asyncProgressTypes.js'
+} from './utils/pnwAsyncProgressTypes.js'
 
 export {
   pnwCreateScanTaskState,
@@ -37,32 +37,32 @@ export {
   pnwEstimateRemaining,
   pnwFormatDuration,
   pnwFormatSeconds,
-} from './utils/asyncProgress.js'
+} from './utils/pnwAsyncProgress.js'
 
 // ---------------------------------------------------------------------------
 // 防抖调度
 // ---------------------------------------------------------------------------
-export { pnwScheduleDebounced } from './utils/scheduleDebounced.js'
+export { pnwScheduleDebounced } from './utils/pnwScheduleDebounced.js'
 
 // ---------------------------------------------------------------------------
 // 色彩方案
 // ---------------------------------------------------------------------------
-export { type PnwColorScheme, pnwResolveColorScheme, pnwApplyColorScheme } from './utils/colorScheme.js'
+export { type PnwColorScheme, pnwResolveColorScheme, pnwApplyColorScheme } from './utils/pnwColorScheme.js'
 
 // ---------------------------------------------------------------------------
 // 指针拖拽
 // ---------------------------------------------------------------------------
-export { pnwBindPointerDrag } from './utils/pointerDrag.js'
+export { pnwBindPointerDrag } from './utils/pnwPointerDrag.js'
 
 // ---------------------------------------------------------------------------
 // 浏览器存储
 // ---------------------------------------------------------------------------
-export { pnwClearPhoenixBrowserStorage } from './utils/phoenixBrowserStorage.js'
+export { pnwClearPhoenixBrowserStorage } from './utils/pnwBrowserStorage.js'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-export { type PnwComboOption } from './types/comboTypes.js'
+export { type PnwComboOption } from './types/pnwComboTypes.js'
 
 export {
   type PnwPagePropertyScalar,
@@ -78,7 +78,7 @@ export {
   type PnwPagePropertyField,
   type PnwPagePropertyGroup,
   type PnwPagePropertiesSheet,
-} from './types/pageProperties.js'
+} from './types/pnwPageProperties.js'
 
 // ---------------------------------------------------------------------------
 // 属性表 Schema 构建器
@@ -93,12 +93,87 @@ export {
   pnwPropPath,
   pnwPropReadonly,
   pnwPropSheet,
-} from './utils/pagePropertySchema.js'
+} from './utils/pnwPagePropertySchema.js'
+
+// ---------------------------------------------------------------------------
+// Composables — 壳层框架
+// ---------------------------------------------------------------------------
+export {
+  type PnwShellLayout,
+  type PnwSideDock,
+  type PnwSideDockVisibility,
+  type PnwSideDockVisibilityContext,
+  pnwGitCommitPanelDock,
+  pnwSideDockVisibility,
+} from './composables/pnwSideDockLayout.js'
+
+export {
+  type PnwTableColumnDef,
+  usePnwResizableTable,
+} from './composables/usePnwResizableTable.js'
+
+export {
+  PNW_DEFAULT_APP_TITLE,
+  usePnwDocumentTitle,
+} from './composables/usePnwDocumentTitle.js'
+
+export {
+  pnwSetPropertiesActivePage,
+  pnwRegisterPageProperties,
+  pnwUnregisterPageProperties,
+  usePnwPagePropertiesHost,
+} from './composables/pnwPagePropertiesHost.js'
+
+export { usePnwPagePropertySheet } from './composables/usePnwPagePropertySheet.js'
+
+// ---------------------------------------------------------------------------
+// Ribbon 配置类型
+// ---------------------------------------------------------------------------
+export {
+  type PnwRibbonItemSize,
+  type PnwRibbonItemDef,
+  type PnwRibbonGroupDef,
+  type PnwRibbonTabDef,
+} from './types/PnwRibbonConfig.js'
+
+// ---------------------------------------------------------------------------
+// 工作台 Tab 管理
+// ---------------------------------------------------------------------------
+export {
+  type PnwWorkbenchTabPayload,
+  type PnwWorkbenchTab,
+  type PnwWorkbenchSessionTab,
+  type PnwWorkbenchSessionSnapshot,
+  type PnwOpenTabOptions,
+  type PnwPageTabPolicy,
+  type PnwWorkbenchConfig,
+  type PnwWorkbenchContext,
+  pnwCreateWorkbench,
+} from './composables/pnwCreateWorkbench.js'
+
+// ---------------------------------------------------------------------------
+// Ribbon 图标 & Tab 切换
+// ---------------------------------------------------------------------------
+export { pnwRegisterRibbonIcons, pnwRibbonIconFor } from './composables/pnwRibbonIcons.js'
+export { usePnwRibbonTabs } from './composables/usePnwRibbonTabs.js'
+
+// ---------------------------------------------------------------------------
+// URL 同步
+// ---------------------------------------------------------------------------
+export {
+  type PnwUrlSyncTab,
+  type PnwShellUrlIntent,
+  type PnwUrlParser,
+  pnwRegisterUrlParser,
+  pnwParseShellUrl,
+  pnwBuildShellSearchParams,
+  pnwReplaceShellUrl,
+} from './composables/pnwShellUrlSync.js'
 
 // ---------------------------------------------------------------------------
 // Pinia stores
 // ---------------------------------------------------------------------------
-export { usePnwAsyncTaskStore } from './stores/asyncTasks.js'
+export { usePnwAsyncTaskStore } from './stores/pnwAsyncTasks.js'
 
 // ---------------------------------------------------------------------------
 // Vue3 Composables
@@ -113,9 +188,20 @@ export {
   pnwChoiceDialogRequest,
   pnwPromptChoice,
   pnwResolveChoice,
-} from './composables/choiceDialog.js'
+} from './composables/pnwChoiceDialog.js'
 
-// Vue3 组件请从子路径导入:
+// 壳层组件从子路径导入:
+//   import PnwSidebarBlock from 'phoenix-wing/layout/PnwSidebarBlock.vue'
+//   import PnwSidebarBlockHead from 'phoenix-wing/layout/PnwSidebarBlockHead.vue'
+//   import PnwRibbonShell from 'phoenix-wing/layout/PnwRibbonShell.vue'
+//   import PnwRibbonTabBar from 'phoenix-wing/layout/PnwRibbonTabBar.vue'
+//   import PnwRibbonGroup from 'phoenix-wing/layout/PnwRibbonGroup.vue'
+//   import PnwRibbonToolButton from 'phoenix-wing/layout/PnwRibbonToolButton.vue'
+//   import PnwRibbonUtilButton from 'phoenix-wing/layout/PnwRibbonUtilButton.vue'
+//   import PnwPageHeader from 'phoenix-wing/layout/PnwPageHeader.vue'
+//   import PnwShellLogPanel from 'phoenix-wing/layout/PnwShellLogPanel.vue'
+//   import PnwWorkbenchTabBar from 'phoenix-wing/layout/PnwWorkbenchTabBar.vue'
+//   import PnwWelcomeShell from 'phoenix-wing/layout/PnwWelcomeShell.vue'
 //   import PnwAppModalOverlay from 'phoenix-wing/components/PnwAppModalOverlay.vue'
 //   import PnwChoiceDialogHost from 'phoenix-wing/components/PnwChoiceDialogHost.vue'
 //   import PnwComboTextInput from 'phoenix-wing/components/PnwComboTextInput.vue'

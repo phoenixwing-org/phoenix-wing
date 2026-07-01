@@ -9,8 +9,8 @@ import type {
   PnwAsyncTaskState,
   PnwStepStatus,
   PnwTaskStatus,
-} from "./asyncProgressTypes.js";
-import { PNW_SCAN_STEP_LABELS, PNW_TEST_STEP_LABEL } from "./asyncProgressTypes.js";
+} from "./pnwAsyncProgressTypes.js";
+import { PNW_SCAN_STEP_LABELS, PNW_TEST_STEP_LABEL } from "./pnwAsyncProgressTypes.js";
 
 // 后端类型内联（避免 utils 依赖 api.ts）
 interface ScanPhaseDict {
@@ -388,7 +388,7 @@ export function pnwUpdateTaskFromStreamEvent(
 // 文件耗时统计（纯函数）
 // ---------------------------------------------------------------------------
 
-import type { PnwFileTimingRecord } from "./asyncProgressTypes.js";
+import type { PnwFileTimingRecord } from "./pnwAsyncProgressTypes.js";
 
 /** 追加一条文件处理耗时记录。不可变更新，超 500 条截头。 */
 export function pnwRecordFileTiming(

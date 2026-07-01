@@ -12,8 +12,8 @@ import {
   pnwSortTasksByTime,
   pnwUpdateTaskFromPoll,
   pnwUpdateTaskFromStreamEvent,
-} from "./asyncProgress.js";
-import type { PnwAsyncProgressStep, PnwAsyncTaskState } from "./asyncProgressTypes.js";
+} from "./pnwAsyncProgress.js";
+import type { PnwAsyncProgressStep, PnwAsyncTaskState } from "./pnwAsyncProgressTypes.js";
 
 // ---------------------------------------------------------------------------
 // pnwCreateScanTaskState / pnwCreateTestTaskState
@@ -340,7 +340,7 @@ import {
   pnwEstimateRemaining,
   pnwFormatDuration,
   pnwFormatSeconds,
-} from "./asyncProgress.js";
+} from "./pnwAsyncProgress.js";
 
 function _state() { return pnwCreateScanTaskState("t1"); }
 
