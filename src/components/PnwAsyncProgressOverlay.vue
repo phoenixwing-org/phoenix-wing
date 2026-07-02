@@ -2,6 +2,7 @@
 /** 异步任务进度浮层 — 纯视图。 */
 
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { ElProgress } from "element-plus";
 import { usePnwAsyncTaskStore } from "../stores/pnwAsyncTasks";
 import { pnwAverageFileDuration, pnwFastestFileDuration, pnwSlowestFileDuration, pnwFormatDuration } from "../utils/pnwAsyncProgress";
 

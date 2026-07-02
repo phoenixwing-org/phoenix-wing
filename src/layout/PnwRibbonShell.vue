@@ -40,7 +40,6 @@ const emit = defineEmits<{
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: stretch;
-  min-height: 0;
 }
 
 .pnw-ribbon-body {
@@ -49,10 +48,15 @@ const emit = defineEmits<{
   align-items: stretch;
   min-height: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.pnw-ribbon-shell.inline {
+  align-items: center;
 }
 
 .pnw-ribbon-shell.inline .pnw-ribbon-body {
-  max-height: 32px;
+  overflow-x: visible;
 }
 
 .pnw-ribbon-layout-toggle {

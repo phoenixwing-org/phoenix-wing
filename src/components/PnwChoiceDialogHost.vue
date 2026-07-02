@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from "vue";
+import { ElCheckbox, ElCheckboxGroup } from "element-plus";
 import {
   pnwChoiceDialogOpen,
   pnwChoiceDialogRequest,
