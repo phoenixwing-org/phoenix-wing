@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./db/*": "./src/db/*",
     "./components/*": "./src/components/*",
     "./layout/*": "./src/layout/*",
     "./composables/*": "./src/composables/*",
@@ -23,6 +24,9 @@
   },
   "dependencies": {
     "element-plus": "^2.0.0"
+  },
+  "optionalDependencies": {
+    "node-sqlite3-wasm": "^0.8.59"
   },
   "peerDependencies": {
     "element-plus": "^2.0.0",
