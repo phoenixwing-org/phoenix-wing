@@ -14,6 +14,7 @@ export type PnwRibbonGroupItem = {
 defineProps<{
   label: string;
   items: PnwRibbonGroupItem[];
+  layout?: "stacked" | "inline";
 }>();
 
 const emit = defineEmits<{
@@ -29,8 +30,8 @@ const emit = defineEmits<{
         :key="item.pageId"
         :label="item.label"
         :icon="item.icon"
-        size="large"
-        layout="stacked"
+        :size="layout === 'inline' ? 'small' : 'large'"
+        :layout="layout === 'inline' ? 'inline' : 'stacked'"
         :active="item.active"
         :disabled="item.disabled"
         :title="item.title"
