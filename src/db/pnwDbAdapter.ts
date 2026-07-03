@@ -32,7 +32,9 @@ class PnwSqliteWasmAdapter implements PnwDbAdapter {
   }
 
   get<T = Record<string, unknown>>(sql: string, params?: unknown): T | undefined {
-    return this.db.get(sql, params) as unknown as T | undefined
+    // node-sqlite3-wasm 无匹配时返回 null，适配层统一转换为 undefined
+    const result = this.db.get(sql, params)
+    return result != null ? (result as unknown as T) : undefined
   }
 
   all<T = Record<string, unknown>>(sql: string, params?: unknown): T[] {
@@ -52,7 +54,7 @@ class PnwSqliteWasmAdapter implements PnwDbAdapter {
   }
 
   close(): void {
-    this.db.close()
+    try { this.db.close() } catch { /* 可能已关闭 */ }
   }
 }
 
