@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./code-core": "./src/code-core/index.ts",
     "./db/*": "./src/db/*",
     "./components/*": "./src/components/*",
     "./layout/*": "./src/layout/*",
@@ -51,7 +52,7 @@
     "typescript",
     "components"
   ],
-  "author": "kt-auto-code",
+  "author": "上海锟钛",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

@@ -49,6 +49,7 @@ npm install phoenix-wing
 | [doc/命名规则.md](doc/命名规则.md) | 命名规则、前缀对照、违规示例 |
 | [doc/框架迁移计划.md](doc/框架迁移计划.md) | 壳层框架迁移计划 |
 | [doc/naming-checklist.md](doc/naming-checklist.md) | 命名点检清单 |
+| [doc/三库共享核心整改计划.md](doc/三库共享核心整改计划.md) | `code-core`、`catdlg-core` 的跨仓库契约、阶段和验收 |
 
 ## Peer Dependencies
 
@@ -66,4 +67,4 @@ npm install phoenix-wing
 
 ## 许可
 
-Apache License 2.0 © 2026 kt-auto-code
+Copyright © 2024–2026 上海锟钛。项目使用 [Apache License 2.0](LICENSE) 开源。
