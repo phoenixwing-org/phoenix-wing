@@ -50,6 +50,7 @@ npm install phoenix-wing
 | [doc/框架迁移计划.md](doc/框架迁移计划.md) | 壳层框架迁移计划 |
 | [doc/naming-checklist.md](doc/naming-checklist.md) | 命名点检清单 |
 | [doc/三库共享核心整改计划.md](doc/三库共享核心整改计划.md) | `code-core`、`catdlg-core` 的跨仓库契约、阶段和验收 |
+| [doc/C++成员排序算法规范.md](doc/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 
 ## Peer Dependencies
 
