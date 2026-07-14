@@ -227,9 +227,10 @@ describe("pnwUpdateTaskFromPoll", () => {
     const state = pnwUpdateTaskFromPoll(_baseState(), _payload());
     expect(state.steps[0].percent).toBe(100);
     expect(state.steps[0].status).toBe("done");
-    expect(state.steps[1].percent).toBe(50);
+    // skipped 与 failed 都会计入已处理进度： (25 + 2 + 1) / 50 = 56%。
+    expect(state.steps[1].percent).toBe(56);
     expect(state.steps[1].status).toBe("active");
-    expect(state.steps[1].processed).toBe(25);
+    expect(state.steps[1].processed).toBe(27);
     expect(state.steps[1].total).toBe(50);
   });
 
@@ -264,8 +265,8 @@ describe("pnwUpdateTaskFromPoll", () => {
 
   it("maintains progressPercent as average of steps", () => {
     const state = pnwUpdateTaskFromPoll(_baseState(), _payload());
-    // walk 100 + bom 50 + xref 0 = 150 / 3 = 50
-    expect(state.progressPercent).toBe(50);
+    // walk 100 + bom 56 + xref 0 = 156 / 3 = 52
+    expect(state.progressPercent).toBe(52);
   });
 });
 
@@ -283,11 +284,18 @@ describe("pnwUpdateTaskFromStreamEvent", () => {
       total_modules: 8,
       total_cases: 42,
     });
-    expect(state.steps[0].total).toBe(8);
+    // 测试进度以用例数为单位，而非模块数。
+    expect(state.steps[0].total).toBe(42);
   });
 
   it("sets current file to module name on module_start", () => {
-    const state = pnwUpdateTaskFromStreamEvent(_testBase(), {
+    const started = pnwUpdateTaskFromStreamEvent(_testBase(), {
+      type: "start",
+      suite_id: "cad",
+      total_modules: 8,
+      total_cases: 42,
+    });
+    const state = pnwUpdateTaskFromStreamEvent(started, {
       type: "module_start",
       module: "test_bom",
       module_index: 1,
@@ -297,7 +305,13 @@ describe("pnwUpdateTaskFromStreamEvent", () => {
   });
 
   it("updates progress on case_done", () => {
-    const state = pnwUpdateTaskFromStreamEvent(_testBase(), {
+    const started = pnwUpdateTaskFromStreamEvent(_testBase(), {
+      type: "start",
+      suite_id: "cad",
+      total_modules: 8,
+      total_cases: 42,
+    });
+    const state = pnwUpdateTaskFromStreamEvent(started, {
       type: "case_done",
       completed: 21,
       total: 42,
