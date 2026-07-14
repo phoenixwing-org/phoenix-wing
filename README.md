@@ -66,4 +66,4 @@ npm install phoenix-wing
 
 ## 许可
 
-MIT
+Apache License 2.0 © 2026 kt-auto-code
