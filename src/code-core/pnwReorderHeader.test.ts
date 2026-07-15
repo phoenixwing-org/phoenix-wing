@@ -143,4 +143,65 @@ describe("reorderHeaderEngine", () => {
     expect(result.text.indexOf("zeta")).toBeLessThan(result.text.indexOf("alpha"));
     expect(result.warnings.some((warning) => warning.includes("numbered Doxygen"))).toBe(true);
   });
+
+  it("removes the empty line between the final declaration and class terminator", () => {
+    const source = fixture("clang_format_class_tail.h");
+    const result = pnwReorderHeaderText(source, { sortMembers: true });
+
+    expect(result.changed).toBe(true);
+    expect(result.text).not.toMatch(/\n[ \t]*\n[ \t]*};/);
+    expect(result.text.match(/\n};/g)).toHaveLength(3);
+    expect(result.text.indexOf("alpha()")).toBeLessThan(result.text.indexOf("zeta()"));
+    expect(result.text).toContain(
+      "//END KEVIN CAA WIZARD SECTION LockedWizardTail PARAM DECLARATION\n\n    // clang-format on\n};",
+    );
+    expect(result.text).not.toContain("// clang-format on\n\n};");
+    expect(pnwReorderHeaderText(result.text, { sortMembers: true }).changed).toBe(false);
+
+    const crlf = pnwReorderHeaderText(source.replace(/\n/g, "\r\n"), { sortMembers: true }).text;
+    expect(crlf).not.toMatch(/\r\n[ \t]*\r\n[ \t]*};/);
+    expect(crlf.replace(/\r\n/g, "")).not.toContain("\n");
+  });
+
+  it("preserves blank lines between independent comments", () => {
+    const source = [
+      "class CommentTail {",
+      "public:",
+      "    void alpha();",
+      "    // generated section end",
+      "",
+      "    // formatter boundary",
+      "",
+      "};",
+      "",
+    ].join("\n");
+
+    const result = pnwReorderHeaderText(source, { sortMembers: true });
+    expect(result.text).toContain("    // generated section end\n\n    // formatter boundary");
+    expect(result.text).not.toContain("    void alpha();\n\n};");
+    expect(pnwReorderHeaderText(result.text, { sortMembers: true }).changed).toBe(false);
+  });
+
+  it("preserves the KtAlarmClock Wizard spacer before clang-format on", () => {
+    const source = [
+      "class KtAlarmClockParam {",
+      "public:",
+      "    // clang-format off",
+      "    //START KEVIN CAA WIZARD SECTION KtAlarmClockParam PARAM DECLARATION",
+      "    int TimeCounter;",
+      "    //END KEVIN CAA WIZARD SECTION KtAlarmClockParam PARAM DECLARATION",
+      "",
+      "    // clang-format on",
+      "",
+      "};",
+      "",
+    ].join("\n");
+
+    const result = pnwReorderHeaderText(source, { sortMembers: true });
+    expect(result.text).toContain(
+      "    //END KEVIN CAA WIZARD SECTION KtAlarmClockParam PARAM DECLARATION\n\n    // clang-format on\n};",
+    );
+    expect(result.text).not.toContain("    // clang-format on\n\n};");
+    expect(pnwReorderHeaderText(result.text, { sortMembers: true }).changed).toBe(false);
+  });
 });

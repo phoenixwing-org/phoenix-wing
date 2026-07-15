@@ -735,6 +735,14 @@ function emitItem(item: DeclItem, trailingGap = item.trailingGap): string {
   return trailingGap && !out.endsWith("\n\n") ? `${out}\n` : out;
 }
 
+function removeClassTailGap(body: string): string {
+  const closingIndent = body.match(/[ \t]*$/)?.[0] ?? "";
+  const content = body
+    .slice(0, body.length - closingIndent.length)
+    .replace(/(?:\n[ \t]*)+$/, "");
+  return `${content}\n${closingIndent}`;
+}
+
 function rebuildClassBody(preamble: string, sections: AccessSection[], className: string, sortMembers: boolean): string {
   const ordinary: AccessSection[] = [];
   const signals: AccessSection[] = [];
@@ -764,7 +772,10 @@ function rebuildClassBody(preamble: string, sections: AccessSection[], className
     }
     if (section.trailingGap && !out.endsWith("\n\n")) out += "\n";
   }
-  return out;
+  // KtAlarmClock's clang-format style keeps the class tail compact. Only trim
+  // padding between the final item and `};`; preserve blank lines between
+  // independent comment/locked-region lines, including before `clang-format on`.
+  return removeClassTailGap(out);
 }
 
 function isCodePosition(text: string, target: number): boolean {

@@ -56,6 +56,8 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 
 ## 4. Header 类声明排序
 
+本算法以 KtAlarmClock 的项目级 clang-format 风格作为主要格式兼容基线，配置解读和完整 fixture 位置见 [C++ clang-format 规则说明](./C++%20clang-format规则说明.md)。兼容的含义是排序结果无需再次格式化即可符合与成员排序有关的稳定布局；不是在 core 内重做一套 clang-format。
+
 ### 4.1 识别范围
 
 - 处理带导出宏、`final`、继承列表的 `class` 定义。
@@ -74,7 +76,7 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 
 ### 4.3 锁定段（P0）
 
-以下成对区间整体冻结，段内字符顺序与内容不得变化；嵌套或重叠时合并为最外层区间：
+以下成对区间整体冻结，段内生成内容、注释与字符顺序不得变化；嵌套或重叠时合并为最外层区间：
 
 | rule id | 起止标记 | 说明 |
 | --- | --- | --- |
@@ -85,6 +87,8 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 
 `#pragma region VirtualFunction` 当前按通用 `pragma-region` 处理，不另行赋予特殊排序语义。
 
+锁定段的内部空白逐字保护，包括 Wizard 的 `//END ...` 与 `// clang-format on` 之间已有的空行。当 `// clang-format on` 是类结束标记前的最后一项时，只删除它与 `};` 之间的纯空行。
+
 ### 4.4 Kevin system-code 兼容
 
 `kevinSystemCodeMode` 取值如下：
@@ -94,6 +98,14 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 - `off`：不进行该兼容转换。
 
 该兼容层与锁定段不同：只处理已识别的声明区，不能越过锁定段。
+
+### 4.5 类结束标记前的空行
+
+- Header 排序输出中，最后一个成员变量或成员函数后必须直接连接类结束标记 `};`，两者之间不得保留空行。
+- 如果最后一个成员位于类尾 Wizard 锁定段内，则保留 `//END ...` 与 `// clang-format on` 之间的原始空白；`// clang-format on` 与 `};` 必须紧邻。
+- 该约束同时适用于 LF 与 CRLF，并且必须保持二次执行幂等。
+- 这是 KtAlarmClock clang-format 基线的稳定结果；core 应直接生成该结果，不能要求宿主在写盘后再运行 clang-format。
+- 类内部有意义的单空行分组仍可保留；本规则只收敛类体末尾、结束标记之前的空白。
 
 ## 5. 宿主契约（必须遵守）
 
@@ -107,7 +119,7 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 
 ## 6. 回归契约与已知边界
 
-当前 core fixture 位于 `src/code-core/fixtures/`：15 个 header 与 7 个 `.cpp`。测试覆盖：
+当前 core fixture 位于 `src/code-core/fixtures/`；其中 `ktalarmclock.clang-format.yaml` 保存实际项目格式基线，`clang_format_class_tail.h` 锁定类尾空行行为。测试覆盖：
 
 - `.cpp` 的 Python 历史 golden hash、特殊成员、注释分隔线、函数体内部调用、分行返回类型、CRLF、初始化列表与幂等；
 - header 的访问区、特殊成员、成员变量可选排序、导出宏、嵌套锁定段、Kevin/CAA2 Wizard、通用 pragma region、Kevin system-code、Doxygen 编号警告、CRLF 与幂等。
