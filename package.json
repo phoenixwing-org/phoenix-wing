@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Phoenix Wing 共享 TypeScript 工具库 — 纯逻辑、Vue3 控件、算法",
   "type": "module",
   "main": "./src/index.ts",
