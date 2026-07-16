@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phoenix-wing.kuntai.dev/schemas/cad/fcstd-document-legacy-v0.schema.json",
+  "title": "Desk Tools legacy FCStd document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["objects", "xlinks", "root_names"],
+  "properties": {
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "label", "typeId", "children", "properties", "material", "placement", "isValidBomItem", "level"],
+        "properties": {
+          "name": { "type": "string" },
+          "label": { "type": "string" },
+          "typeId": { "type": "string" },
+          "children": { "type": "array", "items": { "type": "string" } },
+          "properties": { "type": "object", "additionalProperties": { "type": ["string", "number"] } },
+          "material": { "type": ["string", "null"] },
+          "placement": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["x", "y", "z", "q0", "q1", "q2", "q3"],
+                "properties": {
+                  "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" },
+                  "q0": { "type": "number" }, "q1": { "type": "number" }, "q2": { "type": "number" }, "q3": { "type": "number" }
+                }
+              }
+            ]
+          },
+          "isValidBomItem": { "type": "boolean" },
+          "level": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "xlinks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "label"],
+        "properties": {
+          "file": { "type": "string" },
+          "label": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "root_names": { "type": "array", "items": { "type": "string" } }
+  }
+}

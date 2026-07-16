@@ -1,0 +1,50 @@
+{
+  "name": "@phoenix-wing/cad-contracts",
+  "version": "0.3.0",
+  "description": "Phoenix CAD 跨宿主 JSON 契约、协议版本与 DTO",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas/*": "./schemas/*",
+    "./fixtures/*": "./fixtures/*"
+  },
+  "files": [
+    "dist",
+    "src/index.ts",
+    "src/nativeV1.ts",
+    "src/providerV1.ts",
+    "src/queryV1.ts",
+    "schemas",
+    "fixtures",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "prepack": "pnpm run build",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": ["phoenix", "cad", "fcstd", "contracts"],
+  "author": "上海锟钛",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/PhoenixWing321/phoenix-wing.git"
+  },
+  "devDependencies": {
+    "@phoenix-wing/db-node": "workspace:0.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "protocol": "phoenix-cad-query",
+  "version": { "major": 1, "minor": 0 },
+  "schema": {
+    "id": "phoenix-workspace",
+    "version": 13,
+    "ddl_sha256": "116c5bff9c95e6f670b9ecfc52c053ee08e33e9cf1f3f3b46c02888e97643e1c"
+  },
+  "commands": [
+    "parts",
+    "fcstd-map",
+    "bom-xref-meta",
+    "bom-xref-incoming",
+    "bom-xref-outgoing",
+    "bom-xref-counts",
+    "bom-tree",
+    "bom-file",
+    "scan-recent",
+    "file-upsert"
+  ]
+}
+

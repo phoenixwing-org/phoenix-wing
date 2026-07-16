@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/phoenix-cad-protocol",
+  "crates/fcstd-reader",
+  "crates/fcstd-xlink",
+  "crates/fcstd-cli",
+  "crates/fcstd-query",
+]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://gitee.com/PhoenixWing321/phoenix-wing.git"

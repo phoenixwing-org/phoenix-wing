@@ -1,12 +1,16 @@
 # phoenix-wing
 
-Phoenix Wing 共享 TypeScript 工具库 — 纯逻辑 · Vue3 控件 · 壳层框架 · 算法
+Phoenix Wing 跨语言共享核心与 UI 底座 — TypeScript 多包 · Rust CAD 源码 · Vue3 控件 · 壳层框架
 
-## 安装
+## 按需安装
 
 ```bash
-npm install phoenix-wing
+npm install @phoenix-wing/code-core
+npm install @phoenix-wing/cad-contracts @phoenix-wing/cad-core
+npm install @phoenix-wing/workspace-schema
 ```
+
+只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`；构建 Desk native tools 时单独安装 `@phoenix-wing/cad-rust-source`。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
 
 ## 快速使用
 
@@ -50,6 +54,8 @@ npm install phoenix-wing
 | [doc/框架迁移计划.md](doc/框架迁移计划.md) | 壳层框架迁移计划 |
 | [doc/naming-checklist.md](doc/naming-checklist.md) | 命名点检清单 |
 | [doc/三库共享核心整改计划.md](doc/三库共享核心整改计划.md) | `code-core`、`catdlg-core` 的跨仓库契约、阶段和验收 |
+| [doc/跨语言多包架构与三库迁移计划.md](doc/跨语言多包架构与三库迁移计划.md) | **总计划**：多 npm 子包、Rust CAD 源码、数据库契约和三库迁移边界 |
+| [doc/三库版本矩阵.md](doc/三库版本矩阵.md) | Wing 锁步版本、消费端允许依赖与发布门禁 |
 | [doc/C++成员排序算法规范.md](doc/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 
 ## Peer Dependencies
@@ -64,6 +70,7 @@ npm install phoenix-wing
 |------|------|------|
 | **phoenix-wing** | [Gitee](https://gitee.com/PhoenixWing321/phoenix-wing) | 本仓库 — 共享 TypeScript 工具库与壳层框架 |
 | **phoenix-desk-tools** | [Gitee](https://gitee.com/PhoenixWing321/phoenix-desk-tools) | 源项目 — FreeCAD 桌面辅助工具，phoenix-wing 的提炼来源 |
+| **kt-auto-code** | [Gitee](https://gitee.com/PhoenixWing321/kt-auto-code) | VS Code 自动化扩展，按需消费 `@phoenix-wing/code-core` 的成员排序、UUID 与工作集能力 |
 | **phoenix-open-issue** | [Gitee](https://gitee.com/PhoenixWing321/phoenix-open-issue) | 应用案例 — 基于 phoenix-wing 框架搭建的 Open Issue 管理应用 |
 
 ## 许可

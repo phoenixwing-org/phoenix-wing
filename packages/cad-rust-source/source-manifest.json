@@ -1,0 +1,82 @@
+{
+  "schema_version": 4,
+  "package_version": "0.3.0",
+  "cargo_manifest": "Cargo.toml",
+  "cargo_lock": "Cargo.lock",
+  "legacy_protocol": {
+    "kind": "desk-tools-v0",
+    "json_field_case": "mixed"
+  },
+  "native_protocol": {
+    "kind": "phoenix-cad-native",
+    "version": { "major": 1, "minor": 0 },
+    "supported_protocol_majors": [1],
+    "version_query": true,
+    "version_query_args": ["--protocol-version"],
+    "legacy_compatible": true
+  },
+  "database_query_protocol": {
+    "kind": "phoenix-cad-query",
+    "version": { "major": 1, "minor": 0 },
+    "contract_query_args": ["--contract"],
+    "workspace_schema": {
+      "id": "phoenix-workspace",
+      "version": 13,
+      "ddl_sha256": "116c5bff9c95e6f670b9ecfc52c053ee08e33e9cf1f3f3b46c02888e97643e1c"
+    }
+  },
+  "crates": {
+    "phoenix_cad_protocol": "crates/phoenix-cad-protocol/Cargo.toml",
+    "fcstd_reader": "crates/fcstd-reader/Cargo.toml",
+    "fcstd_xlink": "crates/fcstd-xlink/Cargo.toml",
+    "fcstd_cli": "crates/fcstd-cli/Cargo.toml",
+    "fcstd_query": "crates/fcstd-query/Cargo.toml"
+  },
+  "database_tools": {
+    "fcstd-query": {
+      "package": "fcstd-query",
+      "contract_query_args": ["--contract"],
+      "capabilities": [
+        "parts",
+        "fcstd-map",
+        "bom-xref-meta",
+        "bom-xref-incoming",
+        "bom-xref-outgoing",
+        "bom-xref-counts",
+        "bom-tree",
+        "bom-file",
+        "scan-recent",
+        "file-upsert"
+      ]
+    }
+  },
+  "binaries": {
+    "fcstd-read": {
+      "package": "fcstd-cli",
+      "capabilities": ["read", "write_bom"],
+      "protocol_v1_capabilities": ["read"]
+    },
+    "fcstd-xlink": {
+      "package": "fcstd-xlink",
+      "capabilities": ["scan", "patch", "patch_labels"],
+      "protocol_v1_capabilities": ["scan"]
+    }
+  },
+  "parity_fixtures": {
+    "read": {
+      "document_xml": "fixtures/document-xml/内部装配示例-Document.xml",
+      "selected_object": "_6222656233",
+      "expected_contract_fixture": "native-read-real-summary-v1.json"
+    },
+    "xlink_scan": {
+      "document_xml": "fixtures/document-xml/图纸-通过link来创建-Document.xml",
+      "target_basename": "8003.001-H-PHOENIX-滑轨.FCStd",
+      "expected_contract_fixture": "native-xlink-real-success-v1.json"
+    },
+    "database_query": {
+      "schema_version": 13,
+      "sql_fixture": "fixtures/database/query-v13.sql",
+      "expected_contract_fixture": "fixtures/database/query-contract-v1.json"
+    }
+  }
+}

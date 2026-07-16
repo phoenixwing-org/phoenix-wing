@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phoenix-wing.kuntai.dev/schemas/cad/native-protocol-v1.schema.json",
+  "title": "Phoenix CAD native protocol v1",
+  "oneOf": [
+    { "$ref": "#/$defs/protocol_info" },
+    { "$ref": "#/$defs/read_success" },
+    { "$ref": "#/$defs/xlink_scan_success" },
+    { "$ref": "#/$defs/failure" }
+  ],
+  "$defs": {
+    "protocol_version": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["major", "minor"],
+      "properties": {
+        "major": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "minor": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      }
+    },
+    "v1_protocol_version": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["major", "minor"],
+      "properties": {
+        "major": { "const": 1 },
+        "minor": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      }
+    },
+    "protocol_info": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["protocol", "protocol_version", "tool", "tool_version", "capabilities", "supported_protocol_majors", "legacy_compatible"],
+      "properties": {
+        "protocol": { "const": "phoenix-cad-native" },
+        "protocol_version": { "$ref": "#/$defs/protocol_version" },
+        "tool": { "type": "string", "minLength": 1 },
+        "tool_version": { "type": "string", "minLength": 1 },
+        "capabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "supported_protocol_majors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        },
+        "legacy_compatible": { "type": "boolean" }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["x", "y", "z", "q0", "q1", "q2", "q3"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" },
+        "q0": { "type": "number" },
+        "q1": { "type": "number" },
+        "q2": { "type": "number" },
+        "q3": { "type": "number" }
+      }
+    },
+    "xlink_ref": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["file", "label"],
+      "properties": {
+        "file": { "type": "string" },
+        "label": { "type": ["string", "null"] }
+      }
+    },
+    "fcstd_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["name", "label", "type_id", "children", "properties", "material", "placement", "is_valid_bom_item", "level"],
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string" },
+        "type_id": { "type": "string" },
+        "children": { "type": "array", "items": { "type": "string" } },
+        "properties": { "type": "object", "additionalProperties": { "type": ["string", "number"] } },
+        "material": { "type": ["string", "null"] },
+        "placement": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/placement" }
+          ]
+        },
+        "is_valid_bom_item": { "type": "boolean" },
+        "level": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+      }
+    },
+    "fcstd_document": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["objects", "xlinks", "root_names"],
+      "properties": {
+        "objects": { "type": "array", "items": { "$ref": "#/$defs/fcstd_object" } },
+        "xlinks": { "type": "array", "items": { "$ref": "#/$defs/xlink_ref" } },
+        "root_names": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "read_success": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["protocol", "protocol_version", "tool", "operation", "ok", "result"],
+      "properties": {
+        "protocol": { "const": "phoenix-cad-native" },
+        "protocol_version": { "$ref": "#/$defs/v1_protocol_version" },
+        "tool": { "const": "fcstd-read" },
+        "operation": { "const": "read" },
+        "ok": { "const": true },
+        "result": { "$ref": "#/$defs/fcstd_document" }
+      }
+    },
+    "xlink_scan_success": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["protocol", "protocol_version", "tool", "operation", "ok", "result"],
+      "properties": {
+        "protocol": { "const": "phoenix-cad-native" },
+        "protocol_version": { "$ref": "#/$defs/v1_protocol_version" },
+        "tool": { "const": "fcstd-xlink" },
+        "operation": { "const": "scan" },
+        "ok": { "const": true },
+        "result": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["hits"],
+          "properties": {
+            "hits": { "type": "array", "items": { "$ref": "#/$defs/xlink_ref" } }
+          }
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["protocol", "protocol_version", "tool", "operation", "ok", "error"],
+      "properties": {
+        "protocol": { "const": "phoenix-cad-native" },
+        "protocol_version": { "$ref": "#/$defs/v1_protocol_version" },
+        "tool": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string", "minLength": 1 },
+        "ok": { "const": false },
+        "error": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["code", "message", "retryable"],
+          "properties": {
+            "code": { "type": "string", "minLength": 1 },
+            "message": { "type": "string" },
+            "retryable": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "protocol": "phoenix-cad-native",
+  "protocol_version": { "major": 1, "minor": 0 },
+  "tool": "fcstd-read",
+  "operation": "read",
+  "ok": true,
+  "result": {
+    "objects": [
+      {
+        "name": "Body",
+        "label": "Body",
+        "type_id": "PartDesign::Body",
+        "children": [],
+        "properties": { "PartNumber": "100001", "Mass": 2.5 },
+        "material": "Steel",
+        "placement": { "x": 1.25, "y": 2.5, "z": 3.75, "q0": 0, "q1": 0, "q2": 0, "q3": 1 },
+        "is_valid_bom_item": true,
+        "level": 0
+      }
+    ],
+    "xlinks": [{ "file": "linked.FCStd", "label": "Linked part" }],
+    "root_names": ["Body"]
+  }
+}

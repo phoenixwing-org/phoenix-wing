@@ -1,0 +1,12 @@
+{
+  "protocol": "phoenix-cad-native",
+  "protocol_version": { "major": 1, "minor": 0 },
+  "tool": "fcstd-xlink",
+  "operation": "scan",
+  "ok": true,
+  "result": {
+    "hits": [
+      { "file": "8003.001-H-PHOENIX-滑轨.FCStd", "label": null }
+    ]
+  }
+}

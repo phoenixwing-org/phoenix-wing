@@ -1,0 +1,32 @@
+{
+  "protocol": "phoenix-cad-native",
+  "protocol_version": { "major": 1, "minor": 0 },
+  "tool": "fcstd-read",
+  "operation": "read",
+  "ok": true,
+  "source_fixture": "fixtures/document-xml/内部装配示例-Document.xml",
+  "summary": {
+    "objects": 66,
+    "bom_items": 10,
+    "xlinks": 0,
+    "root_names": ["PCB"],
+    "selected": {
+      "name": "_6222656233",
+      "label": "8008.001-内部装配",
+      "type_id": "App::Part",
+      "properties": {
+        "Id": "",
+        "Label2": "",
+        "License": "",
+        "LicenseURL": "",
+        "ModelSeries": "PX",
+        "PartName": "内部装配",
+        "PartNumber": "8008",
+        "PartVersion": "001",
+        "Type": "",
+        "TypeCode": "H"
+      },
+      "level": 2
+    }
+  }
+}

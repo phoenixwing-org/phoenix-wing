@@ -1,11 +1,12 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { pnwReorderCppText } from "./pnwReorderCpp.js";
 import { pnwExtractLockedRegionContents } from "./pnwReorderHeader.js";
 
-const fixtureRoot = path.resolve(process.cwd(), "src", "code-core", "fixtures");
+const fixtureRoot = fileURLToPath(new URL("./fixtures/", import.meta.url));
 
 const PYTHON_PARITY_HASHES: Record<string, string> = {
   "annotation_sep.cpp": "cb09b54c1181703e70b48ee197d50e4f91440e81b75644310d901abbcf0bc0bb",

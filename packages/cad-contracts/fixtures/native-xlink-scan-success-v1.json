@@ -1,0 +1,13 @@
+{
+  "protocol": "phoenix-cad-native",
+  "protocol_version": { "major": 1, "minor": 0 },
+  "tool": "fcstd-xlink",
+  "operation": "scan",
+  "ok": true,
+  "result": {
+    "hits": [
+      { "file": "sub/part.FCStd", "label": "Part 1" },
+      { "file": "part.FCStd", "label": null }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@phoenix-wing/cad-rust-source",
+  "version": "0.3.0",
+  "description": "Phoenix FCStd/XLink Rust source workspace for consumer-side release builds",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./source-manifest.json": "./source-manifest.json",
+    "./Cargo.toml": "./Cargo.toml",
+    "./Cargo.lock": "./Cargo.lock"
+  },
+  "files": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "source-manifest.json",
+    "fixtures",
+    "crates",
+    "README.md",
+    "MIGRATION.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "test": "cargo test --workspace --locked",
+    "build:release": "cargo build --workspace --release --locked"
+  },
+  "keywords": ["phoenix", "cad", "fcstd", "rust", "source"],
+  "author": "上海锟钛",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/PhoenixWing321/phoenix-wing.git"
+  }
+}

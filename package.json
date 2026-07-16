@@ -1,7 +1,7 @@
 {
   "name": "phoenix-wing",
   "version": "0.3.0",
-  "description": "Phoenix Wing 共享 TypeScript 工具库 — 纯逻辑、Vue3 控件、算法",
+  "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -21,9 +21,16 @@
   ],
   "scripts": {
     "test": "vitest run",
+    "test:workspace": "pnpm -r --include-workspace-root --if-present test",
+    "verify:cad-rust-tarball": "node scripts/verify-cad-rust-tarball.mjs",
+    "verify:package-tarballs": "node scripts/verify-package-tarballs.mjs",
+    "verify:release-matrix": "node scripts/verify-release-matrix.mjs",
+    "typecheck": "tsc --noEmit --pretty false",
     "dev": "vitest"
   },
   "dependencies": {
+    "@phoenix-wing/code-core": "workspace:0.3.0",
+    "@phoenix-wing/db-node": "workspace:0.3.0",
     "element-plus": "^2.0.0"
   },
   "optionalDependencies": {
@@ -47,6 +54,8 @@
   },
   "keywords": [
     "phoenix",
+    "cad",
+    "rust",
     "utils",
     "vue3",
     "typescript",

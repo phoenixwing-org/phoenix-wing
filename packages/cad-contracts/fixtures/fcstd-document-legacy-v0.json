@@ -1,0 +1,37 @@
+{
+  "objects": [
+    {
+      "name": "Body",
+      "label": "Body",
+      "typeId": "PartDesign::Body",
+      "children": [],
+      "properties": {
+        "PartNumber": "100001",
+        "Mass": 2.5
+      },
+      "material": "Steel",
+      "placement": {
+        "x": 1.25,
+        "y": 2.5,
+        "z": 3.75,
+        "q0": 0,
+        "q1": 0,
+        "q2": 0,
+        "q3": 1
+      },
+      "isValidBomItem": true,
+      "level": 0
+    }
+  ],
+  "xlinks": [
+    {
+      "file": "linked.FCStd",
+      "label": "Linked part"
+    },
+    {
+      "file": "unlabelled.FCStd",
+      "label": null
+    }
+  ],
+  "root_names": ["Body"]
+}

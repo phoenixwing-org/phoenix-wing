@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phoenix-wing.kuntai.dev/schemas/cad/native-provider-v1.schema.json",
+  "title": "Phoenix CAD Native Provider Manifest v1",
+  "type": "object",
+  "required": ["schema_version", "provider_id", "provider_version", "platform", "arch", "native_protocol", "workspace_schema", "tools"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "provider_id": { "type": "string", "minLength": 1 },
+    "provider_version": { "type": "string", "minLength": 1 },
+    "platform": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+    "arch": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+    "native_protocol": {
+      "type": "object",
+      "required": ["kind", "version", "supported_protocol_majors", "version_query", "version_query_args", "legacy_compatible"],
+      "properties": {
+        "kind": { "const": "phoenix-cad-native" },
+        "version": { "$ref": "#/$defs/version" },
+        "supported_protocol_majors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        },
+        "version_query": { "const": true },
+        "version_query_args": { "const": ["--protocol-version"] },
+        "legacy_compatible": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "workspace_schema": {
+      "type": "object",
+      "required": ["schema_id", "schema_version", "ddl_sha256", "database_filename"],
+      "properties": {
+        "schema_id": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "integer", "minimum": 1 },
+        "ddl_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "database_filename": { "type": "string", "pattern": "^[a-zA-Z0-9._-]+$" }
+      },
+      "additionalProperties": true
+    },
+    "tools": {
+      "type": "object",
+      "required": ["fcstd-read", "fcstd-xlink"],
+      "properties": {
+        "fcstd-read": { "$ref": "#/$defs/tool" },
+        "fcstd-xlink": { "$ref": "#/$defs/tool" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "object",
+      "required": ["major", "minor"],
+      "properties": {
+        "major": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "minor": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      },
+      "additionalProperties": true
+    },
+    "tool": {
+      "type": "object",
+      "required": ["relative_path", "sha256", "capabilities"],
+      "properties": {
+        "relative_path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

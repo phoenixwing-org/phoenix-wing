@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "provider_id": "phoenix-desk-tools",
+  "provider_version": "0.1.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "native_protocol": {
+    "kind": "phoenix-cad-native",
+    "version": { "major": 1, "minor": 0 },
+    "supported_protocol_majors": [1],
+    "version_query": true,
+    "version_query_args": ["--protocol-version"],
+    "legacy_compatible": true
+  },
+  "workspace_schema": {
+    "schema_id": "phoenix-workspace",
+    "schema_version": 13,
+    "ddl_sha256": "116c5bff9c95e6f670b9ecfc52c053ee08e33e9cf1f3f3b46c02888e97643e1c",
+    "database_filename": "phoenix-workspace.sqlite"
+  },
+  "database_query_protocol": {
+    "protocol": "phoenix-cad-query",
+    "version": { "major": 1, "minor": 0 },
+    "schema": {
+      "id": "phoenix-workspace",
+      "version": 13,
+      "ddl_sha256": "116c5bff9c95e6f670b9ecfc52c053ee08e33e9cf1f3f3b46c02888e97643e1c"
+    },
+    "commands": [
+      "parts",
+      "fcstd-map",
+      "bom-xref-meta",
+      "bom-xref-incoming",
+      "bom-xref-outgoing",
+      "bom-xref-counts",
+      "bom-tree",
+      "bom-file",
+      "scan-recent",
+      "file-upsert"
+    ]
+  },
+  "tools": {
+    "fcstd-read": {
+      "relative_path": "bin/fcstd-read",
+      "sha256": "3134134247590cd807ff7975b2f31789264e291461d03ed8ee6b4bf2937d5735",
+      "capabilities": ["read"]
+    },
+    "fcstd-xlink": {
+      "relative_path": "bin/fcstd-xlink",
+      "sha256": "f5f2c221539f492b8034755cb3bca149e6a5ffb71d4e729bcda06db7e8c7b0a3",
+      "capabilities": ["scan"]
+    },
+    "fcstd-query": {
+      "relative_path": "bin/fcstd-query",
+      "sha256": "0d6cfb6f5b785fa4c78b3f807deb916c837c53cc94aff46d560aa166b107e1b9",
+      "capabilities": [
+        "parts",
+        "fcstd-map",
+        "bom-xref-meta",
+        "bom-xref-incoming",
+        "bom-xref-outgoing",
+        "bom-xref-counts",
+        "bom-tree",
+        "bom-file",
+        "scan-recent",
+        "file-upsert"
+      ]
+    }
+  }
+}

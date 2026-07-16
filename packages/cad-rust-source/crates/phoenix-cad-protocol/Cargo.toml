@@ -1,0 +1,11 @@
+[package]
+name = "phoenix-cad-protocol"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Shared Phoenix CAD native protocol v1 envelopes and discovery metadata"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

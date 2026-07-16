@@ -1,0 +1,11 @@
+{
+  "contract_version": 1,
+  "current_version": 13,
+  "cases": [
+    { "actual_version": null, "classification": "uninitialized", "may_write": false, "host_action": "initialize" },
+    { "actual_version": 10, "classification": "recreate", "may_write": false, "host_action": "confirm_recreate" },
+    { "actual_version": 12, "classification": "recreate", "may_write": false, "host_action": "confirm_recreate" },
+    { "actual_version": 13, "classification": "current", "may_write": true, "host_action": "open" },
+    { "actual_version": 14, "classification": "recreate", "may_write": false, "host_action": "upgrade_host_or_confirm_recreate" }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "protocol": "phoenix-cad-native",
+  "protocol_version": { "major": 1, "minor": 0 },
+  "tool": "fcstd-read",
+  "operation": "read",
+  "ok": false,
+  "error": {
+    "code": "invalid_fcstd_archive",
+    "message": "The input is not a valid FCStd archive",
+    "retryable": false
+  }
+}
