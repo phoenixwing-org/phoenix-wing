@@ -6,11 +6,12 @@ Phoenix Wing 跨语言共享核心与 UI 底座 — TypeScript 多包 · Rust CA
 
 ```bash
 npm install @phoenix-wing/code-core
+npm install @phoenix-wing/kt-codegen
 npm install @phoenix-wing/cad-contracts @phoenix-wing/cad-core
 npm install @phoenix-wing/workspace-schema
 ```
 
-只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`；构建 Desk native tools 时单独安装 `@phoenix-wing/cad-rust-source`。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
+只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。参数驱动 CAA/Qt/C++ 代码生成使用 `@phoenix-wing/kt-codegen`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`；构建 Desk native tools 时单独安装 `@phoenix-wing/cad-rust-source`。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD/Codegen 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
 
 ## 快速使用
 
@@ -40,6 +41,9 @@ npm install @phoenix-wing/workspace-schema
 | 全局函数 | `pnw` | `pnwIsTerminal` |
 | 类型 | `Pnw` | `PnwTaskKind` |
 | 常量 | `PNW_` | `PNW_VERSION` |
+| KtCodegen 领域 API | `KtCodegen` / `ktCodegen` / `KT_CODEGEN_` | `KtCodegenParam` |
+
+`KtCodegen` 是参数代码生成领域的显式命名例外；其余 Phoenix Wing 公共 API 继续遵守 `Pnw` 前缀。
 
 详见 **[doc/命名规则.md](doc/命名规则.md)**
 
@@ -57,6 +61,7 @@ npm install @phoenix-wing/workspace-schema
 | [doc/跨语言多包架构与三库迁移计划.md](doc/跨语言多包架构与三库迁移计划.md) | **总计划**：多 npm 子包、Rust CAD 源码、数据库契约和三库迁移边界 |
 | [doc/三库版本矩阵.md](doc/三库版本矩阵.md) | Wing 锁步版本、消费端允许依赖与发布门禁 |
 | [doc/C++成员排序算法规范.md](doc/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
+| [packages/kt-codegen/README.md](packages/kt-codegen/README.md) | `kt-codegen` 数据模型、17列兼容、32个生成块与类图 |
 
 ## Peer Dependencies
 

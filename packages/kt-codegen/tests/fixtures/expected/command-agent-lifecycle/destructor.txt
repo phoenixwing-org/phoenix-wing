@@ -1,0 +1,16 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT DESTRUCTOR
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdAgentDestructor
+  //.............................................................................
+  // Field count = 3
+  KT_AUTO_CMD_AGENT_DESTRUCTOR_FIELD(OriginSpec);
+  KT_AUTO_CMD_AGENT_DESTRUCTOR_FIELD(Targets);
+  KT_AUTO_CMD_AGENT_DESTRUCTOR_FIELD(View);
+
+  // place at the end
+  KT_AUTO_CMD_AGENT_DESTRUCTOR_COMMON();
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT DESTRUCTOR

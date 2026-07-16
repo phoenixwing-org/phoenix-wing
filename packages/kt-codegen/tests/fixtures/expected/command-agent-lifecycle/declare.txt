@@ -1,0 +1,16 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT DECLARE
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdAgentDeclare
+  //.............................................................................
+  KT_AUTO_CMD_AGENT_DECLARE_COMMON();
+  KT_AUTO_CMD_AGENT_DECLARE_BASE(Kt, CourseGuardCmd);
+
+  // Field count = 3
+  KT_AUTO_CMD_AGENT_DECLARE_FIELD(OriginSpec);
+  KT_AUTO_CMD_AGENT_DECLARE_FIELD(Targets);
+  KT_AUTO_CMD_AGENT_DECLARE_FIELD(View);
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT DECLARE

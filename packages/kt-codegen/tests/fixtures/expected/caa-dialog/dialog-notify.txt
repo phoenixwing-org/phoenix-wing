@@ -1,0 +1,45 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardDlg DIALOG NOTIFY
+
+  // clang-format off
+
+  // 1, Speed_Value
+  ipDialogAgent->AcceptOnNotify(_SpinnerSpeedValue, _SpinnerSpeedValue->GetSpinnerModifyNotification());
+
+  // 2, Axis_Vector
+  ipDialogAgent->AcceptOnNotify(dialogMore->_SpinnerAxisVectorX, dialogMore->_SpinnerAxisVectorX->GetSpinnerModifyNotification());
+  ipDialogAgent->AcceptOnNotify(dialogMore->_SpinnerAxisVectorY, dialogMore->_SpinnerAxisVectorY->GetSpinnerModifyNotification());
+  ipDialogAgent->AcceptOnNotify(dialogMore->_SpinnerAxisVectorZ, dialogMore->_SpinnerAxisVectorZ->GetSpinnerModifyNotification());
+
+  // 3, Kt_Vector
+  ipDialogAgent->AcceptOnNotify(_SpinnerKtVector, _SpinnerKtVector->GetSpinnerModifyNotification());
+
+  // 4, Enabled
+  ipDialogAgent->AcceptOnNotify(_CheckButtonEnabled, _CheckButtonEnabled->GetChkBModifyNotification());
+
+  // 5, Modes
+  ipDialogAgent->AcceptOnNotify(_CheckButtonModes0, _CheckButtonModes0->GetChkBModifyNotification());
+  ipDialogAgent->AcceptOnNotify(_CheckButtonModes1, _CheckButtonModes1->GetChkBModifyNotification());
+  ipDialogAgent->AcceptOnNotify(_CheckButtonModes2, _CheckButtonModes2->GetChkBModifyNotification());
+
+  // 6, Choice
+  ipDialogAgent->AcceptOnNotify(_RadioButtonChoice0, _RadioButtonChoice0->GetRadBModifyNotification());
+  ipDialogAgent->AcceptOnNotify(_RadioButtonChoice1, _RadioButtonChoice1->GetRadBModifyNotification());
+
+  // 7, Mode
+  ipDialogAgent->AcceptOnNotify(_ComboMode, _ComboMode->GetComboModifyNotification());
+
+  // 8, Name
+  ipDialogAgent->AcceptOnNotify(_EditorName, _EditorName->GetEditModifyNotification());
+
+  // 9, Dlg_Text
+  ipDialogAgent->AcceptOnNotify(dialogMore->_EditorDlgText0, dialogMore->_EditorDlgText0->GetEditModifyNotification());
+  ipDialogAgent->AcceptOnNotify(dialogMore->_EditorDlgText1, dialogMore->_EditorDlgText1->GetEditModifyNotification());
+
+  // 10, Selector, NOT SUPPORT, SelectorList, 1
+
+  // 11, NoAction, NO ACTION, Spinner, 0
+
+  // 12, LowerSpinner, NOT SUPPORT, spinner, 1
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardDlg DIALOG NOTIFY

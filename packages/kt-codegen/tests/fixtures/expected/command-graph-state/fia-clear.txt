@@ -1,0 +1,15 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT FIA CLEAR
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdAgentFiaClear
+  // @usage  put this code block into the function Cmd::fiaAgentClear()
+  // @brief  clear select state
+  //.............................................................................
+  KT_AUTO_CMD_ACTION_FIA_CLEAR(GridAxis);
+  KT_AUTO_CMD_ACTION_FIA_CLEAR(OriginPoint);
+  KT_AUTO_CMD_ACTION_FIA_CLEAR(Targets);
+  KT_AUTO_CMD_ACTION_FIA_CLEAR(View);
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT FIA CLEAR

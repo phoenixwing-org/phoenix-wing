@@ -16,6 +16,14 @@ phoenix-wing 是发布到 npm 的公共库，所有对外暴露的名称必须�
 
 **规则：从第一行代码就用前缀。禁止先写通用名再批量改名。**
 
+### KtCodegen 领域例外
+
+`packages/kt-codegen` 迁移自锟钛既有参数自动代码核心，用户已明确决定其
+公开领域类继续使用 `KtCodegen*`、函数使用 `ktCodegen*`、常量使用
+`KT_CODEGEN_*`。该包名为 `@phoenix-wing/kt-codegen`，运行时身份使用
+`kt.codegen.*`。此例外只适用于该兼容领域；其他 Phoenix Wing 公共 API
+仍必须遵守上表的 `Pnw` 命名规则。
+
 详细规则见 `doc/命名规则.md`。
 
 ## 项目定位

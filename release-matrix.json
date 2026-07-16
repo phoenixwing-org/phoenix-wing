@@ -4,6 +4,7 @@
   "packages": [
     { "name": "phoenix-wing", "manifest": "package.json", "kind": "compat-ui" },
     { "name": "@phoenix-wing/code-core", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/kt-codegen", "manifest": "packages/kt-codegen/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/cad-contracts", "manifest": "packages/cad-contracts/package.json", "kind": "typescript-contracts" },
     { "name": "@phoenix-wing/cad-core", "manifest": "packages/cad-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/workspace-schema", "manifest": "packages/workspace-schema/package.json", "kind": "schema" },

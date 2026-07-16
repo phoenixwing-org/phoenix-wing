@@ -8,7 +8,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phoenix-wing-package-tarballs-"));
 const packRoot = path.join(tempRoot, "packs");
 const consumerRoot = path.join(tempRoot, "consumer");
-const packageNames = ["code-core", "cad-contracts", "cad-core", "db-node", "workspace-schema"];
+const packageNames = [
+  "code-core",
+  "kt-codegen",
+  "cad-contracts",
+  "cad-core",
+  "db-node",
+  "workspace-schema",
+];
 const requiredPackageFiles = {
   "code-core": ["src/fixtures/annotation_sep.cpp"],
   "cad-contracts": ["fixtures/query-contract-v1.json"],
@@ -55,6 +62,9 @@ try {
   fs.writeFileSync(smokeFile, `
 import path from "node:path";
 import { pnwNormalizeUuid } from "@phoenix-wing/code-core";
+import { KtCodegenParam } from "@phoenix-wing/kt-codegen";
+import { KT_CODEGEN_LEGACY_17_COLUMN_CSV_HEADERS } from "@phoenix-wing/kt-codegen/legacy";
+import { ktCodegenValidateParam } from "@phoenix-wing/kt-codegen/model";
 import { pnwNormalizeCadRelativePath } from "@phoenix-wing/cad-core";
 import { PNW_CAD_NATIVE_PROTOCOL } from "@phoenix-wing/cad-contracts";
 import {
@@ -66,6 +76,12 @@ import { pnwCreateDb } from "@phoenix-wing/db-node";
 
 if (pnwNormalizeUuid("{550E8400-E29B-41D4-A716-446655440000}") !== "550e8400e29b41d4a716446655440000") {
   throw new Error("code-core export smoke failed");
+}
+if (new KtCodegenParam().kind !== "kt.codegen") {
+  throw new Error("kt-codegen export smoke failed");
+}
+if (KT_CODEGEN_LEGACY_17_COLUMN_CSV_HEADERS.length !== 17 || typeof ktCodegenValidateParam !== "function") {
+  throw new Error("kt-codegen subpath export smoke failed");
 }
 if (pnwNormalizeCadRelativePath("a\\\\b.FCStd") !== "a/b.FCStd") {
   throw new Error("cad-core export smoke failed");

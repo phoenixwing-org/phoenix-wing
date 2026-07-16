@@ -1,0 +1,63 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE INFORS
+
+  // clang-format off
+
+  // 1,Axis_Vector,CAA vector
+  parameter->Axis_Vector.SetX(dialogMore->_SpinnerAxisVectorX->GetValue() * 1000.0);
+  parameter->Axis_Vector.SetY(dialogMore->_SpinnerAxisVectorY->GetValue() * 1000.0);
+  parameter->Axis_Vector.SetZ(dialogMore->_SpinnerAxisVectorZ->GetValue() * 1000.0);
+
+  // 2,Samples,one based list
+  parameter->Samples[1] = _SpinnerSamples0->GetValue();
+  parameter->Samples[2] = _SpinnerSamples1->GetValue();
+
+  // 3,Enabled,boolean cast
+  parameter->Enabled = (CATBoolean)(int)(_CheckButtonEnabled->GetState() == CATDlgCheck ? TRUE : FALSE);
+
+  // 4,Flags,bit flags
+  parameter->Flags=0;
+    if (_CheckButtonFlags0->GetState() == CATDlgCheck)parameter->Flags = parameter->Flags | (1<<0);
+  if (_CheckButtonFlags1->GetState() == CATDlgCheck)parameter->Flags = parameter->Flags | (1<<1);
+
+  // 5,Mode,enum radio
+  parameter->Mode = (GuardMode)0;
+  if (_RadioButtonMode1->GetState() == CATDlgCheck) // BR
+      parameter->Mode = (GuardMode)1;
+
+  // 6,Index,integer combo
+  parameter->Index = _ComboIndex->GetSelect();
+
+  // 7,Bad_Combo,unsupported combo type,NO ACTION,Data Type Error,KtString
+
+  // 8,OriginSpec,coordinate fallback,NO ACTION,SelectorList,1
+
+  // 9,Thresholds,editor list
+  parameter->Thresholds[1] = _EditorThresholds0->GetValue();
+  parameter->Thresholds[2] = _EditorThresholds1->GetValue();
+
+  // 10,No_Action,zero controls,NO ACTION, Spinner,0
+
+  // 11,Unsupported,unknown CAA control,NO ACTION,Toggle (Not Support),1
+
+  // 12,Count,round from spinner
+  parameter->Count = Kt::round(_SpinnerCount->GetValue());
+
+  // 13,Wrong_List,invalid list typedata type is wrong
+
+  // 14,Scale,double combo
+  parameter->Scale = _ComboScale->GetField();
+
+  // 15,Label,unicode combo
+  _ComboLabel->GetField(parameter->Label);
+
+  // 16,AxisSpec,absolute fallback,NO ACTION,SelectorList,1
+
+  // 17,Text_Value,text editor
+  parameter->Text_Value = _EditorTextValue->GetText();
+
+  // 18,Push,allowed no action,NO ACTION,PushButton,1
+
+  // 19,Lower_Spinner,case sensitive component,NO ACTION,spinner (Not Support),1
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE INFORS

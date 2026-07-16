@@ -1,0 +1,26 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardDlg DLG GET SELECTOR LIST
+
+  // clang-format off
+  //.............................................................................
+  // @key    DlgGetSelectorList
+  // @usage  put this code block into the function Dlg::GetSelectorList()
+  // @brief  get SelectorList
+  //.............................................................................
+  // Field count = 5
+  switch (field) {
+  case Field_KtCourseGuardDlg_OriginSpec:
+      return _SelectorListOriginSpec;
+  case Field_KtCourseGuardDlg_Targets:
+      return _SelectorListTargets;
+  case Field_KtCourseGuardDlg_QtList:
+      return _SelectorListQtList;
+  case Field_KtCourseGuardDlg_Table:
+      return _SelectorListTable;
+  case Field_KtCourseGuardDlg_View:
+      return _SelectorListView;
+  default:
+      return NULL;
+  }
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardDlg DLG GET SELECTOR LIST

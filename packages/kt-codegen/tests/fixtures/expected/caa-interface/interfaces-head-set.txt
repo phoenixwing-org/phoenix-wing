@@ -1,0 +1,28 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardItem INTERFACES HEAD SET
+
+  // clang-format off
+public: // Set
+  /**
+   * @brief Machine ID
+   * @param[in] value int
+   * @return HRESULT
+   * @author Kuntai
+   * @date 2026-07-16
+   * @note Machine identifier
+   * @id 1
+   */
+  virtual HRESULT SetMachineId(const int& value, const CATBoolean& checkExist = CATTrue) = 0;
+
+  /**
+   * @brief Guard Length
+   * @param[in] value double
+   * @return HRESULT
+   * @author Kuntai
+   * @date 2026-07-16
+   * @note Length used by CAA and Qt
+   * @id 2
+   */
+  virtual HRESULT SetGuardLength(const double& value, const CATBoolean& checkExist = CATTrue) = 0;
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardItem INTERFACES HEAD SET

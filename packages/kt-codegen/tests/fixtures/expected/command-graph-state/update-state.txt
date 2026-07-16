@@ -1,0 +1,30 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT UPDATE STATE
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdAgentUpdateState
+  // @usage  put this code block into the function Cmd::fiaAgentUpdate()
+  // @brief  Update select state
+  //.............................................................................
+  // Field count = 4
+  switch (field) {
+  case Field_KtCourseGuardCmd_GridAxis:
+      KT_AUTO_CMD_AGENT_UPDATE_STATE(GridAxis);
+      break;
+  case Field_KtCourseGuardCmd_OriginPoint:
+      KT_AUTO_CMD_AGENT_UPDATE_STATE(OriginPoint);
+      break;
+  case Field_KtCourseGuardCmd_Targets:
+      // Please write your own code outside.
+      // Because MultiList is not supported.
+      break;
+  case Field_KtCourseGuardCmd_View:
+      // Please write your own code outside.
+      // Because the component count is 0.
+      break;
+  case 0:
+      KT_AUTO_CMD_AGENT_UPDATE_STATE_ERROR();
+  }
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT UPDATE STATE

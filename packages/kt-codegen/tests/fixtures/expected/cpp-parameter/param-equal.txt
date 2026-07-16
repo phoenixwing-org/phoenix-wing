@@ -1,0 +1,8 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardItem PARAM EQUAL
+
+  // clang-format off
+  MachineId = iOriginal.MachineId; // 1
+  GuardLength = iOriginal.GuardLength; // 2
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardItem PARAM EQUAL

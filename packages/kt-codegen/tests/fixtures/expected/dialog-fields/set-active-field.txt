@@ -1,0 +1,22 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardDlg DLG SET ACTIVE FIELD
+
+  // clang-format off
+  //.............................................................................
+  // @key    DlgSetActiveField
+  // @usage  put this code block into the function Dlg::SetActiveField()
+  // @brief  Set Active Field, clear other field.
+  //.............................................................................
+  if (Field_KtCourseGuardDlg_OriginSpec != field)
+      _SelectorListOriginSpec->ClearSelect();
+  if (Field_KtCourseGuardDlg_Targets != field)
+      _SelectorListTargets->ClearSelect();
+  if (Field_KtCourseGuardDlg_QtList != field)
+      _SelectorListQtList->ClearSelect();
+  if (Field_KtCourseGuardDlg_Table != field)
+      _SelectorListTable->ClearSelect();
+  if (Field_KtCourseGuardDlg_View != field)
+      _SelectorListView->ClearSelect();
+  _ActiveField = field;
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardDlg DLG SET ACTIVE FIELD

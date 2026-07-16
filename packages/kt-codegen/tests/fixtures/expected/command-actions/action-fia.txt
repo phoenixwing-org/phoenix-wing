@@ -1,0 +1,29 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD ACTION FIA
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdActionFia
+  // @usage  put this code block into the function Cmd::ActionSelectorListFia()
+  // @brief  Action object selected
+  //.............................................................................
+  // Field count = 4
+  int count = 0;
+  switch (field) {
+  case Field_KtCourseGuardCmd_Origin:
+      KT_AUTO_CMD_ACTION_FIA(Origin);
+      break;
+  case Field_KtCourseGuardCmd_Targets:
+      KT_AUTO_CMD_ACTION_FIA(Targets);
+      break;
+  case Field_KtCourseGuardCmd_Multi:
+      // Please write your own code outside.
+      // Because MultiList is not supported.
+      break;
+  case Field_KtCourseGuardCmd_View:
+      // Please write your own code outside.
+      // Because the component count is 0.
+      break;
+  }
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD ACTION FIA

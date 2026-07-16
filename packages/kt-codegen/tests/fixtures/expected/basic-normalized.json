@@ -1,0 +1,75 @@
+{
+  "kind": "kt.codegen",
+  "schemaVersion": 1,
+  "source": {
+    "format": "legacy-v4-json",
+    "legacyType": "100106",
+    "legacyVersion": "4.0",
+    "headers": [
+      "NameSuffix",
+      "ID",
+      "Name",
+      "ParamString",
+      "DataType",
+      "TCKind",
+      "DefaultValue",
+      "CATAttrInOut",
+      "IsList",
+      "IsOnTree",
+      "Component",
+      "Count",
+      "IsParamDlg",
+      "Unit",
+      "Author",
+      "CreateDate",
+      "Notes"
+    ],
+    "extensions": {
+      "ProjectTag": "review-fixture"
+    }
+  },
+  "namePrefix": "Kt",
+  "nameMiddle": "CourseGuard",
+  "nameSpace": "Kt",
+  "appendFunction": "push_back",
+  "items": [
+    {
+      "nameSuffix": "Item",
+      "id": 1,
+      "name": "Machine ID",
+      "paramString": "MachineId",
+      "dataType": "int",
+      "tcKind": "Integer",
+      "defaultValue": "0",
+      "catAttrInOut": "In",
+      "isList": false,
+      "isOnTree": true,
+      "component": "QSpinBox",
+      "componentCount": 1,
+      "isParamDlg": true,
+      "unit": "",
+      "author": "Kuntai",
+      "createDate": "2026-07-16",
+      "notes": "Machine identifier"
+    },
+    {
+      "nameSuffix": "Item",
+      "id": 2,
+      "name": "Guard Length",
+      "paramString": "GuardLength",
+      "dataType": "double",
+      "tcKind": "Real",
+      "defaultValue": "25",
+      "catAttrInOut": "InOut",
+      "isList": true,
+      "isOnTree": false,
+      "component": "QDoubleSpinBox",
+      "componentCount": 1,
+      "isParamDlg": true,
+      "unit": "mm",
+      "author": "Kuntai",
+      "createDate": "2026-07-16",
+      "notes": "Length used by CAA and Qt"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE DIALOG
+
+  // clang-format off
+
+  // 1,Axis_Vector,CAA vector
+  dialogMore->_SpinnerAxisVectorX->SetValue(parameter->Axis_Vector.GetX() * 0.001, 0);
+  dialogMore->_SpinnerAxisVectorY->SetValue(parameter->Axis_Vector.GetY() * 0.001, 0);
+  dialogMore->_SpinnerAxisVectorZ->SetValue(parameter->Axis_Vector.GetZ() * 0.001, 0);
+
+  // 2,Samples,one based list
+  _SpinnerSamples0->SetValue(parameter->Samples[1] * 0.001, 0);
+  _SpinnerSamples1->SetValue(parameter->Samples[2] * 0.001, 0);
+
+  // 3,Enabled,boolean cast
+  _CheckButtonEnabled->SetState(parameter->Enabled ? CATDlgCheck : CATDlgUncheck, 0);
+
+  // 4,Flags,bit flags
+  _CheckButtonFlags0->SetState( (parameter->Flags & (1<<0))? CATDlgCheck:CATDlgUncheck, 0);
+  _CheckButtonFlags1->SetState( (parameter->Flags & (1<<1))? CATDlgCheck:CATDlgUncheck, 0);
+
+  // 5,Mode,enum radio
+  // 5,Mode,enum radio
+  if (parameter->Mode > 1 || parameter->Mode < 0) // BR
+      parameter->Mode = (GuardMode)0;
+  _RadioButtonMode0->SetState((parameter->Mode == 0) ? CATDlgCheck : CATDlgUncheck, 0);
+  _RadioButtonMode1->SetState((parameter->Mode == 1) ? CATDlgCheck : CATDlgUncheck, 0);
+
+  _ComboIndex->SetSelect( parameter->Index, 0);
+
+  _ComboBadCombo,NO ACTION,Data Type Error, KtString
+
+  // 8,OriginSpec,coordinate fallback
+  NoSelectionMsg=KtWsp::GetCoordString(parameter->OriginCoord);
+  KT_AUTO_FIELD_SET_LINE(_SelectorListOriginSpec, parameter->OriginSpec, &NoSelectionMsg);
+
+  _EditorThresholds0->SetValue(parameter->Thresholds[1], 0);
+  _EditorThresholds1->SetValue(parameter->Thresholds[2], 0);
+
+  // 10,No_Action,zero controls,NO ACTION,Spinner,0
+
+  // 11,Unsupported,unknown CAA control,NO ACTION,Toggle (Not Support),1
+
+  // 12,Count,round from spinner
+  _SpinnerCount->SetValue(parameter->Count, 0);
+
+  // 13,Wrong_List,invalid list type
+data type is wrong!
+
+  _ComboScale->SetField( parameter->Scale);
+
+  _ComboLabel->SetField( parameter->Label);
+
+  // 16,AxisSpec,absolute fallback
+  NoSelectionMsg="Default(Absolute)";
+  KT_AUTO_FIELD_SET_LINE(_SelectorListAxisSpec, parameter->AxisSpec, &NoSelectionMsg);
+
+  _EditorTextValue->SetText(parameter->Text_Value, 0);
+
+  // 18,Push,allowed no action,NO ACTION,PushButton,1
+
+  // 19,Lower_Spinner,case sensitive component,NO ACTION,spinner (Not Support),1
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE DIALOG

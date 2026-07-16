@@ -1,0 +1,15 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardDlg DLG DEFINE FIELD TYPE
+
+  // clang-format off
+  //.............................................................................
+  // @key    DlgDefineFieldType
+  //.............................................................................
+  Field_KtCourseGuardDlg_None = 0, // None
+  Field_KtCourseGuardDlg_OriginSpec = 1, // OriginSpec
+  Field_KtCourseGuardDlg_Targets = 2, // Targets
+  Field_KtCourseGuardDlg_QtList = 3, // QtList
+  Field_KtCourseGuardDlg_Table = 4, // Table
+  Field_KtCourseGuardDlg_View = 5, // View
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardDlg DLG DEFINE FIELD TYPE

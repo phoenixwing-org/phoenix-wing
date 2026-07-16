@@ -1,0 +1,26 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS HEAD GET
+
+  // clang-format off
+public: // Get
+  /**
+   * @brief Machine ID
+   * @return int
+   * @author Kuntai
+   * @date 2026-07-16
+   * @note Machine identifier
+   * @id 1
+   */
+  int GetMachineId() const;
+
+  /**
+   * @brief Guard Length
+   * @return HRESULT
+   * @author Kuntai
+   * @date 2026-07-16
+   * @note Length used by CAA and Qt
+   * @id 2
+   */
+  HRESULT GetGuardLength(double& value) const;
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS HEAD GET

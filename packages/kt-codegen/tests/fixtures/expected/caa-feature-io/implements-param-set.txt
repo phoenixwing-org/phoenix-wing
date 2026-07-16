@@ -1,0 +1,21 @@
+// START KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS PARAM SET
+
+// clang-format off
+
+hr = SetMachineId(value.MachineId); // 1
+if (FAILED(hr)) {
+    msg.Append("\nSet Parameter of MachineId Error!");
+    findError = TRUE;
+}
+hr = SetGuardLength(value.GuardLength); // 2
+if (FAILED(hr)) {
+    msg.Append("\nSet Parameter of GuardLength Error!");
+    findError = TRUE;
+}
+if (findError) {
+    SetErrMsg(msg);
+    return E_FAIL;
+}
+
+// clang-format on
+// END KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS PARAM SET

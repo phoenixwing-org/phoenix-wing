@@ -1,0 +1,42 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT BUILD GRAPH
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdAgentBuildGraph
+  // @usage  put this code block into the function Cmd::BuildGraph()
+  // @brief  set agent, AddTransition
+  // RegisterFiled() will set suggested menu id by input name. You can change it later
+  //.............................................................................
+
+  // Build Start .......................
+  KT_AUTO_CMD_BUILD_START(KtCourseGuardCmd);
+
+  // Field count = 4
+
+  // Field 1 GridAxis .......................
+  // 1.1 define fia
+  KT_AUTO_CMD_BUILD_FIA_GRID_AXIS(GridAxis);
+  // 1.2 others
+  KT_AUTO_CMD_BUILD_FIELD(KtCourseGuardCmd, GridAxis);
+
+  // Field 2 OriginPoint .......................
+  // 2.1 define fia
+  KT_AUTO_CMD_BUILD_FIA_POINT(OriginPoint);
+  // 2.2 others
+  KT_AUTO_CMD_BUILD_FIELD(KtCourseGuardCmd, OriginPoint);
+
+  // Field 3 Targets .......................
+  // 3.1 define fia
+  // Please write your own code outside.
+  // Because MultiList is not supported.
+
+  // Field 4 View .......................
+  // 4.1 define fia
+  // Please write your own code outside.
+  // Because the component count is 0.
+
+  // Build End .......................
+  KT_AUTO_CMD_BUILD_END(KtCourseGuardCmd);
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT BUILD GRAPH

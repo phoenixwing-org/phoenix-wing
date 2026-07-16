@@ -1,0 +1,85 @@
+[
+  {
+    "name": "unquoted string",
+    "item": {
+      "dataType": "CATUnicodeString",
+      "defaultValue": "Guard"
+    },
+    "expected": "\"Guard\""
+  },
+  {
+    "name": "quoted string",
+    "item": {
+      "dataType": "std::string",
+      "defaultValue": "\"ready\""
+    },
+    "expected": "\"ready\""
+  },
+  {
+    "name": "empty string with quotation",
+    "item": {
+      "dataType": "QString",
+      "defaultValue": ""
+    },
+    "addQuotation": true,
+    "expected": "\"\""
+  },
+  {
+    "name": "empty string without quotation",
+    "item": {
+      "dataType": "QString",
+      "defaultValue": ""
+    },
+    "expected": ""
+  },
+  {
+    "name": "millimetre list",
+    "item": {
+      "dataType": "double",
+      "defaultValue": "1;0;;2",
+      "component": "Spinner",
+      "unit": "mm"
+    },
+    "expected": "1 * 0.001, 0, , 2 * 0.001"
+  },
+  {
+    "name": "millimetre scalar",
+    "item": {
+      "dataType": "double",
+      "defaultValue": "25",
+      "component": "QDoubleSpinBox",
+      "unit": "MM"
+    },
+    "expected": "25 * 0.001"
+  },
+  {
+    "name": "millimetre zero",
+    "item": {
+      "dataType": "double",
+      "defaultValue": "0",
+      "component": "Spinner",
+      "unit": "mm"
+    },
+    "expected": "0"
+  },
+  {
+    "name": "degree spinner",
+    "item": {
+      "dataType": "double",
+      "defaultValue": "90",
+      "component": "Spinner",
+      "unit": "deg"
+    },
+    "expected": "90 * 0.017453292519943295"
+  },
+  {
+    "name": "degree unsupported component",
+    "item": {
+      "dataType": "double",
+      "defaultValue": "90",
+      "component": "QLineEdit",
+      "unit": "deg"
+    },
+    "expected": "90"
+  }
+]

@@ -1,0 +1,32 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD SET ACTIVE FIELD
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdSetActiveField
+  // @usage  put this code block into the function Cmd::SetActiveField()
+  // @brief  Set Active Field, clear other field, update select agent...
+  //.............................................................................
+  // Field count = 4
+
+  KT_AUTO_HSO_CLEAR();
+  switch (field) {
+  case Field_KtCourseGuardCmd_Origin:
+      KT_AUTO_HSO_ADD(Origin);
+      break;
+  case Field_KtCourseGuardCmd_Targets:
+      KT_AUTO_HSO_ADD(Targets);
+      break;
+  case Field_KtCourseGuardCmd_Multi:
+      // Please write your own code outside.
+      // Because MultiList is not supported.
+      break;
+  case Field_KtCourseGuardCmd_View:
+      // Please write your own code outside.
+      // Because the component count is 0.
+      break;
+  default:
+      break;
+  }
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD SET ACTIVE FIELD

@@ -1,0 +1,9 @@
+// START KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS PARAM GET
+
+// clang-format off
+
+value.MachineId = GetMachineId(); // 1
+GetGuardLength(value.GuardLength); // 2
+
+// clang-format on
+// END KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS PARAM GET

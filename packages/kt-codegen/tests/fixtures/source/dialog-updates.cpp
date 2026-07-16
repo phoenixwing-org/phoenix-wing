@@ -1,0 +1,17 @@
+// outside-before
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE DIALOG
+  stale CAA dialog values
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE DIALOG
+
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE INFORS
+  stale CAA parameter values
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE INFORS
+
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardQt QT UPDATE DIALOG
+  stale Qt dialog values
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardQt QT UPDATE DIALOG
+
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardQt QT UPDATE INFORS
+  stale Qt parameter values
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardQt QT UPDATE INFORS
+// outside-after

@@ -1,0 +1,61 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD ELEMENT SELECTED
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdElementSelected
+  // @usage  put this code block into the function Cmd::AfterElementSelected()
+  // @brief  After Element Selected
+  // @brief  !Discard. Replaced by CMD ACTION FIA
+  //.............................................................................
+  // Field count = 4
+  switch (field) {
+  case Field_KtCourseGuardCmd_Origin:
+      if (parameter->Origin == spiSpecOnSelection)
+      {
+          _ktcHSO.RemoveElement(pPathElement);
+          parameter->Origin = NULL_var;
+      }
+      else
+      {
+          _ktcHSO.RemoveElement(parameter->Origin);
+          parameter->Origin = spiSpecOnSelection;
+      }
+      break;
+  case Field_KtCourseGuardCmd_Targets:
+      if (parameter->Targets.Locate(spiSpecOnSelection) == 0)
+      {
+          parameter->Targets.Append(spiSpecOnSelection);
+      }
+      else
+      {
+          _ktcHSO.RemoveElement(pPathElement);
+          parameter->Targets.RemoveValue(spiSpecOnSelection);
+      }
+      break;
+  case Field_KtCourseGuardCmd_Multi:
+      if (parameter->Multi.Locate(spiSpecOnSelection) == 0)
+      {
+          parameter->Multi.Append(spiSpecOnSelection);
+      }
+      else
+      {
+          _ktcHSO.RemoveElement(pPathElement);
+          parameter->Multi.RemoveValue(spiSpecOnSelection);
+      }
+      break;
+  case Field_KtCourseGuardCmd_View:
+      if (parameter->View == spiSpecOnSelection)
+      {
+          _ktcHSO.RemoveElement(pPathElement);
+          parameter->View = NULL_var;
+      }
+      else
+      {
+          _ktcHSO.RemoveElement(parameter->View);
+          parameter->View = spiSpecOnSelection;
+      }
+      break;
+  }
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD ELEMENT SELECTED

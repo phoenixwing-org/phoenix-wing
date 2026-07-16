@@ -1,0 +1,63 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardQt QT UPDATE DIALOG
+
+  // clang-format off
+
+  // 1, Selected_Spec, field widget
+  KT_AUTO_FIELD_SET_LINE(ui->listWidgetSelectedSpec, parameter->Selected_Spec);
+
+  // 2, Axis_Vector, Qt vector
+  dialogMore->doubleSpinBoxAxisVectorX->setValue(parameter->Axis_Vector.GetX() * 0.001);
+  dialogMore->doubleSpinBoxAxisVectorY->setValue(parameter->Axis_Vector.GetY() * 0.001);
+  dialogMore->doubleSpinBoxAxisVectorZ->setValue(parameter->Axis_Vector.GetZ() * 0.001);
+
+  // 3, Float_Values, legacy asymmetric listData type is not suitable for auto code.
+
+  // 4, Count, round to integer
+  ui->doubleSpinBoxCount->setValue(parameter->Count);
+
+  // 5, Number, integer spinner
+  ui->spinBoxNumber->setValue(parameter->Number);
+
+  // 6, Flags, bit flags
+  ui->checkBoxFlags0->setChecked( parameter->Flags & (1<<0));
+  ui->checkBoxFlags1->setChecked( parameter->Flags & (1<<1));
+
+  // 7, Mode, enum radio
+  if (parameter->Mode>1 || parameter->Mode<0) parameter->Mode=0;//Correct
+  ui->radioButtonMode0->setChecked( parameter->Mode==0);
+  ui->radioButtonMode1->setChecked( parameter->Mode==1);
+
+  // 8, Index, integer combo
+  ui->comboBoxIndex->setCurrentIndex(parameter->Index);
+
+  // 9, Title, Qt string combo
+  ui->comboBoxTitle->setEditText(parameter->Title);
+
+  // 10, Kt_Name, legacy placeholder
+  ui->comboBoxKtName->setEditText(QString::fromLocal8Bit({strParamSame}.str()));
+
+  // 11, Text_Value, local string conversion
+  dialogMore->lineEditTextValue->setText(  QString::fromLocal8Bit(parameter->Text_Value.str()) );
+
+  // 12, No_Action, zero controls,NO ACTION, QSpinBox,0
+
+  // 13, Unsupported, unknown Qt control,NO ACTION, QDial (Not Support),1
+
+  // 14, Plain_Text, Qt text
+  ui->lineEditPlainText->setText( parameter->Plain_Text);
+
+  // 15, Text_List, legacy string list
+  ui->lineEditTextList0->setText( QString::fromLocal8Bit(parameter->Text_List.str()) [1]);
+  ui->lineEditTextList1->setText( QString::fromLocal8Bit(parameter->Text_List.str()) [2]);
+
+  // 16, Numbers, integer list
+  ui->spinBoxNumbers0->setValue(parameter->Numbers[0]);
+  ui->spinBoxNumbers1->setValue(parameter->Numbers[1]);
+
+  // 17, Enabled, single checkbox
+  ui->checkBoxEnabled->setChecked(parameter->Enabled);
+
+  // 18, Push, directional no action,NO ACTION, QPushButton,1
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardQt QT UPDATE DIALOG

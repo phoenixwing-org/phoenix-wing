@@ -1,0 +1,17 @@
+// START KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS CPP SET
+
+// clang-format off
+
+//-----------------------------------------------
+HRESULT KtECourseGuardItem::SetMachineId(const int& value, const CATBoolean& checkExist) // 1
+{
+    return ktcSpecRW.SetValue("MachineId", value, checkExist);
+}
+//-----------------------------------------------
+HRESULT KtECourseGuardItem::SetGuardLength(const double& value, const CATBoolean& checkExist) // 2
+{
+    return ktcSpecRW.SetListValue("GuardLength", value, checkExist);
+}
+
+// clang-format on
+// END KEVIN CAA WIZARD SECTION KtCourseGuardItem IMPLEMENTS CPP SET

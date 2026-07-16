@@ -1,0 +1,8 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardItem PARAM DESTRUCTOR
+
+  // clang-format off
+  // MachineId = 0; // 1
+  // GuardLength = 25 * 0.001; // 2
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardItem PARAM DESTRUCTOR

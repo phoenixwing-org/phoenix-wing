@@ -1,0 +1,13 @@
+  // START KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT CONSTRUCTOR
+
+  // clang-format off
+  //.............................................................................
+  // @key    CmdAgentConstructor
+  //.............................................................................
+  , KT_AUTO_CMD_AGENT_CONSTRUCTOR_COMMON()
+  , KT_AUTO_CMD_AGENT_CONSTRUCTOR_FIELD(OriginSpec)
+  , KT_AUTO_CMD_AGENT_CONSTRUCTOR_FIELD(Targets)
+  , KT_AUTO_CMD_AGENT_CONSTRUCTOR_FIELD(View)
+
+  // clang-format on
+  // END KEVIN CAA WIZARD SECTION KtCourseGuardCmd CMD AGENT CONSTRUCTOR
