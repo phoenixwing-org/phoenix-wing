@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/code-core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Phoenix Code 跨宿主纯 TypeScript 算法与契约",
   "type": "module",
   "sideEffects": false,
@@ -22,6 +22,7 @@
     "NOTICE"
   ],
   "scripts": {
+    "prepublishOnly": "node ../../scripts/verify-publish-client.mjs",
     "prepack": "pnpm run build",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",

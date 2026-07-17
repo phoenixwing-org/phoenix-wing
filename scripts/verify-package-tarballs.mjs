@@ -223,7 +223,7 @@ function verifyAggregateManifest(item) {
   run("tar", ["-xzf", item.tarball, "-C", unpackRoot]);
   const packageRoot = path.join(unpackRoot, "package");
   const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"));
-  if (manifest.name !== "phoenix-wing" || manifest.version !== "0.4.0") {
+  if (manifest.name !== "phoenix-wing" || manifest.version !== "0.4.1") {
     throw new Error(`aggregate tarball identity changed to ${manifest.name}@${manifest.version}`);
   }
   const serialized = JSON.stringify({

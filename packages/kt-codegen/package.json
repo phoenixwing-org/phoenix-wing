@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/kt-codegen",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "CAA、Qt 与普通 C++ 的参数驱动代码生成核心",
   "type": "module",
   "sideEffects": false,
@@ -33,6 +33,7 @@
     "NOTICE"
   ],
   "scripts": {
+    "prepublishOnly": "node ../../scripts/verify-publish-client.mjs",
     "prepack": "pnpm run build",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",

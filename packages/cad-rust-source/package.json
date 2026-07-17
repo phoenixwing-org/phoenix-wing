@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/cad-rust-source",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Phoenix FCStd/XLink Rust source workspace for consumer-side release builds",
   "type": "module",
   "sideEffects": false,
@@ -21,6 +21,7 @@
     "NOTICE"
   ],
   "scripts": {
+    "prepublishOnly": "node ../../scripts/verify-publish-client.mjs",
     "test": "cargo test --workspace --locked",
     "build:release": "cargo build --workspace --release --locked"
   },

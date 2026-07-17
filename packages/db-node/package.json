@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/db-node",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Phoenix Node.js SQLite adapter for workspace databases",
   "type": "module",
   "sideEffects": false,
@@ -14,6 +14,7 @@
   },
   "files": ["dist", "src/index.ts", "README.md", "LICENSE", "NOTICE"],
   "scripts": {
+    "prepublishOnly": "node ../../scripts/verify-publish-client.mjs",
     "prepack": "pnpm run build",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
