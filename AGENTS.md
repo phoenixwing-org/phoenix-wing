@@ -28,7 +28,7 @@ phoenix-wing 是发布到 npm 的公共库，所有对外暴露的名称必须�
 
 ## 项目定位
 
-phoenix-wing 正在从单一 TypeScript/Vue npm 包升级为 Phoenix 跨语言共享核心与 UI 底座。权威路线见 `doc/跨语言多包架构与三库迁移计划.md`。
+phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `doc/plan.md`，历史迁移决策由 `doc/document-manifest.json` 标记为 archived/superseded。
 
 - 仓库根 `phoenix-wing` 在迁移期仍是兼容发布包，禁止直接改成 private 或一次性搬走 Vue SFC。
 - 新 npm 子包必须输出稳定 JavaScript 和 `.d.ts`；源码直出只允许作为旧聚合包兼容行为。
@@ -44,16 +44,15 @@ phoenix-wing 正在从单一 TypeScript/Vue npm 包升级为 Phoenix 跨语言�
 - `src/types/` — TypeScript 类型定义
 - `src/stores/` — Pinia stores
 
-目标新增 `packages/` npm workspace 与 Cargo workspace；实施前以总计划的阶段门禁为准，不预建无真实消费者的包。
+`packages/` npm workspace 与 Cargo workspace 已落地；继续遵循真实消费者驱动，不预建无消费者的包。
 
 ## 文档
 
-- `doc/overview.md` — 模块总览
+- `doc/文档索引.md` — 当前文档唯一导航
 - `doc/命名规则.md` — 命名规则详细说明
 - `doc/naming-checklist.md` — 命名点检清单
-- `doc/框架迁移计划.md` — 壳层框架迁移计划
-- `doc/plan.md` — 项目计划
-- `TODO.md` — 代办清单
+- `doc/plan.md` — 当前路线和治理状态
+- `doc/document-manifest.json` — 全量文档分类清单（由脚本生成）
 
 ## 技术栈
 

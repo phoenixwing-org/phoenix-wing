@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import type { KtCodegenPlan } from "../src/api/contracts.js";
 import {
   KtCodegenApplyConcurrentChangeError,
@@ -10,6 +11,21 @@ import {
 
 const bytes = (value: string) => new TextEncoder().encode(value);
 const text = (value: Uint8Array | undefined) => value ? new TextDecoder().decode(value) : undefined;
+const contractFixture = JSON.parse(readFileSync(
+  new URL("./fixtures/contracts/apply-projection-v1.json", import.meta.url),
+  "utf8",
+)) as {
+  plan: KtCodegenPlan;
+  source: { path: string; text: string; fingerprint: string };
+  expected: {
+    after: string;
+    utf8Hex: string;
+    regionCount: number;
+    regionIds: string[];
+    conflictFingerprint: string;
+    conflictCode: string;
+  };
+};
 
 function plan(): KtCodegenPlan {
   return {
@@ -45,6 +61,25 @@ function plan(): KtCodegenPlan {
 }
 
 describe("KtCodegenApply", () => {
+  it("通过跨宿主 v1 fixture 锁定 CRLF、审计顺序、冲突码和最终字节", () => {
+    const result = ktCodegenProjectApply(contractFixture.plan, [contractFixture.source]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.changes).toHaveLength(1);
+    expect(result.changes[0]).toMatchObject({
+      after: contractFixture.expected.after,
+      regionCount: contractFixture.expected.regionCount,
+    });
+    expect(result.changes[0]?.regions.map((region) => region.id)).toEqual(contractFixture.expected.regionIds);
+    expect(Buffer.from(result.changes[0]!.after, "utf8").toString("hex")).toBe(contractFixture.expected.utf8Hex);
+
+    const conflict = ktCodegenProjectApply(contractFixture.plan, [{
+      ...contractFixture.source,
+      fingerprint: contractFixture.expected.conflictFingerprint,
+    }]);
+    expect(conflict.changes).toEqual([]);
+    expect(conflict.diagnostics.map((item) => item.code)).toEqual([contractFixture.expected.conflictCode]);
+  });
+
   it("汇总已命中和未命中的控制符", () => {
     const summary = ktCodegenInspectApplyPlan(plan());
     expect(summary.targets).toEqual([{ target: "cpp.parameter", status: "ready", artifactCount: 1 }]);

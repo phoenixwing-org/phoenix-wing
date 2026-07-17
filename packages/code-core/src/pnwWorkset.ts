@@ -1,3 +1,5 @@
+import { pnwNormalizeWorkspacePath } from "./pnwWorkspacePath.js";
+
 export type PnwWorkset = {
   readonly id: string;
   readonly label: string;
@@ -37,8 +39,7 @@ export function pnwParseWorksetDocument(text: string): PnwWorksetParseResult {
 }
 
 export function pnwIsSafeWorkspacePath(value: string): boolean {
-  const normalized = value.replace(/\\/g, "/").replace(/^\.\//, "");
-  return Boolean(normalized) && !normalized.startsWith("/") && !/^[a-z]:\//i.test(normalized) && !normalized.split("/").includes("..");
+  return pnwNormalizeWorkspacePath(value) !== null;
 }
 
 function pnwIsRecord(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value); }

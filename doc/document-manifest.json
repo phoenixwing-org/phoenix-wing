@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "pnpm docs:manifest",
+  "statuses": [
+    "current",
+    "draft",
+    "superseded",
+    "archived",
+    "generated"
+  ],
+  "entries": [
+    {
+      "path": ".claude/rules/naming-prefix.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "AGENTS.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "CLAUDE.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/0.4.0发布验收.md",
+      "status": "archived",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/三库版本矩阵.md",
+      "reason": "0.4.0/0.4.1 发布历史证据"
+    },
+    {
+      "path": "doc/0.4.2发布候选验收.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/本地验证方法.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/发布配置步骤.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/架构图.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/跨语言多包架构与三库迁移计划.md",
+      "status": "archived",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "完成态实施计划，保留为历史证据"
+    },
+    {
+      "path": "doc/快速使用.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/框架迁移计划.md",
+      "status": "archived",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "完成态实施计划，保留为历史证据"
+    },
+    {
+      "path": "doc/命名规则.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/三库版本矩阵.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/三库共享核心整改计划.md",
+      "status": "archived",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "完成态实施计划，保留为历史证据"
+    },
+    {
+      "path": "doc/文档索引.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/组件改进计划.md",
+      "status": "archived",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "完成态实施计划，保留为历史证据"
+    },
+    {
+      "path": "doc/C++ clang-format规则说明.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/C++成员排序算法规范.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/naming-checklist.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "doc/overview.md",
+      "status": "superseded",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/文档索引.md",
+      "reason": "v0.1 模块总览已由包 README 和文档索引替代"
+    },
+    {
+      "path": "doc/plan.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/cad-contracts/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/cad-core/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/cad-rust-source/MIGRATION.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/cad-rust-source/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/code-core/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/db-node/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/kt-codegen/doc/来源与许可归档.md",
+      "status": "current",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/kt-codegen/doc/两小时迁移计划与验收.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/普通C++参数块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/生成块迁移矩阵.md",
+      "status": "current",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/kt-codegen/doc/自动代码标记扫描.md",
+      "status": "current",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/kt-codegen/doc/CAA对话框通知块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/CAA接口头文件块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/CAA目录与树工厂块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/CAA特征读写块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/CAA与Qt对话框双向更新块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/Command动作与活动字段块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/Command图与状态块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/CommandAgent生命周期块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/Dialog字段与废弃兼容块迁移.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/doc/KtCodegen命名迁移说明.md",
+      "status": "archived",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "path": "packages/kt-codegen/README.md",
+      "status": "current",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "packages/workspace-schema/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17"
+    },
+    {
+      "path": "TODO.md",
+      "status": "superseded",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.4.x",
+      "lastVerified": "2026-07-17",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "旧 Phase 清单仅保留兼容跳转"
+    }
+  ]
+}

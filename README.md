@@ -9,9 +9,14 @@ npm install @phoenix-wing/code-core
 npm install @phoenix-wing/kt-codegen
 npm install @phoenix-wing/cad-contracts @phoenix-wing/cad-core
 npm install @phoenix-wing/workspace-schema
+npm install phoenix-wing vue pinia
 ```
 
 只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。参数驱动 CAA/Qt/C++ 代码生成使用 `@phoenix-wing/kt-codegen`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`；构建 Desk native tools 时单独安装 `@phoenix-wing/cad-rust-source`。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD/Codegen 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
+
+`phoenix-wing` 聚合 UI 只发布 `dist` 编译产物。根入口和保留的 `.vue` 兼容子路径均落到同一份 JavaScript 模块图，避免 Vite 分别预构建根入口与源码 SFC 时产生 Vue/Pinia singleton 双实例。新代码优先使用根入口的命名导出；组件样式由编译入口自动加载。
+
+跨宿主兼容性不依靠 npm 版本猜测：KtCodegen Plan、Ribbon contribution、workspace schema、CAD native/provider/query 都有独立的 schema/protocol 版本与运行时拒绝门禁。Canonical fixtures 随对应 npm 包发布，产品仓只保留宿主 adapter 和字节一致的消费副本。
 
 ## 快速使用
 
@@ -28,7 +33,7 @@ npm install @phoenix-wing/workspace-schema
 | 📦 类型系统 | 6 | 属性面板、Ribbon 配置、工作台等类型定义 |
 | 🗄 Store | 1 | 异步任务 Pinia store |
 
-完整清单见 **[doc/overview.md](doc/overview.md)**
+当前模块与发布单元入口见 **[doc/文档索引.md](doc/文档索引.md)**。
 
 ## 命名规则
 
@@ -51,14 +56,12 @@ npm install @phoenix-wing/workspace-schema
 
 | 文档 | 内容 |
 |------|------|
+| [doc/文档索引.md](doc/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
 | [doc/快速使用.md](doc/快速使用.md) | 各类 API 快速上手示例 |
 | [doc/架构图.md](doc/架构图.md) | 壳层组件树和引擎清单 |
-| [doc/overview.md](doc/overview.md) | 模块总览与 API 说明 |
+| [doc/plan.md](doc/plan.md) | 当前路线、已完成基线和后续治理顺序 |
 | [doc/命名规则.md](doc/命名规则.md) | 命名规则、前缀对照、违规示例 |
-| [doc/框架迁移计划.md](doc/框架迁移计划.md) | 壳层框架迁移计划 |
 | [doc/naming-checklist.md](doc/naming-checklist.md) | 命名点检清单 |
-| [doc/三库共享核心整改计划.md](doc/三库共享核心整改计划.md) | `code-core`、`catdlg-core` 的跨仓库契约、阶段和验收 |
-| [doc/跨语言多包架构与三库迁移计划.md](doc/跨语言多包架构与三库迁移计划.md) | **总计划**：多 npm 子包、Rust CAD 源码、数据库契约和三库迁移边界 |
 | [doc/三库版本矩阵.md](doc/三库版本矩阵.md) | Wing 锁步版本、消费端允许依赖与发布门禁 |
 | [doc/C++成员排序算法规范.md](doc/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 | [packages/kt-codegen/README.md](packages/kt-codegen/README.md) | `kt-codegen` 数据模型、17列兼容、32个生成块与类图 |

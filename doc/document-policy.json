@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "owner": "Phoenix Wing maintainers",
+  "lastVerified": "2026-07-17",
+  "appliesTo": "0.4.x",
+  "rules": [
+    {
+      "match": "^TODO\\.md$",
+      "status": "superseded",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "旧 Phase 清单仅保留兼容跳转"
+    },
+    {
+      "match": "^doc/overview\\.md$",
+      "status": "superseded",
+      "sourceOfTruth": "doc/文档索引.md",
+      "reason": "v0.1 模块总览已由包 README 和文档索引替代"
+    },
+    {
+      "match": "^doc/(框架迁移计划|组件改进计划|三库共享核心整改计划|跨语言多包架构与三库迁移计划)\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "doc/plan.md",
+      "reason": "完成态实施计划，保留为历史证据"
+    },
+    {
+      "match": "^doc/0\\.4\\.0发布验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "doc/三库版本矩阵.md",
+      "reason": "0.4.0/0.4.1 发布历史证据"
+    },
+    {
+      "match": "^packages/kt-codegen/doc/(两小时迁移计划与验收|KtCodegen命名迁移说明|普通C\\+\\+参数块迁移|CAA.*块迁移|Command.*块迁移|Dialog.*块迁移)\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "match": "^packages/kt-codegen/",
+      "status": "current",
+      "owner": "@phoenix-wing/kt-codegen maintainers"
+    },
+    {
+      "match": "^.*\\.md$",
+      "status": "current"
+    }
+  ]
+}

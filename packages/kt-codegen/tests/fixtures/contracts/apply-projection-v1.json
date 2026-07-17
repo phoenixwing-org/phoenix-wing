@@ -1,0 +1,82 @@
+{
+  "kind": "kt.codegen.apply-projection-fixture",
+  "schemaVersion": 1,
+  "id": "apply-projection-crlf-two-regions-v1",
+  "plan": {
+    "kind": "kt.codegen.plan",
+    "schemaVersion": 1,
+    "phase": "preview",
+    "targets": [],
+    "blockKeys": [
+      "PARAM DECLARATION",
+      "PARAM EQUAL"
+    ],
+    "markerRegions": [
+      {
+        "id": "region-first",
+        "path": "src/Widget.hpp",
+        "sourceFingerprint": "sha256:fixture-before",
+        "classId": "Widget",
+        "nameSuffix": "First",
+        "blockKey": "PARAM DECLARATION",
+        "start": {
+          "line": 1
+        },
+        "replaceStartOffset": 3,
+        "replaceEndOffset": 10
+      },
+      {
+        "id": "region-second",
+        "path": "src/Widget.hpp",
+        "sourceFingerprint": "sha256:fixture-before",
+        "classId": "Widget",
+        "nameSuffix": "Second",
+        "blockKey": "PARAM EQUAL",
+        "start": {
+          "line": 3
+        },
+        "replaceStartOffset": 20,
+        "replaceEndOffset": 27
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "artifact-first",
+        "regionId": "region-first",
+        "target": "cpp.parameter",
+        "blockKey": "PARAM DECLARATION",
+        "classId": "Widget",
+        "content": "FIRST\nLINE",
+        "sourceParameters": []
+      },
+      {
+        "id": "artifact-second",
+        "regionId": "region-second",
+        "target": "cpp.parameter",
+        "blockKey": "PARAM EQUAL",
+        "classId": "Widget",
+        "content": "SECOND\nLINE",
+        "sourceParameters": []
+      }
+    ],
+    "diagnostics": [],
+    "hasChanges": true,
+    "canApply": true
+  },
+  "source": {
+    "path": "src/Widget.hpp",
+    "text": "A\r\nold-one\r\nmiddle\r\nold-two\r\nZ\r\n",
+    "fingerprint": "sha256:fixture-before"
+  },
+  "expected": {
+    "after": "A\r\nFIRST\r\nLINE\r\nmiddle\r\nSECOND\r\nLINE\r\nZ\r\n",
+    "utf8Hex": "410d0a46495253540d0a4c494e450d0a6d6964646c650d0a5345434f4e440d0a4c494e450d0a5a0d0a",
+    "regionCount": 2,
+    "regionIds": [
+      "region-first",
+      "region-second"
+    ],
+    "conflictFingerprint": "sha256:fixture-external-change",
+    "conflictCode": "apply.source-changed"
+  }
+}

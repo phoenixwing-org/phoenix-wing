@@ -70,6 +70,15 @@ export {
 } from "./pnwWorkset.js";
 
 export {
+  type PnwWorkspacePathEntry,
+  pnwIsWorkspacePathWithin,
+  pnwMatchesWorkspacePath,
+  pnwNormalizeWorkspacePath,
+  pnwNormalizeWorkspacePaths,
+  pnwRelativeToWorkspaceRoots,
+} from "./pnwWorkspacePath.js";
+
+export {
   type PnwCaaEnvironment,
   type PnwCaaEnvironmentKey,
   type PnwCaaEnvironmentSource,

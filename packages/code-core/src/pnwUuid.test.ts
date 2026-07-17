@@ -28,6 +28,21 @@ describe("pnw UUID helpers", () => {
     expect(pnwReplaceUuidOccurrences(guid32, [{ from: guid32, to: compactTarget }])).toBe("ABCDEFABCDEF4ABC8DEFABCDEFABCDEF");
   });
 
+  it("treats a braced dashed UUID as one token and preserves its braces", () => {
+    const braced = `{${upper}}`;
+    expect(pnwFindUuidOccurrences(braced)).toEqual([{
+      value: braced,
+      normalized: lower.replace(/-/g, ""),
+      kind: "uuid",
+      offset: 0,
+      line: 1,
+      column: 1,
+    }]);
+    expect(pnwReplaceUuidOccurrences(braced, [{ from: braced, to: replacement }])).toBe(
+      `{${replacement.toUpperCase()}}`,
+    );
+  });
+
   it("validates mapping values before use", () => {
     expect(pnwIsUuid(lower)).toBe(true);
     expect(pnwIsUuid("not-a-uuid")).toBe(false);

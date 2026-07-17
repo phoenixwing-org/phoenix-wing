@@ -17,7 +17,11 @@ export type PnwUuidReplacement = {
 
 type PnwCaaGuidStyle = "nested" | "flat_brace" | "flat_run";
 
-const PNW_STANDARD_UUID_PATTERN = /\b(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{32})\b/gi;
+const PNW_DASHED_UUID_SOURCE = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const PNW_STANDARD_UUID_PATTERN = new RegExp(
+  `(?<![0-9a-z_])(?:\\{${PNW_DASHED_UUID_SOURCE}\\}|${PNW_DASHED_UUID_SOURCE}|[0-9a-f]{32})(?![0-9a-z_])`,
+  "gi",
+);
 const PNW_CAA_BYTE_PATTERN = "0x([0-9a-f]{2})";
 const PNW_CAA_BYTES_PATTERN = Array.from({ length: 8 }, () => PNW_CAA_BYTE_PATTERN).join("\\s*,\\s*");
 const PNW_CAA_GUID_SPECS: readonly { readonly style: PnwCaaGuidStyle; readonly source: string }[] = [
@@ -110,11 +114,12 @@ function pnwFormatUuidLike(template: string, replacement: string): string {
   const sourceUsesUppercase = /[A-F]/.test(template);
   if (caa) return pnwFormatCaaGuid(normalized, caa.style, sourceUsesUppercase, template);
   const sourceUsesHyphens = template.includes("-");
+  const sourceUsesBraces = template.startsWith("{") && template.endsWith("}");
   let output = sourceUsesHyphens
     ? `${normalized.slice(0, 8)}-${normalized.slice(8, 12)}-${normalized.slice(12, 16)}-${normalized.slice(16, 20)}-${normalized.slice(20)}`
     : normalized;
   if (sourceUsesUppercase) output = output.toUpperCase();
-  return output;
+  return sourceUsesBraces ? `{${output}}` : output;
 }
 
 function pnwFormatCaaGuid(normalized: string, style: PnwCaaGuidStyle, useUppercase: boolean, template: string): string {

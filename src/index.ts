@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.4.1'
+export const PNW_VERSION = '0.4.2'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -130,10 +130,14 @@ export { usePnwPagePropertySheet } from './composables/usePnwPagePropertySheet.j
 // Ribbon 配置类型
 // ---------------------------------------------------------------------------
 export {
+  PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION,
+  pnwCheckRibbonContributionCompatibility,
   type PnwRibbonItemSize,
   type PnwRibbonItemDef,
   type PnwRibbonGroupDef,
   type PnwRibbonTabDef,
+  type PnwRibbonContributionDocumentV1,
+  type PnwRibbonContributionCompatibility,
 } from './types/PnwRibbonConfig.js'
 
 // ---------------------------------------------------------------------------
@@ -192,7 +196,29 @@ export {
   pnwPromptInput,
 } from './composables/pnwChoiceDialog.js'
 
-// 壳层组件从子路径导入:
+// ---------------------------------------------------------------------------
+// Vue3 组件 — 根入口与兼容子路径均解析到同一 dist 模块图
+// ---------------------------------------------------------------------------
+export { default as PnwAppModalOverlay } from './components/PnwAppModalOverlay.vue'
+export { default as PnwAsyncProgressOverlay } from './components/PnwAsyncProgressOverlay.vue'
+export { default as PnwChoiceDialogHost } from './components/PnwChoiceDialogHost.vue'
+export { default as PnwComboTextInput } from './components/PnwComboTextInput.vue'
+export { default as PnwDictSelect } from './components/PnwDictSelect.vue'
+export { default as PnwExpandCaret } from './components/PnwExpandCaret.vue'
+
+export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'
+export { default as PnwRibbonGroup } from './layout/PnwRibbonGroup.vue'
+export { default as PnwRibbonShell } from './layout/PnwRibbonShell.vue'
+export { default as PnwRibbonTabBar } from './layout/PnwRibbonTabBar.vue'
+export { default as PnwRibbonToolButton } from './layout/PnwRibbonToolButton.vue'
+export { default as PnwRibbonUtilButton } from './layout/PnwRibbonUtilButton.vue'
+export { default as PnwShellLogPanel } from './layout/PnwShellLogPanel.vue'
+export { default as PnwSidebarBlock } from './layout/PnwSidebarBlock.vue'
+export { default as PnwSidebarBlockHead } from './layout/PnwSidebarBlockHead.vue'
+export { default as PnwWelcomeShell } from './layout/PnwWelcomeShell.vue'
+export { default as PnwWorkbenchTabBar } from './layout/PnwWorkbenchTabBar.vue'
+
+// 0.4.x 兼容子路径（同样解析到编译后的 dist JS）:
 //   import PnwSidebarBlock from 'phoenix-wing/layout/PnwSidebarBlock.vue'
 //   import PnwSidebarBlockHead from 'phoenix-wing/layout/PnwSidebarBlockHead.vue'
 //   import PnwRibbonShell from 'phoenix-wing/layout/PnwRibbonShell.vue'

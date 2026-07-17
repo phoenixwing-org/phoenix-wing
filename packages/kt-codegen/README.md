@@ -19,7 +19,8 @@ src/
 ├── KtCodegenController.ts  # 宿主编排
 ├── KtCodegenCore.ts        # 核心生成算法入口
 ├── KtCodegenMarker.ts      # 旧自动代码标记构造与只读扫描
-├── KtCodegenRenderer.ts    # 多目标生成器
+├── KtCodegenRenderer.ts    # 稳定 Renderer facade 与公共契约
+├── renderer/               # block family 策略、注册表与 legacy 兼容层
 ├── KtCodegenTableCore.ts   # 无 DOM 的整表编辑与 checkpoint
 ├── KtCodegenTableData.ts   # 宿主交换的整表 DTO
 ├── KtCodegenTableColumns.ts # 17列描述与字段类型
@@ -36,7 +37,18 @@ src/
 - `index.ts` 只导出，不放实现；
 - MVC-C 是职责划分，不通过目录层级表达。
 
-`api/`、`blocks/`、`legacy/`、`model/` 当前只放迁移初期的纯函数、旧格式 schema 和公共类型，不承载上述主要类。
+`api/`、`blocks/`、`legacy/`、`model/` 放纯函数、旧格式 schema 和公共类型；`renderer/` 是明确的例外，它按 block family 隔离模板策略，根 `KtCodegenRenderer` 只保留公共 facade。
+
+## Renderer family 注册表
+
+32 个旧 block 已从中心 `if/else` 调度器拆为 10 个具名 family：普通 C++ Parameter、CAA Feature I/O、Catalog、Factory Tree、Dialog、Dialog Field、Command Agent 生命周期、Command Graph/State、Command Action 和 Qt Dialog。结构职责如下：
+
+- `family-registry.ts` 只维护 `blockKey → family` 能力映射、artifact 安全区域绑定和待迁移诊断，不含任何 C++/CAA/Qt 模板；
+- `caa-feature-families.ts`、`caa-dialog-family.ts`、`caa-command-families.ts`、`cpp-parameter-family.ts`、`qt-dialog-family.ts` 各自拥有模板和 item 筛选规则；
+- `legacy-compatibility.ts` 统一保留旧 Start/End、Doxygen、EOL 和废弃 block warning 语义；
+- `caa-renderer.ts` 只组合 family，不判断具体 block；根 facade 只创建平台 Renderer。
+
+新增或迁移 block 时，应在所属 family 注册并添加独立 golden；不得把模板或 block 分支重新写回 `KtCodegenRenderer.ts`。`renderer-family-registry.test.ts` 会检查重复注册立即失败，并要求全部 32 个 migrated block 恰好归属一个 family。
 
 完整的类型、函数、常量和运行时身份映射见[《KtCodegen 命名迁移说明》](doc/KtCodegen命名迁移说明.md)。
 
@@ -186,7 +198,7 @@ classDiagram
     KtCodegenOptions ..> KtCodegenItem : UI checks strings
 ```
 
-图中的关键边界是：`KtCodegenParam` 没有操作方法；Controller 只维护同一个共享实例；Reader 先产生临时数据，读取完整成功后再由 Adapter 用原数组 `splice` 更新共享实例；Marker 只消费 Param 和宿主源码快照，不把文件状态放回数据类；Core 把默认值算法注入 Renderer，避免 Renderer 反向依赖 Core。
+图中的关键边界是：`KtCodegenParam` 没有操作方法；Controller 只维护同一个共享实例；Reader 先产生临时数据，读取完整成功后再由 Adapter 用原数组 `splice` 更新共享实例；Marker 只消费 Param 和宿主源码快照，不把文件状态放回数据类；Core 把默认值算法注入 Renderer，避免 Renderer 反向依赖 Core；Renderer facade 再把只读算法交给具名 family，注册表不拥有模板。
 
 ## Combo 字符串规则
 
@@ -236,6 +248,14 @@ table.addEventListener("kt-codegen-table-change", () => {
 - `ktCodegenCommitApplyWrites()`：通过泛型 `readFile`/`writeFile` Port 在每次写前复读字节；失败时逆序回滚，而且不会覆盖回滚期间出现的第三方内容。
 
 Wing 不选择工作区、不弹窗、不发布 Problems、不决定源码编码，也不直接调用文件系统。VS Code/Desk Tools 负责工作区边界、未保存编辑器检查、UTF-8/GBK 编解码、真实文件 Port、Output 文本与诊断定位。这使两个宿主共享同一写回规则，同时保留各自 UI。
+
+## 跨宿主契约与 fixtures
+
+宿主在解释序列化 Analyze Plan 前必须调用 `ktCodegenCheckPlanCompatibility()`。当前只接受 `kind: "kt.codegen.plan"`、`schemaVersion: 1`；未知未来版本返回 `contract.unsupported-schema-version`，不能由宿主按字段猜测兼容。
+
+`@phoenix-wing/kt-codegen/fixtures/codegen-host-contract-v1.json` 是 Analyze、marker、legacy v4 JSON 与 17 列 CSV 的联合 golden；它冻结参数归一化、Marker 字节偏移、Renderer 身份、Artifact 内容哈希和版本拒绝结果。`apply-projection-v1.json` 独立冻结 Apply 的 CRLF 投影、审计顺序、冲突码与最终 UTF-8 字节。Auto Code 与 Desk Tools 只保存字节一致的消费副本并调用本包 API，不复制协议解释。
+
+fixtures 的 `schemaVersion` 是测试 bundle 版本，Analyze Plan 的 `schemaVersion` 是运行时 envelope 版本，两者都独立于 npm 包版本。变更任一公开语义时，必须新增版本或提供兼容判定，不能静默覆盖既有 v1 golden。
 
 ## 已迁移的参数核心语义
 
@@ -308,6 +328,7 @@ const committed = await ktCodegenCommitApplyWrites(filePort, encodedWrites);
 - artifact 通过 `regionId` 关联安全区域，并保留文件指纹、缩进和 LF/CRLF；
 - Apply 计划审计、LF/CRLF 适配、整文件投影、写前复读与失败回滚；
 - 32个归档旧 block 全部具备 Renderer、Marker artifact 与迁移状态测试；
+- 32个 migrated block 全部且唯一归属具名 Renderer family，重复注册和漏注册由契约测试阻止；
 - fixtures、结构化预期数据和单元测试。
 
 当前 Analyze 读取调用者提供的不可变源码快照，`KtCodegenApply` 根据计划形成可审计的写回候选并提供文件 Port 事务；包本身仍不自行打开或写入真实文件。请求目标与标记完整时，计划可以返回 `canApply: true`，最终编码、权限、UI 与真实文件 Port 由宿主负责。

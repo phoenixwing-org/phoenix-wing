@@ -1,0 +1,44 @@
+{
+  "kind": "phoenix.ribbon-contributions",
+  "schemaVersion": 1,
+  "tabs": [
+    {
+      "id": "system",
+      "label": "系统",
+      "groups": [
+        {
+          "id": "system-common",
+          "label": "常用",
+          "items": [
+            {
+              "pageId": "home",
+              "label": "主页",
+              "size": "large"
+            },
+            {
+              "pageId": "settings",
+              "label": "设置"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "code",
+      "label": "Code",
+      "module": "code",
+      "groups": [
+        {
+          "id": "code-generate",
+          "label": "生成",
+          "items": [
+            {
+              "pageId": "kt_codegen",
+              "label": "自动代码"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

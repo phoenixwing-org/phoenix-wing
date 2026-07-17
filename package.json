@@ -1,37 +1,85 @@
 {
   "name": "phoenix-wing",
-  "version": "0.4.1",
+  "version": "0.4.2",
+  "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./code-core": "./src/code-core/index.ts",
-    "./db/*": "./src/db/*",
-    "./components/*": "./src/components/*",
-    "./layout/*": "./src/layout/*",
-    "./composables/*": "./src/composables/*",
-    "./stores/*": "./src/stores/*",
-    "./types/*": "./src/types/*",
-    "./utils/*": "./src/utils/*"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./fixtures/*": "./fixtures/*",
+    "./code-core": {
+      "types": "./dist/code-core/index.d.ts",
+      "import": "./dist/code-core/index.js"
+    },
+    "./components/*.vue": {
+      "types": "./dist/components/*.vue.d.ts",
+      "import": "./dist/components/*.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*.vue.d.ts",
+      "import": "./dist/components/*.js"
+    },
+    "./layout/*.vue": {
+      "types": "./dist/layout/*.vue.d.ts",
+      "import": "./dist/layout/*.js"
+    },
+    "./layout/*": {
+      "types": "./dist/layout/*.vue.d.ts",
+      "import": "./dist/layout/*.js"
+    },
+    "./db/*": {
+      "types": "./dist/db/*.d.ts",
+      "import": "./dist/db/*.js"
+    },
+    "./composables/*": {
+      "types": "./dist/composables/*.d.ts",
+      "import": "./dist/composables/*.js"
+    },
+    "./stores/*": {
+      "types": "./dist/stores/*.d.ts",
+      "import": "./dist/stores/*.js"
+    },
+    "./types/*": {
+      "types": "./dist/types/*.d.ts",
+      "import": "./dist/types/*.js"
+    },
+    "./utils/*": {
+      "types": "./dist/utils/*.d.ts",
+      "import": "./dist/utils/*.js"
+    }
   },
   "files": [
-    "src"
+    "dist",
+    "fixtures"
   ],
   "scripts": {
     "prepublishOnly": "node scripts/verify-publish-client.mjs",
+    "prepack": "pnpm build && pnpm verify:aggregate-dist",
+    "build": "vite build && vue-tsc -p tsconfig.build.json --declaration --emitDeclarationOnly",
+    "verify:aggregate-dist": "node scripts/verify-aggregate-dist.mjs",
     "test": "vitest run",
     "test:workspace": "pnpm -r --include-workspace-root --if-present test",
+    "typecheck:workspace": "pnpm -r --include-workspace-root --if-present typecheck",
     "verify:cad-rust-tarball": "node scripts/verify-cad-rust-tarball.mjs",
     "verify:package-tarballs": "node scripts/verify-package-tarballs.mjs",
     "verify:release-matrix": "node scripts/verify-release-matrix.mjs",
-    "typecheck": "tsc --noEmit --pretty false",
+    "docs:manifest": "node scripts/generate-doc-manifest.mjs",
+    "docs:check": "node scripts/generate-doc-manifest.mjs --check",
+    "verify:architecture": "node scripts/verify-import-boundaries.mjs",
+    "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix -- --require-consumers && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "vitest"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.4.1",
-    "@phoenix-wing/db-node": "workspace:0.4.1",
+    "@phoenix-wing/code-core": "workspace:0.4.2",
+    "@phoenix-wing/db-node": "workspace:0.4.2",
     "element-plus": "^2.0.0"
   },
   "optionalDependencies": {
@@ -70,9 +118,13 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitejs/plugin-vue": "^5.2.3",
     "element-plus": "^2.14.2",
     "pinia": "^3.0.4",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vite": "^6.3.0",
+    "vitest": "^3.0.0",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.8"
   }
 }

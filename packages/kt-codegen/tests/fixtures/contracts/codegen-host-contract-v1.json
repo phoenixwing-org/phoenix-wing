@@ -1,0 +1,280 @@
+{
+  "kind": "kt.codegen.host-contract-fixture",
+  "schemaVersion": 1,
+  "compatibility": {
+    "planSchemaVersion": 1,
+    "legacyJsonVersion": "4.0",
+    "legacyCsvColumns": 17
+  },
+  "input": {
+    "legacyJson": {
+      "type": "100106",
+      "version": "4.0",
+      "NamePrefix": "Kt",
+      "NameMiddle": "CourseGuard",
+      "NameSpace": "Kt",
+      "AppendFunction": "push_back",
+      "ProjectTag": "review-fixture",
+      "headers": [
+        "NameSuffix",
+        "ID",
+        "Name",
+        "ParamString",
+        "DataType",
+        "TCKind",
+        "DefaultValue",
+        "CATAttrInOut",
+        "IsList",
+        "IsOnTree",
+        "Component",
+        "Count",
+        "IsParamDlg",
+        "Unit",
+        "Author",
+        "CreateDate",
+        "Notes"
+      ],
+      "data": [
+        [
+          "Item",
+          1,
+          "Machine ID",
+          "MachineId",
+          "int",
+          "Integer",
+          0,
+          "In",
+          0,
+          1,
+          "QSpinBox",
+          1,
+          1,
+          "",
+          "Kuntai",
+          "2026-07-16",
+          "Machine identifier"
+        ],
+        [
+          "Item",
+          2,
+          "Guard Length",
+          "GuardLength",
+          "double",
+          "Real",
+          "25",
+          "InOut",
+          "TRUE",
+          0,
+          "QDoubleSpinBox",
+          1,
+          1,
+          "mm",
+          "Kuntai",
+          "2026-07-16",
+          "Length used by CAA and Qt"
+        ]
+      ]
+    },
+    "legacyCsv": "NameSuffix,ID,Name,ParamString,DataType,TCKind,DefaultValue,CATAttrInOut,IsList,IsOnTree,Component,Count,IsParamDlg,Unit,Author,CreateDate,Notes\nItem,1,Machine ID,MachineId,int,Integer,0,In,,1,QSpinBox,1,1,,Kuntai,2026-07-16,Machine identifier\nItem,2,Guard Length,GuardLength,double,Real,25,InOut,1,,QDoubleSpinBox,1,1,mm,Kuntai,2026-07-16,Length used by CAA and Qt\n$NamePrefix,Kt,the prefix\n$NameMiddle,CourseGuard,the middle name\n$NameSpace,Kt,$Name Space\n$AppendFunction,push_back,the append function name\n",
+    "source": {
+      "path": "legacy-markers.cpp",
+      "fingerprint": "sha256:host-contract-v1",
+      "text": "namespace sample {\n  // START KEVIN CAA WIZARD SECTION KtCourseGuardItem PARAM DECLARATION\n  int oldMachineId;\n  double oldGuardLength;\n  // END KEVIN CAA WIZARD SECTION KtCourseGuardItem PARAM DECLARATION\n\n\t// START KEVIN CAA WIZARD SECTION KtCourseGuardItem QT UPDATE DIALOG\n\toldDialogUpdate();\n\t// END KEVIN CAA WIZARD SECTION KtCourseGuardItem QT UPDATE DIALOG\n}\n"
+    },
+    "targets": [
+      "cpp.parameter",
+      "qt.dialog"
+    ],
+    "blockKeys": [
+      "PARAM DECLARATION",
+      "QT UPDATE DIALOG"
+    ]
+  },
+  "expected": {
+    "legacyJson": {
+      "readOk": true,
+      "diagnosticCodes": [
+        "legacy.value-coerced-to-string"
+      ],
+      "param": {
+        "kind": "kt.codegen",
+        "schemaVersion": 1,
+        "sourceFormat": "legacy-v4-json",
+        "namePrefix": "Kt",
+        "nameMiddle": "CourseGuard",
+        "nameSpace": "Kt",
+        "appendFunction": "push_back",
+        "items": [
+          {
+            "nameSuffix": "Item",
+            "id": 1,
+            "paramString": "MachineId",
+            "dataType": "int",
+            "defaultValue": "0",
+            "isList": false,
+            "component": "QSpinBox",
+            "componentCount": 1,
+            "unit": ""
+          },
+          {
+            "nameSuffix": "Item",
+            "id": 2,
+            "paramString": "GuardLength",
+            "dataType": "double",
+            "defaultValue": "25",
+            "isList": true,
+            "component": "QDoubleSpinBox",
+            "componentCount": 1,
+            "unit": "mm"
+          }
+        ]
+      }
+    },
+    "legacyCsv": {
+      "readOk": true,
+      "diagnosticCodes": [],
+      "param": {
+        "kind": "kt.codegen",
+        "schemaVersion": 1,
+        "sourceFormat": "legacy-17-column-csv",
+        "namePrefix": "Kt",
+        "nameMiddle": "CourseGuard",
+        "nameSpace": "Kt",
+        "appendFunction": "push_back",
+        "items": [
+          {
+            "nameSuffix": "Item",
+            "id": 1,
+            "paramString": "MachineId",
+            "dataType": "int",
+            "defaultValue": "0",
+            "isList": false,
+            "component": "QSpinBox",
+            "componentCount": 1,
+            "unit": ""
+          },
+          {
+            "nameSuffix": "Item",
+            "id": 2,
+            "paramString": "GuardLength",
+            "dataType": "double",
+            "defaultValue": "25",
+            "isList": true,
+            "component": "QDoubleSpinBox",
+            "componentCount": 1,
+            "unit": "mm"
+          }
+        ]
+      }
+    },
+    "markerRegions": [
+      {
+        "id": "legacy-markers.cpp:19:206",
+        "path": "legacy-markers.cpp",
+        "sourceFingerprint": "sha256:host-contract-v1",
+        "classId": "KtCourseGuardItem",
+        "nameSuffix": "Item",
+        "blockKey": "PARAM DECLARATION",
+        "startLine": 1,
+        "linePrefix": "  ",
+        "bodyStartOffset": 91,
+        "bodyEndOffset": 136,
+        "replaceStartOffset": 19,
+        "replaceEndOffset": 206
+      },
+      {
+        "id": "legacy-markers.cpp:207:365",
+        "path": "legacy-markers.cpp",
+        "sourceFingerprint": "sha256:host-contract-v1",
+        "classId": "KtCourseGuardItem",
+        "nameSuffix": "Item",
+        "blockKey": "QT UPDATE DIALOG",
+        "startLine": 6,
+        "linePrefix": "\t",
+        "bodyStartOffset": 277,
+        "bodyEndOffset": 297,
+        "replaceStartOffset": 207,
+        "replaceEndOffset": 365
+      }
+    ],
+    "analyze": {
+      "kind": "kt.codegen.plan",
+      "schemaVersion": 1,
+      "phase": "preview",
+      "targets": [
+        {
+          "target": "cpp.parameter",
+          "rendererId": "kt.codegen.renderer.cpp",
+          "status": "ready",
+          "artifactCount": 1
+        },
+        {
+          "target": "qt.dialog",
+          "rendererId": "kt.codegen.renderer.qt",
+          "status": "ready",
+          "artifactCount": 1
+        }
+      ],
+      "blockKeys": [
+        "PARAM DECLARATION",
+        "QT UPDATE DIALOG"
+      ],
+      "artifacts": [
+        {
+          "id": "kt.codegen.artifact:cpp.parameter:legacy-markers.cpp:19:206",
+          "regionId": "legacy-markers.cpp:19:206",
+          "target": "cpp.parameter",
+          "blockKey": "PARAM DECLARATION",
+          "classId": "KtCourseGuardItem",
+          "contentSha256": "de8ed1746a1c1dea79b93aea829c5c44ab479dc44c7e4aa572c275f8dbf8112e",
+          "contentUtf8Bytes": 525,
+          "sourceParameters": [
+            "MachineId",
+            "GuardLength"
+          ]
+        },
+        {
+          "id": "kt.codegen.artifact:qt.dialog:legacy-markers.cpp:207:365",
+          "regionId": "legacy-markers.cpp:207:365",
+          "target": "qt.dialog",
+          "blockKey": "QT UPDATE DIALOG",
+          "classId": "KtCourseGuardItem",
+          "contentSha256": "7c5462d60c25321dd21eacbe7874373ee71198e680806cafbe6f822247d96fdb",
+          "contentUtf8Bytes": 402,
+          "sourceParameters": [
+            "MachineId",
+            "GuardLength"
+          ]
+        }
+      ],
+      "diagnosticCodes": [],
+      "hasChanges": true,
+      "canApply": true
+    },
+    "compatibility": {
+      "current": {
+        "compatible": true,
+        "kind": "kt.codegen.plan",
+        "schemaVersion": 1
+      },
+      "future": {
+        "compatible": false,
+        "code": "contract.unsupported-schema-version",
+        "actualKind": "kt.codegen.plan",
+        "actualSchemaVersion": 2,
+        "supportedSchemaVersions": [
+          1
+        ]
+      },
+      "invalid": {
+        "compatible": false,
+        "code": "contract.invalid-plan",
+        "actualKind": "other",
+        "actualSchemaVersion": 1,
+        "supportedSchemaVersions": [
+          1
+        ]
+      }
+    }
+  }
+}

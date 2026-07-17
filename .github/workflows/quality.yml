@@ -1,0 +1,74 @@
+name: Wing quality and release artifacts
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "packages/**"
+      - "crates/**"
+      - "scripts/**"
+      - "release-matrix.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig*.json"
+      - ".github/workflows/quality.yml"
+  push:
+    paths:
+      - "src/**"
+      - "packages/**"
+      - "crates/**"
+      - "scripts/**"
+      - "release-matrix.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig*.json"
+      - ".github/workflows/quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wing-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: TypeScript, contracts and release packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:ci
+
+  cross-platform-tarballs:
+    name: ${{ matrix.os }} / tarball contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:release-matrix -- --wing-only
+      - run: pnpm verify:package-tarballs
+      - run: pnpm verify:cad-rust-tarball

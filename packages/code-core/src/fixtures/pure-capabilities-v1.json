@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "uuid": {
+    "scan": {
+      "text": "braced={12345678-1234-1234-1234-1234567890AB}\ncompact=123456781234123412341234567890ab\n",
+      "expected": [
+        {
+          "value": "{12345678-1234-1234-1234-1234567890AB}",
+          "normalized": "123456781234123412341234567890ab",
+          "kind": "uuid",
+          "offset": 7,
+          "line": 1,
+          "column": 8
+        },
+        {
+          "value": "123456781234123412341234567890ab",
+          "normalized": "123456781234123412341234567890ab",
+          "kind": "guid32",
+          "offset": 54,
+          "line": 2,
+          "column": 9
+        }
+      ]
+    },
+    "formatCases": [
+      {
+        "source": "{12345678-1234-1234-1234-1234567890AB}",
+        "replacement": "abcdefab-cdef-4abc-8def-abcdefabcdef",
+        "expected": "{ABCDEFAB-CDEF-4ABC-8DEF-ABCDEFABCDEF}"
+      },
+      {
+        "source": "0x12345678, 0x1234, 0x1234, {0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef}",
+        "replacement": "abcdefab-cdef-4abc-8def-abcdefabcdef",
+        "expected": "0xabcdefab, 0xcdef, 0x4abc, {0x8d, 0xef, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef}"
+      }
+    ]
+  },
+  "workspacePath": {
+    "normalizeCases": [
+      { "input": " ./src\\module//a.cpp/ ", "expected": "src/module/a.cpp" },
+      { "input": ".", "expected": "." },
+      { "input": "src/../outside.cpp", "expected": null },
+      { "input": "C:/outside.cpp", "expected": null }
+    ],
+    "matchCases": [
+      {
+        "candidate": "src/module/main.cpp",
+        "entries": [{ "path": "src/module", "type": "dir" }],
+        "expected": true
+      },
+      {
+        "candidate": "src/module-other/main.cpp",
+        "entries": [{ "path": "src/module", "type": "dir" }],
+        "expected": false
+      },
+      {
+        "candidate": "docs/README.md",
+        "entries": ["README.md"],
+        "expected": false
+      }
+    ],
+    "relativeCases": [
+      {
+        "candidate": "src/module/main.cpp",
+        "roots": [".", "src/module"],
+        "expected": "main.cpp"
+      },
+      {
+        "candidate": "src/other.cpp",
+        "roots": ["src/module"]
+      }
+    ]
+  }
+}
