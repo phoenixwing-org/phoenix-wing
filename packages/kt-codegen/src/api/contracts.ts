@@ -74,8 +74,8 @@ export interface KtCodegenTargetPlan {
 /**
  * 一次参数代码生成 Analyze 的不可变计划。
  *
- * 计划只描述标记区域、候选产物、目标状态和诊断；真实 Apply 由宿主和
- * code-core 完成。
+ * 计划只描述标记区域、候选产物、目标状态和诊断；Wing 的
+ * `KtCodegenApply` 可形成宿主无关投影与事务，真实文件 Port 和 UI 由宿主提供。
  */
 export interface KtCodegenPlan {
   /** 计划类型标识。 */

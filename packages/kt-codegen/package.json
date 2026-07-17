@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/kt-codegen",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "CAA、Qt 与普通 C++ 的参数驱动代码生成核心",
   "type": "module",
   "sideEffects": false,
@@ -18,6 +18,10 @@
     "./model": {
       "types": "./dist/model/index.d.ts",
       "import": "./dist/model/index.js"
+    },
+    "./table": {
+      "types": "./dist/table/index.d.ts",
+      "import": "./dist/table/index.js"
     }
   },
   "files": [

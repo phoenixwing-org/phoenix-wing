@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { KtCodegenController } from "../src/KtCodegenController.js";
 import { KtCodegenOptions } from "../src/KtCodegenOptions.js";
 import { KtCodegenParam } from "../src/KtCodegenParam.js";
+import { ktCodegenParamsEqual } from "../src/model/equal.js";
 import { ktCodegenReadFixture, ktCodegenReadJsonFixture } from "./helpers.js";
 
 function ktCodegenSerializableData(data: KtCodegenParam): Record<string, unknown> {
@@ -20,6 +21,36 @@ function ktCodegenSerializableData(data: KtCodegenParam): Record<string, unknown
 }
 
 describe("KtCodegenParam", () => {
+  it("compares JSON Count and CSV ComponentCount by semantic data", () => {
+    const json = new KtCodegenController();
+    expect(json.readJson({
+      type: "100106",
+      version: "4.0",
+      NamePrefix: "PNX",
+      NameMiddle: "Part",
+      NameSpace: "Kt",
+      AppendFunction: "push_back",
+      headers: [
+        "NameSuffix", "ID", "Name", "ParamString", "DataType", "TCKind", "DefaultValue",
+        "CATAttrInOut", "IsList", "IsOnTree", "Component", "Count", "IsParamDlg", "Unit",
+        "Author", "CreateDate", "Notes",
+      ],
+      data: [["Part", 1, "First", "First", "int", "Integer", 0, "In", 0, 0, "", 0, 0, "", "", "", ""]],
+    }).ok).toBe(true);
+    const csv = new KtCodegenController();
+    expect(csv.readCsv(json.writeCsv().value!).ok).toBe(true);
+
+    expect(json.param.source.headers[11]).toBe("Count");
+    expect((JSON.parse(csv.writeJson().value!) as { headers: string[] }).headers[11])
+      .toBe("ComponentCount");
+    expect(ktCodegenParamsEqual(json.param, csv.param)).toBe(true);
+    csv.param.items[0]!.notes = "changed";
+    expect(ktCodegenParamsEqual(json.param, csv.param)).toBe(false);
+    csv.param.items[0]!.notes = "";
+    json.param.source.extensions.PrivateFlag = true;
+    expect(ktCodegenParamsEqual(json.param, csv.param)).toBe(false);
+  });
+
   it("is a public-field data class without I/O or validation methods", () => {
     const param = new KtCodegenParam();
 
@@ -64,8 +95,52 @@ describe("KtCodegenParam", () => {
     };
 
     expect(written.ok).toBe(true);
-    expect(json.headers?.[11]).toBe("ComponentCount");
+    expect(json.headers?.[11]).toBe("Count");
     expect(json.data?.[0]?.[6]).toBe("42");
+  });
+
+  it("preserves legacy root/header order and writes four-space JSON", () => {
+    const seed = new KtCodegenController();
+    expect(seed.readJson(ktCodegenReadFixture("legacy-v4/basic.json")).ok).toBe(true);
+    const normalized = JSON.parse(seed.writeJson().value ?? "{}") as Record<string, unknown>;
+    const custom = {
+      type: normalized.type,
+      ProjectTag: normalized.ProjectTag,
+      version: normalized.version,
+      NamePrefix: normalized.NamePrefix,
+      NameMiddle: normalized.NameMiddle,
+      NameSpace: normalized.NameSpace,
+      AppendFunction: normalized.AppendFunction,
+      headers: normalized.headers,
+      data: normalized.data,
+    };
+    const input = `${JSON.stringify(custom, null, 4)}\n`;
+    const controller = new KtCodegenController();
+    expect(controller.readJson(input).ok).toBe(true);
+    controller.param.nameSpace = "SavedNamespace";
+
+    const output = controller.writeJson().value!;
+    expect(output).toBe(input.replace('"NameSpace": "Kt"', '"NameSpace": "SavedNamespace"'));
+    expect(Object.keys(JSON.parse(output) as object)).toEqual(Object.keys(custom));
+    expect((JSON.parse(output) as { headers: string[] }).headers).toContain("Count");
+    expect(output).toContain('\n    "type":');
+  });
+
+  it("inserts missing root and header fields at their schema positions", () => {
+    const input = JSON.parse(ktCodegenReadFixture("legacy-v4/basic.json")) as Record<string, unknown>;
+    delete input.NameSpace;
+    const headers = input.headers as string[];
+    const notesIndex = headers.indexOf("Notes");
+    headers.splice(notesIndex, 1);
+    for (const row of input.data as unknown[][]) row.splice(notesIndex, 1);
+    const controller = new KtCodegenController();
+    expect(controller.readJson(input).ok).toBe(true);
+
+    const output = JSON.parse(controller.writeJson().value ?? "{}") as Record<string, unknown>;
+    const rootKeys = Object.keys(output);
+    expect(rootKeys.indexOf("NameSpace")).toBe(rootKeys.indexOf("NameMiddle") + 1);
+    expect(rootKeys.indexOf("AppendFunction")).toBe(rootKeys.indexOf("NameSpace") + 1);
+    expect((output.headers as string[]).at(-1)).toBe("Notes");
   });
 
   it("reads old 17-column CSV and converts it through the same data class", () => {

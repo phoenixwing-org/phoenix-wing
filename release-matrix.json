@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "release_version": "0.3.0",
+  "release_version": "0.4.0",
   "packages": [
     { "name": "phoenix-wing", "manifest": "package.json", "kind": "compat-ui" },
     { "name": "@phoenix-wing/code-core", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
@@ -15,13 +15,13 @@
     {
       "name": "kt-auto-code workspace",
       "manifest": "../kt-auto-code/package.json",
-      "required": { "dependencies": { "@phoenix-wing/code-core": "0.3.0" } },
+      "required": { "dependencies": { "@phoenix-wing/code-core": "0.4.0" } },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source"]
     },
     {
       "name": "KT Auto Code VSIX",
       "manifest": "../kt-auto-code/extension/package.json",
-      "required": { "dependencies": { "@phoenix-wing/code-core": "0.3.0" } },
+      "required": { "dependencies": { "@phoenix-wing/code-core": "0.4.0" } },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source"]
     },
     {
@@ -29,9 +29,9 @@
       "manifest": "../kt-auto-code/extensions/kt-auto-cad/package.json",
       "required": {
         "devDependencies": {
-          "@phoenix-wing/cad-contracts": "0.3.0",
-          "@phoenix-wing/cad-core": "0.3.0",
-          "@phoenix-wing/workspace-schema": "0.3.0"
+          "@phoenix-wing/cad-contracts": "0.4.0",
+          "@phoenix-wing/cad-core": "0.4.0",
+          "@phoenix-wing/workspace-schema": "0.4.0"
         }
       },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
@@ -41,20 +41,20 @@
       "manifest": "../phoenix-desk-tools/server/package.json",
       "required": {
         "dependencies": {
-          "@phoenix-wing/code-core": "0.3.0",
-          "@phoenix-wing/cad-contracts": "0.3.0",
-          "@phoenix-wing/cad-core": "0.3.0",
-          "@phoenix-wing/workspace-schema": "0.3.0",
-          "@phoenix-wing/db-node": "0.3.0"
+          "@phoenix-wing/code-core": "0.4.0",
+          "@phoenix-wing/cad-contracts": "0.4.0",
+          "@phoenix-wing/cad-core": "0.4.0",
+          "@phoenix-wing/workspace-schema": "0.4.0",
+          "@phoenix-wing/db-node": "0.4.0"
         },
-        "devDependencies": { "@phoenix-wing/cad-rust-source": "0.3.0" }
+        "devDependencies": { "@phoenix-wing/cad-rust-source": "0.4.0" }
       },
       "forbidden": ["phoenix-wing"]
     },
     {
       "name": "Desk Tools web-ui",
       "manifest": "../phoenix-desk-tools/web-ui/package.json",
-      "required": { "dependencies": { "phoenix-wing": "0.3.0" } },
+      "required": { "dependencies": { "phoenix-wing": "0.4.0" } },
       "forbidden": ["@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
     }
   ],

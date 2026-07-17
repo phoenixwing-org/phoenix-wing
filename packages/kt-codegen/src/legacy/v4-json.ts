@@ -466,31 +466,109 @@ export function ktCodegenParseLegacyV4Json(input: string | unknown): KtCodegenDa
   }
 }
 
-function ktCodegenParamToLegacyRow(parameter: KtCodegenItem): readonly unknown[] {
-  return [
-    parameter.nameSuffix,
-    parameter.id,
-    parameter.name,
-    parameter.paramString,
-    parameter.dataType,
-    parameter.tcKind,
-    parameter.defaultValue,
-    parameter.catAttrInOut,
-    parameter.isList ? 1 : 0,
-    parameter.isOnTree ? 1 : 0,
-    parameter.component,
-    parameter.componentCount,
-    parameter.isParamDlg ? 1 : 0,
-    parameter.unit,
-    parameter.author,
-    parameter.createDate,
-    parameter.notes,
-  ];
+function ktCodegenParamValueForColumn(
+  parameter: KtCodegenItem,
+  column: KtCodegenLegacyV4Column | null,
+): unknown {
+  switch (column) {
+    case "NameSuffix": return parameter.nameSuffix;
+    case "ID": return parameter.id;
+    case "Name": return parameter.name;
+    case "ParamString": return parameter.paramString;
+    case "DataType": return parameter.dataType;
+    case "TCKind": return parameter.tcKind;
+    case "DefaultValue": return parameter.defaultValue;
+    case "CATAttrInOut": return parameter.catAttrInOut;
+    case "IsList": return parameter.isList ? 1 : 0;
+    case "IsOnTree": return parameter.isOnTree ? 1 : 0;
+    case "Component": return parameter.component;
+    case "ComponentCount": return parameter.componentCount;
+    case "IsParamDlg": return parameter.isParamDlg ? 1 : 0;
+    case "Unit": return parameter.unit;
+    case "Author": return parameter.author;
+    case "CreateDate": return parameter.createDate;
+    case "Notes": return parameter.notes;
+    default: return null;
+  }
+}
+
+/** 保留既有表头的名称与顺序，仅把缺少的新列插到 schema 邻近位置。 */
+function ktCodegenHeadersForWrite(spec: KtCodegenParam): string[] {
+  if (spec.source.format !== "legacy-v4-json" || spec.source.headers.length === 0) {
+    return [...KT_CODEGEN_LEGACY_V4_JSON_HEADERS];
+  }
+
+  const headers = [...spec.source.headers];
+  const present = new Set(headers.map(ktCodegenNormalizeLegacyV4Header).filter(
+    (column): column is KtCodegenLegacyV4Column => column !== null,
+  ));
+  for (let schemaIndex = 0; schemaIndex < KT_CODEGEN_LEGACY_V4_JSON_HEADERS.length; schemaIndex += 1) {
+    const column = KT_CODEGEN_LEGACY_V4_JSON_HEADERS[schemaIndex]!;
+    if (present.has(column)) continue;
+    const nextIndex = headers.findIndex((header) => {
+      const normalized = ktCodegenNormalizeLegacyV4Header(header);
+      return normalized !== null
+        && KT_CODEGEN_LEGACY_V4_JSON_HEADERS.indexOf(normalized) > schemaIndex;
+    });
+    headers.splice(nextIndex < 0 ? headers.length : nextIndex, 0, column);
+    present.add(column);
+  }
+  return headers;
+}
+
+function ktCodegenParamToLegacyRow(
+  parameter: KtCodegenItem,
+  headers: readonly string[],
+): readonly unknown[] {
+  return headers.map((header) => ktCodegenParamValueForColumn(
+    parameter,
+    ktCodegenNormalizeLegacyV4Header(header),
+  ));
+}
+
+const KT_CODEGEN_LEGACY_V4_ROOT_ORDER = [
+  "type",
+  "version",
+  "NamePrefix",
+  "NameMiddle",
+  "NameSpace",
+  "AppendFunction",
+  "headers",
+  "data",
+] as const;
+
+function ktCodegenOrderedRootKeys(
+  values: Readonly<Record<string, unknown>>,
+  preferredKeys: readonly string[],
+  extensionKeys: readonly string[],
+): string[] {
+  const keys = [...new Set(preferredKeys.filter((key) => Object.hasOwn(values, key)))];
+  for (let schemaIndex = 0; schemaIndex < KT_CODEGEN_LEGACY_V4_ROOT_ORDER.length; schemaIndex += 1) {
+    const key = KT_CODEGEN_LEGACY_V4_ROOT_ORDER[schemaIndex]!;
+    if (keys.includes(key)) continue;
+    const nextIndex = keys.findIndex((candidate) => {
+      const candidateIndex = KT_CODEGEN_LEGACY_V4_ROOT_ORDER.indexOf(
+        candidate as (typeof KT_CODEGEN_LEGACY_V4_ROOT_ORDER)[number],
+      );
+      return candidateIndex > schemaIndex;
+    });
+    keys.splice(nextIndex < 0 ? keys.length : nextIndex, 0, key);
+  }
+  for (const key of extensionKeys) {
+    if (keys.includes(key) || !Object.hasOwn(values, key)) continue;
+    const structuralIndex = keys.findIndex((candidate) => candidate === "headers" || candidate === "data");
+    keys.splice(structuralIndex < 0 ? keys.length : structuralIndex, 0, key);
+  }
+  return keys;
 }
 
 /** 把统一参数数据转换为旧 v4 JSON 的结构化对象。 */
-export function ktCodegenToLegacyV4JsonObject(spec: KtCodegenParam): KtCodegenLegacyV4JsonObject {
-  return {
+export function ktCodegenToLegacyV4JsonObject(
+  spec: KtCodegenParam,
+  rootKeys: readonly string[] = [],
+): KtCodegenLegacyV4JsonObject {
+  const headers = ktCodegenHeadersForWrite(spec);
+  const values: Record<string, unknown> = {
     ...spec.source.extensions,
     type: "100106",
     version: "4.0",
@@ -498,12 +576,18 @@ export function ktCodegenToLegacyV4JsonObject(spec: KtCodegenParam): KtCodegenLe
     NameMiddle: spec.nameMiddle,
     NameSpace: spec.nameSpace,
     AppendFunction: spec.appendFunction,
-    headers: [...KT_CODEGEN_LEGACY_V4_JSON_HEADERS],
-    data: spec.items.map(ktCodegenParamToLegacyRow),
+    headers,
+    data: spec.items.map((parameter) => ktCodegenParamToLegacyRow(parameter, headers)),
   };
+  const keys = ktCodegenOrderedRootKeys(values, rootKeys, Object.keys(spec.source.extensions));
+  return Object.fromEntries(keys.map((key) => [key, values[key]])) as KtCodegenLegacyV4JsonObject;
 }
 
 /** 把统一参数数据序列化为旧 C++/Qt 可读取的 v4 JSON 文本。 */
-export function ktCodegenWriteLegacyV4Json(spec: KtCodegenParam, space = 2): string {
-  return `${JSON.stringify(ktCodegenToLegacyV4JsonObject(spec), null, space)}\n`;
+export function ktCodegenWriteLegacyV4Json(
+  spec: KtCodegenParam,
+  space = 4,
+  rootKeys: readonly string[] = [],
+): string {
+  return `${JSON.stringify(ktCodegenToLegacyV4JsonObject(spec, rootKeys), null, space)}\n`;
 }

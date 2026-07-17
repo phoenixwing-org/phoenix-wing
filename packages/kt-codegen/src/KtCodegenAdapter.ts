@@ -75,14 +75,18 @@ export class KtCodegenAdapter {
    * 发生结构性错误时返回 `value: null`；未知 Combo 字符串不属于结构性错误，
    * 会按原值写出。
    */
-  writeJson(param: KtCodegenParam, space = 2): KtCodegenDataResult<string> {
+  writeJson(
+    param: KtCodegenParam,
+    space = 4,
+    rootKeys: readonly string[] = [],
+  ): KtCodegenDataResult<string> {
     const diagnostics = ktCodegenValidateParam(param);
     if (ktCodegenHasDiagnosticErrors(diagnostics)) {
       return { ok: false, value: null, diagnostics };
     }
     return {
       ok: true,
-      value: ktCodegenWriteLegacyV4Json(param, space),
+      value: ktCodegenWriteLegacyV4Json(param, space, rootKeys),
       diagnostics,
     };
   }

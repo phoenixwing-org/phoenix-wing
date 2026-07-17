@@ -135,4 +135,19 @@ describe("KtCodegenMarker", () => {
 
     expect(result).toEqual({ regions: [], diagnostics: [] });
   });
+
+  it("silently preserves a paired Kevin block outside the 32 generated block keys", () => {
+    const controller = loadedController();
+    const text = [
+      "// START KEVIN CAA WIZARD SECTION KtCourseGuardItem IID_INTERFACE_CPP",
+      "IID IID_KtCourseGuardItem = {};",
+      "// END KEVIN CAA WIZARD SECTION KtCourseGuardItem IID_INTERFACE_CPP",
+      "",
+    ].join("\n");
+    const result = controller.core.marker.scan(controller.param, snapshot(text), [
+      PARAM_DECLARATION,
+    ]);
+
+    expect(result).toEqual({ regions: [], diagnostics: [] });
+  });
 });

@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.3.0
+        specifier: workspace:0.4.0
         version: link:packages/code-core
       '@phoenix-wing/db-node':
-        specifier: workspace:0.3.0
+        specifier: workspace:0.4.0
         version: link:packages/db-node
       element-plus:
         specifier: ^2.0.0
@@ -41,7 +41,7 @@ importers:
   packages/cad-contracts:
     devDependencies:
       '@phoenix-wing/db-node':
-        specifier: workspace:0.3.0
+        specifier: workspace:0.4.0
         version: link:../db-node
       typescript:
         specifier: ^5.7.0

@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/cad-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Phoenix CAD 纯 TypeScript 领域算法",
   "type": "module",
   "sideEffects": false,

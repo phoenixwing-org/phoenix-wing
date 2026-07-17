@@ -2,7 +2,7 @@
 
 这是从 `KtAutoCode` 本地归档标签 `kt-codegen-0.1.0` 迁入 Phoenix Wing 的参数驱动代码生成核心，npm 包名为 `@phoenix-wing/kt-codegen`。归档旧仓库继续作为 VB/C++/Qt 行为、许可和来源证据。
 
-本包提供共享数据、旧格式兼容、只读源码标记扫描和32个生成块的 Core/Renderer；不写入真实项目源码，也不接产品 UI。
+本包提供共享数据、旧格式兼容、只读源码标记扫描、32个生成块的 Core/Renderer、宿主无关的 Apply 投影/回滚事务，以及17列 Table Web Component。它不直接打开真实文件，也不依赖 VS Code、DeskTools 或其他产品壳；宿主通过只读快照和文件读写 Port 接入。
 
 ## 文件与命名规则
 
@@ -15,10 +15,15 @@ src/
 ├── KtCodegenOptions.ts     # UI Combo 候选值
 ├── KtCodegenReader.ts      # CSV/JSON读取
 ├── KtCodegenAdapter.ts     # 旧格式写出、复制和清空
+├── KtCodegenApply.ts       # Apply审计、纯文本投影与宿主无关回滚事务
 ├── KtCodegenController.ts  # 宿主编排
 ├── KtCodegenCore.ts        # 核心生成算法入口
 ├── KtCodegenMarker.ts      # 旧自动代码标记构造与只读扫描
-└── KtCodegenRenderer.ts    # 多目标生成器
+├── KtCodegenRenderer.ts    # 多目标生成器
+├── KtCodegenTableCore.ts   # 无 DOM 的整表编辑与 checkpoint
+├── KtCodegenTableData.ts   # 宿主交换的整表 DTO
+├── KtCodegenTableColumns.ts # 17列描述与字段类型
+└── table/KtCodegenTable.ts # browser-only Web Component
 ```
 
 规则如下：
@@ -195,6 +200,43 @@ classDiagram
 
 因此，配置即使经过界面打开，只要用户没有主动修正，未知值仍可无损写回。
 
+## 共享 Table 组件
+
+`KtCodegenTableCore` 从包根导出，只依赖 `KtCodegenParam`，可供 Node、测试、DeskTools store 或其他 UI 控制层直接复用。`KtCodegenTable` 从 browser-only 子路径 `@phoenix-wing/kt-codegen/table` 导出，模块加载不会自动注册自定义元素，也不会污染全局 DOM。
+
+```ts
+import type { KtCodegenTableData } from "@phoenix-wing/kt-codegen";
+import {
+  ktCodegenDefineTableElement,
+  type KtCodegenTable,
+} from "@phoenix-wing/kt-codegen/table";
+
+ktCodegenDefineTableElement();
+const table = document.querySelector<KtCodegenTable>("kt-codegen-table")!;
+table.setData(data);
+
+table.addEventListener("kt-codegen-table-change", () => {
+  // 宿主自行选择保存、页面隐藏或防抖时机，再整体取出；不需要逐单元格通信。
+  const next: KtCodegenTableData = table.getData();
+});
+```
+
+- `setData()`/`getData()` 交换带 schema 与 `documentRevision` 的整表 DTO；返回值不暴露组件内部可变数组。
+- Sort、Copy/Paste、Insert、Duplicate、Move、Delete 和列宽自适应属于组件内部操作。
+- `kt-codegen-table-change` 只提示“内部数据变化”；宿主决定何时获取整表。`kt-codegen-table-dirty-change` 只在 clean/dirty 跃迁时发出。
+- `configure()` 可替换列描述和 Combo 候选；未知旧值仍显示并保持，不会因渲染被清空。
+- 文件 URI、JSON/CSV、保存冲突、Preflight 编排和 Output/Problems 留在产品宿主；Apply 的纯文本投影、指纹复核和多文件回滚事务复用 `KtCodegenApply`。DeskTools 可直接组合组件或再包一层 Vue wrapper。
+
+## 共享 Apply 与宿主边界
+
+`KtCodegenApply.ts` 把原先散落在产品宿主中的无 UI 算法集中为三组 API：
+
+- `ktCodegenInspectApplyPlan()`：汇总 Target、Marker、Artifact、未命中控制符和“有 Marker 无 Artifact”状态，返回结构化数据；宿主自行格式化日志。
+- `ktCodegenProjectApply()`：根据 `KtCodegenPlan`、源码文本与指纹形成整文件候选，校验区域缺失、重复、重叠、源码变化，并按目标 LF/CRLF 规范化生成文本；每个文件结果同时携带按源码顺序排列的 `region/artifact/block/class/line` 审计元数据。
+- `ktCodegenCommitApplyWrites()`：通过泛型 `readFile`/`writeFile` Port 在每次写前复读字节；失败时逆序回滚，而且不会覆盖回滚期间出现的第三方内容。
+
+Wing 不选择工作区、不弹窗、不发布 Problems、不决定源码编码，也不直接调用文件系统。VS Code/Desk Tools 负责工作区边界、未保存编辑器检查、UTF-8/GBK 编解码、真实文件 Port、Output 文本与诊断定位。这使两个宿主共享同一写回规则，同时保留各自 UI。
+
 ## 已迁移的参数核心语义
 
 `KtCodegenCore` 已从 `KevinCAAParamInfor.vb` 提取第一组不依赖文件系统的纯 helper：
@@ -232,6 +274,11 @@ const plan = controller.analyze({
     files: [{ path, text, fingerprint }],
   },
 });
+
+const audit = ktCodegenInspectApplyPlan(plan);
+const projection = ktCodegenProjectApply(plan, [{ path, text, fingerprint }]);
+// 宿主先按原编码把 projection.changes 编码为字节，再把文件 Port 交给事务层。
+const committed = await ktCodegenCommitApplyWrites(filePort, encodedWrites);
 ```
 
 ## 已实现范围
@@ -259,10 +306,11 @@ const plan = controller.analyze({
 - CAA Command PDA/FIA Action、废弃 ElementSelected 与活动 Field 四块 Renderer；
 - CAA/Qt Parameter 与 Dialog 双向更新四块 Renderer；
 - artifact 通过 `regionId` 关联安全区域，并保留文件指纹、缩进和 LF/CRLF；
+- Apply 计划审计、LF/CRLF 适配、整文件投影、写前复读与失败回滚；
 - 32个归档旧 block 全部具备 Renderer、Marker artifact 与迁移状态测试；
 - fixtures、结构化预期数据和单元测试。
 
-当前 Analyze 可以读取调用者提供的不可变源码快照，但不自行打开或写入文件。请求目标与标记完整时，计划可以返回 `canApply: true`；真实 Apply 仍由未来宿主或通用 code-core 完成。
+当前 Analyze 读取调用者提供的不可变源码快照，`KtCodegenApply` 根据计划形成可审计的写回候选并提供文件 Port 事务；包本身仍不自行打开或写入真实文件。请求目标与标记完整时，计划可以返回 `canApply: true`，最终编码、权限、UI 与真实文件 Port 由宿主负责。
 
 ## 运行
 

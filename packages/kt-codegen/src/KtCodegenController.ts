@@ -19,6 +19,9 @@ import { KtCodegenReader } from "./KtCodegenReader.js";
  * 语法，也不包含目标代码生成算法。
  */
 export class KtCodegenController {
+  /** 最近一次成功读取的旧 JSON 根字段顺序；CSV/原生数据不带布局模板。 */
+  private legacyJsonRootKeys: string[] = [];
+
   /** MVC-C 各消费者共享的唯一参数数据实例。 */
   public readonly param: KtCodegenParam;
 
@@ -55,7 +58,9 @@ export class KtCodegenController {
    * 失败时保留此前所有共享数据，并通过结果返回诊断。
    */
   readJson(input: string | unknown): KtCodegenDataResult<KtCodegenParam> {
-    return this.applyReadResult(this.reader.readJson(input));
+    const result = this.applyReadResult(this.reader.readJson(input));
+    if (result.ok && result.value) this.legacyJsonRootKeys = this.readRootKeys(input);
+    return result;
   }
 
   /**
@@ -64,12 +69,14 @@ export class KtCodegenController {
    * 失败时保留此前所有共享数据，并通过结果返回诊断。
    */
   readCsv(text: string): KtCodegenDataResult<KtCodegenParam> {
-    return this.applyReadResult(this.reader.readCsv(text));
+    const result = this.applyReadResult(this.reader.readCsv(text));
+    if (result.ok && result.value) this.legacyJsonRootKeys = [];
+    return result;
   }
 
   /** 将当前共享数据写成旧 v4 JSON，不执行文件系统写入。 */
-  writeJson(space = 2): KtCodegenDataResult<string> {
-    return this.adapter.writeJson(this.param, space);
+  writeJson(space = 4): KtCodegenDataResult<string> {
+    return this.adapter.writeJson(this.param, space, this.legacyJsonRootKeys);
   }
 
   /** 将当前共享数据写成旧17列 CSV，不执行文件系统写入。 */
@@ -80,6 +87,7 @@ export class KtCodegenController {
   /** 清空共享数据内容，但不替换 `param`、`items` 等共享容器引用。 */
   clear(): void {
     this.adapter.clear(this.param);
+    this.legacyJsonRootKeys = [];
   }
 
   /**
@@ -99,5 +107,17 @@ export class KtCodegenController {
     if (!result.ok || !result.value) return result;
     this.adapter.replace(this.param, result.value);
     return { ...result, value: this.param };
+  }
+
+  /** 成功解析后的第二次轻量读取只提取布局，不参与数据语义。 */
+  private readRootKeys(input: string | unknown): string[] {
+    try {
+      const value = typeof input === "string" ? JSON.parse(input) as unknown : input;
+      return typeof value === "object" && value !== null && !Array.isArray(value)
+        ? Object.keys(value)
+        : [];
+    } catch {
+      return [];
+    }
   }
 }

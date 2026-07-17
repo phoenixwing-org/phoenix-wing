@@ -13,9 +13,6 @@ import type { KtCodegenParam } from "./KtCodegenParam.js";
 
 const KT_CODEGEN_MARKER_START = "START KEVIN CAA WIZARD SECTION";
 const KT_CODEGEN_MARKER_END = "END KEVIN CAA WIZARD SECTION";
-const KT_CODEGEN_BLOCK_KEYS_BY_LENGTH = [...KT_CODEGEN_LEGACY_BLOCKS]
-  .map((block) => block.key)
-  .sort((left, right) => right.length - left.length);
 
 /** 自动代码控制标记的开始或结束种类。 */
 export type KtCodegenMarkerKind = "start" | "end";
@@ -96,7 +93,8 @@ interface KtCodegenSourceLine {
 interface KtCodegenParsedMarker {
   readonly kind: KtCodegenMarkerKind;
   readonly classId: string;
-  readonly blockKey: KtCodegenBlockKey;
+  /** 标记协议中的块区分词；只有已归档的32项才会进入生成计划。 */
+  readonly blockKey: string;
   readonly line: KtCodegenSourceLine;
   readonly column: number;
   readonly markerEndColumn: number;
@@ -112,6 +110,10 @@ interface KtCodegenOpenMarker {
 interface KtCodegenMarkerLineParseResult {
   readonly marker: KtCodegenParsedMarker | null;
   readonly diagnostic: KtCodegenDiagnostic | null;
+}
+
+function isArchivedBlockKey(value: string): value is KtCodegenBlockKey {
+  return KT_CODEGEN_LEGACY_BLOCKS.some((block) => block.key === value);
 }
 
 /**
@@ -199,7 +201,10 @@ export class KtCodegenMarker {
         if (open) open.invalid = true;
       }
       if (!parsed.marker) continue;
-      if (!requestedBlocks.has(parsed.marker.blockKey)) {
+      if (
+        !isArchivedBlockKey(parsed.marker.blockKey) ||
+        !requestedBlocks.has(parsed.marker.blockKey)
+      ) {
         if (open) {
           diagnostics.push(
             this.sourceDiagnostic(
@@ -248,7 +253,11 @@ export class KtCodegenMarker {
         continue;
       }
 
-      const marker = this.toMarkerPoint(file.path, parsed.marker, nameSuffix);
+      const knownMarker = {
+        ...parsed.marker,
+        blockKey: parsed.marker.blockKey,
+      } as KtCodegenParsedMarker & { readonly blockKey: KtCodegenBlockKey };
+      const marker = this.toMarkerPoint(file.path, knownMarker, nameSuffix);
       if (marker.kind === "start") {
         if (open) {
           diagnostics.push(
@@ -406,16 +415,14 @@ export class KtCodegenMarker {
 
     const payloadStartColumn = payloadColumn + 1;
     const payload = line.text.slice(payloadStartColumn).trimEnd();
-    const blockKey = KT_CODEGEN_BLOCK_KEYS_BY_LENGTH.find((candidate) =>
-      payload.endsWith(` ${candidate}`),
-    );
-    if (!blockKey) {
+    const separatorColumn = payload.indexOf(" ");
+    if (separatorColumn < 1 || separatorColumn === payload.length - 1) {
       return {
         marker: null,
         diagnostic: this.sourceDiagnostic(
-          "marker.unknown-block",
-          "warning",
-          "Kevin marker does not end with one of the 32 archived block keys.",
+          "marker.malformed-payload",
+          "error",
+          "Kevin marker must contain a class identity followed by a block discriminator.",
           path,
           line.number,
           column,
@@ -423,20 +430,8 @@ export class KtCodegenMarker {
       };
     }
 
-    const classId = payload.slice(0, -(blockKey.length + 1));
-    if (classId.length === 0) {
-      return {
-        marker: null,
-        diagnostic: this.sourceDiagnostic(
-          "marker.missing-class-id",
-          "error",
-          "Kevin marker has no class identity before its block key.",
-          path,
-          line.number,
-          column,
-        ),
-      };
-    }
+    const classId = payload.slice(0, separatorColumn);
+    const blockKey = payload.slice(separatorColumn + 1).trim();
 
     const beforeMarker = line.text.slice(0, column);
     const commentColumn = beforeMarker.lastIndexOf("//");
@@ -460,7 +455,7 @@ export class KtCodegenMarker {
   /** 将内部解析记录转换为公开、可审计的绝对定位结构。 */
   private toMarkerPoint(
     path: string,
-    marker: KtCodegenParsedMarker,
+    marker: KtCodegenParsedMarker & { readonly blockKey: KtCodegenBlockKey },
     nameSuffix: string,
   ): KtCodegenMarkerPoint {
     return {

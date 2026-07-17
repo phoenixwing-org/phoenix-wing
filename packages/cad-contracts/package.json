@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/cad-contracts",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Phoenix CAD 跨宿主 JSON 契约、协议版本与 DTO",
   "type": "module",
   "sideEffects": false,
@@ -43,7 +43,7 @@
     "url": "https://gitee.com/PhoenixWing321/phoenix-wing.git"
   },
   "devDependencies": {
-    "@phoenix-wing/db-node": "workspace:0.3.0",
+    "@phoenix-wing/db-node": "workspace:0.4.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
