@@ -16,7 +16,9 @@ npm install phoenix-wing vue pinia
 
 `phoenix-wing` 聚合 UI 只发布 `dist` 编译产物。根入口和保留的 `.vue` 兼容子路径均落到同一份 JavaScript 模块图，避免 Vite 分别预构建根入口与源码 SFC 时产生 Vue/Pinia singleton 双实例。新代码优先使用根入口的命名导出；组件样式由编译入口自动加载。
 
-跨宿主兼容性不依靠 npm 版本猜测：KtCodegen Plan、Ribbon contribution、workspace schema、CAD native/provider/query 都有独立的 schema/protocol 版本与运行时拒绝门禁。Canonical fixtures 随对应 npm 包发布，产品仓只保留宿主 adapter 和字节一致的消费副本。
+跨宿主兼容性不依靠 npm 版本猜测：KtCodegen Plan、Ribbon contribution、workspace schema、CAD native/provider/query 都有独立的 schema/protocol 版本与运行时拒绝门禁。Canonical fixtures 随对应 npm 包发布，产品仓直接导入同一 Registry fixture，只保留宿主 adapter，不再维护消费副本。
+
+单仓 CI 使用 `pnpm verify:ci`，只依赖 Wing checkout；四仓同目录联调时再运行 `pnpm verify:consumers`，核对 Auto Code、Desk Tools 与 Open Issue 的 Registry 精确版本和依赖边界。
 
 ## 快速使用
 

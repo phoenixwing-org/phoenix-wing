@@ -15,13 +15,23 @@
     {
       "name": "kt-auto-code workspace",
       "manifest": "../kt-auto-code/package.json",
-      "required": { "dependencies": { "@phoenix-wing/code-core": "0.4.1" } },
+      "required": {
+        "dependencies": {
+          "@phoenix-wing/code-core": "0.4.2",
+          "@phoenix-wing/kt-codegen": "0.4.2"
+        }
+      },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source"]
     },
     {
       "name": "KT Auto Code VSIX",
       "manifest": "../kt-auto-code/extension/package.json",
-      "required": { "dependencies": { "@phoenix-wing/code-core": "0.4.1" } },
+      "required": {
+        "dependencies": {
+          "@phoenix-wing/code-core": "0.4.2",
+          "@phoenix-wing/kt-codegen": "0.4.2"
+        }
+      },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source"]
     },
     {
@@ -29,9 +39,9 @@
       "manifest": "../kt-auto-code/extensions/kt-auto-cad/package.json",
       "required": {
         "devDependencies": {
-          "@phoenix-wing/cad-contracts": "0.4.1",
-          "@phoenix-wing/cad-core": "0.4.1",
-          "@phoenix-wing/workspace-schema": "0.4.1"
+          "@phoenix-wing/cad-contracts": "0.4.2",
+          "@phoenix-wing/cad-core": "0.4.2",
+          "@phoenix-wing/workspace-schema": "0.4.2"
         }
       },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
@@ -41,20 +51,38 @@
       "manifest": "../phoenix-desk-tools/server/package.json",
       "required": {
         "dependencies": {
-          "@phoenix-wing/code-core": "0.4.1",
-          "@phoenix-wing/cad-contracts": "0.4.1",
-          "@phoenix-wing/cad-core": "0.4.1",
-          "@phoenix-wing/workspace-schema": "0.4.1",
-          "@phoenix-wing/db-node": "0.4.1"
+          "@phoenix-wing/code-core": "0.4.2",
+          "@phoenix-wing/cad-contracts": "0.4.2",
+          "@phoenix-wing/cad-core": "0.4.2",
+          "@phoenix-wing/workspace-schema": "0.4.2",
+          "@phoenix-wing/db-node": "0.4.2",
+          "@phoenix-wing/kt-codegen": "0.4.2"
         },
-        "devDependencies": { "@phoenix-wing/cad-rust-source": "0.4.1" }
+        "devDependencies": { "@phoenix-wing/cad-rust-source": "0.4.2" }
       },
       "forbidden": ["phoenix-wing"]
     },
     {
       "name": "Desk Tools web-ui",
       "manifest": "../phoenix-desk-tools/web-ui/package.json",
-      "required": { "dependencies": { "phoenix-wing": "0.4.1" } },
+      "required": {
+        "dependencies": {
+          "@phoenix-wing/kt-codegen": "0.4.2",
+          "phoenix-wing": "0.4.2"
+        }
+      },
+      "forbidden": ["@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
+    },
+    {
+      "name": "Open Issue server",
+      "manifest": "../phoenix-open-issue/packages/server/package.json",
+      "required": { "dependencies": { "phoenix-wing": "0.4.2" } },
+      "forbidden": ["@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
+    },
+    {
+      "name": "Open Issue web",
+      "manifest": "../phoenix-open-issue/packages/web/package.json",
+      "required": { "dependencies": { "phoenix-wing": "0.4.2" } },
       "forbidden": ["@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
     }
   ],

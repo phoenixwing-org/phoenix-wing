@@ -70,10 +70,11 @@
     "verify:cad-rust-tarball": "node scripts/verify-cad-rust-tarball.mjs",
     "verify:package-tarballs": "node scripts/verify-package-tarballs.mjs",
     "verify:release-matrix": "node scripts/verify-release-matrix.mjs",
+    "verify:consumers": "node scripts/verify-release-matrix.mjs --require-consumers",
     "docs:manifest": "node scripts/generate-doc-manifest.mjs",
     "docs:check": "node scripts/generate-doc-manifest.mjs --check",
     "verify:architecture": "node scripts/verify-import-boundaries.mjs",
-    "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix -- --require-consumers && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
+    "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix -- --wing-only && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "vitest"
   },

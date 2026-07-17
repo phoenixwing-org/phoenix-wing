@@ -253,7 +253,7 @@ Wing 不选择工作区、不弹窗、不发布 Problems、不决定源码编码
 
 宿主在解释序列化 Analyze Plan 前必须调用 `ktCodegenCheckPlanCompatibility()`。当前只接受 `kind: "kt.codegen.plan"`、`schemaVersion: 1`；未知未来版本返回 `contract.unsupported-schema-version`，不能由宿主按字段猜测兼容。
 
-`@phoenix-wing/kt-codegen/fixtures/codegen-host-contract-v1.json` 是 Analyze、marker、legacy v4 JSON 与 17 列 CSV 的联合 golden；它冻结参数归一化、Marker 字节偏移、Renderer 身份、Artifact 内容哈希和版本拒绝结果。`apply-projection-v1.json` 独立冻结 Apply 的 CRLF 投影、审计顺序、冲突码与最终 UTF-8 字节。Auto Code 与 Desk Tools 只保存字节一致的消费副本并调用本包 API，不复制协议解释。
+`@phoenix-wing/kt-codegen/fixtures/codegen-host-contract-v1.json` 是 Analyze、marker、legacy v4 JSON 与 17 列 CSV 的联合 golden；它冻结参数归一化、Marker 字节偏移、Renderer 身份、Artifact 内容哈希和版本拒绝结果。`apply-projection-v1.json` 独立冻结 Apply 的 CRLF 投影、审计顺序、冲突码与最终 UTF-8 字节。Auto Code 与 Desk Tools 直接导入 Registry 包中的同一 fixture 并调用本包 API，不保存副本，也不复制协议解释。
 
 fixtures 的 `schemaVersion` 是测试 bundle 版本，Analyze Plan 的 `schemaVersion` 是运行时 envelope 版本，两者都独立于 npm 包版本。变更任一公开语义时，必须新增版本或提供兼容判定，不能静默覆盖既有 v1 golden。
 
