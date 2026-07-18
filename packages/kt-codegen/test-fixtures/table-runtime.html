@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KtCodegenTable runtime fixture</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { padding: 16px; background: #1f1f1f; color: #cccccc; font: 13px system-ui, sans-serif; }
+    .fixture { width: min(720px, calc(100vw - 32px)); height: min(420px, calc(100vh - 32px)); }
+    .fixture[layout="page"] { height: auto; }
+    #fixture-state { margin: 10px 0 0; color: #9cdcfe; }
+  </style>
+</head>
+<body>
+  <kt-codegen-table class="fixture"></kt-codegen-table>
+  <p id="fixture-state" role="status">等待组件……</p>
+  <script type="module">
+    import { ktCodegenDefineTableElement } from "../dist/table/index.js";
+
+    ktCodegenDefineTableElement();
+    const table = document.querySelector("kt-codegen-table");
+    const state = document.querySelector("#fixture-state");
+    const query = new URLSearchParams(location.search);
+    if (query.has("narrow")) {
+      table.style.width = "360px";
+      table.style.height = "260px";
+    }
+    table.layout = query.get("layout") === "page" ? "page" : "contained";
+    table.collapsible = query.has("collapsible");
+    table.collapsed = query.has("collapsed");
+    const rowCount = query.has("empty") ? 0 : Number.parseInt(query.get("rows") || "24", 10);
+    table.setData({
+      kind: "kt.codegen.table-data",
+      schemaVersion: 1,
+      documentRevision: 7,
+      selectedRow: 1,
+      items: Array.from({ length: rowCount }, (_, index) => ({
+        nameSuffix: `Curve${index + 1}`,
+        id: index + 1,
+        name: `Point ${index + 1}`,
+        paramString: `Point${index + 1}`,
+        dataType: "CATISpecObject_var",
+        tcKind: "tk_specobject",
+        defaultValue: "NULL_var",
+        catAttrInOut: "sp_IN",
+        isList: index % 3 === 0,
+        isOnTree: index % 2 === 0,
+        component: "SelectorList",
+        componentCount: 1,
+        isParamDlg: true,
+        unit: "",
+        author: "Runtime Fixture",
+        createDate: "2026-07-18",
+        notes: `visual primitive row ${index + 1}`,
+      })),
+    });
+    table.setStatus("error", "运行态视觉原语点检");
+    let collapseEvents = 0;
+    table.addEventListener("kt-codegen-table-collapse-change", (event) => {
+      collapseEvents += 1;
+      state.textContent = `用户折叠事件 ${collapseEvents}：collapsed=${event.detail.collapsed}`;
+    });
+    window.__wingTableMetrics = () => {
+      const shell = table.shadowRoot.querySelector("[data-role=table-shell]");
+      const statusbar = table.shadowRoot.querySelector("[data-role=statusbar]");
+      const toggle = table.shadowRoot.querySelector("[data-role=collapse-toggle]");
+      const shellStyle = getComputedStyle(shell);
+      return {
+        layout: table.layout,
+        collapsible: table.collapsible,
+        collapsed: table.collapsed,
+        collapseEvents,
+        page: { clientHeight: document.documentElement.clientHeight, scrollHeight: document.documentElement.scrollHeight },
+        host: { clientHeight: table.clientHeight, scrollHeight: table.scrollHeight },
+        shell: {
+          clientHeight: shell.clientHeight,
+          scrollHeight: shell.scrollHeight,
+          clientWidth: shell.clientWidth,
+          scrollWidth: shell.scrollWidth,
+          overflowX: shellStyle.overflowX,
+          overflowY: shellStyle.overflowY,
+          hidden: shell.hidden,
+        },
+        statusbarHidden: statusbar.hidden,
+        ariaExpanded: toggle.getAttribute("aria-expanded"),
+        ariaLabel: toggle.getAttribute("aria-label"),
+        toolCount: table.shadowRoot.querySelectorAll("button[data-action]").length,
+      };
+    };
+    state.textContent = `${table.layout} · ${rowCount} 行 · ${table.collapsible ? "可折叠" : "固定展开"}`;
+    window.__wingTableReady = true;
+  </script>
+</body>
+</html>

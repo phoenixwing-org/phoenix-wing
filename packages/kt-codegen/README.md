@@ -24,7 +24,10 @@ src/
 ├── KtCodegenTableCore.ts   # 无 DOM 的整表编辑与 checkpoint
 ├── KtCodegenTableData.ts   # 宿主交换的整表 DTO
 ├── KtCodegenTableColumns.ts # 17列描述与字段类型
-└── table/KtCodegenTable.ts # browser-only Web Component
+└── table/
+    ├── KtCodegenTableViewModel.ts # 无 DOM 的动作、Combo、列宽与状态投影
+    ├── KtCodegenTableStyle.ts     # pnw 类名、主题 token 与滚动视觉原语
+    └── KtCodegenTable.ts          # browser-only Web Component
 ```
 
 规则如下：
@@ -225,19 +228,33 @@ import {
 
 ktCodegenDefineTableElement();
 const table = document.querySelector<KtCodegenTable>("kt-codegen-table")!;
+table.layout = "page";
+table.collapsible = true;
 table.setData(data);
 
 table.addEventListener("kt-codegen-table-change", () => {
   // 宿主自行选择保存、页面隐藏或防抖时机，再整体取出；不需要逐单元格通信。
   const next: KtCodegenTableData = table.getData();
 });
+
+table.addEventListener("kt-codegen-table-collapse-change", (event) => {
+  // 只响应用户点击；table.collapsed = true 不会回发事件。
+  console.log(event.detail.collapsed);
+});
 ```
 
 - `setData()`/`getData()` 交换带 schema 与 `documentRevision` 的整表 DTO；返回值不暴露组件内部可变数组。
 - Sort、Copy/Paste、Insert、Duplicate、Move、Delete 和列宽自适应属于组件内部操作。
+- 动作可用性、Combo 未知值/空值/分隔项、列宽拟合与状态栏计数由 UI-neutral `KtCodegenTableViewModel.ts` 统一投影；Web Component 只把这些描述装配成 DOM。该文件纳入 pure import graph，不可依赖 DOM、Vue、Node 或宿主 API。
+- Shadow DOM 的 `pnw-kt-codegen-table-*` 类名、VS Code token 回退、工具栏/表格滚动与 sticky 表头由内部 `KtCodegenTableStyle.ts` 单点维护；组件只按 class map 装配。该视觉原语也纳入 pure import graph，但不从 browser 子路径公开导出。
+- `layout="contained"` 是兼容默认值，保留组件高度与内部双向滚动；`layout="page"` 使用自然高度，表格区只保留横向溢出，由 Page shell 负责唯一纵向滚动。空表提示在 page 模式进入文档流，不会被零高度容器裁切。
+- `collapsible` 启用 Header disclosure button，`collapsed` 可由宿主静默反射；只有用户点击会发出 `kt-codegen-table-collapse-change`，程序设置不发 change/dirty/collapse 事件。收起只隐藏 table shell 与 statusbar，全部表格工具仍留在 Header。
+- 本地构建后可用 `test-fixtures/table-runtime.html?layout=page&collapsible` 在浏览器点检真实 Shadow DOM、自然高度、横向滚动、折叠和焦点；追加 `empty`/`collapsed`/`rows=40` 可覆盖空表、初始收起与长表。该夹具不进入 npm `files` 白名单。
 - `kt-codegen-table-change` 只提示“内部数据变化”；宿主决定何时获取整表。`kt-codegen-table-dirty-change` 只在 clean/dirty 跃迁时发出。
 - `configure()` 可替换列描述和 Combo 候选；未知旧值仍显示并保持，不会因渲染被清空。
 - 文件 URI、JSON/CSV、保存冲突、Preflight 编排和 Output/Problems 留在产品宿主；Apply 的纯文本投影、指纹复核和多文件回滚事务复用 `KtCodegenApply`。DeskTools 可直接组合组件或再包一层 Vue wrapper。
+
+布局责任、属性反射、事件和无障碍边界见[《KtCodegenTable 布局与折叠契约》](doc/KtCodegenTable布局与折叠契约.md)。
 
 ## 共享 Apply 与宿主边界
 
@@ -312,7 +329,7 @@ const committed = await ktCodegenCommitApplyWrites(filePort, encodedWrites);
 - 32个 block 的 VB 调用、源码位置、主目标和废弃状态迁移矩阵；
 - 第一组默认值、类型和列表核心 helper；
 - 旧 Kevin Start/End 标记构造、只读扫描和精确替换偏移；
-- 标记孤立、缺失、嵌套、错配和未知 block 诊断；
+- 标记孤立、缺失和错配诊断、未知 block 透传，并在下一个语法完整 Start 恢复扫描；
 - 标记区域进入 Analyze Plan；
 - 普通 C++ Parameter 的构造、声明、析构和赋值四块 Renderer；
 - CAA 实现类与纯虚接口的 Get/Set 四块 Renderer；

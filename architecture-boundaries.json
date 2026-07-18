@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentDate": "2026-07-17",
+  "currentDate": "2026-07-18",
   "scanRoots": [
     "packages/code-core/src",
     "packages/kt-codegen/src",
@@ -13,6 +13,8 @@
   "pureEntrypoints": [
     "packages/code-core/src/index.ts",
     "packages/kt-codegen/src/index.ts",
+    "packages/kt-codegen/src/table/KtCodegenTableViewModel.ts",
+    "packages/kt-codegen/src/table/KtCodegenTableStyle.ts",
     "packages/cad-contracts/src/index.ts",
     "packages/cad-core/src/index.ts",
     "packages/workspace-schema/src/index.ts"

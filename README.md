@@ -20,6 +20,12 @@ npm install phoenix-wing vue pinia
 
 单仓 CI 使用 `pnpm verify:ci`，只依赖 Wing checkout；四仓同目录联调时再运行 `pnpm verify:consumers`，核对 Auto Code、Desk Tools 与 Open Issue 的 Registry 精确版本和依赖边界。
 
+## 消费者本地联调
+
+标准开发目录要求 `phoenix-wing`、`kt-auto-code`、`phoenix-desk-tools` 三仓同级。Auto Code 使用 `pnpm dev`（AI 无 GUI 验证用 `pnpm ext:dev:prepare`），Desk Tools 使用 `pnpm dev`、`pnpm test:local-wing` 或 `pnpm build:local-wing`；找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。
+
+正式 npm 包行为必须另跑显式 Registry 对照命令。完整目录、命令、安全边界与消费者验收入口见 **[doc/本地验证方法.md](doc/本地验证方法.md)**。
+
 ## 快速使用
 
 详见 **[doc/快速使用.md](doc/快速使用.md)**
@@ -60,6 +66,7 @@ npm install phoenix-wing vue pinia
 |------|------|
 | [doc/文档索引.md](doc/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
 | [doc/快速使用.md](doc/快速使用.md) | 各类 API 快速上手示例 |
+| [doc/本地验证方法.md](doc/本地验证方法.md) | 三仓并列目录、Auto/Desk 本地 Wing 命令与 Registry 对照边界 |
 | [doc/架构图.md](doc/架构图.md) | 壳层组件树和引擎清单 |
 | [doc/plan.md](doc/plan.md) | 当前路线、已完成基线和后续治理顺序 |
 | [doc/命名规则.md](doc/命名规则.md) | 命名规则、前缀对照、违规示例 |

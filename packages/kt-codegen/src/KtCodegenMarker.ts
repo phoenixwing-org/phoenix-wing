@@ -77,9 +77,9 @@ export interface KtCodegenMarkerRegion {
 
 /** 一次只读源码标记扫描的结果。 */
 export interface KtCodegenMarkerScanResult {
-  /** 结构完整且没有嵌套或错配风险的标记区域。 */
+  /** 结构完整且没有错配风险的标记区域。 */
   readonly regions: readonly KtCodegenMarkerRegion[];
-  /** 孤立、缺失、嵌套、错配或格式异常标记的结构化诊断。 */
+  /** 孤立、缺失、错配或格式异常标记的结构化诊断。 */
   readonly diagnostics: readonly KtCodegenDiagnostic[];
 }
 
@@ -121,7 +121,8 @@ function isArchivedBlockKey(value: string): value is KtCodegenBlockKey {
  *
  * 本类复现 `KevinCAAFileGuide` 的 `START/END KEVIN CAA WIZARD SECTION`
  * 文本协议和缩进提取规则，但不生成业务代码、不修改源码，也不写文件。
- * 对旧实现会静默吞掉的嵌套、错配和孤立标记，本类返回明确 error 诊断。
+ * 控制块严格同级、不允许嵌套；对旧实现会静默吞掉的缺失、错配和孤立标记，
+ * 本类返回明确 error 诊断并在下一处语法完整的 Start 恢复扫描。
  */
 export class KtCodegenMarker {
   /** 根据共享参数和后缀创建旧标记使用的类身份。 */
@@ -201,131 +202,68 @@ export class KtCodegenMarker {
         if (open) open.invalid = true;
       }
       if (!parsed.marker) continue;
+
+      let marker: KtCodegenMarkerPoint | null = null;
       if (
-        !isArchivedBlockKey(parsed.marker.blockKey) ||
-        !requestedBlocks.has(parsed.marker.blockKey)
+        isArchivedBlockKey(parsed.marker.blockKey) &&
+        requestedBlocks.has(parsed.marker.blockKey)
       ) {
-        if (open) {
-          diagnostics.push(
-            this.sourceDiagnostic(
-              parsed.marker.kind === "start"
-                ? "marker.nested-start"
-                : "marker.mismatched-end",
-              "error",
-              `${parsed.marker.kind === "start" ? "Start" : "End"} marker ${parsed.marker.classId} ${parsed.marker.blockKey} appears inside the open ${open.marker.classId} ${open.marker.blockKey} region.`,
-              file.path,
-              line.number,
-              parsed.marker.column,
-            ),
-          );
-          open.invalid = true;
+        const nameSuffix = expectedClassIds.get(parsed.marker.classId);
+        if (nameSuffix !== undefined) {
+          const knownMarker = {
+            ...parsed.marker,
+            blockKey: parsed.marker.blockKey,
+          } as KtCodegenParsedMarker & { readonly blockKey: KtCodegenBlockKey };
+          marker = this.toMarkerPoint(file.path, knownMarker, nameSuffix);
         }
-        continue;
       }
 
-      const nameSuffix = expectedClassIds.get(parsed.marker.classId);
-      if (nameSuffix === undefined) {
-        if (open && parsed.marker.kind === "start") {
-          diagnostics.push(
-            this.sourceDiagnostic(
-              "marker.nested-start",
-              "error",
-              `A foreign Start marker appears before ${open.marker.classId} ${open.marker.blockKey} is closed.`,
-              file.path,
-              line.number,
-              parsed.marker.column,
-            ),
-          );
-          open.invalid = true;
-        } else if (open && parsed.marker.kind === "end") {
-          diagnostics.push(
-            this.sourceDiagnostic(
-              "marker.mismatched-end",
-              "error",
-              `End marker ${parsed.marker.classId} ${parsed.marker.blockKey} does not close ${open.marker.classId} ${open.marker.blockKey}.`,
-              file.path,
-              line.number,
-              parsed.marker.column,
-            ),
-          );
-          open.invalid = true;
-        }
-        continue;
-      }
-
-      const knownMarker = {
-        ...parsed.marker,
-        blockKey: parsed.marker.blockKey,
-      } as KtCodegenParsedMarker & { readonly blockKey: KtCodegenBlockKey };
-      const marker = this.toMarkerPoint(file.path, knownMarker, nameSuffix);
-      if (marker.kind === "start") {
-        if (open) {
-          diagnostics.push(
-            this.sourceDiagnostic(
-              "marker.nested-start",
-              "error",
-              `Start marker ${marker.classId} ${marker.blockKey} appears before ${open.marker.classId} ${open.marker.blockKey} is closed.`,
-              file.path,
-              marker.line,
-              marker.column,
-            ),
-          );
-          open.invalid = true;
+      // Kevin 控制块严格同级、不允许嵌套。任何下一条语法完整 marker 都是当前
+      // 打开块的边界；只有身份完全匹配的 End 能闭合它。Start 或错配 End 都先
+      // 终止旧状态，避免一个手误向文件后部级联出 nested/mismatched 诊断。
+      if (open) {
+        if (parsed.marker.kind === "start") {
+          diagnostics.push(this.missingEndDiagnostic(file.path, open, parsed.marker));
+          open = null;
+        } else if (
+          !marker ||
+          open.marker.classId !== marker.classId ||
+          open.marker.blockKey !== marker.blockKey
+        ) {
+          diagnostics.push(this.missingEndDiagnostic(file.path, open, parsed.marker));
+          open = null;
+          if (marker) diagnostics.push(this.orphanEndDiagnostic(marker));
+          continue;
+        } else {
+          if (!open.invalid) {
+            regions.push({
+              id: `${file.path}:${open.marker.lineStartOffset}:${marker.lineEndOffset}`,
+              path: file.path,
+              sourceFingerprint: file.fingerprint,
+              classId: marker.classId,
+              nameSuffix: marker.nameSuffix,
+              blockKey: marker.blockKey,
+              start: open.marker,
+              end: marker,
+              bodyStartOffset: open.marker.lineEndOffset,
+              bodyEndOffset: marker.lineStartOffset,
+              replaceStartOffset: open.marker.lineStartOffset,
+              replaceEndOffset: marker.lineEndOffset,
+            });
+          }
+          open = null;
           continue;
         }
+      }
+
+      // 未请求 block 和其他类的 marker 也能切断旧 open，但其自身保持静默，
+      // 避免一次局部扫描把未选择的正常控制块误报为孤立标记。
+      if (!marker) continue;
+      if (marker.kind === "start") {
         open = { marker, invalid: false };
-        continue;
+      } else {
+        diagnostics.push(this.orphanEndDiagnostic(marker));
       }
-
-      if (!open) {
-        diagnostics.push(
-          this.sourceDiagnostic(
-            "marker.orphan-end",
-            "error",
-            `End marker ${marker.classId} ${marker.blockKey} has no preceding Start marker.`,
-            file.path,
-            marker.line,
-            marker.column,
-          ),
-        );
-        continue;
-      }
-
-      if (
-        open.marker.classId !== marker.classId ||
-        open.marker.blockKey !== marker.blockKey
-      ) {
-        diagnostics.push(
-          this.sourceDiagnostic(
-            "marker.mismatched-end",
-            "error",
-            `End marker ${marker.classId} ${marker.blockKey} does not close ${open.marker.classId} ${open.marker.blockKey}.`,
-            file.path,
-            marker.line,
-            marker.column,
-          ),
-        );
-        open.invalid = true;
-        continue;
-      }
-
-      if (!open.invalid) {
-        regions.push({
-          id: `${file.path}:${open.marker.lineStartOffset}:${marker.lineEndOffset}`,
-          path: file.path,
-          sourceFingerprint: file.fingerprint,
-          classId: marker.classId,
-          nameSuffix: marker.nameSuffix,
-          blockKey: marker.blockKey,
-          start: open.marker,
-          end: marker,
-          bodyStartOffset: open.marker.lineEndOffset,
-          bodyEndOffset: marker.lineStartOffset,
-          replaceStartOffset: open.marker.lineStartOffset,
-          replaceEndOffset: marker.lineEndOffset,
-        });
-      }
-      open = null;
     }
 
     if (open) {
@@ -340,6 +278,35 @@ export class KtCodegenMarker {
         ),
       );
     }
+  }
+
+  /** 在旧 Start 位置报告其直到下一条完整 marker 仍未闭合。 */
+  private missingEndDiagnostic(
+    path: string,
+    open: KtCodegenOpenMarker,
+    boundary: KtCodegenParsedMarker,
+  ): KtCodegenDiagnostic {
+    const boundaryKind = boundary.kind === "start" ? "Start" : "End";
+    return this.sourceDiagnostic(
+      "marker.missing-end",
+      "error",
+      `Start marker ${open.marker.classId} ${open.marker.blockKey} has no matching End marker before ${boundaryKind} marker at line ${boundary.line.number + 1}.`,
+      path,
+      open.marker.line,
+      open.marker.column,
+    );
+  }
+
+  /** 把没有可闭合 open 的已选 End 作为独立错误定位。 */
+  private orphanEndDiagnostic(marker: KtCodegenMarkerPoint): KtCodegenDiagnostic {
+    return this.sourceDiagnostic(
+      "marker.orphan-end",
+      "error",
+      `End marker ${marker.classId} ${marker.blockKey} has no preceding Start marker.`,
+      marker.path,
+      marker.line,
+      marker.column,
+    );
   }
 
   /** 将文件文本拆成保留精确绝对偏移的逻辑行。 */

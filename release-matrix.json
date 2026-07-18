@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "release_version": "0.4.2",
+  "release_version": "0.4.3",
   "packages": [
     { "name": "phoenix-wing", "manifest": "package.json", "kind": "compat-ui" },
     { "name": "@phoenix-wing/code-core", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },

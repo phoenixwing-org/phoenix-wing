@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "owner": "Phoenix Wing maintainers",
-  "lastVerified": "2026-07-17",
+  "lastVerified": "2026-07-18",
   "appliesTo": "0.4.x",
   "rules": [
     {
@@ -27,6 +27,12 @@
       "status": "archived",
       "sourceOfTruth": "doc/三库版本矩阵.md",
       "reason": "0.4.0/0.4.1 发布历史证据"
+    },
+    {
+      "match": "^doc/0\\.4\\.2发布候选验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "doc/0.4.3发布候选验收.md",
+      "reason": "0.4.2 候选与公开发布历史证据"
     },
     {
       "match": "^packages/kt-codegen/doc/(两小时迁移计划与验收|KtCodegen命名迁移说明|普通C\\+\\+参数块迁移|CAA.*块迁移|Command.*块迁移|Dialog.*块迁移)\\.md$",

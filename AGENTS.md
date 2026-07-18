@@ -46,6 +46,25 @@ phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `d
 
 `packages/` npm workspace 与 Cargo workspace 已落地；继续遵循真实消费者驱动，不预建无消费者的包。
 
+## 消费者本地联调（AI 强制）
+
+Phoenix 三个开发仓库使用唯一的标准并列目录，目录名不得自行变体：
+
+```text
+phoenix/
+├── phoenix-wing/
+├── kt-auto-code/
+└── phoenix-desk-tools/
+```
+
+- Auto Code 本地联调在 `kt-auto-code` 根运行 `pnpm dev`；AI 只构建和验证来源时运行 `pnpm ext:dev:prepare`。Registry 对照分别使用 `pnpm dev:registry` 或不启动 GUI 的 `pnpm ext:dev:registry:prepare`。
+- Desk Tools 本地联调在 `phoenix-desk-tools` 根按目的运行 `pnpm dev`、`pnpm test:local-wing` 或 `pnpm build:local-wing`。Registry 对照使用对应的 `pnpm dev:registry`、`pnpm test:registry` 或 `pnpm build:registry`。
+- 标准本地命令找不到同级 `../phoenix-wing` 时必须说明上述目录要求并停止；若只需验证已发布包，应提示并改用显式 Registry 命令。禁止静默回退，也禁止由 AI 另造路径分支绕过目录错误。
+- 禁止运行 `pnpm link`，禁止写入 `link:`、`file:`、`workspace:` 本地依赖或 `pnpm.overrides`，禁止临时修改消费者 `pnpm-workspace.yaml`、`package.json`、`pnpm-lock.yaml`，禁止替换或编辑 `node_modules`。
+- 本地联调成功只证明并列源码消费，不等于 npm tarball、Registry 或真实发布完成；不得因此修改 Wing 版本、标签或发布矩阵。
+
+详细责任、命令与消费者验收入口见 `doc/本地验证方法.md`。
+
 ## 文档
 
 - `doc/文档索引.md` — 当前文档唯一导航

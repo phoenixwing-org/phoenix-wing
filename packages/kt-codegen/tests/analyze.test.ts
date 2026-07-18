@@ -91,6 +91,40 @@ describe("KtCodegenController", () => {
     );
   });
 
+  it("keeps Apply blocked when scanning recovers a later complete marker region", () => {
+    const controller = new KtCodegenController();
+    expect(controller.readJson(ktCodegenReadFixture("legacy-v4/basic.json")).ok).toBe(true);
+    const marker = controller.core.marker;
+    const text = [
+      marker.createStart(controller.param, "Item", "PARAM DECLARATION"),
+      "int staleDeclaration;",
+      marker.createStart(controller.param, "Item", "PARAM EQUAL"),
+      "return *this;",
+      marker.createEnd(controller.param, "Item", "PARAM EQUAL"),
+      "",
+    ].join("\n");
+
+    const plan = controller.analyze({
+      targets: ["cpp.parameter"],
+      blockKeys: ["PARAM DECLARATION", "PARAM EQUAL"],
+      snapshot: {
+        files: [{ path: "recovered.cpp", text, fingerprint: "fixture:recovered" }],
+      },
+    });
+
+    expect(plan.markerRegions.map((region) => region.blockKey)).toEqual([
+      "PARAM EQUAL",
+    ]);
+    expect(plan.artifacts).toContainEqual(
+      expect.objectContaining({ blockKey: "PARAM EQUAL" }),
+    );
+    expect(plan.hasChanges).toBe(true);
+    expect(plan.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "marker.missing-end" }),
+    );
+    expect(plan.canApply).toBe(false);
+  });
+
   it("records an auditable VB call, target and migration state for every block", () => {
     for (const block of KT_CODEGEN_LEGACY_BLOCKS) {
       expect(block.legacyCall).toMatch(/^[A-Za-z][A-Za-z0-9]+\(.*\)$/);

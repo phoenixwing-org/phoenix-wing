@@ -9,16 +9,35 @@ import {
 } from "../KtCodegenTableColumns.js";
 import { KtCodegenTableCore } from "../KtCodegenTableCore.js";
 import type { KtCodegenTableData } from "../KtCodegenTableData.js";
+import {
+  KT_CODEGEN_TABLE_ACTIONS,
+  ktCodegenFitTableColumnWidths,
+  ktCodegenNormalizeTableLayout,
+  ktCodegenTableColumnWidth,
+  ktCodegenTableCountLabel,
+  ktCodegenTableDisabledActions,
+  ktCodegenTableDisclosure,
+  ktCodegenTableSelectOptions,
+  type KtCodegenTableAction,
+  type KtCodegenTableLayout,
+  type KtCodegenTableOptions,
+} from "./KtCodegenTableViewModel.js";
+import {
+  KT_CODEGEN_TABLE_CLASSES,
+  KT_CODEGEN_TABLE_STYLE,
+} from "./KtCodegenTableStyle.js";
+
+export type {
+  KtCodegenTableLayout,
+  KtCodegenTableOptions,
+} from "./KtCodegenTableViewModel.js";
 
 /** 默认 Web Component 标签名。 */
 export const KT_CODEGEN_TABLE_TAG_NAME = "kt-codegen-table";
 
-/** 表格 Combo 候选项；未知当前值始终会额外保留。 */
-export interface KtCodegenTableOptions {
-  readonly tcKind: readonly string[];
-  readonly catAttrInOut: readonly string[];
-  readonly component: readonly string[];
-}
+const KT_CODEGEN_TABLE_TOGGLE_ID = "pnw-kt-codegen-table-toggle";
+const KT_CODEGEN_TABLE_SHELL_ID = "pnw-kt-codegen-table-shell";
+const KT_CODEGEN_TABLE_STATUSBAR_ID = "pnw-kt-codegen-table-statusbar";
 
 /** 表格可替换的列和候选项配置。 */
 export interface KtCodegenTableConfiguration {
@@ -39,170 +58,12 @@ export interface KtCodegenTableChangeDetail {
   readonly itemCount: number;
 }
 
+/** 用户通过 Header disclosure button 改变折叠状态。 */
+export interface KtCodegenTableCollapseChangeDetail {
+  readonly collapsed: boolean;
+}
+
 export type KtCodegenTableStatus = "idle" | "saving" | "saved" | "error";
-
-const KT_CODEGEN_TABLE_STYLE = `
-:host {
-  --pnw-kt-codegen-border: var(--vscode-panel-border, color-mix(in srgb, currentColor 18%, transparent));
-  --pnw-kt-codegen-background: var(--vscode-editor-background, #fff);
-  --pnw-kt-codegen-toolbar-background: var(--vscode-sideBar-background, #f6f6f6);
-  --pnw-kt-codegen-input-background: var(--vscode-input-background, #fff);
-  --pnw-kt-codegen-input-foreground: var(--vscode-input-foreground, inherit);
-  --pnw-kt-codegen-selection: var(--vscode-list-activeSelectionBackground, #dbeafe);
-  --pnw-kt-codegen-selection-foreground: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground, inherit));
-  --pnw-kt-codegen-hover: var(--vscode-list-hoverBackground, rgba(127, 127, 127, .12));
-  --pnw-kt-codegen-focus: var(--vscode-focusBorder, #007acc);
-  display: flex;
-  min-height: 240px;
-  height: 100%;
-  flex-direction: column;
-  overflow: hidden;
-  color: var(--vscode-foreground, inherit);
-  background: var(--pnw-kt-codegen-background);
-  border: 1px solid var(--pnw-kt-codegen-border);
-  border-radius: 6px;
-  font: var(--vscode-font-size, 13px)/1.4 var(--vscode-font-family, system-ui, sans-serif);
-  color-scheme: light dark;
-}
-* { box-sizing: border-box; }
-.toolbar {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 5px 8px;
-  background: var(--pnw-kt-codegen-toolbar-background);
-  border-bottom: 1px solid var(--pnw-kt-codegen-border);
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-.caption { flex: 0 0 auto; margin-right: auto; font-weight: 650; }
-button {
-  flex: 0 0 auto;
-  min-height: 26px;
-  padding: 2px 8px;
-  color: inherit;
-  background: var(--vscode-button-secondaryBackground, transparent);
-  border: 1px solid var(--pnw-kt-codegen-border);
-  border-radius: 4px;
-  font: inherit;
-  cursor: pointer;
-}
-button:hover:not(:disabled) { background: var(--pnw-kt-codegen-hover); }
-button:focus-visible, input:focus-visible, select:focus-visible {
-  outline: 1px solid var(--pnw-kt-codegen-focus);
-  outline-offset: -1px;
-}
-button:disabled { opacity: .42; cursor: default; }
-.shell { position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; }
-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-th, td {
-  height: 34px;
-  padding: 0;
-  overflow: hidden;
-  border-right: 1px solid var(--pnw-kt-codegen-border);
-  border-bottom: 1px solid var(--pnw-kt-codegen-border);
-  background: var(--pnw-kt-codegen-background);
-}
-th {
-  position: sticky;
-  z-index: 2;
-  top: 0;
-  padding: 0 8px;
-  text-align: left;
-  white-space: nowrap;
-  color: var(--vscode-descriptionForeground, inherit);
-  background: var(--pnw-kt-codegen-toolbar-background);
-  font-weight: 650;
-}
-tr:hover td { background: var(--pnw-kt-codegen-hover); }
-tr.selected td {
-  color: var(--pnw-kt-codegen-selection-foreground);
-  background: var(--pnw-kt-codegen-selection);
-}
-tr.selected td > input:not([type="checkbox"]),
-tr.selected td > select { color: inherit; }
-.row-number {
-  position: sticky;
-  z-index: 1;
-  left: 0;
-  width: 48px;
-  min-width: 48px;
-  max-width: 48px;
-  text-align: center;
-  color: var(--vscode-descriptionForeground, inherit);
-  background: var(--pnw-kt-codegen-toolbar-background);
-}
-th.row-number { z-index: 3; }
-.row-number button {
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-td > input:not([type="checkbox"]), td > select {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  padding: 0 8px;
-  color: var(--pnw-kt-codegen-input-foreground);
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  font: inherit;
-}
-td.boolean { text-align: center; }
-td.boolean input { width: 16px; height: 16px; accent-color: var(--vscode-button-background, #007acc); }
-option.unknown { color: var(--vscode-editorWarning-foreground, #b89500); }
-.empty {
-  position: absolute;
-  inset: 42px 16px auto;
-  padding: 24px;
-  text-align: center;
-  color: var(--vscode-descriptionForeground, #666);
-  border: 1px dashed var(--pnw-kt-codegen-border);
-  border-radius: 6px;
-}
-.statusbar {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 28px;
-  padding: 5px 9px;
-  color: var(--vscode-descriptionForeground, inherit);
-  background: var(--pnw-kt-codegen-toolbar-background);
-  border-top: 1px solid var(--pnw-kt-codegen-border);
-}
-.status.error { color: var(--vscode-errorForeground, #c72e0f); }
-.status.dirty { color: var(--vscode-editorWarning-foreground, #b89500); }
-`;
-
-type KtCodegenTableAction =
-  | "autoFit"
-  | "sort"
-  | "copy"
-  | "paste"
-  | "insert"
-  | "duplicate"
-  | "moveUp"
-  | "moveDown"
-  | "delete";
-
-const KT_CODEGEN_TABLE_ACTIONS = [
-  ["autoFit", "自适应", "根据当前内容调整列宽"],
-  ["sort", "排序", "按旧 Qt 规则规范 Suffix 和 ID"],
-  ["copy", "复制", "复制当前行"],
-  ["paste", "粘贴", "用复制内容替换当前行"],
-  ["insert", "＋ 插入", "在当前行后插入"],
-  ["duplicate", "⧉ 副本", "在当前行后创建副本"],
-  ["moveUp", "↑", "上移"],
-  ["moveDown", "↓", "下移"],
-  ["delete", "− 删除", "删除当前行"],
-] as const satisfies readonly (readonly [KtCodegenTableAction, string, string])[];
 
 /**
  * 独立的 Codegen 17列表格 Web Component。
@@ -211,6 +72,10 @@ const KT_CODEGEN_TABLE_ACTIONS = [
  * 交换整表，只在 clean/dirty 状态跃迁时接收 kt-codegen-table-dirty-change。
  */
 export class KtCodegenTable extends HTMLElement {
+  static get observedAttributes(): readonly string[] {
+    return ["layout", "collapsible", "collapsed"];
+  }
+
   private readonly param = new KtCodegenParam();
   private readonly core = new KtCodegenTableCore(this.param);
   private readonly root: ShadowRoot;
@@ -230,6 +95,44 @@ export class KtCodegenTable extends HTMLElement {
 
   connectedCallback(): void {
     this.render();
+  }
+
+  attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
+    if (name === "layout" && newValue !== null) {
+      const normalized = ktCodegenNormalizeTableLayout(newValue);
+      if (newValue !== normalized) {
+        this.setAttribute("layout", normalized);
+        return;
+      }
+    }
+    this.syncDisclosure();
+  }
+
+  /** contained 为组件内双向滚动；page 为页面自然高度和表格横向滚动。 */
+  get layout(): KtCodegenTableLayout {
+    return ktCodegenNormalizeTableLayout(this.getAttribute("layout"));
+  }
+
+  set layout(value: KtCodegenTableLayout) {
+    this.setAttribute("layout", ktCodegenNormalizeTableLayout(value));
+  }
+
+  /** 是否允许用户通过 Header button 展开/收起。 */
+  get collapsible(): boolean {
+    return this.hasAttribute("collapsible");
+  }
+
+  set collapsible(value: boolean) {
+    this.toggleAttribute("collapsible", Boolean(value));
+  }
+
+  /** 宿主可静默控制的折叠偏好；只有 collapsible 同时存在时才隐藏内容。 */
+  get collapsed(): boolean {
+    return this.hasAttribute("collapsed");
+  }
+
+  set collapsed(value: boolean) {
+    this.toggleAttribute("collapsed", Boolean(value));
   }
 
   configure(configuration: Partial<KtCodegenTableConfiguration>): void {
@@ -282,7 +185,9 @@ export class KtCodegenTable extends HTMLElement {
     const element = this.root.querySelector<HTMLElement>("[data-role=status]");
     if (!element) return;
     element.textContent = message;
-    element.className = "status" + (status === "error" ? " error" : "");
+    element.className = status === "error"
+      ? `${KT_CODEGEN_TABLE_CLASSES.status} ${KT_CODEGEN_TABLE_CLASSES.error}`
+      : KT_CODEGEN_TABLE_CLASSES.status;
   }
 
   private build(): void {
@@ -290,11 +195,30 @@ export class KtCodegenTable extends HTMLElement {
     style.textContent = KT_CODEGEN_TABLE_STYLE;
 
     const toolbar = document.createElement("header");
-    toolbar.className = "toolbar";
+    toolbar.className = KT_CODEGEN_TABLE_CLASSES.toolbar;
+    const plainCaption = document.createElement("span");
+    plainCaption.className = KT_CODEGEN_TABLE_CLASSES.caption;
+    plainCaption.dataset.role = "plain-caption";
+    plainCaption.textContent = "参数表";
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.id = KT_CODEGEN_TABLE_TOGGLE_ID;
+    toggle.className = KT_CODEGEN_TABLE_CLASSES.collapseToggle;
+    toggle.dataset.role = "collapse-toggle";
+    toggle.setAttribute(
+      "aria-controls",
+      `${KT_CODEGEN_TABLE_SHELL_ID} ${KT_CODEGEN_TABLE_STATUSBAR_ID}`,
+    );
+    toggle.addEventListener("click", () => this.handleCollapseToggle());
+    const indicator = document.createElement("span");
+    indicator.className = KT_CODEGEN_TABLE_CLASSES.collapseIndicator;
+    indicator.dataset.role = "collapse-indicator";
+    indicator.setAttribute("aria-hidden", "true");
     const caption = document.createElement("span");
-    caption.className = "caption";
+    caption.className = KT_CODEGEN_TABLE_CLASSES.caption;
     caption.textContent = "参数表";
-    toolbar.append(caption);
+    toggle.append(indicator, caption);
+    toolbar.append(plainCaption, toggle);
     for (const [action, label, title] of KT_CODEGEN_TABLE_ACTIONS) {
       const button = document.createElement("button");
       button.type = "button";
@@ -307,7 +231,10 @@ export class KtCodegenTable extends HTMLElement {
     }
 
     const shell = document.createElement("main");
-    shell.className = "shell";
+    shell.id = KT_CODEGEN_TABLE_SHELL_ID;
+    shell.className = KT_CODEGEN_TABLE_CLASSES.shell;
+    shell.dataset.role = "table-shell";
+    shell.setAttribute("aria-label", "参数表内容");
     const table = document.createElement("table");
     table.setAttribute("aria-label", "Codegen 参数表");
     const head = document.createElement("thead");
@@ -316,18 +243,20 @@ export class KtCodegenTable extends HTMLElement {
     body.dataset.role = "body";
     table.append(head, body);
     const empty = document.createElement("div");
-    empty.className = "empty";
+    empty.className = KT_CODEGEN_TABLE_CLASSES.empty;
     empty.dataset.role = "empty";
     empty.setAttribute("role", "note");
     empty.textContent = "当前 JSON 没有参数行。点击“插入”创建第一行。";
     shell.append(table, empty);
 
     const footer = document.createElement("footer");
-    footer.className = "statusbar";
+    footer.id = KT_CODEGEN_TABLE_STATUSBAR_ID;
+    footer.className = KT_CODEGEN_TABLE_CLASSES.statusbar;
+    footer.dataset.role = "statusbar";
     const count = document.createElement("span");
     count.dataset.role = "count";
     const status = document.createElement("span");
-    status.className = "status";
+    status.className = KT_CODEGEN_TABLE_CLASSES.status;
     status.dataset.role = "status";
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
@@ -335,6 +264,7 @@ export class KtCodegenTable extends HTMLElement {
     footer.append(count, status);
 
     this.root.replaceChildren(style, toolbar, shell, footer);
+    this.syncDisclosure();
   }
 
   private render(): void {
@@ -343,6 +273,7 @@ export class KtCodegenTable extends HTMLElement {
     this.renderRows();
     this.syncActions();
     this.syncDirtyStatus();
+    this.syncDisclosure();
   }
 
   private renderHead(): void {
@@ -350,7 +281,7 @@ export class KtCodegenTable extends HTMLElement {
     if (!head) return;
     const row = document.createElement("tr");
     const number = document.createElement("th");
-    number.className = "row-number";
+    number.className = KT_CODEGEN_TABLE_CLASSES.rowNumber;
     number.textContent = "#";
     number.scope = "col";
     row.append(number);
@@ -380,10 +311,10 @@ export class KtCodegenTable extends HTMLElement {
       const row = document.createElement("tr");
       row.dataset.row = String(rowIndex);
       const selected = rowIndex === this.core.selectedRow;
-      if (selected) row.className = "selected";
+      if (selected) row.className = KT_CODEGEN_TABLE_CLASSES.selectedRow;
       row.setAttribute("aria-selected", String(selected));
       const number = document.createElement("td");
-      number.className = "row-number";
+      number.className = KT_CODEGEN_TABLE_CLASSES.rowNumber;
       const selectButton = document.createElement("button");
       selectButton.type = "button";
       selectButton.textContent = String(rowIndex + 1);
@@ -397,7 +328,7 @@ export class KtCodegenTable extends HTMLElement {
     });
     body.replaceChildren(fragment);
     empty.hidden = this.param.items.length > 0;
-    count.textContent = this.param.items.length + " 行 · " + this.columns.length + " 列";
+    count.textContent = ktCodegenTableCountLabel(this.param.items.length, this.columns.length);
   }
 
   private createCell(row: number, column: KtCodegenTableColumn): HTMLTableCellElement {
@@ -407,7 +338,7 @@ export class KtCodegenTable extends HTMLElement {
     cell.style.width = width + "px";
     cell.style.minWidth = width + "px";
     if (column.kind === "boolean") {
-      cell.className = "boolean";
+      cell.className = KT_CODEGEN_TABLE_CLASSES.booleanCell;
       const input = document.createElement("input");
       input.type = "checkbox";
       input.checked = Boolean(item[column.field]);
@@ -418,29 +349,17 @@ export class KtCodegenTable extends HTMLElement {
       return cell;
     }
 
-    const candidates = column.kind === "tcKind"
-      ? this.options.tcKind
-      : column.kind === "catAttrInOut"
-        ? this.options.catAttrInOut
-        : column.kind === "component"
-          ? this.options.component
-          : undefined;
-    if (candidates) {
+    const current = String(item[column.field] ?? "");
+    const selectOptions = ktCodegenTableSelectOptions(column, current, this.options);
+    if (selectOptions) {
       const select = document.createElement("select");
       select.setAttribute("aria-label", column.title + "，第 " + (row + 1) + " 行");
-      const current = String(item[column.field] ?? "");
-      if (current && !candidates.includes(current)) {
-        const unknown = document.createElement("option");
-        unknown.value = current;
-        unknown.textContent = current + "（未知，保持原值）";
-        unknown.className = "unknown";
-        select.append(unknown);
-      }
-      for (const candidate of candidates) {
+      for (const descriptor of selectOptions) {
         const option = document.createElement("option");
-        option.value = candidate;
-        option.textContent = candidate || "（空）";
-        option.disabled = /^-.*-$/.test(candidate);
+        option.value = descriptor.value;
+        option.textContent = descriptor.label;
+        option.disabled = descriptor.disabled;
+        if (descriptor.unknown) option.className = KT_CODEGEN_TABLE_CLASSES.unknownOption;
         select.append(option);
       }
       select.value = current;
@@ -514,46 +433,80 @@ export class KtCodegenTable extends HTMLElement {
     this.emitDirtyTransition(wasDirty);
   }
 
+  private handleCollapseToggle(): void {
+    if (!this.collapsible) return;
+    this.collapsed = !this.collapsed;
+    this.dispatchEvent(new CustomEvent<KtCodegenTableCollapseChangeDetail>(
+      "kt-codegen-table-collapse-change",
+      {
+        bubbles: true,
+        composed: true,
+        detail: { collapsed: this.collapsed },
+      },
+    ));
+  }
+
+  private syncDisclosure(): void {
+    const plainCaption = this.root.querySelector<HTMLElement>("[data-role=plain-caption]");
+    const toggle = this.root.querySelector<HTMLButtonElement>("[data-role=collapse-toggle]");
+    const indicator = this.root.querySelector<HTMLElement>("[data-role=collapse-indicator]");
+    const shell = this.root.querySelector<HTMLElement>("[data-role=table-shell]")
+      ?? this.root.querySelector<HTMLElement>(`.${KT_CODEGEN_TABLE_CLASSES.shell}`);
+    const statusbar = this.root.querySelector<HTMLElement>("[data-role=statusbar]")
+      ?? this.root.querySelector<HTMLElement>(`.${KT_CODEGEN_TABLE_CLASSES.statusbar}`);
+    if (!plainCaption || !toggle || !indicator || !shell || !statusbar) return;
+
+    const disclosure = ktCodegenTableDisclosure({
+      collapsible: this.collapsible,
+      collapsed: this.collapsed,
+    });
+    const active = this.root.activeElement;
+    plainCaption.hidden = !disclosure.disabled;
+    toggle.hidden = disclosure.disabled;
+    toggle.disabled = disclosure.disabled;
+    toggle.title = disclosure.label;
+    toggle.setAttribute("aria-label", disclosure.label);
+    toggle.setAttribute("aria-expanded", String(disclosure.expanded));
+    indicator.textContent = disclosure.indicator;
+    shell.hidden = disclosure.hidden;
+    statusbar.hidden = disclosure.hidden;
+    if (disclosure.hidden && active && (shell.contains(active) || statusbar.contains(active))) {
+      toggle.focus();
+    }
+  }
+
   private syncSelection(): void {
     for (const row of this.root.querySelectorAll<HTMLTableRowElement>("tbody tr")) {
       const selected = Number(row.dataset.row) === this.core.selectedRow;
-      row.classList.toggle("selected", selected);
+      row.classList.toggle(KT_CODEGEN_TABLE_CLASSES.selectedRow, selected);
       row.setAttribute("aria-selected", String(selected));
-      row.querySelector<HTMLButtonElement>(".row-number button")
+      row.querySelector<HTMLButtonElement>(`.${KT_CODEGEN_TABLE_CLASSES.rowNumber} button`)
         ?.setAttribute("aria-pressed", String(selected));
     }
     this.syncActions();
   }
 
   private syncActions(): void {
-    const row = this.core.selectedRow;
-    const hasSelection = row !== null && row >= 0 && row < this.param.items.length;
-    this.disableAction("sort", this.param.items.length === 0);
-    this.disableAction("copy", !hasSelection);
-    this.disableAction("paste", !hasSelection || !this.core.hasClipboard);
-    this.disableAction("duplicate", !hasSelection);
-    this.disableAction("delete", !hasSelection);
-    this.disableAction("moveUp", !hasSelection || row === 0);
-    this.disableAction("moveDown", !hasSelection || row === this.param.items.length - 1);
+    const disabled = ktCodegenTableDisabledActions({
+      itemCount: this.param.items.length,
+      selectedRow: this.core.selectedRow,
+      hasClipboard: this.core.hasClipboard,
+    });
+    for (const [action] of KT_CODEGEN_TABLE_ACTIONS) {
+      this.disableAction(action, disabled.has(action));
+    }
   }
 
   /** 轻量复现 Qt resizeColumnsToContents；只改变组件布局，不修改表格数据。 */
   private fitColumnsToContents(): void {
-    for (const column of this.columns) {
-      const longest = this.param.items.reduce((length, item) => {
-        const value = column.kind === "boolean" ? "true" : String(item[column.field] ?? "");
-        return Math.max(length, [...value].length);
-      }, [...column.title].length);
-      const checkboxWidth = column.kind === "boolean" ? 72 : 0;
-      this.fittedWidths.set(
-        column.field,
-        Math.max(checkboxWidth, Math.min(360, Math.max(72, longest * 8 + 28))),
-      );
+    this.fittedWidths.clear();
+    for (const [field, width] of ktCodegenFitTableColumnWidths(this.columns, this.param.items)) {
+      this.fittedWidths.set(field, width);
     }
   }
 
   private columnWidth(column: KtCodegenTableColumn): number {
-    return this.fittedWidths.get(column.field) ?? column.width;
+    return ktCodegenTableColumnWidth(column, this.fittedWidths);
   }
 
   private disableAction(action: KtCodegenTableAction, disabled: boolean): void {
@@ -565,7 +518,9 @@ export class KtCodegenTable extends HTMLElement {
     const status = this.root.querySelector<HTMLElement>("[data-role=status]");
     if (!status) return;
     status.textContent = this.core.dirty ? "有未保存的表格修改" : "";
-    status.className = "status" + (this.core.dirty ? " dirty" : "");
+    status.className = this.core.dirty
+      ? `${KT_CODEGEN_TABLE_CLASSES.status} ${KT_CODEGEN_TABLE_CLASSES.dirty}`
+      : KT_CODEGEN_TABLE_CLASSES.status;
   }
 
   private emitDirtyTransition(wasDirty: boolean): void {
@@ -612,5 +567,11 @@ export function ktCodegenDefineTableElement(
 declare global {
   interface HTMLElementTagNameMap {
     "kt-codegen-table": KtCodegenTable;
+  }
+
+  interface HTMLElementEventMap {
+    "kt-codegen-table-change": CustomEvent<KtCodegenTableChangeDetail>;
+    "kt-codegen-table-collapse-change": CustomEvent<KtCodegenTableCollapseChangeDetail>;
+    "kt-codegen-table-dirty-change": CustomEvent<KtCodegenTableDirtyChangeDetail>;
   }
 }

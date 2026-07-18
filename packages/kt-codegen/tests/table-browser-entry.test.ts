@@ -28,18 +28,36 @@ describe("@phoenix-wing/kt-codegen/table", () => {
 
   it("把 Qt 的列宽自适应保留为组件内部布局动作", () => {
     const source = readFileSync(new URL("../src/table/KtCodegenTable.ts", import.meta.url), "utf8");
-    expect(source).toContain('["autoFit", "自适应"');
+    const model = readFileSync(new URL("../src/table/KtCodegenTableViewModel.ts", import.meta.url), "utf8");
+    expect(source).toContain("KT_CODEGEN_TABLE_ACTIONS");
+    expect(model).toContain('["autoFit", "自适应"');
     expect(source).toContain("fitColumnsToContents");
+    expect(source).toContain("ktCodegenFitTableColumnWidths");
     expect(source).toContain("kt-codegen-table-change");
   });
 
-  it("使用 VS Code 选中态前景色，并让窄窗口工具栏保持可访问", () => {
+  it("只装配独立视觉原语，不在组件文件重新维护 CSS", () => {
     const source = readFileSync(new URL("../src/table/KtCodegenTable.ts", import.meta.url), "utf8");
-    expect(source).toContain("--vscode-list-activeSelectionForeground");
-    expect(source).toContain("--pnw-kt-codegen-selection-foreground");
-    expect(source).toContain("overflow-x: auto");
-    expect(source).toContain("scrollbar-width: thin");
-    expect(source).toContain('tr.selected td > select { color: inherit; }');
+    expect(source).toContain('from "./KtCodegenTableStyle.js"');
+    expect(source).toContain("style.textContent = KT_CODEGEN_TABLE_STYLE");
+    expect(source).toContain("KT_CODEGEN_TABLE_CLASSES.toolbar");
+    expect(source).not.toContain("const KT_CODEGEN_TABLE_STYLE");
+    for (const legacyClass of [
+      "toolbar",
+      "caption",
+      "shell",
+      "selected",
+      "row-number",
+      "boolean",
+      "unknown",
+      "empty",
+      "statusbar",
+      "status",
+      "error",
+      "dirty",
+    ]) {
+      expect(source).not.toContain(`className = "${legacyClass}"`);
+    }
   });
 
   it("为动态表格状态、行选择和单元格编辑器提供读屏语义", () => {
