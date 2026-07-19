@@ -10,8 +10,8 @@ Owner：Phoenix Wing maintainers
 
 ## 已完成基线
 
-- 八个 npm 发布单元已在 0.4.2 锁步公开发布；聚合包 Registry manifest 不含 `workspace:`。
-- 下一公开版本已确定为 0.4.3：八个 manifest 与 `release-matrix.release_version` 已锁步到 0.4.3，npm Registry 八包及全部消费者仍为 0.4.2。现有本地 `0.4.3` 标签早于最终修复，发布前必须在最终候选提交上重新封签，不能直接使用旧标签。
+- 八个 npm 发布单元已在 0.4.3 锁步公开发布；聚合包 Registry manifest 仅引用精确的 0.4.3 内部依赖，不含 `workspace:`、`link:` 或 `file:`。
+- 注释标签 `0.4.3` 已封签到最终候选 `5211504` 并推送远端；Auto Code、Desk Tools 与 Open Issue 仍精确消费 Registry 0.4.2，等待各仓独立升级和验收。
 - `code-core`、`kt-codegen`、CAD contracts/core、workspace schema、Node DB adapter 和 Rust source 已有真实消费者。
 - Auto Code、Desk Tools 与 Open Issue 只从 Registry 精确消费 0.4.2，不再使用相邻目录 override；机器事实由 `release-matrix.json` 维护。
 - 完整 workspace 测试、类型检查、release matrix、TypeScript/Rust tarball smoke 已进入 `pnpm verify:ci`。
@@ -24,7 +24,7 @@ Owner：Phoenix Wing maintainers
 
 1. **[已完成：核心平台基线]** Apply、UUID/GUID、workspace path、32 个 Renderer family、跨宿主 golden fixture、聚合 UI 单出口与 AST/import graph 均由 Wing 保持真源，Auto/Desk/Open Issue 已通过 Registry 0.4.2 验证；原八条重复完成项合并由本条追踪。
 2. **[已完成：0.4.3 功能范围]** Marker 在下一 Start/End 边界恢复并输出结构化诊断；仅 `missing-end`/`orphan-end` 时可安全应用其余完整区域；`KtCodegenTable` 已完成 ViewModel/Style 分层、`contained|page`、disclosure 与高对比选中态治理，公共入口保持兼容。
-3. **[进行中：0.4.3 发布闭环]** 重新运行完整 `pnpm verify:ci`，把失效的本地 `0.4.3` 标签重新封签到最终候选，获得用户公开发布确认后按固定顺序发布八包；随后逐仓升级 Registry 消费并同步版本矩阵。
+3. **[进行中：0.4.3 消费升级]** 0.4.3 完整 `pnpm verify:ci`、最终候选注释标签、八包 pnpm 公开发布、Registry 查询及干净 npm/pnpm 安装与导入均已完成；下一步逐仓升级 Auto Code、Desk Tools 与 Open Issue 的精确 Registry 消费并同步版本矩阵。
 
 下一优先级是由 Auto Code、Desk Tools 在 Registry 发布后接入 `KtCodegenTable` 的 page/disclosure API；Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 
