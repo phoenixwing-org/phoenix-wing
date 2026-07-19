@@ -106,6 +106,11 @@ describe("KtCodegenMarker", () => {
     expect(orphan.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       "marker.orphan-end",
     ]);
+    expect(orphan.diagnostics[0]?.marker).toEqual({
+      kind: "end",
+      classId: "KtCourseGuardItem",
+      blockKey: PARAM_DECLARATION,
+    });
 
     const missing = marker.scan(controller.param, snapshot(`${start}\nold();\n`), [
       PARAM_DECLARATION,
@@ -114,6 +119,11 @@ describe("KtCodegenMarker", () => {
     expect(missing.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       "marker.missing-end",
     ]);
+    expect(missing.diagnostics[0]?.marker).toEqual({
+      kind: "start",
+      classId: "KtCourseGuardItem",
+      blockKey: PARAM_DECLARATION,
+    });
   });
 
   it("recovers all five complete command blocks after a missing constructor End", () => {
@@ -176,6 +186,12 @@ describe("KtCodegenMarker", () => {
           file: "PNXBomAnalysisCmd.cpp",
           row: 3,
         }),
+        marker: {
+          kind: "start",
+          classId: "PNXBomAnalysis",
+          blockKey: "CMD AGENT CONSTRUCTOR",
+          boundary: { kind: "start", line: 15 },
+        },
       }),
       expect.objectContaining({
         code: "marker.missing-end",
@@ -186,6 +202,12 @@ describe("KtCodegenMarker", () => {
           file: "PNXBomAnalysisCmd.cpp",
           row: 14,
         }),
+        marker: {
+          kind: "start",
+          classId: "PNXBomAnalysis",
+          blockKey: "CMD AGENT DESTRUCTOR",
+          boundary: { kind: "start", line: 25 },
+        },
       }),
     ]);
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
@@ -286,10 +308,21 @@ describe("KtCodegenMarker", () => {
       message:
         "Start marker KtCourseGuardItem PARAM DECLARATION has no matching End marker before End marker at line 3.",
       path: expect.objectContaining({ row: 0 }),
+      marker: {
+        kind: "start",
+        classId: "KtCourseGuardItem",
+        blockKey: PARAM_DECLARATION,
+        boundary: { kind: "end", line: 3 },
+      },
     });
     expect(result.diagnostics[1]).toMatchObject({
       code: "marker.orphan-end",
       path: expect.objectContaining({ row: 2 }),
+      marker: {
+        kind: "end",
+        classId: "KtCourseGuardItem",
+        blockKey: PARAM_EQUAL,
+      },
     });
     expect(
       result.regions.map((region) =>

@@ -28,6 +28,10 @@ describe("KtCodegenTable visual primitive", () => {
     expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-border: var(--vscode-panel-border");
     expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-input-background: var(--vscode-input-background");
     expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-selection-foreground: var(--vscode-list-activeSelectionForeground");
+    expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-selection: var(--vscode-list-activeSelectionBackground, Highlight)");
+    expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-selection-foreground: var(--vscode-list-activeSelectionForeground, HighlightText)");
+    expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-inactive-selection: var(--vscode-list-inactiveSelectionBackground");
+    expect(KT_CODEGEN_TABLE_STYLE).toContain("--pnw-kt-codegen-inactive-selection-foreground: var(--vscode-list-inactiveSelectionForeground");
     expect(KT_CODEGEN_TABLE_STYLE).toContain("color-scheme: light dark");
   });
 
@@ -71,6 +75,12 @@ describe("KtCodegenTable visual primitive", () => {
   });
 
   it("保留选中前景、键盘焦点和状态反馈", () => {
+    expect(KT_CODEGEN_TABLE_STYLE).toContain(
+      "color: var(--pnw-kt-codegen-selection-foreground);",
+    );
+    expect(KT_CODEGEN_TABLE_STYLE).toContain(
+      ".pnw-kt-codegen-table-shell:focus-within tr.pnw-kt-codegen-table-selected-row td",
+    );
     expect(KT_CODEGEN_TABLE_STYLE).toContain(
       `tr.${KT_CODEGEN_TABLE_CLASSES.selectedRow} td > select { color: inherit; }`,
     );

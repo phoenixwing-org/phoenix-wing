@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import type { KtCodegenPlan } from "../src/api/contracts.js";
+import type { KtCodegenBlockKey } from "../src/blocks/index.js";
+import { KtCodegenController } from "../src/KtCodegenController.js";
 import {
   KtCodegenApplyConcurrentChangeError,
+  ktCodegenCanApplyValidRegions,
   ktCodegenCommitApplyWrites,
   ktCodegenInspectApplyPlan,
   ktCodegenProjectApply,
   type KtCodegenApplyWritePort,
 } from "../src/KtCodegenApply.js";
+import { ktCodegenReadFixture } from "./helpers.js";
 
 const bytes = (value: string) => new TextEncoder().encode(value);
 const text = (value: Uint8Array | undefined) => value ? new TextDecoder().decode(value) : undefined;
@@ -103,6 +107,97 @@ describe("KtCodegenApply", () => {
       nameSuffix: "A",
       line: 1,
     }]);
+  });
+
+  it("缺失 End 只隔离错误控制块，其余完整区域仍可安全投影", () => {
+    const partial = {
+      ...plan(),
+      canApply: false,
+      diagnostics: [{
+        code: "marker.missing-end",
+        severity: "error",
+        message: "Start marker BROKEN has no matching End marker before Start marker at line 20.",
+        path: { source: "source", file: "/workspace/a.cpp", row: 10, column: 0 },
+      }],
+    } as KtCodegenPlan;
+
+    expect(ktCodegenCanApplyValidRegions(partial)).toBe(true);
+    const result = ktCodegenProjectApply(partial, [{
+      path: "/workspace/a.cpp",
+      text: "01old\r\nZ",
+      fingerprint: "sha256:before",
+    }]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.changes[0]?.after).toBe("01A\r\nB\r\nZ");
+    expect(result.changes[0]?.regions.map((region) => region.id)).toEqual(["r1"]);
+  });
+
+  it("非 Marker 错误仍阻止整份计划，不能借部分 Apply 绕过", () => {
+    const unsafe = {
+      ...plan(),
+      canApply: false,
+      diagnostics: [{
+        code: "renderer.invalid-output",
+        severity: "error",
+        message: "renderer failed",
+        path: { source: "renderer", field: "artifact" },
+      }],
+    } as KtCodegenPlan;
+
+    expect(ktCodegenCanApplyValidRegions(unsafe)).toBe(false);
+    const result = ktCodegenProjectApply(unsafe, [{
+      path: "/workspace/a.cpp",
+      text: "01old\nZ",
+      fingerprint: "sha256:before",
+    }]);
+    expect(result.changes).toEqual([]);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "apply.plan-not-applicable",
+    ]);
+  });
+
+  it("以 PNXBomAnalysis 反例保留两处缺失 End，并应用后续五个完整区域", () => {
+    const controller = new KtCodegenController();
+    expect(controller.readJson(ktCodegenReadFixture("legacy-v4/bom-analysis.json")).ok).toBe(true);
+    const sourceText = ktCodegenReadFixture("source/bom-analysis-two-missing-ends.cpp");
+    const source = {
+      path: "PNXBomAnalysisCmd.cpp",
+      text: sourceText,
+      fingerprint: `fixture:${sourceText.length}`,
+    };
+    const blockKeys = [
+      "CMD AGENT CONSTRUCTOR",
+      "CMD AGENT DESTRUCTOR",
+      "CMD ACTION FIA",
+      "CMD ACTION PDA",
+      "CMD AGENT FIA CLEAR",
+      "CMD AGENT UPDATE STATE",
+      "CMD SET ACTIVE FIELD",
+    ] as const satisfies readonly KtCodegenBlockKey[];
+    const plan = controller.analyze({
+      targets: ["caa.control"],
+      blockKeys,
+      snapshot: { files: [source] },
+    });
+
+    expect(plan.canApply).toBe(false);
+    expect(plan.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "marker.missing-end",
+      "marker.missing-end",
+    ]);
+    const result = ktCodegenProjectApply(plan, [source]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.changes).toHaveLength(1);
+    expect(result.changes[0]?.regions.map((region) => region.blockKey)).toEqual([
+      "CMD ACTION FIA",
+      "CMD ACTION PDA",
+      "CMD AGENT FIA CLEAR",
+      "CMD AGENT UPDATE STATE",
+      "CMD SET ACTIVE FIELD",
+    ]);
+    expect(result.changes[0]?.after).toContain(", KT_AUTO_CMD_AGENT_CONSTRUCTOR_COMMON()");
+    expect(result.changes[0]?.after).toContain("parameter = new PNXBomAnalysisParam();");
+    expect(result.changes[0]?.after).toContain("catFrmEditor_ = NULL;");
   });
 
   it("事务发现并发变化后回滚，不覆盖第三方内容", async () => {

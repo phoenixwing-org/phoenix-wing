@@ -26,8 +26,10 @@ export const KT_CODEGEN_TABLE_STYLE = `
   --pnw-kt-codegen-toolbar-background: var(--vscode-sideBar-background, #f6f6f6);
   --pnw-kt-codegen-input-background: var(--vscode-input-background, #fff);
   --pnw-kt-codegen-input-foreground: var(--vscode-input-foreground, inherit);
-  --pnw-kt-codegen-selection: var(--vscode-list-activeSelectionBackground, #dbeafe);
-  --pnw-kt-codegen-selection-foreground: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground, inherit));
+  --pnw-kt-codegen-selection: var(--vscode-list-activeSelectionBackground, Highlight);
+  --pnw-kt-codegen-selection-foreground: var(--vscode-list-activeSelectionForeground, HighlightText);
+  --pnw-kt-codegen-inactive-selection: var(--vscode-list-inactiveSelectionBackground, var(--pnw-kt-codegen-hover));
+  --pnw-kt-codegen-inactive-selection-foreground: var(--vscode-list-inactiveSelectionForeground, var(--vscode-foreground, inherit));
   --pnw-kt-codegen-hover: var(--vscode-list-hoverBackground, rgba(127, 127, 127, .12));
   --pnw-kt-codegen-focus: var(--vscode-focusBorder, #007acc);
   display: flex;
@@ -133,6 +135,10 @@ th {
 }
 tr:hover td { background: var(--pnw-kt-codegen-hover); }
 tr.${KT_CODEGEN_TABLE_CLASSES.selectedRow} td {
+  color: var(--pnw-kt-codegen-selection-foreground);
+  background: var(--pnw-kt-codegen-selection);
+}
+.${KT_CODEGEN_TABLE_CLASSES.shell}:focus-within tr.${KT_CODEGEN_TABLE_CLASSES.selectedRow} td {
   color: var(--pnw-kt-codegen-selection-foreground);
   background: var(--pnw-kt-codegen-selection);
 }

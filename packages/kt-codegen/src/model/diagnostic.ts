@@ -17,6 +17,23 @@ export interface KtCodegenDiagnosticPath {
   readonly field?: string;
 }
 
+/** 源码 marker 诊断对应的结构化控制符身份。 */
+export interface KtCodegenDiagnosticMarker {
+  /** 诊断所定位控制符的开始或结束种类。 */
+  readonly kind: "start" | "end";
+  /** `NamePrefix + NameMiddle + NameSuffix` 组成的旧类身份。 */
+  readonly classId: string;
+  /** 控制符协议中的稳定块 key。 */
+  readonly blockKey: string;
+  /** 未闭合 Start 被下一条完整控制符截断时的边界。 */
+  readonly boundary?: {
+    /** 截断边界是下一条 Start 还是 End。 */
+    readonly kind: "start" | "end";
+    /** 截断边界在源码中的 1-based 行号。 */
+    readonly line: number;
+  };
+}
+
 /** 参数读取、校验或生成过程中产生的稳定诊断。 */
 export interface KtCodegenDiagnostic {
   /** 可供测试、UI 和自动化判断使用的稳定诊断代码。 */
@@ -27,6 +44,8 @@ export interface KtCodegenDiagnostic {
   readonly message: string;
   /** 可选的结构化定位信息。 */
   readonly path?: KtCodegenDiagnosticPath;
+  /** 可选的源码控制符上下文；消费者无需解析 message 即可定位对应 block。 */
+  readonly marker?: KtCodegenDiagnosticMarker;
 }
 
 /** Reader、Adapter 等数据边界统一使用的结果结构。 */

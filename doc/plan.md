@@ -6,12 +6,12 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.4.x
 
-最后核验：2026-07-18
+最后核验：2026-07-19
 
 ## 已完成基线
 
 - 八个 npm 发布单元已在 0.4.2 锁步公开发布；聚合包 Registry manifest 不含 `workspace:`。
-- 0.4.3 八包锁步候选正在本地归档，包含 KtCodegenTable 分层和控制符缺失 End 重同步；公开发布前消费者继续保持 Registry 0.4.2。
+- 下一公开版本已确定为 0.4.3：八个 manifest 与 `release-matrix.release_version` 已锁步到 0.4.3，npm Registry 八包及全部消费者仍为 0.4.2。现有本地 `0.4.3` 标签早于最终修复，发布前必须在最终候选提交上重新封签，不能直接使用旧标签。
 - `code-core`、`kt-codegen`、CAD contracts/core、workspace schema、Node DB adapter 和 Rust source 已有真实消费者。
 - Auto Code、Desk Tools 与 Open Issue 只从 Registry 精确消费 0.4.2，不再使用相邻目录 override；机器事实由 `release-matrix.json` 维护。
 - 完整 workspace 测试、类型检查、release matrix、TypeScript/Rust tarball smoke 已进入 `pnpm verify:ci`。
@@ -22,14 +22,9 @@ Owner：Phoenix Wing maintainers
 
 ## 当前优先级
 
-1. **[已完成]** Desk Codegen Apply 纯投影副本已清除，由 Wing 保持算法真源。
-2. **[已完成]** AST/import graph 已固化 Core → Contract → Host adapter → View 的依赖方向。
-3. **[已完成]** 聚合 UI 已改为编译后的统一入口；Desk/Open Issue 已删除旧消费规避项并通过 Registry 0.4.2 singleton 验证。
-4. **[已完成]** 版本判定与 Analyze/Apply/Schema/contribution golden fixtures 已建立并由 Auto/Desk/Open Issue 接入。
-5. **[已完成]** 32 个 block 已按 CAA Feature/Dialog/Command、Qt、普通 C++ family 拆分；注册表唯一归属与既有 golden 共同保护公共行为。
-6. **[已完成]** UUID/GUID 格式保持与 workspace path 语义已形成两项纯能力及同一 v1 fixture；Auto/Desk 已从 Registry 0.4.2 消费。
-7. **[已完成]** 按 Domain Model → ViewModel → Controller → Host adapter → Page shell → visual primitive 完成 `KtCodegenTable` 首轮治理；当前没有第二 DOM renderer 或重复消费者，不为降低单文件行数继续拆分。
-8. **[进行中]** 完成 Wing 0.4.3 本地候选、注释标签和公开发布确认；发布后再逐仓升级 Registry 消费并同步版本矩阵。
+1. **[已完成：核心平台基线]** Apply、UUID/GUID、workspace path、32 个 Renderer family、跨宿主 golden fixture、聚合 UI 单出口与 AST/import graph 均由 Wing 保持真源，Auto/Desk/Open Issue 已通过 Registry 0.4.2 验证；原八条重复完成项合并由本条追踪。
+2. **[已完成：0.4.3 功能范围]** Marker 在下一 Start/End 边界恢复并输出结构化诊断；仅 `missing-end`/`orphan-end` 时可安全应用其余完整区域；`KtCodegenTable` 已完成 ViewModel/Style 分层、`contained|page`、disclosure 与高对比选中态治理，公共入口保持兼容。
+3. **[进行中：0.4.3 发布闭环]** 重新运行完整 `pnpm verify:ci`，把失效的本地 `0.4.3` 标签重新封签到最终候选，获得用户公开发布确认后按固定顺序发布八包；随后逐仓升级 Registry 消费并同步版本矩阵。
 
 下一优先级是由 Auto Code、Desk Tools 在 Registry 发布后接入 `KtCodegenTable` 的 page/disclosure API；Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 

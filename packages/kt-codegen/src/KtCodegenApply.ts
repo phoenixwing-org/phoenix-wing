@@ -99,6 +99,33 @@ function ktCodegenApplyDiagnostic(
   };
 }
 
+const KT_CODEGEN_RECOVERABLE_PARTIAL_APPLY_DIAGNOSTICS = new Set([
+  "marker.missing-end",
+  "marker.orphan-end",
+]);
+
+/**
+ * 判断计划是否可安全写入其中已经形成完整 Region/Artifact 绑定的部分。
+ *
+ * `plan.canApply` 仍表示“整份计划无 error”。缺失或孤立 Marker 会让该值为
+ * false，但 Marker 扫描器已经隔离这些不完整区域；只要其余 Target 全部 ready、
+ * Artifact 都绑定到完整 Region，就允许 Apply 这些已验证区域。其他模型、Renderer
+ * 或 Artifact 错误仍保持 fail-closed。
+ */
+export function ktCodegenCanApplyValidRegions(plan: KtCodegenPlan): boolean {
+  if (plan.canApply) return true;
+  if (!plan.targets.length || plan.targets.some((target) => target.status !== "ready")) return false;
+  if (!plan.artifacts.length) return false;
+  const regionIds = new Set(plan.markerRegions.map((region) => region.id));
+  if (plan.artifacts.some((artifact) => !regionIds.has(artifact.regionId))) return false;
+  return plan.diagnostics
+    .filter((diagnostic) => diagnostic.severity === "error")
+    .every((diagnostic) => (
+      diagnostic.path?.source === "source"
+      && KT_CODEGEN_RECOVERABLE_PARTIAL_APPLY_DIAGNOSTICS.has(diagnostic.code)
+    ));
+}
+
 /**
  * 汇总计划中的 Target、控制符区域和 Artifact 绑定关系。
  *
@@ -153,12 +180,12 @@ export function ktCodegenProjectApply(
   plan: KtCodegenPlan,
   sources: readonly KtCodegenApplySource[],
 ): KtCodegenApplyProjection {
-  if (!plan.canApply) {
+  if (!ktCodegenCanApplyValidRegions(plan)) {
     return {
       changes: [],
       diagnostics: [ktCodegenApplyDiagnostic(
         "apply.plan-not-applicable",
-        "当前预检计划包含错误或没有可应用的生成产物。",
+        "当前预检计划没有可安全隔离应用的生成产物。",
       )],
     };
   }

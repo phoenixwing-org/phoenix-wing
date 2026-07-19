@@ -63,6 +63,12 @@ src/
 
 旧 Start/End 文本协议、源码偏移和异常配对规则见[《自动代码标记扫描》](doc/自动代码标记扫描.md)。
 
+Apply 默认保持 fail-closed，但允许一种明确的部分成功：当 Plan 的 error 仅为
+`marker.missing-end` / `marker.orphan-end`，Marker 扫描器已经隔离不完整区域，
+且其余 Target、Region 与 Artifact 绑定全部有效时，`ktCodegenProjectApply` 只
+投影这些完整区域。模型、Renderer、Artifact 绑定、指纹、范围或重叠错误仍阻止
+全部写入。宿主可用 `ktCodegenCanApplyValidRegions(plan)` 展示“可部分应用”状态。
+
 首组已迁移 Renderer 的逐块行为和 golden 见[《普通 C++ 参数块迁移》](doc/普通C++参数块迁移.md)。
 
 CAA 实现类/纯虚接口 Get/Set 差异见[《CAA 接口头文件块迁移》](doc/CAA接口头文件块迁移.md)。
@@ -246,7 +252,7 @@ table.addEventListener("kt-codegen-table-collapse-change", (event) => {
 - `setData()`/`getData()` 交换带 schema 与 `documentRevision` 的整表 DTO；返回值不暴露组件内部可变数组。
 - Sort、Copy/Paste、Insert、Duplicate、Move、Delete 和列宽自适应属于组件内部操作。
 - 动作可用性、Combo 未知值/空值/分隔项、列宽拟合与状态栏计数由 UI-neutral `KtCodegenTableViewModel.ts` 统一投影；Web Component 只把这些描述装配成 DOM。该文件纳入 pure import graph，不可依赖 DOM、Vue、Node 或宿主 API。
-- Shadow DOM 的 `pnw-kt-codegen-table-*` 类名、VS Code token 回退、工具栏/表格滚动与 sticky 表头由内部 `KtCodegenTableStyle.ts` 单点维护；组件只按 class map 装配。该视觉原语也纳入 pure import graph，但不从 browser 子路径公开导出。
+- Shadow DOM 的 `pnw-kt-codegen-table-*` 类名、VS Code token 回退、工具栏/表格滚动与 sticky 表头由内部 `KtCodegenTableStyle.ts` 单点维护；组件只按 class map 装配。选中行在表格区有焦点时使用 `list.activeSelection*`，焦点移出后切换到 `list.inactiveSelection*`，避免高对比主题继续用 active 背景显示失焦选择。该视觉原语也纳入 pure import graph，但不从 browser 子路径公开导出。
 - `layout="contained"` 是兼容默认值，保留组件高度与内部双向滚动；`layout="page"` 使用自然高度，表格区只保留横向溢出，由 Page shell 负责唯一纵向滚动。空表提示在 page 模式进入文档流，不会被零高度容器裁切。
 - `collapsible` 启用 Header disclosure button，`collapsed` 可由宿主静默反射；只有用户点击会发出 `kt-codegen-table-collapse-change`，程序设置不发 change/dirty/collapse 事件。收起只隐藏 table shell 与 statusbar，全部表格工具仍留在 Header。
 - 本地构建后可用 `test-fixtures/table-runtime.html?layout=page&collapsible` 在浏览器点检真实 Shadow DOM、自然高度、横向滚动、折叠和焦点；追加 `empty`/`collapsed`/`rows=40` 可覆盖空表、初始收起与长表。该夹具不进入 npm `files` 白名单。

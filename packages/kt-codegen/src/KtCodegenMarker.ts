@@ -275,6 +275,11 @@ export class KtCodegenMarker {
           file.path,
           open.marker.line,
           open.marker.column,
+          {
+            kind: open.marker.kind,
+            classId: open.marker.classId,
+            blockKey: open.marker.blockKey,
+          },
         ),
       );
     }
@@ -294,6 +299,15 @@ export class KtCodegenMarker {
       path,
       open.marker.line,
       open.marker.column,
+      {
+        kind: open.marker.kind,
+        classId: open.marker.classId,
+        blockKey: open.marker.blockKey,
+        boundary: {
+          kind: boundary.kind,
+          line: boundary.line.number + 1,
+        },
+      },
     );
   }
 
@@ -306,6 +320,11 @@ export class KtCodegenMarker {
       marker.path,
       marker.line,
       marker.column,
+      {
+        kind: marker.kind,
+        classId: marker.classId,
+        blockKey: marker.blockKey,
+      },
     );
   }
 
@@ -450,12 +469,14 @@ export class KtCodegenMarker {
     file: string,
     row: number,
     column: number,
+    marker?: KtCodegenDiagnostic["marker"],
   ): KtCodegenDiagnostic {
     return {
       code,
       severity,
       message,
       path: { source: "source", file, row, column },
+      ...(marker ? { marker } : {}),
     };
   }
 }
