@@ -17,8 +17,8 @@
       "manifest": "../kt-auto-code/package.json",
       "required": {
         "dependencies": {
-          "@phoenix-wing/code-core": "0.4.2",
-          "@phoenix-wing/kt-codegen": "0.4.2"
+          "@phoenix-wing/code-core": "0.4.3",
+          "@phoenix-wing/kt-codegen": "0.4.3"
         }
       },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source"]
@@ -28,8 +28,8 @@
       "manifest": "../kt-auto-code/extension/package.json",
       "required": {
         "dependencies": {
-          "@phoenix-wing/code-core": "0.4.2",
-          "@phoenix-wing/kt-codegen": "0.4.2"
+          "@phoenix-wing/code-core": "0.4.3",
+          "@phoenix-wing/kt-codegen": "0.4.3"
         }
       },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source"]
@@ -39,9 +39,9 @@
       "manifest": "../kt-auto-code/extensions/kt-auto-cad/package.json",
       "required": {
         "devDependencies": {
-          "@phoenix-wing/cad-contracts": "0.4.2",
-          "@phoenix-wing/cad-core": "0.4.2",
-          "@phoenix-wing/workspace-schema": "0.4.2"
+          "@phoenix-wing/cad-contracts": "0.4.3",
+          "@phoenix-wing/cad-core": "0.4.3",
+          "@phoenix-wing/workspace-schema": "0.4.3"
         }
       },
       "forbidden": ["phoenix-wing", "@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
