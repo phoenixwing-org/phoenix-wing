@@ -6,6 +6,8 @@ import {
   pnwBuildAssemblyTreeFromXrefs,
   pnwInferBomDocumentKinds,
   pnwInferBomFieldsFromFilename,
+  pnwExtractEmbeddedBomFieldsFromDocumentXml,
+  pnwPatchEmbeddedBomFieldsInDocumentXml,
   pnwExtractXlinksFromDocumentXml,
   pnwNormalizeCadRelativePath,
   pnwResolveXlinkTarget,
@@ -83,6 +85,91 @@ describe("CAD XLink XML core", () => {
     expect(pnwExtractXlinksFromDocumentXml(
       `<Document><XLink file='part.FCStd'/><XLink file='part.FCStd' label='Part &#49;'/></Document>`,
     )).toEqual([{ file: "part.FCStd", label: "Part 1" }]);
+  });
+});
+
+describe("CAD embedded BOM XML core", () => {
+  it("extracts BOM fields from the legacy inline-type schema", () => {
+    const xml = `<Document><ObjectData>
+      <Object name="Assembly" type="App::Part"><Properties>
+        <Property name="Label" type="App::PropertyString"><String value="主装配 &amp; 夹具"/></Property>
+        <Property name="PartNumber" type="App::PropertyString"><String value="800001"/></Property>
+        <Property name="PartVersion" type="App::PropertyString"><String value="002"/></Property>
+        <Property name="TypeCode" type="App::PropertyString"><String value="a"/></Property>
+        <Property name="ModelSeries" type="App::PropertyString"><String value="px"/></Property>
+        <Property name="PartName" type="App::PropertyString"><String value="滑轨"/></Property>
+        <Property name="Group" type="App::PropertyLinkList"><Link value="Body"/></Property>
+      </Properties></Object>
+      <Object name="Body" type="PartDesign::Body"><Properties>
+        <Property name="Label"><String value="子项"/></Property>
+      </Properties></Object>
+    </ObjectData></Document>`;
+
+    expect(pnwExtractEmbeddedBomFieldsFromDocumentXml(xml)).toEqual({
+      PartNumber: "800001",
+      PartVersion: "002",
+      TypeCode: "A",
+      ModelSeries: "PX",
+      PartName: "滑轨",
+      label: "主装配 & 夹具",
+    });
+  });
+
+  it("uses the FreeCAD 1.x Objects type map and preserves empty fields", () => {
+    const xml = `<Document>
+      <Objects><Object type="PartDesign::Body" name="Body"/></Objects>
+      <ObjectData><Object name="Body"><Properties>
+        <Property name="Label" type="App::PropertyString"><String>新格式零件</String></Property>
+        <Property name="PartNumber" type="App::PropertyString"><String value="900001"/></Property>
+        <Property name="PartVersion" type="App::PropertyString"><String value="001"/></Property>
+        <Property name="PartName" type="App::PropertyString"><String value=""/></Property>
+      </Properties></Object></ObjectData>
+    </Document>`;
+
+    expect(pnwExtractEmbeddedBomFieldsFromDocumentXml(xml)).toEqual({
+      PartNumber: "900001",
+      PartVersion: "001",
+      TypeCode: "",
+      ModelSeries: "",
+      PartName: "",
+      label: "新格式零件",
+    });
+  });
+
+  it("returns null when no root BOM object exists", () => {
+    expect(pnwExtractEmbeddedBomFieldsFromDocumentXml(
+      `<Document><ObjectData><Object name="Link" type="App::Link"><Properties/></Object></ObjectData></Document>`,
+    )).toBeNull();
+  });
+
+  it("patches existing and missing BOM properties without touching sibling objects", () => {
+    const xml = `<Document><ObjectData>
+      <Object name="Root" type="App::Part"><Properties>
+        <Property name="Label" type="App::PropertyString"><String value="Old"/></Property>
+        <Property name="Custom"><String value="Keep"/></Property>
+        <Property name="Group"><Link value="Child"/></Property>
+      </Properties></Object>
+      <Object name="Child" type="PartDesign::Body"><Properties>
+        <Property name="Label"><String value="Child Label"/></Property>
+      </Properties></Object>
+    </ObjectData></Document>`;
+    const patched = pnwPatchEmbeddedBomFieldsInDocumentXml(xml, {
+      PartNumber: "800001",
+      PartVersion: "002",
+      PartName: "A&B",
+      label: "New Root",
+    });
+
+    expect(patched).toMatchObject({ changed: true, objectName: "Root" });
+    expect(patched?.xml).toContain('<Property name="Custom"><String value="Keep"/></Property>');
+    expect(patched?.xml).toContain('<String value="A&amp;B"/>');
+    expect(patched?.xml).toContain('<Object name="Child" type="PartDesign::Body"><Properties>');
+    expect(pnwExtractEmbeddedBomFieldsFromDocumentXml(patched!.xml)).toMatchObject({
+      PartNumber: "800001",
+      PartVersion: "002",
+      PartName: "A&B",
+      label: "New Root",
+    });
   });
 });
 
