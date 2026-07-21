@@ -22,6 +22,15 @@ export type PnwCadXlinkRef = {
   label: string;
 };
 
+export type PnwCadEmbeddedBomFields = {
+  PartNumber: string;
+  PartVersion: string;
+  TypeCode: string;
+  ModelSeries: string;
+  PartName: string;
+  label: string;
+};
+
 export type PnwCadXlinkResolveStatus = "resolved" | "ambiguous" | "missing" | "self" | "non_fcstd";
 
 export type PnwCadResolvedXlinkTarget = {
@@ -248,6 +257,172 @@ export function pnwExtractXlinksFromDocumentXml(xml: string): PnwCadXlinkRef[] {
   }
   addFromFragment(xml, "");
   return [...byFile.values()];
+}
+
+type PnwCadXmlBomObject = {
+  name: string;
+  typeId: string;
+  children: string[];
+  properties: Map<string, string>;
+};
+
+function pnwIsBomObjectType(typeId: string): boolean {
+  return typeId === "PartDesign::Body"
+    || typeId === "App::Part"
+    || typeId === "App::LinkGroup"
+    || typeId.includes("Part::")
+    || typeId.includes("Assembly");
+}
+
+function pnwXmlStringValue(fragment: string): string {
+  const tag = /<String\b[^>]*>/i.exec(fragment)?.[0] ?? "";
+  const attributeValue = tag ? xmlTagAttribute(tag, "value") : "";
+  if (attributeValue) return attributeValue;
+  const textValue = /<String\b[^>]*>([\s\S]*?)<\/String>/i.exec(fragment)?.[1] ?? "";
+  return decodeXmlAttribute(textValue.trim());
+}
+
+function pnwParseXmlBomObjects(xml: string): PnwCadXmlBomObject[] {
+  const typeByName = new Map<string, string>();
+  const objectsSection = /<Objects\b[^>]*>([\s\S]*?)<\/Objects>/i.exec(xml)?.[1] ?? "";
+  for (const match of objectsSection.matchAll(/<Object\b[^>]*\/?\s*>/gi)) {
+    const name = xmlTagAttribute(match[0], "name");
+    const typeId = xmlTagAttribute(match[0], "type");
+    if (name && typeId) typeByName.set(name, typeId);
+  }
+
+  const objectData = /<ObjectData\b[^>]*>([\s\S]*?)<\/ObjectData>/i.exec(xml)?.[1] ?? "";
+  const objects: PnwCadXmlBomObject[] = [];
+  for (const match of objectData.matchAll(/<Object\b([^>]*)>([\s\S]*?)<\/Object>/gi)) {
+    const openingTag = `<Object${match[1]}>`;
+    const name = xmlTagAttribute(openingTag, "name");
+    if (!name) continue;
+    const body = match[2];
+    const properties = new Map<string, string>();
+    const children: string[] = [];
+    for (const propertyMatch of body.matchAll(/<Property\b([^>]*)>([\s\S]*?)<\/Property>/gi)) {
+      const propertyTag = `<Property${propertyMatch[1]}>`;
+      const propertyName = xmlTagAttribute(propertyTag, "name");
+      if (!propertyName) continue;
+      if (propertyName === "Group") {
+        for (const linkMatch of propertyMatch[2].matchAll(/<Link\b[^>]*>/gi)) {
+          const child = xmlTagAttribute(linkMatch[0], "value") || xmlTagAttribute(linkMatch[0], "name");
+          if (child) children.push(child);
+        }
+      }
+      const value = pnwXmlStringValue(propertyMatch[2]);
+      if (value || propertyMatch[2].includes("<String")) properties.set(propertyName, value);
+    }
+    objects.push({
+      name,
+      typeId: xmlTagAttribute(openingTag, "type") || typeByName.get(name) || "",
+      children,
+      properties,
+    });
+  }
+  return objects;
+}
+
+function pnwSelectXmlBomObject(objects: readonly PnwCadXmlBomObject[]): PnwCadXmlBomObject | null {
+  const childNames = new Set(objects.flatMap((object) => object.children));
+  const roots = objects.filter((object) => (
+    pnwIsBomObjectType(object.typeId)
+    && object.typeId !== "App::Link"
+    && !childNames.has(object.name)
+  ));
+  return roots.find((object) => object.typeId === "PartDesign::Body")
+    ?? roots.find((object) => object.typeId === "App::Part" || object.typeId.includes("Assembly"))
+    ?? roots.find((object) => object.typeId === "App::LinkGroup")
+    ?? roots[0]
+    ?? null;
+}
+
+/**
+ * 从 FreeCAD 新旧两种 Document.xml schema 中投影根 BOM 对象字段。
+ * ZIP、文件系统和写回不进入 cad-core；消费者只负责提供 XML 字符串。
+ */
+export function pnwExtractEmbeddedBomFieldsFromDocumentXml(
+  xml: string,
+): PnwCadEmbeddedBomFields | null {
+  const selected = pnwSelectXmlBomObject(pnwParseXmlBomObjects(xml));
+  if (!selected) return null;
+
+  const value = (key: string): string => selected.properties.get(key)?.trim() ?? "";
+  return {
+    PartNumber: value("PartNumber"),
+    PartVersion: value("PartVersion"),
+    TypeCode: value("TypeCode").toUpperCase(),
+    ModelSeries: value("ModelSeries").toUpperCase(),
+    PartName: value("PartName"),
+    label: value("Label") || selected.name,
+  };
+}
+
+function encodeXmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+export type PnwCadEmbeddedBomPatch = {
+  xml: string;
+  changed: boolean;
+  objectName: string;
+};
+
+/** 只改根 BOM 对象的字符串属性；ZIP 重建与原子替换继续由 Node 宿主负责。 */
+export function pnwPatchEmbeddedBomFieldsInDocumentXml(
+  xml: string,
+  fields: Partial<PnwCadEmbeddedBomFields>,
+): PnwCadEmbeddedBomPatch | null {
+  const selected = pnwSelectXmlBomObject(pnwParseXmlBomObjects(xml));
+  if (!selected) return null;
+  const objectPattern = /<Object\b([^>]*)>([\s\S]*?)<\/Object>/gi;
+  let objectMatch: RegExpExecArray | null = null;
+  for (const match of xml.matchAll(objectPattern)) {
+    if (xmlTagAttribute(`<Object${match[1]}>`, "name") === selected.name) {
+      objectMatch = match;
+      break;
+    }
+  }
+  if (!objectMatch || objectMatch.index == null) return null;
+
+  const values = new Map<string, string>();
+  for (const key of ["PartNumber", "PartVersion", "TypeCode", "ModelSeries", "PartName"] as const) {
+    if (fields[key] != null) values.set(key, String(fields[key]));
+  }
+  if (fields.label != null) values.set("Label", String(fields.label));
+
+  let body = objectMatch[2];
+  for (const [key, value] of values) {
+    const replacement = `<Property name="${key}" type="App::PropertyString"><String value="${encodeXmlAttribute(value)}"/></Property>`;
+    let existing: RegExpExecArray | null = null;
+    for (const propertyMatch of body.matchAll(/<Property\b([^>]*)>[\s\S]*?<\/Property>/gi)) {
+      if (xmlTagAttribute(`<Property${propertyMatch[1]}>`, "name") === key) {
+        existing = propertyMatch;
+        break;
+      }
+    }
+    if (existing?.index != null) {
+      body = body.slice(0, existing.index) + replacement + body.slice(existing.index + existing[0].length);
+    } else {
+      const propertiesEnd = body.indexOf("</Properties>");
+      if (propertiesEnd >= 0) {
+        body = `${body.slice(0, propertiesEnd)}\n        ${replacement}${body.slice(propertiesEnd)}`;
+      } else {
+        body += `\n      <Properties>\n        ${replacement}\n      </Properties>`;
+      }
+    }
+  }
+
+  const openingLength = objectMatch[0].indexOf(">") + 1;
+  const patchedObject = objectMatch[0].slice(0, openingLength) + body + "</Object>";
+  const patchedXml = xml.slice(0, objectMatch.index)
+    + patchedObject
+    + xml.slice(objectMatch.index + objectMatch[0].length);
+  return { xml: patchedXml, changed: patchedXml !== xml, objectName: selected.name };
 }
 
 function indexRelativePath(value: string): string {
