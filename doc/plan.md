@@ -22,7 +22,7 @@ Owner：Phoenix Wing maintainers
 
 ## 当前优先级
 
-1. **[进行中：0.5.0 锁步发布]** 新增 Git/Run 四个发布包，并纳入 KtCodegen Workbench UI 与 CAD FCStd BOM XML 能力；12 个发布物统一提升为 0.5.0，完成全量门禁、中文提交、pnpm 发布与 Registry 干净消费后，再依次升级 Auto Code 0.6.0 和 Desk Tools。Open Issue 本轮不动。
+1. **[已完成：0.5.0 锁步发布]** 新增 Git/Run 四个发布包，并纳入 KtCodegen Workbench UI 与 CAD FCStd BOM XML 能力；12 个发布物已统一提升到 0.5.0，完成全量门禁、中文提交、pnpm 发布与 Registry 干净消费。下一步依次升级 Auto Code 0.6.0 和 Desk Tools；Open Issue 本轮不动。
 2. **[已完成：核心平台基线]** Apply、UUID/GUID、workspace path、32 个 Renderer family、跨宿主 golden fixture、聚合 UI 单出口与 AST/import graph 均由 Wing 保持真源，Auto/Desk/Open Issue 已通过 Registry 0.4.2 验证；原八条重复完成项合并由本条追踪。
 3. **[已完成：0.4.3 功能范围]** Marker 在下一 Start/End 边界恢复并输出结构化诊断；仅 `missing-end`/`orphan-end` 时可安全应用其余完整区域；`KtCodegenTable` 已完成 ViewModel/Style 分层、`contained|page`、disclosure 与高对比选中态治理，公共入口保持兼容。
 
