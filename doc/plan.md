@@ -11,9 +11,9 @@ Owner：Phoenix Wing maintainers
 ## 已完成基线
 
 - 八个 npm 发布单元已在 0.4.3 锁步公开发布；聚合包 Registry manifest 仅引用精确的 0.4.3 内部依赖，不含 `workspace:`、`link:` 或 `file:`。
-- 注释标签 `0.4.3` 已封签到最终候选 `5211504` 并推送远端；Auto Code 0.5.1 与 Auto CAD 0.1.0 已精确消费 Registry 0.4.3、完成 Marketplace 公开发布并通过人工审查，Desk Tools 与 Open Issue 仍消费 0.4.2。
+- 注释标签 `0.4.3` 已封签到最终候选 `5211504` 并推送远端；Auto Code 0.5.1 与 Auto CAD 0.1.0 曾完成 Registry 消费、Marketplace 公开发布与人工审查。
 - `code-core`、`kt-codegen`、CAD contracts/core、workspace schema、Node DB adapter 和 Rust source 已有真实消费者。
-- Auto Code/Auto CAD 与 Desk Tools 只从 Registry 精确消费 0.4.3，Open Issue 仍精确消费 0.4.2；各仓均不使用相邻目录 override，机器事实由 `release-matrix.json` 维护。
+- Auto Code/Auto CAD、Desk Tools 与 Open Issue 均从 Registry 消费 Wing；各仓不使用相邻目录 override，当前精确版本由各自的 manifest、lockfile 和依赖门禁维护。
 - 完整 workspace 测试、类型检查、release matrix、TypeScript/Rust tarball smoke 已进入 `pnpm verify:ci`。
 - 聚合 UI 编译入口、跨宿主契约、两项纯能力 fixture 与消费者验证均已进入制品门禁；0.4.2 归档、Registry 和七个消费者结果见[《0.4.2 本地候选与公开发布验收》](0.4.2发布候选验收.md)。
 - 大型 UI 分阶段拆分已经启动；Wing 的 `KtCodegenTable` 首轮治理已完成：领域编辑在 Core、布局与动作投影在无 DOM ViewModel、主题/滚动视觉规则在内部 Style，Web Component 保留单一 DOM renderer、焦点/事件接线与 Host 事件投影；`contained|page` 布局和公共 disclosure 属性/事件已经落地，公共 tag、数据方法和 browser 子路径保持稳定。
@@ -35,6 +35,6 @@ Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一�
 ## 变更规则
 
 - 公共能力必须先有第二个真实消费者或明确的跨宿主契约。
-- 发布版本、消费关系和协议由 `release-matrix.json` 维护，不在文档中复制第二份机器事实。
+- 发布版本与协议由 `release-matrix.json` 维护；消费者当前精确版本由各消费仓库维护，不在 Wing 中复制。
 - 测试数量和 bundle 大小由 CI 产出；当前文档只描述门禁范围，不手写易漂移计数。
 - 完成态计划转为 archived；被新真源替代的文档标为 superseded，并保留跳转关系至少一个发布周期。
