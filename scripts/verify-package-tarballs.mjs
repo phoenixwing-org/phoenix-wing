@@ -11,6 +11,10 @@ const packRoot = path.join(tempRoot, "packs");
 const consumerRoot = path.join(tempRoot, "consumer");
 const packageNames = [
   "code-core",
+  "git-core",
+  "git-node",
+  "run-core",
+  "run-node",
   "kt-codegen",
   "cad-contracts",
   "cad-core",
@@ -88,6 +92,10 @@ import {
   PNW_WORKSPACE_SCHEMA_V13_DDL,
 } from "@phoenix-wing/workspace-schema";
 import { pnwCreateDb } from "@phoenix-wing/db-node";
+import { pnwShortestUniqueGitOid } from "@phoenix-wing/git-core";
+import { pnwRunGitCommand } from "@phoenix-wing/git-node";
+import { pnwResolveRunCaaVersion } from "@phoenix-wing/run-core";
+import { pnwCreateBundledCaaLaunchPlan } from "@phoenix-wing/run-node";
 
 if (pnwNormalizeUuid("{550E8400-E29B-41D4-A716-446655440000}") !== "550e8400e29b41d4a716446655440000") {
   throw new Error("code-core export smoke failed");
@@ -125,6 +133,20 @@ if (PNW_CAD_NATIVE_PROTOCOL !== "phoenix-cad-native") {
 if (PNW_WORKSPACE_SCHEMA_ID !== "phoenix-workspace" || PNW_WORKSPACE_SCHEMA_VERSION !== 13) {
   throw new Error("workspace-schema export smoke failed");
 }
+if (pnwShortestUniqueGitOid("4b4622df00") !== "4b4622d") {
+  throw new Error("git-core export smoke failed");
+}
+const gitVersion = await pnwRunGitCommand(["--version"], { cwd: process.cwd() });
+if (!gitVersion.stdout.startsWith("git version")) throw new Error("git-node runtime smoke failed");
+if (pnwResolveRunCaaVersion({ explicit: "B20" }).value !== "20") {
+  throw new Error("run-core export smoke failed");
+}
+const runPlan = pnwCreateBundledCaaLaunchPlan({
+  id: "smoke", projectId: "smoke", label: "Run", action: "caa-run", sourceKind: "bundled",
+  platforms: ["win32"], cwd: process.cwd(), args: [], envKeys: ["CAA_MK_VERSION"],
+  problemMatchers: [], matcherFidelity: "none", risk: "review", priority: 200,
+}, { platform: "win32", resourceRoot: process.cwd(), caaVersion: "20" });
+if (runPlan.program !== "cmd.exe") throw new Error("run-node export smoke failed");
 const databasePath = path.join(process.cwd(), "consumer.sqlite");
 const db = pnwCreateDb(databasePath);
 try {
@@ -153,17 +175,19 @@ process.stdout.write("[verify] clean npm consumer imports and SQLite smoke passe
 function packPackage(directoryName) {
   const packageRoot = path.join(root, "packages", directoryName);
   const result = run(
-    npmCommand(),
+    pnpmCommand(),
     ["pack", "--json", "--pack-destination", packRoot],
     { cwd: packageRoot, capture: true },
   );
-  const info = parsePackJson(result.stdout)?.[0];
+  const marker = result.stdout.lastIndexOf("\n{");
+  const parsed = JSON.parse(marker >= 0 ? result.stdout.slice(marker + 1) : result.stdout.slice(result.stdout.indexOf("{")));
+  const info = Array.isArray(parsed) ? parsed[0] : parsed;
   if (!info || typeof info.filename !== "string") {
-    throw new Error(`npm pack returned no filename for ${directoryName}`);
+    throw new Error(`pnpm pack returned no filename for ${directoryName}`);
   }
   return {
     directoryName,
-    tarball: path.join(packRoot, info.filename),
+    tarball: path.isAbsolute(info.filename) ? info.filename : path.join(packRoot, info.filename),
     expectedName: JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")).name,
   };
 }

@@ -1,0 +1,40 @@
+{
+  "name": "@phoenix-wing/run-node",
+  "version": "0.5.0",
+  "description": "Phoenix Run Node.js 工作区发现、tasks.json 导入与 launch plan adapter",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src/index.ts", "README.md", "LICENSE", "NOTICE"],
+  "scripts": {
+    "prepublishOnly": "node ../../scripts/verify-publish-client.mjs",
+    "prepack": "pnpm run build",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": ["phoenix", "run", "node", "task", "discovery"],
+  "author": "上海锟钛",
+  "license": "Apache-2.0",
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/PhoenixWing321/phoenix-wing.git"
+  },
+  "dependencies": {
+    "@phoenix-wing/run-core": "workspace:0.5.0",
+    "jsonc-parser": "3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

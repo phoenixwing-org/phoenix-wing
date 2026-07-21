@@ -1,8 +1,12 @@
 {
   "schemaVersion": 1,
-  "currentDate": "2026-07-18",
+  "currentDate": "2026-07-21",
   "scanRoots": [
     "packages/code-core/src",
+    "packages/git-core/src",
+    "packages/git-node/src",
+    "packages/run-core/src",
+    "packages/run-node/src",
     "packages/kt-codegen/src",
     "packages/cad-contracts/src",
     "packages/cad-core/src",
@@ -12,6 +16,8 @@
   "exclude": ["\\.test\\.", "\\.spec\\.", "(?:^|/)dist/"],
   "pureEntrypoints": [
     "packages/code-core/src/index.ts",
+    "packages/git-core/src/index.ts",
+    "packages/run-core/src/index.ts",
     "packages/kt-codegen/src/index.ts",
     "packages/kt-codegen/src/table/KtCodegenTableViewModel.ts",
     "packages/kt-codegen/src/table/KtCodegenTableStyle.ts",

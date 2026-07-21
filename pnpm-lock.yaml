@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.4.3
+        specifier: workspace:0.5.0
         version: link:packages/code-core
       '@phoenix-wing/db-node':
-        specifier: workspace:0.4.3
+        specifier: workspace:0.5.0
         version: link:packages/db-node
       element-plus:
         specifier: ^2.0.0
@@ -50,7 +50,7 @@ importers:
   packages/cad-contracts:
     devDependencies:
       '@phoenix-wing/db-node':
-        specifier: workspace:0.4.3
+        specifier: workspace:0.5.0
         version: link:../db-node
       typescript:
         specifier: ^5.7.0
@@ -98,7 +98,66 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@22.20.0)
 
+  packages/git-core:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)
+
+  packages/git-node:
+    dependencies:
+      '@phoenix-wing/git-core':
+        specifier: workspace:0.5.0
+        version: link:../git-core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)
+
   packages/kt-codegen:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)
+
+  packages/run-core:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@22.20.0)
+
+  packages/run-node:
+    dependencies:
+      '@phoenix-wing/run-core':
+        specifier: workspace:0.5.0
+        version: link:../run-core
+      jsonc-parser:
+        specifier: 3.3.1
+        version: 3.3.1
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -685,6 +744,9 @@ packages:
 
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
+
+  jsonc-parser@3.3.1:
+    resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
 
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
@@ -1413,6 +1475,8 @@ snapshots:
   is-what@5.5.0: {}
 
   js-tokens@9.0.1: {}
+
+  jsonc-parser@3.3.1: {}
 
   lodash-es@4.18.1: {}
 

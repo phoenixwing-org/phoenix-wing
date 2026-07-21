@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "release_version": "0.4.3",
+  "release_version": "0.5.0",
   "packages": [
     { "name": "phoenix-wing", "manifest": "package.json", "kind": "compat-ui" },
     { "name": "@phoenix-wing/code-core", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/git-core", "manifest": "packages/git-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/git-node", "manifest": "packages/git-node/package.json", "kind": "node-adapter" },
+    { "name": "@phoenix-wing/run-core", "manifest": "packages/run-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/run-node", "manifest": "packages/run-node/package.json", "kind": "node-adapter" },
     { "name": "@phoenix-wing/kt-codegen", "manifest": "packages/kt-codegen/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/cad-contracts", "manifest": "packages/cad-contracts/package.json", "kind": "typescript-contracts" },
     { "name": "@phoenix-wing/cad-core", "manifest": "packages/cad-core/package.json", "kind": "typescript-core" },
@@ -51,14 +55,12 @@
       "manifest": "../phoenix-desk-tools/server/package.json",
       "required": {
         "dependencies": {
-          "@phoenix-wing/code-core": "0.4.2",
-          "@phoenix-wing/cad-contracts": "0.4.2",
-          "@phoenix-wing/cad-core": "0.4.2",
-          "@phoenix-wing/workspace-schema": "0.4.2",
-          "@phoenix-wing/db-node": "0.4.2",
-          "@phoenix-wing/kt-codegen": "0.4.2"
-        },
-        "devDependencies": { "@phoenix-wing/cad-rust-source": "0.4.2" }
+          "@phoenix-wing/code-core": "0.4.3",
+          "@phoenix-wing/cad-core": "0.4.3",
+          "@phoenix-wing/workspace-schema": "0.4.3",
+          "@phoenix-wing/db-node": "0.4.3",
+          "@phoenix-wing/kt-codegen": "0.4.3"
+        }
       },
       "forbidden": ["phoenix-wing"]
     },
@@ -67,8 +69,8 @@
       "manifest": "../phoenix-desk-tools/web-ui/package.json",
       "required": {
         "dependencies": {
-          "@phoenix-wing/kt-codegen": "0.4.2",
-          "phoenix-wing": "0.4.2"
+          "@phoenix-wing/kt-codegen": "0.4.3",
+          "phoenix-wing": "0.4.3"
         }
       },
       "forbidden": ["@phoenix-wing/cad-rust-source", "@phoenix-wing/db-node"]
