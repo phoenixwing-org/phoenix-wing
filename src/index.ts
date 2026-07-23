@@ -60,9 +60,22 @@ export { pnwBindPointerDrag } from './utils/pnwPointerDrag.js'
 export { pnwClearPhoenixBrowserStorage } from './utils/pnwBrowserStorage.js'
 
 // ---------------------------------------------------------------------------
+// 编辑抽屉宿主
+// ---------------------------------------------------------------------------
+export { pnwCanCloseEditorDrawer } from './utils/pnwEditorDrawer.js'
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 export { type PnwComboOption } from './types/pnwComboTypes.js'
+
+export {
+  type PnwEditorDrawerMode,
+  type PnwEditorDrawerSide,
+  type PnwEditorDrawerIdentity,
+  type PnwEditorDrawerCloseContext,
+  type PnwEditorDrawerCloseGuard,
+} from './types/PnwEditorDrawer.js'
 
 export {
   type PnwPagePropertyScalar,
@@ -204,6 +217,7 @@ export { default as PnwAsyncProgressOverlay } from './components/PnwAsyncProgres
 export { default as PnwChoiceDialogHost } from './components/PnwChoiceDialogHost.vue'
 export { default as PnwComboTextInput } from './components/PnwComboTextInput.vue'
 export { default as PnwDictSelect } from './components/PnwDictSelect.vue'
+export { default as PnwEditorDrawerHost } from './components/PnwEditorDrawerHost.vue'
 export { default as PnwExpandCaret } from './components/PnwExpandCaret.vue'
 
 export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'
@@ -233,5 +247,6 @@ export { default as PnwWorkbenchTabBar } from './layout/PnwWorkbenchTabBar.vue'
 //   import PnwAppModalOverlay from 'phoenix-wing/components/PnwAppModalOverlay.vue'
 //   import PnwChoiceDialogHost from 'phoenix-wing/components/PnwChoiceDialogHost.vue'
 //   import PnwComboTextInput from 'phoenix-wing/components/PnwComboTextInput.vue'
+//   import PnwEditorDrawerHost from 'phoenix-wing/components/PnwEditorDrawerHost.vue'
 //   import PnwExpandCaret from 'phoenix-wing/components/PnwExpandCaret.vue'
 //   import PnwAsyncProgressOverlay from 'phoenix-wing/components/PnwAsyncProgressOverlay.vue'
