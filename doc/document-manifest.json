@@ -14,28 +14,28 @@
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "AGENTS.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "CLAUDE.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/0.4.0发布验收.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/三库版本矩阵.md",
       "reason": "0.4.0/0.4.1 发布历史证据"
     },
@@ -44,7 +44,7 @@
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/0.4.3发布候选验收.md",
       "reason": "0.4.2 候选与公开发布历史证据"
     },
@@ -53,51 +53,60 @@
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/0.5.0发布候选验收.md",
       "reason": "0.4.3 公开发布历史证据"
     },
     {
       "path": "doc/0.5.0发布候选验收.md",
+      "status": "archived",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "historical",
+      "lastVerified": "2026-07-23",
+      "sourceOfTruth": "doc/0.5.1本地发布候选验收.md",
+      "reason": "0.5.0 公开发布历史证据"
+    },
+    {
+      "path": "doc/0.5.1本地发布候选验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/发布配置步骤.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/共享能力目录.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/架构图.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/跨语言多包架构与三库迁移计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
@@ -106,14 +115,14 @@
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/框架迁移计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
@@ -122,21 +131,21 @@
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/三库版本矩阵.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/三库共享核心整改计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
@@ -145,14 +154,14 @@
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/组件改进计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
@@ -161,28 +170,28 @@
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/C++成员排序算法规范.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/naming-checklist.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "doc/overview.md",
       "status": "superseded",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/文档索引.md",
       "reason": "v0.1 模块总览已由包 README 和文档索引替代"
     },
@@ -191,77 +200,77 @@
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/cad-contracts/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/cad-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/cad-rust-source/MIGRATION.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/cad-rust-source/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/code-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/db-node/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/git-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/git-node/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/kt-codegen/doc/来源与许可归档.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/kt-codegen/doc/两小时迁移计划与验收.md",
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -270,7 +279,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -279,21 +288,21 @@
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/kt-codegen/doc/自动代码标记扫描.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/kt-codegen/doc/CAA对话框通知块迁移.md",
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -302,7 +311,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -311,7 +320,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -320,7 +329,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -329,7 +338,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -338,7 +347,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -347,7 +356,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -356,7 +365,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -365,7 +374,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -374,7 +383,7 @@
       "status": "archived",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "historical",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "packages/kt-codegen/README.md",
       "reason": "单批次迁移与兼容证据"
     },
@@ -383,56 +392,56 @@
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/kt-codegen/README.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/run-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/run-node/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "packages/workspace-schema/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21"
+      "lastVerified": "2026-07-23"
     },
     {
       "path": "TODO.md",
       "status": "superseded",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",
-      "lastVerified": "2026-07-21",
+      "lastVerified": "2026-07-23",
       "sourceOfTruth": "doc/plan.md",
       "reason": "旧 Phase 清单仅保留兼容跳转"
     }
