@@ -14,17 +14,33 @@ public:
     // START KEVIN CAA WIZARD SECTION PNXBomAnalysis PARAM DECLARATION
 
     // clang-format off
+
+    // @app Kt Auto Code
+    // @version 5.0.0, (2024)
+
     /**
-     * @brief Part Count
-     * @id 3
+     * @brief First Product
+     * @author Phoenix
+     * @date 2021/10/27
+     * @id 1
      */
-    int PartCount;
+    CATISpecObject_var FirstProduct;
 
     /**
      * @brief Top Part Number
+     * @author Phoenix
+     * @date 2021/10/27
      * @id 2
      */
     CATUnicodeString FirstPartNumber;
+
+    /**
+     * @brief Part Count
+     * @author Phoenix
+     * @date 2025/10/13
+     * @id 3
+     */
+    int PartCount;
 
     // clang-format on
     // END KEVIN CAA WIZARD SECTION PNXBomAnalysis PARAM DECLARATION

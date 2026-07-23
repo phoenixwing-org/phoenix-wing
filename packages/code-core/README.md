@@ -7,9 +7,11 @@ Phoenix Code 可跨宿主复用的纯 TypeScript 算法与数据契约。包内�
 - C++ 实现文件与头文件成员排序、锁定区保护；
 - UUID/GUID/CAA GUID 识别、花括号/大小写/布局保持、替换计划与纯文本 apply；
 - Code Rename 计划与纯文本 apply；
+- Phoenix Ignore 子集的规则解析、大小写策略、路径/名称/目录匹配；
+- 搜索替换规则校验、去重/冲突检测、最长匹配、文本行号与名称建议；
 - 工作集 Schema，以及 workspace 相对路径规范化、去重、文件/目录匹配、包含和 roots 相对化；
 - CAA 工程环境和对话框 handoff 数据契约；
-- 跨宿主文件结果分组与排序 ViewModel。
+- 跨宿主文件、成员排序、UUID 与搜索替换结果 ViewModel；成员排序、UUID 与搜索替换另提供 Host-neutral Web Components。
 
 `kt-auto-code` 与 Desk Tools 应直接消费本包。旧 `phoenix-wing/code-core` subpath 仅保留兼容 re-export，不再持有算法真源。
 

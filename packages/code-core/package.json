@@ -11,6 +11,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "import": "./dist/ui/index.js"
+    },
+    "./ui/model": {
+      "types": "./dist/ui/model.d.ts",
+      "import": "./dist/ui/model.js"
+    },
     "./fixtures/*": "./src/fixtures/*"
   },
   "files": [

@@ -13,6 +13,11 @@ export type KtCodegenControlResultItem =
   | { readonly kind: "hit"; readonly key: string; readonly region: KtCodegenMarkerRegion }
   | { readonly kind: "issue"; readonly key: string; readonly diagnostic: KtCodegenDiagnostic };
 
+export interface KtCodegenControlResultBadge {
+  readonly label: string;
+  readonly tone: "info" | "success" | "warning" | "error" | "muted";
+}
+
 export function ktCodegenClampControlSplitPercent(value: number): number {
   if (!Number.isFinite(value)) return 42;
   return Math.max(20, Math.min(75, value));
@@ -38,6 +43,63 @@ export function ktCodegenControlResultItems(
     });
   }
   return items;
+}
+
+/**
+ * 共享预检列表的结构化状态标签。只使用 plan / marker / artifact 身份推导，
+ * 不解析本地化 message，也不猜测 Host 尚未提供的逐区域写回结果。
+ */
+export function ktCodegenControlResultBadges(
+  model: KtCodegenControlUiModel,
+  item: KtCodegenControlResultItem,
+): readonly KtCodegenControlResultBadge[] {
+  if (item.kind === "issue") {
+    return [{
+      label: item.diagnostic.severity === "error"
+        ? "错误"
+        : item.diagnostic.severity === "warning" ? "警告" : "信息",
+      tone: item.diagnostic.severity === "info" ? "info" : item.diagnostic.severity,
+    }];
+  }
+  const plan = model.preflight?.plan;
+  if (!plan) return [];
+  const hitCount = plan.markerRegions.filter((region) => region.blockKey === item.region.blockKey).length;
+  const relatedDiagnostics = plan.diagnostics.filter((diagnostic) => {
+    if (diagnostic.marker?.blockKey === item.region.blockKey
+      && diagnostic.marker.classId === item.region.classId) return true;
+    const row = diagnostic.path?.row;
+    return diagnostic.path?.source === "source"
+      && diagnostic.path.file === item.region.path
+      && row !== undefined
+      && row >= item.region.start.line
+      && row <= item.region.end.line;
+  });
+  const severity = relatedDiagnostics.some((diagnostic) => diagnostic.severity === "error")
+    ? "error" as const
+    : relatedDiagnostics.some((diagnostic) => diagnostic.severity === "warning")
+      ? "warning" as const
+      : undefined;
+  const artifactCount = plan.artifacts.filter((artifact) => artifact.regionId === item.region.id).length;
+  const badges: KtCodegenControlResultBadge[] = [{
+    label: `${hitCount} 命中`,
+    tone: "info",
+  }];
+  if (severity) badges.push({ label: severity === "error" ? "错误" : "警告", tone: severity });
+  const appliedOutcome = model.preflight?.regionOutcomes
+    ?.find((outcome) => outcome.regionId === item.region.id)?.change;
+  if (!artifactCount) badges.push({ label: "未改写", tone: "muted" });
+  else if (model.preflight?.state === "applied" && appliedOutcome === "updated") {
+    badges.push({ label: "已改写", tone: "success" });
+  } else if (model.preflight?.state === "applied" && appliedOutcome === "unchanged") {
+    badges.push({ label: "一致", tone: "muted" });
+  } else if (model.preflight?.state === "applied" && appliedOutcome === "not-applied") {
+    badges.push({ label: "未应用", tone: "warning" });
+  } else if (model.preflight?.state === "applied") {
+    badges.push({ label: "已应用", tone: "success" });
+  }
+  else if (model.preflight?.state === "stale") badges.push({ label: "已过期", tone: "warning" });
+  else badges.push({ label: "待改写", tone: "info" });
+  return badges;
 }
 
 export function ktCodegenControlUnclosedForDiagnostic(

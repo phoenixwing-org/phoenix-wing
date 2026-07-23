@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { KtCodegenPlan } from "../src/api/contracts.js";
 import {
   ktCodegenClampControlSplitPercent,
+  ktCodegenControlResultBadges,
   ktCodegenControlResultItems,
   ktCodegenControlUnclosedForDiagnostic,
   ktCodegenExpectedEndFromDiagnostic,
@@ -71,6 +72,49 @@ describe("Codegen shared control UI projection", () => {
     expect(ktCodegenControlResultItems(value, "hits").map((item) => item.kind)).toEqual(["hit"]);
     expect(ktCodegenControlResultItems(value, "issues").map((item) => item.kind)).toEqual(["issue"]);
     expect(ktCodegenControlResultItems(value, "all").map((item) => item.kind)).toEqual(["hit", "issue"]);
+  });
+
+  it("projects shared hit, issue, and write-state badges from structured plan data", () => {
+    const value = model();
+    const hit = ktCodegenControlResultItems(value, "hits")[0]!;
+    expect(ktCodegenControlResultBadges(value, hit)).toEqual([
+      { label: "1 命中", tone: "info" },
+      { label: "错误", tone: "error" },
+      { label: "未改写", tone: "muted" },
+    ]);
+    const issue = ktCodegenControlResultItems(value, "issues")[0]!;
+    expect(ktCodegenControlResultBadges(value, issue)).toEqual([
+      { label: "错误", tone: "error" },
+    ]);
+  });
+
+  it.each([
+    ["updated", "已改写", "success"],
+    ["unchanged", "一致", "muted"],
+    ["not-applied", "未应用", "warning"],
+  ] as const)("renders the Host-provided %s region outcome", (change, label, tone) => {
+    const value = model();
+    const region = value.preflight!.plan.markerRegions[0]!;
+    const artifact = {
+      id: "artifact-1",
+      regionId: region.id,
+      blockKey: region.blockKey,
+      target: "cpp.parameter" as const,
+      classId: region.classId,
+      sourceParameters: [],
+      content: "generated",
+    };
+    const applied: KtCodegenControlUiModel = {
+      ...value,
+      preflight: {
+        ...value.preflight!,
+        plan: { ...value.preflight!.plan, artifacts: [artifact] } as KtCodegenPlan,
+        state: "applied",
+        regionOutcomes: [{ regionId: region.id, change }],
+      },
+    };
+    const hit = ktCodegenControlResultItems(applied, "hits")[0]!;
+    expect(ktCodegenControlResultBadges(applied, hit).at(-1)).toEqual({ label, tone });
   });
 
   it("matches END suggestions through structured diagnostic identity", () => {

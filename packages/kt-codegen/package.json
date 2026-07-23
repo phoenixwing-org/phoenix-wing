@@ -27,6 +27,10 @@
       "types": "./dist/ui/index.d.ts",
       "import": "./dist/ui/index.js"
     },
+    "./ui/report-model": {
+      "types": "./dist/ui/KtCodegenApplyReportModel.d.ts",
+      "import": "./dist/ui/KtCodegenApplyReportModel.js"
+    },
     "./fixtures/*": "./tests/fixtures/contracts/*"
   },
   "files": [

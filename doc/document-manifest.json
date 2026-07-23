@@ -79,6 +79,13 @@
       "lastVerified": "2026-07-21"
     },
     {
+      "path": "doc/共享能力目录.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-21"
+    },
+    {
       "path": "doc/架构图.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
