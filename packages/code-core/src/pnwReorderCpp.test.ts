@@ -15,7 +15,8 @@ const PYTHON_PARITY_HASHES: Record<string, string> = {
   "ktca_KTCAutoCodeInterfaces_KTCAutoCodeItf.m_src_KTCAutoAttrAccess.cpp": "827b909e4f56915e258cfc1db57580eb57a3028d78428d44c8470a33c2392620",
   "ktca_KTCAutoCodeInterfaces_KTCAutoCodeItf.m_src_KTCAutoBuildGSM.cpp": "df96a6eb9754b844466a691bcf2c0a702e63fe9bde985ec0287addf494054bd5",
   "ktca_KTCAutoCodeInterfaces_KTCAutoCodeItf.m_src_KTCAutoPartDoc.cpp": "949e5c00b0e80bb5e033c45ce4a9bd0d8ab2a06db83d26543d4dcdd1ffa79422",
-  "pnx_bom_analysis_cmd_min.cpp": "eebb5a688b7c195a8d680ca5e6696ec17f840ef8681d5f8ec6ec9057666f6941",
+  // 该片段没有构造函数；Python/TypeScript 安全边界都必须原样保留。
+  "pnx_bom_analysis_cmd_min.cpp": "3f6e585268d3adb34436883f3c3b730f8e4dc1915b7c2f388d92bbd5c79865ad",
 };
 
 function fixture(name: string): string {
@@ -87,9 +88,12 @@ describe("reorderCppEngine", () => {
     expect(result.text.indexOf("Foo::alpha()")).toBeLessThan(result.text.indexOf("Foo::zeta()"));
   });
 
-  it("preserves Wizard blocks inside member function bodies", () => {
+  it("leaves constructor-less Wizard excerpts unchanged", () => {
     const source = fixture("pnx_bom_analysis_cmd_min.cpp");
     const result = pnwReorderCppText(source, "pnx_bom_analysis_cmd_min");
+    expect(result.changed).toBe(false);
+    expect(result.text).toBe(source);
+    expect(result.className).toBe("PNXBomAnalysisCmd");
     expect(pnwExtractLockedRegionContents(result.text)).toEqual(pnwExtractLockedRegionContents(source));
   });
 
