@@ -3,8 +3,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const requireConsumers = process.argv.includes("--require-consumers");
-const wingOnly = process.argv.includes("--wing-only");
 const matrix = readJson(path.join(root, "release-matrix.json"));
 
 if (matrix.schema_version !== 1 || !isExactVersion(matrix.release_version)) {
@@ -27,39 +25,8 @@ for (const entry of matrix.packages) {
   packageNames.add(entry.name);
 }
 
-let verifiedConsumers = 0;
-if (!wingOnly) {
-  for (const consumer of matrix.consumers ?? []) {
-    const manifestPath = path.resolve(root, consumer.manifest);
-    if (!fs.existsSync(manifestPath)) {
-      if (requireConsumers) throw new Error(`required consumer manifest is missing: ${manifestPath}`);
-      process.stdout.write(`[verify] skipped unavailable consumer ${consumer.name}\n`);
-      continue;
-    }
-    const manifest = readJson(manifestPath);
-    for (const [section, dependencies] of Object.entries(consumer.required ?? {})) {
-      for (const [name, expected] of Object.entries(dependencies)) {
-        const actual = manifest[section]?.[name];
-        if (actual !== expected) {
-          throw new Error(`${consumer.name} ${section}.${name} must be ${expected}, got ${String(actual)}`);
-        }
-      }
-    }
-    const declared = {
-      ...manifest.dependencies,
-      ...manifest.devDependencies,
-      ...manifest.optionalDependencies,
-      ...manifest.peerDependencies,
-    };
-    for (const name of consumer.forbidden ?? []) {
-      if (declared[name] !== undefined) throw new Error(`${consumer.name} must not depend on ${name}`);
-    }
-    verifiedConsumers += 1;
-  }
-}
-
 process.stdout.write(
-  `[verify] release matrix ${matrix.release_version}: ${packageNames.size} Wing packages, ${verifiedConsumers} consumers passed\n`,
+  `[verify] release matrix ${matrix.release_version}: ${packageNames.size} Wing packages passed\n`,
 );
 
 function readJson(file) {

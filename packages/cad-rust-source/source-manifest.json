@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "package_version": "0.5.0",
+  "package_version": "0.5.1",
   "cargo_manifest": "Cargo.toml",
   "cargo_lock": "Cargo.lock",
   "legacy_protocol": {

@@ -6,6 +6,12 @@ import type { KtCodegenPlan } from "../api/contracts.js";
 /** 三种 Host 共用的 Codegen 预检状态；只有 ready 可用于 Apply。 */
 export type KtCodegenPreflightUiState = "ready" | "applied" | "stale";
 
+/** Apply 完成后由 Host 提供的逐区域真实变化结果；UI 不比较源码文本猜测状态。 */
+export interface KtCodegenRegionApplyUiOutcome {
+  readonly regionId: string;
+  readonly change: "updated" | "unchanged" | "not-applied";
+}
+
 /** Host 已完成安全判断后的预检 UI 投影。组件只展示，不重新推导门禁。 */
 export interface KtCodegenPreflightUiModel {
   readonly plan: KtCodegenPlan;
@@ -13,6 +19,8 @@ export interface KtCodegenPreflightUiModel {
   readonly createdAt: string;
   readonly state: KtCodegenPreflightUiState;
   readonly message: string;
+  /** 仅 applied 快照通常提供；缺省表示旧 Host 尚未回传逐区域结果。 */
+  readonly regionOutcomes?: readonly KtCodegenRegionApplyUiOutcome[];
 }
 
 /** 控制符目录和预检 View 共用的 Host 无关会话投影。 */
@@ -22,6 +30,8 @@ export interface KtCodegenControlUiModel {
   readonly documentId: string;
   readonly fileName: string;
   readonly selectedBlockKeys: readonly KtCodegenBlockKey[];
+  /** Host 若持久化单选模式可回传；未提供时由目录组件保留当前会话状态。 */
+  readonly singleSelectionMode?: boolean;
   readonly blocks: readonly KtCodegenControlBlockStateUiModel[];
   /** Host 根据结构化 marker 上下文生成的只读修复建议；组件不得解析诊断 message。 */
   readonly unclosed: readonly KtCodegenUnclosedUiModel[];
@@ -113,6 +123,8 @@ export interface KtCodegenPrimaryUiModel {
     readonly applyAll: boolean;
     readonly scanCandidates: boolean;
     readonly openReportDirectory: boolean;
+    /** Host 是否支持把当前 JSON 的控制符模板输出到日志/剪贴板。 */
+    readonly outputControlTemplates?: boolean;
   };
 }
 
@@ -134,3 +146,8 @@ export interface KtCodegenControlSelectionDetail {
   readonly blockKeys: readonly KtCodegenBlockKey[];
   readonly singleMode: boolean;
 }
+
+/** 可选的控制符模板输出动作；实际日志与剪贴板写入仍由 Host adapter 完成。 */
+export type KtCodegenControlOutputDetail =
+  | { readonly scope: "visible"; readonly blockKeys: readonly KtCodegenBlockKey[] }
+  | { readonly scope: "block"; readonly blockKey: KtCodegenBlockKey };

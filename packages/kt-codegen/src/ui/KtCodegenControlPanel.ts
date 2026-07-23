@@ -5,6 +5,7 @@ import type { KtCodegenBlockKey } from "../blocks/legacy-blocks.js";
 import type { KtCodegenDiagnostic } from "../model/diagnostic.js";
 import {
   ktCodegenClampControlSplitPercent,
+  ktCodegenControlResultBadges,
   ktCodegenControlResultItems,
   ktCodegenControlUnclosedForDiagnostic,
   type KtCodegenControlResultItem,
@@ -55,6 +56,14 @@ button:focus-visible, [tabindex]:focus-visible { outline: 1px solid var(--pnw-co
 .pnw-codegen-heading { display: flex; min-width: 0; align-items: center; gap: 6px; overflow: hidden; }
 .pnw-codegen-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pnw-codegen-id { flex: 0 0 auto; padding: 1px 4px; color: var(--pnw-codegen-muted); border: 1px solid var(--pnw-codegen-border); border-radius: 999px; font-size: 10px; font-weight: 500; }
+.pnw-codegen-badges { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; margin-left: auto; }
+.pnw-codegen-badge { padding: 1px 5px; border: 1px solid currentColor; border-radius: 999px; font-size: 9px; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+.pnw-codegen-badge-info { color: var(--vscode-textLink-foreground, #2563eb); }
+.pnw-codegen-badge-success { color: var(--vscode-testing-iconPassed, #16803c); }
+.pnw-codegen-badge-warning { color: var(--vscode-editorWarning-foreground, #b45309); }
+.pnw-codegen-badge-error { color: var(--vscode-errorForeground, #dc2626); }
+.pnw-codegen-badge-muted { color: var(--pnw-codegen-muted); }
+.pnw-codegen-row[aria-pressed="true"] .pnw-codegen-badge { color: inherit; opacity: .92; }
 .pnw-codegen-meta { overflow: hidden; color: var(--pnw-codegen-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .pnw-codegen-meta.pnw-codegen-path { overflow-wrap: anywhere; white-space: normal; }
 .pnw-codegen-splitter { position: relative; align-self: stretch; min-height: 100%; padding: 0; background: transparent; border: 0; cursor: col-resize; touch-action: none; }
@@ -211,6 +220,15 @@ export class KtCodegenControlPanel extends HTMLElement {
       const location = this.diagnosticLocation(item.diagnostic);
       meta.textContent = this.showResultPaths && location ? location : item.diagnostic.message;
     }
+    const badges = document.createElement("span");
+    badges.className = "pnw-codegen-badges";
+    for (const badge of ktCodegenControlResultBadges(this.currentModel!, item)) {
+      const node = document.createElement("span");
+      node.className = `pnw-codegen-badge pnw-codegen-badge-${badge.tone}`;
+      node.textContent = badge.label;
+      badges.append(node);
+    }
+    title.append(badges);
     if (this.showResultPaths) meta.classList.add("pnw-codegen-path");
     row.append(title, meta);
     row.onclick = () => { this.selectedResultKey = item.key; this.render(); };
@@ -302,7 +320,8 @@ export class KtCodegenControlPanel extends HTMLElement {
   private openButton(path: string, line: number): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = "打开";
+    button.textContent = "查看源码";
+    button.title = `只读查看 ${path}:${line + 1}`;
     button.onclick = () => this.dispatchEvent(new CustomEvent<KtCodegenControlOpenDetail>(
       "kt-codegen-control-open",
       { bubbles: true, composed: true, detail: { path, line } },

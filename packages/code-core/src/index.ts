@@ -85,3 +85,27 @@ export {
   type PnwCaaEnvironmentValue,
   pnwResolveCaaEnvironment,
 } from "./pnwCaaEnvironment.js";
+
+export {
+  type PnwCodeIgnoreMatchOptions,
+  type PnwCodeIgnoreNameOptions,
+  type PnwCodeIgnoreNormalizeOptions,
+  pnwCodeIsIgnoredName,
+  pnwCodeIsIgnoredPath,
+  pnwCodeNormalizeIgnorePatterns,
+  pnwCodeParseIgnoreText,
+  pnwCodeShouldSkipDirName,
+} from "./pnwCodeIgnore.js";
+
+export {
+  type PnwCodeNameReplacementSuggestion,
+  type PnwCodeReplacementRule,
+  type PnwCodeResolvedReplacementRule,
+  type PnwCodeRuleMatchSummary,
+  type PnwCodeStringReplacement,
+  type PnwCodeTextReplacement,
+  pnwCodeReplaceStringByRules,
+  pnwCodeReplaceTextByRules,
+  pnwCodeResolveReplacementRules,
+  pnwCodeSuggestNameReplacement,
+} from "./pnwCodeReplacementRules.js";

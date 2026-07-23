@@ -19,7 +19,18 @@ CATBoolean PNXBomAnalysisCmd::ActionSelectorListPda(void* data) {
     // START KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD ACTION PDA
 
     // clang-format off
-    // Field count = 0
+    //.............................................................................
+    // @key    CmdActionPda
+    // @usage  put this code block into the function Cmd::ActionSelectorListPda()
+    // @brief  InitializeAcquisition and HSO Append
+    //.............................................................................
+    // Field count = 1
+    if (fieldChange) KT_AUTO_HSO_CLEAR();
+    switch (field) {
+    case Field_PNXBomAnalysis_FirstProduct:
+        KT_AUTO_CMD_ACTION_PDA(FirstProduct);
+        break;
+    }
 
     // clang-format on
     // END KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD ACTION PDA
@@ -35,7 +46,18 @@ CATBoolean PNXBomAnalysisCmd::ActionSelectorListFia(void*) {
     // START KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD ACTION FIA
 
     // clang-format off
+    //.............................................................................
+    // @key    CmdActionFia
+    // @usage  put this code block into the function Cmd::ActionSelectorListFia()
+    // @brief  Action object selected
+    //.............................................................................
+    // Field count = 1
     int count = 0;
+    switch (field) {
+    case Field_PNXBomAnalysis_FirstProduct:
+        KT_AUTO_CMD_ACTION_FIA(FirstProduct);
+        break;
+    }
 
     // clang-format on
     // END KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD ACTION FIA
@@ -48,6 +70,12 @@ void PNXBomAnalysisCmd::fiaAgentClear() {
     // START KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD AGENT FIA CLEAR
 
     // clang-format off
+    //.............................................................................
+    // @key    CmdAgentFiaClear
+    // @usage  put this code block into the function Cmd::fiaAgentClear()
+    // @brief  clear select state
+    //.............................................................................
+    KT_AUTO_CMD_ACTION_FIA_CLEAR(FirstProduct);
 
     // clang-format on
     // END KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD AGENT FIA CLEAR
@@ -59,7 +87,19 @@ void PNXBomAnalysisCmd::fiaAgentUpdate() {
     // START KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD AGENT UPDATE STATE
 
     // clang-format off
-    // Field count = 0
+    //.............................................................................
+    // @key    CmdAgentUpdateState
+    // @usage  put this code block into the function Cmd::fiaAgentUpdate()
+    // @brief  Update select state
+    //.............................................................................
+    // Field count = 1
+    switch (field) {
+    case Field_PNXBomAnalysis_FirstProduct:
+        KT_AUTO_CMD_AGENT_UPDATE_STATE(FirstProduct);
+        break;
+    case 0:
+        KT_AUTO_CMD_AGENT_UPDATE_STATE_ERROR();
+    }
 
     // clang-format on
     // END KEVIN CAA WIZARD SECTION PNXBomAnalysis CMD AGENT UPDATE STATE

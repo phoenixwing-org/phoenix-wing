@@ -16,15 +16,23 @@ describe("@phoenix-wing/kt-codegen/ui host boundary", () => {
 
     expect(entry).toContain('export * from "./KtCodegenPrimaryPanel.js"');
     expect(entry).toContain('export * from "./KtCodegenControlPanel.js"');
+    expect(entry).toContain('export * from "./KtCodegenControlCatalog.js"');
+    expect(entry).toContain('export * from "./KtCodegenApplyReport.js"');
     expect(packageJson.exports).toHaveProperty("./ui");
+    expect(packageJson.exports).toHaveProperty("./ui/report-model");
+    expect(packageJson.exports).toHaveProperty("./fixtures/*");
   });
 
   it("keeps UI runtime independent from all three hosts", () => {
     const runtime = [
       source("../src/ui/KtCodegenPrimaryPanel.ts"),
       source("../src/ui/KtCodegenControlPanel.ts"),
+      source("../src/ui/KtCodegenControlCatalog.ts"),
+      source("../src/ui/KtCodegenControlCatalogState.ts"),
       source("../src/ui/KtCodegenControlViewModel.ts"),
       source("../src/ui/KtCodegenUiContracts.ts"),
+      source("../src/ui/KtCodegenApplyReportModel.ts"),
+      source("../src/ui/KtCodegenApplyReport.ts"),
     ].join("\n");
 
     expect(runtime).not.toMatch(/from ["'](?:vue|vscode|electron|@tauri-apps\/)/u);
@@ -35,15 +43,25 @@ describe("@phoenix-wing/kt-codegen/ui host boundary", () => {
 
   it("uses host-neutral ViewModels and composed events instead of services", () => {
     const primary = source("../src/ui/KtCodegenPrimaryPanel.ts");
+    const catalog = source("../src/ui/KtCodegenControlCatalog.ts");
     const control = source("../src/ui/KtCodegenControlPanel.ts");
+    const report = source("../src/ui/KtCodegenApplyReport.ts");
 
     expect(primary).toContain("KtCodegenPrimaryUiModel");
     expect(primary).toContain('"kt-codegen-primary-action"');
-    expect(primary).toContain('"kt-codegen-control-selection-change"');
+    expect(primary).toContain("ktCodegenPrimaryActionDisabled");
+    expect(primary).toContain("ktCodegenPrimaryControlsLocked");
+    expect(primary).toContain('document.createElement("kt-codegen-control-catalog")');
+    expect(primary).toContain("grid-auto-rows: max-content");
+    expect(catalog).toContain('"kt-codegen-control-selection-change"');
+    expect(catalog).toContain('"kt-codegen-control-output"');
+    expect(catalog).toContain("KT_CODEGEN_CONTROL_CATALOG_GROUPS");
     expect(control).toContain("KtCodegenControlUiModel");
     expect(control).toContain('"kt-codegen-control-open"');
     expect(control).toContain('"kt-codegen-control-copy-end"');
     expect(control).toContain('"kt-codegen-control-split-change"');
+    expect(report).toContain('"kt-codegen-apply-report-action"');
+    expect(report).toContain('"kt-codegen-apply-report-filter-change"');
     expect(primary).toContain("composed: true");
     expect(control).toContain("composed: true");
   });

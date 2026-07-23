@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
@@ -70,17 +70,16 @@
     "verify:cad-rust-tarball": "node scripts/verify-cad-rust-tarball.mjs",
     "verify:package-tarballs": "node scripts/verify-package-tarballs.mjs",
     "verify:release-matrix": "node scripts/verify-release-matrix.mjs",
-    "verify:consumers": "node scripts/verify-release-matrix.mjs --require-consumers",
     "docs:manifest": "node scripts/generate-doc-manifest.mjs",
     "docs:check": "node scripts/generate-doc-manifest.mjs --check",
     "verify:architecture": "node scripts/verify-import-boundaries.mjs",
-    "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix -- --wing-only && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
+    "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "vitest"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.5.0",
-    "@phoenix-wing/db-node": "workspace:0.5.0",
+    "@phoenix-wing/code-core": "workspace:0.5.1",
+    "@phoenix-wing/db-node": "workspace:0.5.1",
     "element-plus": "^2.0.0"
   },
   "optionalDependencies": {

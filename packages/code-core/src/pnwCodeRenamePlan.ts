@@ -57,11 +57,12 @@ export function pnwPlanCodeRename(
 
   const changes: PnwCodeRenameChange[] = [];
   if (levels.includes("text")) {
+    const rules = pnwCodeResolveReplacementRules([{ id: "primary", search: oldText, replace: newText }]);
     for (const entry of normalizedEntries) {
       if (entry.kind !== "file" || entry.text === undefined) continue;
-      const occurrences = pnwCountOccurrences(entry.text, oldText);
-      if (!occurrences) continue;
-      changes.push({ level: "text", relativePath: entry.relativePath, occurrences, lines: pnwHitLines(entry.text, oldText), status: "preview" });
+      const replacement = pnwCodeReplaceTextByRules(entry.text, rules);
+      if (!replacement.occurrences) continue;
+      changes.push({ level: "text", relativePath: entry.relativePath, occurrences: replacement.occurrences, lines: replacement.lines, status: "preview" });
     }
   }
 
@@ -104,7 +105,9 @@ export function pnwPlanCodeRename(
 
 /** Applies only literal text changes after a host has accepted a preview plan. */
 export function pnwApplyCodeRenameText(text: string, oldText: string, newText: string): string {
-  return oldText ? text.split(oldText).join(newText) : text;
+  if (!oldText) return text;
+  const rules = pnwCodeResolveReplacementRules([{ id: "primary", search: oldText, replace: newText }]);
+  return pnwCodeReplaceTextByRules(text, rules).output;
 }
 
 function pnwEmptyRenamePlan(oldText: string, newText: string, levels: readonly PnwCodeRenameLevel[], diagnostics: readonly string[]): PnwCodeRenamePlan {
@@ -126,12 +129,8 @@ function pnwRenameBasename(path: string, oldText: string, newText: string): stri
   const base = path.slice(slash + 1);
   return base === oldText ? `${slash < 0 ? "" : `${path.slice(0, slash + 1)}`}${newText}` : undefined;
 }
-function pnwCountOccurrences(text: string, needle: string): number {
-  let count = 0; let offset = 0;
-  while ((offset = text.indexOf(needle, offset)) >= 0) { count += 1; offset += needle.length; }
-  return count;
-}
-function pnwHitLines(text: string, needle: string): readonly number[] {
-  return text.split(/\r?\n/).flatMap((line, index) => line.includes(needle) ? [index + 1] : []);
-}
 function pnwRenameLevelOrder(level: PnwCodeRenameLevel): number { return level === "dir" ? 0 : level === "file" ? 1 : 2; }
+import {
+  pnwCodeReplaceTextByRules,
+  pnwCodeResolveReplacementRules,
+} from "./pnwCodeReplacementRules.js";

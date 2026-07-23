@@ -11,6 +11,8 @@ const required = [
   "style.css",
   "components/PnwChoiceDialogHost.js",
   "components/PnwChoiceDialogHost.vue.d.ts",
+  "components/PnwEditorDrawerHost.js",
+  "components/PnwEditorDrawerHost.vue.d.ts",
   "composables/pnwChoiceDialog.js",
   "composables/pnwChoiceDialog.d.ts",
   "layout/PnwPageHeader.js",

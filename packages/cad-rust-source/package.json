@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/cad-rust-source",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Phoenix FCStd/XLink Rust source workspace for consumer-side release builds",
   "type": "module",
   "sideEffects": false,
