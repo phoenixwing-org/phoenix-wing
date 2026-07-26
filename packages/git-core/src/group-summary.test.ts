@@ -75,7 +75,7 @@ describe("Git group summary", () => {
     const result = pnwFormatGitGroupSummaries({
       repositoryName: "PNXCaaStudy",
       upstream: "origin/sort",
-      remoteUrl: "https://gitee.com/PhoenixWing321/PNXCaaStudy.git",
+      remoteUrl: "https://gitee.com/phoenixwing/PNXCaaStudy.git",
       includeRemoteUrl: true,
       includeCommitTime: true,
       commits: [
@@ -85,7 +85,7 @@ describe("Git group summary", () => {
       fallbackReviewer: "ymp",
     });
     expect(result.text).toBe([
-      "https://gitee.com/PhoenixWing321/PNXCaaStudy.git",
+      "https://gitee.com/phoenixwing/PNXCaaStudy.git",
       "origin/sort **Commit:** 4b4622d ++ · 2026-07-18 14:55",
       "修复：补齐曲线分割命令构造控制符 审查：@ymp",
       "origin/sort **Commit:** eea15a1 ++ · 2026-07-18 14:55",

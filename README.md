@@ -85,10 +85,10 @@ npm install phoenix-wing vue pinia
 
 | 项目 | 地址 | 说明 |
 |------|------|------|
-| **phoenix-wing** | [Gitee](https://gitee.com/PhoenixWing321/phoenix-wing) | 本仓库 — 共享 TypeScript 工具库与壳层框架 |
-| **phoenix-desk-tools** | [Gitee](https://gitee.com/PhoenixWing321/phoenix-desk-tools) | 源项目 — FreeCAD 桌面辅助工具，phoenix-wing 的提炼来源 |
-| **kt-auto-code** | [Gitee](https://gitee.com/PhoenixWing321/kt-auto-code) | VS Code 自动化扩展，按需消费 `@phoenix-wing/code-core` 的成员排序、UUID 与工作集能力 |
-| **phoenix-open-issue** | [Gitee](https://gitee.com/PhoenixWing321/phoenix-open-issue) | 应用案例 — 基于 phoenix-wing 框架搭建的 Open Issue 管理应用 |
+| **phoenix-wing** | [Gitee](https://gitee.com/phoenixwing/phoenix-wing) | 本仓库 — 共享 TypeScript 工具库与壳层框架 |
+| **phoenix-desk-tools** | [Gitee](https://gitee.com/phoenixwing/phoenix-desk-tools) | 源项目 — FreeCAD 桌面辅助工具，phoenix-wing 的提炼来源 |
+| **kt-auto-code** | [Gitee](https://gitee.com/phoenixwing/kt-auto-code) | VS Code 自动化扩展，按需消费 `@phoenix-wing/code-core` 的成员排序、UUID 与工作集能力 |
+| **phoenix-open-issue** | [Gitee](https://gitee.com/phoenixwing/phoenix-open-issue) | 应用案例 — 基于 phoenix-wing 框架搭建的 Open Issue 管理应用 |
 
 ## 许可
 

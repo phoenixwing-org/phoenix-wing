@@ -26,7 +26,7 @@
   "publishConfig": { "access": "public" },
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/PhoenixWing321/phoenix-wing.git"
+    "url": "https://gitee.com/phoenixwing/phoenix-wing.git"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

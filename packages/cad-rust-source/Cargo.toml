@@ -11,4 +11,4 @@ members = [
 [workspace.package]
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://gitee.com/PhoenixWing321/phoenix-wing.git"
+repository = "https://gitee.com/phoenixwing/phoenix-wing.git"
