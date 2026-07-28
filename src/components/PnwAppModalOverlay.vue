@@ -86,8 +86,9 @@ onUnmounted(() => {
   max-height: min(88vh, 920px);
   overflow: auto;
   border-radius: 12px;
-  background: var(--page-bg, #fff);
-  border: 1px solid var(--border-strong, #cbd5e1);
+  background: var(--pnw-workbench-surface, var(--page-bg, #fff));
+  border: 1px solid var(--pnw-workbench-border, var(--border-strong, #cbd5e1));
+  color: var(--pnw-workbench-text, var(--text, inherit));
   box-shadow:
     0 24px 48px rgba(15, 23, 42, 0.18),
     0 0 0 1px rgba(255, 255, 255, 0.06) inset;

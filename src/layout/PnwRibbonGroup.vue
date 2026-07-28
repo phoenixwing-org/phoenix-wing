@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { Component } from "vue";
+import type {
+  PnwRibbonDisplayMode,
+  PnwRibbonIconSize,
+} from "../types/PnwWorkbenchWeb.js";
 import PnwRibbonToolButton from "./PnwRibbonToolButton.vue";
 
 export type PnwRibbonGroupItem = {
   pageId: string;
   label: string;
-  icon: Component;
+  icon: Component | string;
   active: boolean;
   disabled: boolean;
   title: string;
@@ -13,8 +17,12 @@ export type PnwRibbonGroupItem = {
 
 defineProps<{
   label: string;
-  items: PnwRibbonGroupItem[];
+  items: readonly PnwRibbonGroupItem[];
   layout?: "stacked" | "inline";
+  displayMode?: PnwRibbonDisplayMode;
+  iconSize?: PnwRibbonIconSize;
+  showLabel?: boolean;
+  showTitles?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -32,12 +40,16 @@ const emit = defineEmits<{
         :icon="item.icon"
         :size="layout === 'inline' ? 'small' : 'large'"
         :layout="layout === 'inline' ? 'inline' : 'stacked'"
+        :display-mode="displayMode"
+        :icon-size="iconSize"
+        :show-title="showTitles"
         :active="item.active"
         :disabled="item.disabled"
         :title="item.title"
         @click="emit('open', item.pageId)"
       />
     </div>
+    <div v-if="showLabel" class="pnw-ribbon-group-label">{{ label }}</div>
   </div>
 </template>
 
@@ -48,7 +60,7 @@ const emit = defineEmits<{
   flex-shrink: 0;
   min-width: 0;
   padding: 0 8px;
-  border-right: 1px solid var(--ribbon-group-divider);
+  border-right: 1px solid var(--pnw-workbench-border, var(--ribbon-group-divider, var(--pnw-workbench-default-border, #dbe3ed)));
   justify-content: center;
 }
 
@@ -62,5 +74,18 @@ const emit = defineEmits<{
   min-height: 0;
   padding: 0;
   overflow: hidden;
+}
+
+.pnw-ribbon-group-label {
+  flex: 0 0 auto;
+  min-height: 17px;
+  padding: 1px 4px 2px;
+  overflow: hidden;
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b));
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

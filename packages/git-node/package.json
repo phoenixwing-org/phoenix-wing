@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/git-node",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Phoenix Git Node.js CLI、仓库读取与安全历史改写 adapter",
   "type": "module",
   "sideEffects": false,
@@ -29,7 +29,7 @@
     "url": "https://gitee.com/phoenixwing/phoenix-wing.git"
   },
   "dependencies": {
-    "@phoenix-wing/git-core": "workspace:0.5.1"
+    "@phoenix-wing/git-core": "workspace:0.5.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

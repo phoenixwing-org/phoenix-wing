@@ -203,6 +203,41 @@
       "lastVerified": "2026-07-23"
     },
     {
+      "path": "doc/Pnw工作台Web-OpenIssue应用分析.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "doc/Pnw工作台Web架构与示例计划.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "doc/Pnw工作台Web双消费者验证计划.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "doc/Pnw工作台Web消费者接入指南.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "examples/PwwWorkbenchWeb/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
       "path": "packages/cad-contracts/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",

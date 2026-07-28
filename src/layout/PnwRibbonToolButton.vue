@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import type { Component } from "vue";
+import { computed, type Component } from "vue";
+import type {
+  PnwRibbonDisplayMode,
+  PnwRibbonIconSize,
+} from "../types/PnwWorkbenchWeb.js";
 
-defineProps<{
+const props = defineProps<{
   label: string;
-  icon: Component;
+  icon: Component | string;
   size?: "large" | "small";
   layout?: "inline" | "stacked";
+  displayMode?: PnwRibbonDisplayMode;
+  iconSize?: PnwRibbonIconSize;
+  /** 高层 Ribbon 可独立隐藏 Title；缺省时保持现有 displayMode 行为。 */
+  showTitle?: boolean;
   active?: boolean;
   disabled?: boolean;
   title?: string;
@@ -14,6 +22,16 @@ defineProps<{
 const emit = defineEmits<{
   click: [];
 }>();
+
+const pnwEffectiveDisplayMode = computed<PnwRibbonDisplayMode>(() => {
+  if (props.displayMode) return props.displayMode;
+  return props.size === "large" && props.layout === "stacked" ? "large" : "icon-title";
+});
+
+const pnwEffectiveIconSize = computed(() => props.iconSize
+  ?? (pnwEffectiveDisplayMode.value === "large" ? 24 : 16));
+const pnwShowTitle = computed(() => props.showTitle
+  ?? pnwEffectiveDisplayMode.value !== "icon");
 </script>
 
 <template>
@@ -21,23 +39,28 @@ const emit = defineEmits<{
     type="button"
     class="pnw-ribbon-tool-btn"
     :class="[
-      size === 'large' ? 'pnw-size-large' : 'pnw-size-small',
-      layout === 'stacked' ? 'pnw-layout-stacked' : 'pnw-layout-inline',
+      displayMode ? undefined : (size === 'large' ? 'pnw-size-large' : 'pnw-size-small'),
+      displayMode ? undefined : (layout === 'stacked' ? 'pnw-layout-stacked' : 'pnw-layout-inline'),
+      `pnw-display-${pnwEffectiveDisplayMode}`,
       { active, disabled },
     ]"
+    :style="{ '--pnw-ribbon-tool-icon-size': `${pnwEffectiveIconSize}px` }"
     :disabled="disabled"
     :title="title || label"
+    :aria-label="label"
     @click="emit('click')"
   >
     <span class="pnw-ribbon-tool-icon" aria-hidden="true">
-      <component :is="icon" />
+      <span v-if="typeof icon === 'string'">{{ icon }}</span>
+      <component :is="icon" v-else />
     </span>
-    <span class="pnw-ribbon-tool-label">{{ label }}</span>
+    <span v-if="pnwShowTitle" class="pnw-ribbon-tool-label">{{ label }}</span>
   </button>
 </template>
 
 <style scoped>
 .pnw-ribbon-tool-btn {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,7 +70,7 @@ const emit = defineEmits<{
   border: 1px solid transparent;
   border-radius: var(--ribbon-btn-radius, 2px);
   background: transparent;
-  color: var(--text);
+  color: var(--pnw-workbench-text, var(--text, var(--pnw-workbench-default-text, #0f172a)));
   cursor: pointer;
   min-width: 0;
 }
@@ -129,14 +152,14 @@ const emit = defineEmits<{
 }
 
 .pnw-ribbon-tool-btn:hover:not(:disabled) {
-  background: var(--ribbon-btn-hover);
+  background: var(--pnw-control-hover-bg, var(--ribbon-btn-hover, var(--pnw-workbench-default-hover-bg, rgba(148, 163, 184, 0.12))));
   border-color: transparent;
 }
 
 .pnw-ribbon-tool-btn.active {
-  background: rgba(33, 115, 70, 0.1);
-  border-color: rgba(33, 115, 70, 0.25);
-  color: var(--phoenix-wps-accent, #217346);
+  background: var(--pnw-control-active-bg, var(--pnw-workbench-default-active-bg, rgba(33, 115, 70, 0.1)));
+  border-color: var(--pnw-control-active-border, rgba(33, 115, 70, 0.25));
+  color: var(--pnw-control-active-text, var(--phoenix-wps-accent, var(--pnw-workbench-default-active-text, #217346)));
 }
 
 .pnw-ribbon-tool-btn:disabled {
@@ -149,10 +172,76 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #334155;
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #334155));
 }
 
 .pnw-ribbon-tool-btn.active .pnw-ribbon-tool-icon {
-  color: var(--phoenix-wps-accent, #217346);
+  color: var(--pnw-control-active-text, var(--phoenix-wps-accent, var(--pnw-workbench-default-active-text, #217346)));
+}
+
+.pnw-ribbon-tool-btn.pnw-display-icon {
+  width: calc(var(--pnw-ribbon-tool-icon-size) + 16px);
+  min-width: calc(var(--pnw-ribbon-tool-icon-size) + 16px);
+  max-width: none;
+  height: max(28px, calc(var(--pnw-ribbon-tool-icon-size) + 10px));
+  min-height: max(28px, calc(var(--pnw-ribbon-tool-icon-size) + 10px));
+  flex-direction: row;
+  padding: 3px 8px;
+}
+
+.pnw-ribbon-tool-btn.pnw-display-icon-title {
+  width: auto;
+  min-width: calc(var(--pnw-ribbon-tool-icon-size) + 54px);
+  max-width: 152px;
+  height: max(28px, calc(var(--pnw-ribbon-tool-icon-size) + 10px));
+  min-height: max(28px, calc(var(--pnw-ribbon-tool-icon-size) + 10px));
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 3px 8px;
+}
+
+.pnw-ribbon-tool-btn.pnw-display-large {
+  width: calc(var(--pnw-ribbon-tool-icon-size) + 34px);
+  min-width: calc(var(--pnw-ribbon-tool-icon-size) + 34px);
+  max-width: 82px;
+  min-height: calc(var(--pnw-ribbon-tool-icon-size) + 32px);
+  flex-direction: column;
+  padding: 6px 5px 4px;
+}
+
+.pnw-display-icon .pnw-ribbon-tool-icon,
+.pnw-display-icon-title .pnw-ribbon-tool-icon,
+.pnw-display-large .pnw-ribbon-tool-icon {
+  width: var(--pnw-ribbon-tool-icon-size);
+  height: var(--pnw-ribbon-tool-icon-size);
+  font-size: calc(var(--pnw-ribbon-tool-icon-size) * 0.9);
+}
+
+.pnw-display-icon .pnw-ribbon-tool-icon :deep(svg),
+.pnw-display-icon-title .pnw-ribbon-tool-icon :deep(svg),
+.pnw-display-large .pnw-ribbon-tool-icon :deep(svg) {
+  width: 100%;
+  height: 100%;
+}
+
+.pnw-display-icon-title .pnw-ribbon-tool-label {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pnw-display-large .pnw-ribbon-tool-label {
+  max-width: 72px;
+  font-size: 0.68rem;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

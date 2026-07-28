@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/git-core",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Phoenix Git 跨宿主纯 TypeScript 契约、摘要与历史改写计划",
   "type": "module",
   "sideEffects": false,

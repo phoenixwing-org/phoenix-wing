@@ -1,0 +1,111 @@
+<script setup lang="ts">
+import { reactive } from "vue";
+import { PnwWorkbenchShell } from "phoenix-wing";
+import { PWW_FIXTURE_NAVIGATION } from "./fixture/PwwFixtureNavigation.js";
+import { usePwwFixtureWorkbenchController } from "./fixture/PwwFixtureWorkbenchController.js";
+import PwwFixtureDisplaySettingsExtras from "./fixture/PwwFixtureDisplaySettingsExtras.vue";
+import PwwFixtureNavigationLayoutView from "./fixture/PwwFixtureNavigationLayoutView.vue";
+import PwwFixtureWorkbenchView from "./fixture/PwwFixtureWorkbenchView.vue";
+
+// App 只持有一个 fixture facade；真实 consumer 可换成自己的 Pinia/Router adapter。
+const pwwFixture = reactive(usePwwFixtureWorkbenchController());
+</script>
+
+<template>
+  <div
+    class="pww-app"
+    :class="{
+      'pww-app--dark': pwwFixture.appearance.colorScheme === 'dark',
+      'pww-app--system': pwwFixture.appearance.colorScheme === 'system',
+    }"
+  >
+    <div
+      class="pww-stage"
+      :class="{ 'pww-stage--narrow': pwwFixture.settings.narrowPreview }"
+    >
+      <PnwWorkbenchShell
+        v-model:presentation="pwwFixture.appearance.presentation"
+        v-model:expanded-node-ids="pwwFixture.navigation.expandedNodeIds"
+        v-model:ribbon-appearance="pwwFixture.appearance.ribbon"
+        v-model:color-scheme="pwwFixture.appearance.colorScheme"
+        v-model:tree-collapsed="pwwFixture.navigation.treeCollapsed"
+        v-model:layout-state="pwwFixture.layout.state"
+        v-model:active-bottom-tab-id="pwwFixture.layout.activeBottomTabId"
+        class="pww-workbench"
+        :class="{ 'pww-workbench--custom': pwwFixture.appearance.customTheme }"
+        :nodes="pwwFixture.navigation.nodes"
+        :active-node-id="pwwFixture.navigation.activeNodeId"
+        :view-blocks="pwwFixture.view.blocks"
+        :tabs="pwwFixture.tabs.items"
+        :active-tab-id="pwwFixture.tabs.activeId"
+        :can-close-all-tabs="pwwFixture.tabs.items.length > 0"
+        :show-empty-view="pwwFixture.tabs.items.length === 0"
+        brand-subtitle="fixture / public entry"
+        header-aria-label="Pnw 工作台示例页眉"
+        @activate="pwwFixture.actions.activateNode"
+        @select-module="pwwFixture.actions.activateModule"
+        @select-tab="pwwFixture.actions.selectTab"
+        @close-tab="pwwFixture.actions.closeTab"
+        @close-all-tabs="pwwFixture.actions.closeAllTabs"
+        @display-settings-action="pwwFixture.actions.handleDisplaySettingsAction"
+      >
+        <template #display-settings-actions="{ emitAction }">
+          <button
+            type="button"
+            @click="emitAction('fixture.log-display-state')"
+          >
+            将当前显示状态写入日志
+          </button>
+        </template>
+
+        <template #display-settings-panel-extra>
+          <PwwFixtureDisplaySettingsExtras
+            v-model:narrow-preview="pwwFixture.settings.narrowPreview"
+            v-model:custom-theme="pwwFixture.appearance.customTheme"
+            :color-scheme="pwwFixture.appearance.colorScheme"
+          />
+        </template>
+
+        <template #header-actions>
+          <button
+            type="button"
+            class="pww-consumer-action"
+            aria-label="Consumer 用户区域示例"
+            title="Consumer 自定义区域"
+            @click="pwwFixture.actions.openConsumerUserArea"
+          >
+            KT
+          </button>
+        </template>
+
+        <PwwFixtureNavigationLayoutView
+          v-if="pwwFixture.navigation.activeNodeId === 'workbench-layout'"
+          :nodes="pwwFixture.navigation.nodes"
+          :default-nodes="PWW_FIXTURE_NAVIGATION"
+          @move="pwwFixture.actions.moveNavigationNode"
+          @create-root="pwwFixture.actions.createNavigationRoot"
+          @update-root="pwwFixture.actions.updateNavigationRoot"
+          @restore-root="pwwFixture.actions.restoreNavigationRootDefinition"
+          @delete-root="pwwFixture.actions.deleteNavigationRoot"
+          @restore="pwwFixture.actions.restoreDefaultNavigation"
+        />
+
+        <PwwFixtureWorkbenchView
+          v-else
+          :key="pwwFixture.navigation.activeNodeId"
+          :view="pwwFixture.view.current"
+          :active-node-id="pwwFixture.navigation.activeNodeId"
+          :presentation="pwwFixture.appearance.presentation"
+          :ribbon-summary="`${pwwFixture.appearance.ribbon.mode} / ${pwwFixture.appearance.activeRibbon.iconSize}px`"
+          :theme-summary="pwwFixture.appearance.customTheme
+            ? 'custom tokens'
+            : pwwFixture.appearance.colorScheme"
+          :event-log="pwwFixture.view.eventLog"
+        />
+
+      </PnwWorkbenchShell>
+    </div>
+  </div>
+</template>
+
+<style scoped src="./fixture/PwwFixtureWorkbench.css"></style>

@@ -1,0 +1,35 @@
+import type { Component, MaybeRefOrGetter } from "vue";
+import type { PnwBottomPanelTab } from "./PnwWorkbenchWeb.js";
+
+/** Vue Web View 提供给工作台 Block 的动态组件；业务状态仍由 View 持有。 */
+export interface PnwViewBlockComponentContribution {
+  readonly component: Component;
+  readonly props?: MaybeRefOrGetter<Readonly<Record<string, unknown>>>;
+}
+
+/** Bottom 在动态内容之外还可提供自己的页签定义。 */
+export interface PnwBottomViewBlockComponentContribution
+  extends PnwViewBlockComponentContribution {
+  readonly tabs?: MaybeRefOrGetter<readonly PnwBottomPanelTab[]>;
+}
+
+/**
+ * Vue 专用的 View Block 组件集合。
+ *
+ * 纯 TypeScript 的可用性契约仍是 `PnwViewBlockContributions`；该类型只用于
+ * Web consumer 把实际组件动态交给 `PnwWorkbenchShell`。
+ */
+export interface PnwViewBlockComponentContributions {
+  readonly primary?: PnwViewBlockComponentContribution;
+  readonly bottom?: PnwBottomViewBlockComponentContribution;
+  readonly secondary?: PnwViewBlockComponentContribution;
+}
+
+/**
+ * 工作台显示菜单向 consumer 追加项暴露的最小信号接口。
+ *
+ * actionId 由 consumer 自己定义和处理；Wing 只沿组件层级转发。
+ */
+export interface PnwWorkbenchDisplaySettingsActionSlotProps {
+  readonly emitAction: (actionId: string) => void;
+}
