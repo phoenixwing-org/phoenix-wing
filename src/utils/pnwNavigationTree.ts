@@ -25,6 +25,58 @@ export interface PnwNavigationRibbonModule {
   readonly groups: readonly PnwNavigationRibbonGroup[];
 }
 
+function pnwNormalizeNavigationNodeVisibility(
+  node: PnwNavigationNode,
+): PnwNavigationNode {
+  const originalChildren = node.children;
+  const normalizedChildren = originalChildren === undefined
+    ? undefined
+    : pnwNormalizeNavigationVisibility(originalChildren);
+  const childrenChanged = normalizedChildren !== originalChildren;
+  const derivedHidden = originalChildren !== undefined
+    && normalizedChildren!.every((child) => child.hidden === true);
+  const hidden = node.hidden === true || derivedHidden;
+
+  if (!childrenChanged && hidden === (node.hidden === true)) return node;
+  return {
+    ...node,
+    ...(normalizedChildren === undefined ? {} : { children: normalizedChildren }),
+    hidden,
+  };
+}
+
+/**
+ * 自底向上归一化导航可见性。
+ *
+ * 叶子省略 `children`；目录保留 `children`。当目录的所有直接子项都已
+ * 有效隐藏（包括空目录）时，只在派生树中把该目录标记为 hidden。
+ * 输入节点保持只读；没有变化时保留数组与节点引用。
+ */
+export function pnwNormalizeNavigationVisibility(
+  nodes: readonly PnwNavigationNode[],
+): readonly PnwNavigationNode[] {
+  let changed = false;
+  const normalized = nodes.map((node) => {
+    const next = pnwNormalizeNavigationNodeVisibility(node);
+    if (next !== node) changed = true;
+    return next;
+  });
+  return changed ? normalized : nodes;
+}
+
+function pnwSortedVisibleNavigationNodes(
+  nodes: readonly PnwNavigationNode[],
+): readonly PnwNavigationNode[] {
+  return nodes
+    .map((node, index) => ({ node, index }))
+    .filter(({ node }) => !node.hidden)
+    .sort((left, right) => {
+      const orderDifference = (left.node.order ?? 0) - (right.node.order ?? 0);
+      return orderDifference || left.index - right.index;
+    })
+    .map(({ node }) => node);
+}
+
 /**
  * 将既有 PnwRibbonTabDef 兼容配置投影成统一导航树。
  * 只转换呈现数据；模块过滤、Router、权限与动作仍由宿主负责。
@@ -52,18 +104,11 @@ export function pnwNavigationFromRibbonTabs(
   });
 }
 
-/** 过滤隐藏节点并按 order 稳定排序；不克隆可见节点。 */
+/** 一次归一化空目录，再过滤隐藏节点并按 order 稳定排序。 */
 export function pnwVisibleNavigationNodes(
   nodes: readonly PnwNavigationNode[],
 ): readonly PnwNavigationNode[] {
-  return nodes
-    .map((node, index) => ({ node, index }))
-    .filter(({ node }) => !node.hidden)
-    .sort((left, right) => {
-      const orderDifference = (left.node.order ?? 0) - (right.node.order ?? 0);
-      return orderDifference || left.index - right.index;
-    })
-    .map(({ node }) => node);
+  return pnwSortedVisibleNavigationNodes(pnwNormalizeNavigationVisibility(nodes));
 }
 
 /** 将当前受控展开状态投影成 Tree 可见行。 */
@@ -71,6 +116,7 @@ export function pnwFlattenNavigationTree(
   nodes: readonly PnwNavigationNode[],
   expandedNodeIds: readonly string[],
 ): readonly PnwNavigationTreeRow[] {
+  const normalizedNodes = pnwNormalizeNavigationVisibility(nodes);
   const expanded = new Set(expandedNodeIds);
   const rows: PnwNavigationTreeRow[] = [];
 
@@ -79,8 +125,8 @@ export function pnwFlattenNavigationTree(
     depth: number,
     parentId?: string,
   ): void {
-    for (const node of pnwVisibleNavigationNodes(siblings)) {
-      const children = pnwVisibleNavigationNodes(node.children ?? []);
+    for (const node of pnwSortedVisibleNavigationNodes(siblings)) {
+      const children = pnwSortedVisibleNavigationNodes(node.children ?? []);
       rows.push({ node, depth, parentId, hasChildren: children.length > 0 });
       if (children.length > 0 && expanded.has(node.id)) {
         pnwAppendRows(children, depth + 1, node.id);
@@ -88,7 +134,7 @@ export function pnwFlattenNavigationTree(
     }
   }
 
-  pnwAppendRows(nodes, 1);
+  pnwAppendRows(normalizedNodes, 1);
   return rows;
 }
 
@@ -103,12 +149,18 @@ export function pnwNavigationLeafIds(
 export function pnwNavigationLeaves(
   nodes: readonly PnwNavigationNode[],
 ): readonly PnwNavigationNode[] {
+  const normalizedNodes = pnwNormalizeNavigationVisibility(nodes);
   const leaves: PnwNavigationNode[] = [];
-  for (const node of pnwVisibleNavigationNodes(nodes)) {
-    const children = pnwVisibleNavigationNodes(node.children ?? []);
-    if (children.length === 0) leaves.push(node);
-    else leaves.push(...pnwNavigationLeaves(children));
+
+  function pnwAppendLeaves(siblings: readonly PnwNavigationNode[]): void {
+    for (const node of pnwSortedVisibleNavigationNodes(siblings)) {
+      const children = pnwSortedVisibleNavigationNodes(node.children ?? []);
+      if (children.length === 0) leaves.push(node);
+      else pnwAppendLeaves(children);
+    }
   }
+
+  pnwAppendLeaves(normalizedNodes);
   return leaves;
 }
 
@@ -117,9 +169,16 @@ export function pnwNavigationNodeContains(
   node: PnwNavigationNode,
   nodeId: string,
 ): boolean {
-  if (node.id === nodeId) return true;
-  return pnwVisibleNavigationNodes(node.children ?? [])
-    .some((child) => pnwNavigationNodeContains(child, nodeId));
+  const normalizedNode = pnwNormalizeNavigationVisibility([node])[0];
+  if (!normalizedNode || normalizedNode.hidden) return false;
+
+  function pnwContainsVisibleNode(current: PnwNavigationNode): boolean {
+    if (current.id === nodeId) return true;
+    return pnwSortedVisibleNavigationNodes(current.children ?? [])
+      .some(pnwContainsVisibleNode);
+  }
+
+  return pnwContainsVisibleNode(normalizedNode);
 }
 
 /**
@@ -129,8 +188,20 @@ export function pnwNavigationNodeContains(
 export function pnwProjectNavigationRibbon(
   nodes: readonly PnwNavigationNode[],
 ): readonly PnwNavigationRibbonModule[] {
-  return pnwVisibleNavigationNodes(nodes).map((moduleNode) => {
-    const moduleChildren = pnwVisibleNavigationNodes(moduleNode.children ?? []);
+  const normalizedNodes = pnwNormalizeNavigationVisibility(nodes);
+
+  function pnwLeavesFromNormalized(siblings: readonly PnwNavigationNode[]): PnwNavigationNode[] {
+    const leaves: PnwNavigationNode[] = [];
+    for (const node of pnwSortedVisibleNavigationNodes(siblings)) {
+      const children = pnwSortedVisibleNavigationNodes(node.children ?? []);
+      if (children.length === 0) leaves.push(node);
+      else leaves.push(...pnwLeavesFromNormalized(children));
+    }
+    return leaves;
+  }
+
+  return pnwSortedVisibleNavigationNodes(normalizedNodes).map((moduleNode) => {
+    const moduleChildren = pnwSortedVisibleNavigationNodes(moduleNode.children ?? []);
     if (moduleChildren.length === 0) {
       return {
         id: moduleNode.id,
@@ -146,7 +217,7 @@ export function pnwProjectNavigationRibbon(
     const groups: PnwNavigationRibbonGroup[] = [];
     const directItems: PnwNavigationNode[] = [];
     for (const child of moduleChildren) {
-      const childLeaves = pnwNavigationLeaves(child.children ?? []);
+      const childLeaves = pnwLeavesFromNormalized(child.children ?? []);
       if (childLeaves.length === 0) directItems.push(child);
       else groups.push({ id: child.id, label: child.label, items: childLeaves });
     }

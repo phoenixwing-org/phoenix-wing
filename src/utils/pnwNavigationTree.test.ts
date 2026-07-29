@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PnwNavigationNode } from "../types/PnwWorkbenchWeb.js";
 import {
   pnwFlattenNavigationTree,
+  pnwNormalizeNavigationVisibility,
   pnwNavigationFromRibbonTabs,
   pnwNavigationLeaves,
   pnwNavigationLeafIds,
@@ -38,6 +39,40 @@ const PNW_NAVIGATION_FIXTURE = [
 ] as const satisfies readonly PnwNavigationNode[];
 
 describe("受控导航树投影", () => {
+  it("自底向上只派生一次 hidden，空目录不会误变为可激活叶子", () => {
+    const visibleLeaf = { id: "visible", label: "可见页" } as const;
+    const hiddenLeaf = { id: "hidden", label: "隐藏页", hidden: true } as const;
+    const emptyRoot = { id: "empty", label: "空目录", children: [] } as const;
+    const hiddenRoot = {
+      id: "hidden-root",
+      label: "无权限目录",
+      children: [{
+        id: "hidden-group",
+        label: "无权限子目录",
+        children: [hiddenLeaf],
+      }],
+    } as const;
+    const visibleRoot = {
+      id: "visible-root",
+      label: "可见目录",
+      children: [visibleLeaf, hiddenLeaf],
+    } as const;
+    const nodes = [emptyRoot, hiddenRoot, visibleRoot] satisfies readonly PnwNavigationNode[];
+
+    const normalized = pnwNormalizeNavigationVisibility(nodes);
+
+    expect(normalized).not.toBe(nodes);
+    expect(normalized[0]).toMatchObject({ id: "empty", hidden: true });
+    expect(normalized[1]).toMatchObject({ id: "hidden-root", hidden: true });
+    expect(normalized[1]?.children?.[0]).toMatchObject({ id: "hidden-group", hidden: true });
+    expect(normalized[2]).toBe(visibleRoot);
+    expect(emptyRoot).not.toHaveProperty("hidden");
+    expect(hiddenRoot).not.toHaveProperty("hidden");
+    expect(pnwNormalizeNavigationVisibility(normalized)).toBe(normalized);
+    expect(pnwVisibleNavigationNodes(nodes)).toEqual([visibleRoot]);
+    expect(pnwNavigationLeafIds(nodes)).toEqual(["visible"]);
+  });
+
   it("把既有 Ribbon Tab 兼容配置转换为同一导航树", () => {
     const nodes = pnwNavigationFromRibbonTabs([
       {

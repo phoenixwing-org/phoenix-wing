@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.5.2'
+export const PNW_VERSION = '0.6.0'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -173,6 +173,9 @@ export {
 // ---------------------------------------------------------------------------
 export {
   type PnwActivityBarPresentation,
+  type PnwActivityTreeExpandedMode,
+  type PnwActivityTreeCollapsedMode,
+  type PnwActivityTreeAppearance,
   type PnwRibbonDisplayMode,
   type PnwRibbonIconSize,
   type PnwRibbonMode,
@@ -180,6 +183,8 @@ export {
   type PnwRibbonAppearance,
   type PnwNavigationNode,
   type PnwWorkbenchTabItem,
+  type PnwWorkbenchTabBarPlacement,
+  type PnwWorkbenchResponsiveState,
   type PnwBottomPanelTabTone,
   type PnwBottomPanelTab,
   type PnwViewBlockId,
@@ -187,6 +192,8 @@ export {
   type PnwViewBlockVisibility,
   type PnwWorkbenchPanelSizes,
   type PnwWorkbenchLayoutState,
+  type PnwWorkbenchDisplaySettingsPositions,
+  type PnwWorkbenchDisplayPreferences,
   type PnwWorkbenchLayoutViewport,
 } from './types/PnwWorkbenchWeb.js'
 
@@ -196,6 +203,30 @@ export {
   type PnwViewBlockComponentContributions,
   type PnwWorkbenchDisplaySettingsActionSlotProps,
 } from './types/PnwWorkbenchVue.js'
+
+export {
+  type PnwLogLevel,
+  type PnwLogEntry,
+  type PnwLogFilter,
+  type PnwProblemSeverity,
+  type PnwProblemInput,
+  type PnwProblemItem,
+  type PnwProblemFilter,
+  type PnwDiagnosticsSnapshot,
+  type PnwDiagnosticsCommand,
+  type PnwDiagnosticsListener,
+  type PnwDiagnosticsHub,
+  type PnwDiagnosticsHubOptions,
+} from './types/PnwDiagnostics.js'
+
+export {
+  PNW_DEFAULT_DIAGNOSTICS_MAX_LOG_ENTRIES,
+  PNW_DIAGNOSTICS_MAX_LOG_ENTRIES_LIMIT,
+  pnwCreateDiagnosticsHub,
+  pnwFilterLogEntries,
+  pnwFilterProblemItems,
+  pnwDiagnosticsLogChannels,
+} from './utils/pnwDiagnostics.js'
 
 export {
   type PnwViewContributionRegistry,
@@ -248,9 +279,14 @@ export {
 } from './utils/pnwNavigationTree.js'
 
 export {
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+  PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+  PNW_WORKBENCH_NARROW_BREAKPOINT,
   PNW_DEFAULT_RIBBON_APPEARANCE,
   PNW_WORKBENCH_PANEL_SIZE_LIMITS,
   PNW_DEFAULT_WORKBENCH_PANEL_SIZES,
+  PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS,
+  PNW_DEFAULT_WORKBENCH_DISPLAY_PREFERENCES,
   PNW_DEFAULT_WORKBENCH_LAYOUT_STATE,
   PNW_VIEW_BLOCK_IDS,
   pnwRibbonIconSizesFor,
@@ -262,6 +298,9 @@ export {
   pnwToggleViewBlockVisibility,
   pnwResolveWorkbenchLayoutState,
   pnwResizeWorkbenchLayoutState,
+  pnwResolveWorkbenchResponsiveState,
+  pnwNormalizeWorkbenchTabBarPlacement,
+  pnwNormalizeWorkbenchDisplayPreferences,
   type PnwRibbonAppearanceIssueCode,
   type PnwRibbonAppearanceValidation,
 } from './utils/pnwWorkbenchWeb.js'
@@ -319,6 +358,8 @@ export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'
 export { default as PnwActivityBar } from './layout/PnwActivityBar.vue'
 export { default as PnwActivityTree } from './layout/PnwActivityTree.vue'
 export { default as PnwBottomPanel } from './layout/PnwBottomPanel.vue'
+export { default as PnwLogBlock } from './layout/PnwLogBlock.vue'
+export { default as PnwProblemsBlock } from './layout/PnwProblemsBlock.vue'
 export { default as PnwPrimaryBlock } from './layout/PnwPrimaryBlock.vue'
 export { default as PnwRibbon } from './layout/PnwRibbon.vue'
 export { default as PnwRibbonGroup } from './layout/PnwRibbonGroup.vue'
@@ -335,6 +376,7 @@ export { default as PnwWorkbenchTabBar } from './layout/PnwWorkbenchTabBar.vue'
 export { default as PnwWorkbenchFooter } from './layout/PnwWorkbenchFooter.vue'
 export { default as PnwWorkbenchHeader } from './layout/PnwWorkbenchHeader.vue'
 export { default as PnwWorkbenchDisplaySettingsPanel } from './layout/PnwWorkbenchDisplaySettingsPanel.vue'
+export { default as PnwWorkbenchDisplaySettingsSection } from './layout/PnwWorkbenchDisplaySettingsSection.vue'
 export { default as PnwWorkbenchShell } from './layout/PnwWorkbenchShell.vue'
 export { default as PnwWorkbenchLayout } from './layout/PnwWorkbenchLayout.vue'
 

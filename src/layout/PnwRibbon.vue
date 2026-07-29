@@ -4,16 +4,19 @@ import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwWorkbenchDisplaySettingsActionSlotProps } from "../types/PnwWorkbenchVue.js";
 import type {
   PnwActivityBarPresentation,
+  PnwActivityTreeAppearance,
   PnwNavigationNode,
   PnwRibbonAppearance,
   PnwRibbonDisplayMode,
 } from "../types/PnwWorkbenchWeb.js";
 import {
   pnwNavigationNodeContains,
+  pnwNormalizeNavigationVisibility,
   pnwProjectNavigationRibbon,
   pnwVisibleNavigationNodes,
 } from "../utils/pnwNavigationTree.js";
 import {
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   PNW_DEFAULT_RIBBON_APPEARANCE,
   pnwNextRibbonFocusIndex,
   pnwResolveRibbonNaturalHeight,
@@ -28,6 +31,7 @@ const props = withDefaults(defineProps<{
   activeNodeId?: string;
   appearance?: PnwRibbonAppearance;
   presentation?: PnwActivityBarPresentation;
+  treeAppearance?: PnwActivityTreeAppearance;
   colorScheme?: PnwColorScheme;
   ariaLabel?: string;
   /** 独立使用时默认显示；组合式 Header 可关闭后由宿主设置遮罩接管。 */
@@ -37,6 +41,7 @@ const props = withDefaults(defineProps<{
   activeNodeId: "",
   appearance: () => PNW_DEFAULT_RIBBON_APPEARANCE,
   presentation: "ribbon",
+  treeAppearance: () => PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   colorScheme: "system",
   ariaLabel: "功能区导航",
   showAppearanceMenu: true,
@@ -46,6 +51,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   activate: [nodeId: string];
   "update:appearance": [appearance: PnwRibbonAppearance];
+  "update:treeAppearance": [appearance: PnwActivityTreeAppearance];
   "update:presentation": [presentation: PnwActivityBarPresentation];
   "update:colorScheme": [colorScheme: PnwColorScheme];
   displaySettingsAction: [actionId: string];
@@ -59,8 +65,9 @@ defineSlots<{
   "display-settings-panel-extra"(): unknown;
 }>();
 
-const pnwModules = computed(() => pnwProjectNavigationRibbon(props.nodes));
-const pnwActiveModuleId = computed(() => pnwVisibleNavigationNodes(props.nodes)
+const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
+const pnwModules = computed(() => pnwProjectNavigationRibbon(pnwNavigationNodes.value));
+const pnwActiveModuleId = computed(() => pnwVisibleNavigationNodes(pnwNavigationNodes.value)
   .find((node) => pnwNavigationNodeContains(node, props.activeNodeId))?.id
   ?? pnwModules.value[0]?.id
   ?? "");
@@ -145,11 +152,13 @@ function pnwHandleRibbonKeydown(event: KeyboardEvent): void {
         v-if="showAppearanceMenu"
         :presentation="presentation"
         :appearance="pnwAppearance"
+        :tree-appearance="treeAppearance"
         :color-scheme="colorScheme"
         :show-advanced-settings-action="showAdvancedSettingsAction"
         trigger-variant="ribbon"
         @update:presentation="emit('update:presentation', $event)"
         @update:appearance="emit('update:appearance', $event)"
+        @update:tree-appearance="emit('update:treeAppearance', $event)"
         @update:color-scheme="emit('update:colorScheme', $event)"
         @display-settings-action="emit('displaySettingsAction', $event)"
         @open-advanced-settings="emit('openAdvancedSettings')"

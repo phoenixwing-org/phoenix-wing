@@ -180,6 +180,13 @@
       "lastVerified": "2026-07-23"
     },
     {
+      "path": "doc/Git轻量仓库读取与OID分页计划.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
       "path": "doc/naming-checklist.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
@@ -210,6 +217,20 @@
       "lastVerified": "2026-07-23"
     },
     {
+      "path": "doc/Pnw工作台Web侧目录外观可行性.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "doc/Pnw工作台Web动态布局与拖动可行性.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
       "path": "doc/Pnw工作台Web架构与示例计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
@@ -217,7 +238,28 @@
       "lastVerified": "2026-07-23"
     },
     {
+      "path": "doc/Pnw工作台Web可扩展显示配置中心.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "doc/Pnw工作台Web扩展消费者接入审计.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
       "path": "doc/Pnw工作台Web双消费者验证计划.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.5.x",
+      "lastVerified": "2026-07-23"
+    },
+    {
+      "path": "doc/Pnw工作台Web问题与日志Block方案.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.5.x",

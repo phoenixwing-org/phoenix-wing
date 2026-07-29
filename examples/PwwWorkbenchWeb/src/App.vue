@@ -29,8 +29,11 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
         v-model:ribbon-appearance="pwwFixture.appearance.ribbon"
         v-model:color-scheme="pwwFixture.appearance.colorScheme"
         v-model:tree-collapsed="pwwFixture.navigation.treeCollapsed"
+        v-model:tree-appearance="pwwFixture.appearance.tree"
         v-model:layout-state="pwwFixture.layout.state"
         v-model:active-bottom-tab-id="pwwFixture.layout.activeBottomTabId"
+        v-model:tab-bar-placement="pwwFixture.layout.tabBarPlacement"
+        v-model:display-settings-positions="pwwFixture.settings.displayPositions"
         class="pww-workbench"
         :class="{ 'pww-workbench--custom': pwwFixture.appearance.customTheme }"
         :nodes="pwwFixture.navigation.nodes"
@@ -100,7 +103,10 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
           :theme-summary="pwwFixture.appearance.customTheme
             ? 'custom tokens'
             : pwwFixture.appearance.colorScheme"
-          :event-log="pwwFixture.view.eventLog"
+          :diagnostics="pwwFixture.view.diagnostics"
+          :clear-log="pwwFixture.actions.clearDiagnosticsLog"
+          :open-problem="pwwFixture.actions.openProblem"
+          @action="pwwFixture.actions.handleViewAction"
         />
 
       </PnwWorkbenchShell>

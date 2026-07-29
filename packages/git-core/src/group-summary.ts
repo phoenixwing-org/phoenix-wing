@@ -1,11 +1,11 @@
-import type { PnwGitCommitRecord } from "./types.js";
+import type { PnwGitCommitSummary } from "./types.js";
 
 export interface PnwGitGroupSummaryInput {
   /** Retained for host compatibility; group lines use the Git ref, not a local directory name. */
   readonly repositoryName: string;
   readonly branch?: string;
   readonly upstream?: string;
-  readonly commit: PnwGitCommitRecord;
+  readonly commit: PnwGitCommitSummary;
   readonly visibleOids?: readonly string[];
   /** @deprecated Repository directory names are no longer optional summary content. */
   readonly includeRepositoryContext?: boolean;
@@ -25,7 +25,7 @@ export interface PnwGitGroupSummary {
 }
 
 export interface PnwGitGroupSummariesInput extends Omit<PnwGitGroupSummaryInput, "commit" | "includeRepositoryContext"> {
-  readonly commits: readonly PnwGitCommitRecord[];
+  readonly commits: readonly PnwGitCommitSummary[];
   readonly remoteUrl?: string;
   readonly includeRemoteUrl?: boolean;
 }

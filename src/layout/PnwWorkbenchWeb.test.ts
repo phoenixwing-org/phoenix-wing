@@ -1,14 +1,23 @@
 import { createSSRApp, defineComponent, h, type Component, type Slots } from "vue";
-import { renderToString } from "vue/server-renderer";
+import { renderToString, type SSRContext } from "vue/server-renderer";
 import { describe, expect, it } from "vitest";
 import type { PnwNavigationNode } from "../types/PnwWorkbenchWeb.js";
+import {
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+  PNW_DEFAULT_RIBBON_APPEARANCE,
+} from "../utils/pnwWorkbenchWeb.js";
 import PnwIcon from "../components/PnwIcon.vue";
 import PnwPhoenixWingMark from "../components/PnwPhoenixWingMark.vue";
 import PnwActivityBar from "./PnwActivityBar.vue";
 import PnwActivityTree from "./PnwActivityTree.vue";
+import PnwLogBlock from "./PnwLogBlock.vue";
+import PnwPageHeader from "./PnwPageHeader.vue";
+import PnwProblemsBlock from "./PnwProblemsBlock.vue";
 import PnwRibbon from "./PnwRibbon.vue";
 import PnwRibbonTabBar from "./PnwRibbonTabBar.vue";
 import PnwWorkbenchFooter from "./PnwWorkbenchFooter.vue";
+import PnwWorkbenchDisplaySettingsPanel from "./PnwWorkbenchDisplaySettingsPanel.vue";
+import PnwWorkbenchDisplaySettingsSection from "./PnwWorkbenchDisplaySettingsSection.vue";
 import PnwWorkbenchHeader from "./PnwWorkbenchHeader.vue";
 import PnwWorkbenchLayout from "./PnwWorkbenchLayout.vue";
 import PnwWorkbenchShell from "./PnwWorkbenchShell.vue";
@@ -36,9 +45,11 @@ async function pnwRenderComponent(
   props: Record<string, unknown>,
   slots: Slots = {},
 ): Promise<string> {
-  return renderToString(createSSRApp({
+  const context: SSRContext = {};
+  const html = await renderToString(createSSRApp({
     render: () => h(component, props, slots),
-  }));
+  }), context);
+  return html + Object.values(context.teleports ?? {}).join("");
 }
 
 describe("Pnw Web 工作台 SSR 无障碍语义", () => {
@@ -76,9 +87,108 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
       collapsed: true,
     });
     expect(railHtml).toContain('data-pnw-activity-tree-collapsed="true"');
+    expect(railHtml).toContain('data-pnw-activity-tree-collapsed-mode="leaf-rail"');
     expect(railHtml).toContain('role="toolbar"');
     expect(railHtml).toContain("无");
     expect(railHtml).not.toContain('role="treeitem"');
+  });
+
+  it("Tree 展开和收起外观独立受控且不复制导航树", async () => {
+    const adminHtml = await pnwRenderComponent(PnwActivityTree, {
+      nodes: PNW_SSR_NAVIGATION,
+      activeNodeId: "page",
+      expandedNodeIds: ["module", "group"],
+      treeAppearance: { expanded: "admin-menu", collapsed: "leaf-rail" },
+    });
+    const rootRailHtml = await pnwRenderComponent(PnwActivityTree, {
+      nodes: PNW_SSR_NAVIGATION,
+      activeNodeId: "page",
+      collapsed: true,
+      treeAppearance: { expanded: "outline", collapsed: "root-flyout" },
+    });
+
+    expect(adminHtml).toContain('data-pnw-activity-tree-expanded-mode="admin-menu"');
+    expect(adminHtml).toContain("pnw-activity-tree--expanded-admin-menu");
+    expect(rootRailHtml).toContain('data-pnw-activity-tree-rail-mode="root-flyout"');
+    expect(rootRailHtml).toContain('aria-label="模块"');
+    expect(rootRailHtml).not.toContain('aria-label="页面"');
+    expect(rootRailHtml).toContain('aria-haspopup="tree"');
+  });
+
+  it("第一层显示配置中心始终提供目录展开与收起外观", async () => {
+    const html = await pnwRenderComponent(PnwWorkbenchDisplaySettingsPanel, {
+      open: true,
+      position: { x: 24, y: 56 },
+      presentation: "ribbon",
+      appearance: {
+        mode: "ribbon",
+        compact: { iconSize: 24, showTitles: true, showGroupLabels: false },
+        ribbon: { iconSize: 36, showTitles: true, showGroupLabels: true },
+      },
+      treeAppearance: { expanded: "outline", collapsed: "leaf-rail" },
+      colorScheme: "light",
+      showLayoutSettings: true,
+    });
+
+    expect(html).toContain("目录展开外观");
+    expect(html).toContain("紧凑大纲树");
+    expect(html).toContain("Admin 菜单");
+    expect(html).toContain("目录收起外观");
+    expect(html).toContain("所有叶子图标");
+    expect(html).toContain("一级菜单 + 子菜单浮层");
+    expect(html).toContain("View 标签位置");
+    expect(html).toContain("Editor 底部");
+    expect(html).toContain("pnw-workbench-display-full-done");
+    expect(html).toMatch(/>\s*完成\s*<\/button>/u);
+    expect(html).not.toContain("before-navigation");
+  });
+
+  it("consumer 扩展区复用公共折叠段，不复制配置中心结构样式", async () => {
+    const html = await pnwRenderComponent(
+      PnwWorkbenchDisplaySettingsSection,
+      { title: "产品显示扩展", summary: "consumer", defaultOpen: true },
+      { default: () => [h("label", "产品开关")] },
+    );
+
+    expect(html).toContain("pnw-workbench-display-settings-section");
+    expect(html).toContain("产品显示扩展");
+    expect(html).toContain("产品开关");
+    expect(html).toContain(" open");
+  });
+
+  it("所有叶子隐藏后只归一化派生树，空目录不会进入 Tree 或 Ribbon", async () => {
+    const nodes = [
+      { id: "empty", label: "空目录", children: [] },
+      {
+        id: "restricted",
+        label: "无权限目录",
+        children: [{ id: "restricted-page", label: "无权限页面", hidden: true }],
+      },
+      {
+        id: "visible",
+        label: "可见目录",
+        children: [{ id: "visible-page", label: "可见页面" }],
+      },
+    ] as const satisfies readonly PnwNavigationNode[];
+
+    const treeHtml = await pnwRenderComponent(PnwActivityTree, {
+      nodes,
+      activeNodeId: "visible-page",
+      expandedNodeIds: ["visible"],
+    });
+    const ribbonHtml = await pnwRenderComponent(PnwRibbon, {
+      nodes,
+      activeNodeId: "visible-page",
+    });
+
+    expect(treeHtml).toContain("可见页面");
+    expect(treeHtml).not.toContain("空目录");
+    expect(treeHtml).not.toContain("无权限目录");
+    expect(ribbonHtml).toContain("可见页面");
+    expect(ribbonHtml).not.toContain("空目录");
+    expect(ribbonHtml).not.toContain("无权限目录");
+    expect(nodes[0]).not.toHaveProperty("hidden");
+    expect(nodes[1]).not.toHaveProperty("hidden");
   });
 
   it("Ribbon 只提供一个可访问的工作台显示设置入口并呈现合法尺寸", async () => {
@@ -126,6 +236,35 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html.indexOf("工作台显示设置")).toBeGreaterThan(html.indexOf('role="tree"'));
   });
 
+  it("ActivityBar 独立入口与 Workbench 第一层都只保留一个显示设置实例", async () => {
+    const ribbonHtml = await pnwRenderComponent(PnwActivityBar, {
+      nodes: PNW_SSR_NAVIGATION,
+      presentation: "ribbon",
+      activeNodeId: "page",
+    });
+    const treeHtml = await pnwRenderComponent(PnwActivityBar, {
+      nodes: PNW_SSR_NAVIGATION,
+      presentation: "tree",
+      activeNodeId: "page",
+    });
+    const shellHtml = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        presentation: "ribbon",
+        activeNodeId: "page",
+      },
+      { default: () => [h("div", "Editor")] },
+    );
+
+    expect(ribbonHtml.match(/data-pnw-display-trigger="ribbon"/g)).toHaveLength(1);
+    expect(treeHtml.match(/data-pnw-display-trigger="tree"/g)).toHaveLength(1);
+    expect(ribbonHtml.match(/aria-label="工作台显示设置"/g)).toHaveLength(1);
+    expect(treeHtml.match(/aria-label="工作台显示设置"/g)).toHaveLength(1);
+    expect(shellHtml.match(/data-pnw-display-trigger="ribbon"/g)).toHaveLength(1);
+    expect(shellHtml.match(/aria-label="工作台显示设置"/g)).toHaveLength(1);
+  });
+
   it("公共图标在指定尺寸下保持 SVG 与可访问语义", async () => {
     const html = await pnwRenderComponent(PnwIcon, {
       name: "settings",
@@ -160,6 +299,24 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(new Set(rendered).size).toBe(iconNames.length);
   });
 
+  it("窄屏完整设置解释当前 Ribbon 与宽屏 Tree 偏好的区别", async () => {
+    const html = await pnwRenderComponent(PnwWorkbenchDisplaySettingsPanel, {
+      open: true,
+      position: { x: 12, y: 12 },
+      presentation: "tree",
+      responsiveNarrow: true,
+      appearance: PNW_DEFAULT_RIBBON_APPEARANCE,
+      treeAppearance: PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+      colorScheme: "light",
+    });
+
+    expect(html).toContain("窄屏固定使用顶部 Ribbon");
+    expect(html).toContain("导航结构暂不可切换");
+    expect(html).toContain("恢复宽屏后使用原偏好：侧面目录树");
+    expect(html).toContain('disabled title="窄屏固定使用顶部 Ribbon"');
+    expect(html).toContain('aria-pressed="true" disabled');
+  });
+
   it("Header 以固定插槽顺序容纳品牌、模块、打开页签和单一操作区", async () => {
     const html = await pnwRenderComponent(
       PnwWorkbenchHeader,
@@ -176,6 +333,32 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html.indexOf("Brand")).toBeLessThan(html.indexOf("Modules"));
     expect(html.indexOf("Modules")).toBeLessThan(html.indexOf("Pages"));
     expect(html.indexOf("Pages")).toBeLessThan(html.indexOf("Settings"));
+  });
+
+  it("业务 View Header 兼容紧凑标题并可追加分类、摘要、说明与操作", async () => {
+    const html = await pnwRenderComponent(
+      PnwPageHeader,
+      {
+        eyebrow: "工程工具",
+        title: "代码生成",
+        subtitle: "Foo.cpp",
+        summary: "READY",
+        description: "View 自己持有标题和操作；工作台 Header 不重复业务标题。",
+      },
+      {
+        actions: () => [h("button", { type: "button" }, "执行")],
+        help: () => [h("button", { type: "button", "aria-label": "帮助" }, "?")],
+      },
+    );
+
+    expect(html).toContain("pnw-head-eyebrow");
+    expect(html).toContain("工程工具");
+    expect(html).toContain("代码生成");
+    expect(html).toContain("Foo.cpp");
+    expect(html).toContain("READY");
+    expect(html).toContain("工作台 Header 不重复业务标题");
+    expect(html.indexOf("代码生成")).toBeLessThan(html.indexOf("执行"));
+    expect(html.indexOf("执行")).toBeLessThan(html.indexOf("帮助"));
   });
 
   it("无打开 View 时移除空页签区，Header 操作区仍保留", async () => {
@@ -197,6 +380,52 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain("Settings");
     expect(html).not.toContain("pnw-workbench-header-pages");
     expect(html).not.toContain('aria-label="已打开页面"');
+  });
+
+  it("同一 View TabBar 可受控移动到三个连续壳层位置且始终只渲染一次", async () => {
+    const placements = [
+      "header",
+      "after-navigation",
+      "editor-bottom",
+    ] as const;
+    const rendered = await Promise.all(placements.map((tabBarPlacement) => (
+      pnwRenderComponent(
+        PnwWorkbenchShell,
+        {
+          nodes: PNW_SSR_NAVIGATION,
+          activeNodeId: "page",
+          tabs: [{ id: "page", pageId: "page", title: "页面", dirty: false }],
+          activeTabId: "page",
+          tabBarPlacement,
+        },
+        { default: () => [h("div", "Editor")] },
+      )
+    )));
+
+    rendered.forEach((html, index) => {
+      expect(html).toContain(`data-pnw-tab-bar-placement="${placements[index]}"`);
+      expect(html.match(/aria-label="已打开页面"/g)).toHaveLength(1);
+    });
+    expect(rendered[0]).toContain("pnw-workbench-header-pages");
+    expect(rendered[1]).toContain("pnw-workbench-view-tabs--editor-top");
+    expect(rendered[2]).toContain("pnw-workbench-view-tabs--editor-bottom");
+
+    const treeAfterHtml = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        presentation: "tree",
+        tabs: [{ id: "page", pageId: "page", title: "页面", dirty: false }],
+        activeTabId: "page",
+        tabBarPlacement: "after-navigation",
+      },
+      { default: () => [h("div", "Editor")] },
+    );
+    expect(treeAfterHtml).toContain("pnw-workbench-view-tabs--editor-top");
+    expect(treeAfterHtml.match(/aria-label="已打开页面"/g)).toHaveLength(1);
+    expect(treeAfterHtml).not.toContain('aria-label="模块"');
+    expect(treeAfterHtml).toContain('data-pnw-activity-presentation="tree"');
+    expect(treeAfterHtml).toContain('data-pnw-preferred-activity-presentation="tree"');
   });
 
   it("WorkbenchShell 用一个组合入口装配受控 Header、ActivityBar 与 View Blocks", async () => {
@@ -307,7 +536,7 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain('title="工作空间"');
   });
 
-  it("Footer 仅为当前 View 的 contribution 输出仅图标开关", async () => {
+  it("Footer 始终输出三个仅图标开关且禁用当前 View 未贡献的 Block", async () => {
     const html = await pnwRenderComponent(
       PnwWorkbenchFooter,
       {
@@ -317,11 +546,12 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
       { default: () => [h("span", "Consumer status")] },
     );
 
-    expect(html.match(/<button/g)).toHaveLength(2);
+    expect(html.match(/<button/g)).toHaveLength(3);
     expect(html).toContain("Consumer status");
     expect(html).toContain('aria-label="显示/隐藏 Primary Block"');
     expect(html).toContain('aria-pressed="true"');
-    expect(html).not.toContain("Secondary Block");
+    expect(html).toContain('title="当前 View 未提供 Secondary Block"');
+    expect(html).toMatch(/disabled[^>]*aria-label="显示\/隐藏 Secondary Block"/);
   });
 
   it("consumer 可只贡献 Footer 内容而不声明 View Block", async () => {
@@ -336,7 +566,16 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
 
     expect(html).toContain("pnw-workbench-footer");
     expect(html).toContain("连接状态：就绪");
-    expect(html).not.toContain("pnw-workbench-footer-toggle");
+    expect(html.match(/pnw-workbench-footer-toggle/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(html.match(/disabled/g)?.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("只有 consumer 显式关闭时才不渲染 Footer", async () => {
+    const html = await pnwRenderComponent(PnwWorkbenchLayout, {
+      showFooter: false,
+    });
+
+    expect(html).not.toContain("pnw-workbench-footer");
   });
 
   it("无 slot 时不生成空 Block，Bottom 始终嵌在 Editor 栈内", async () => {
@@ -347,7 +586,8 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     });
     expect(emptyHtml).toContain('data-pnw-color-scheme="dark"');
     expect(emptyHtml).not.toContain("pnw-primary-block");
-    expect(emptyHtml).not.toContain("pnw-workbench-footer");
+    expect(emptyHtml).toContain("pnw-workbench-footer");
+    expect(emptyHtml.match(/disabled/g)?.length).toBeGreaterThanOrEqual(3);
 
     const fullHtml = await pnwRenderComponent(
       PnwWorkbenchLayout,
@@ -407,5 +647,44 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain('role="tablist"');
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain(">output</div>");
+  });
+
+  it("紧凑 Problems / Log Block 输出过滤工具栏、结构化行与空态", async () => {
+    const logHtml = await pnwRenderComponent(PnwLogBlock, {
+      entries: [{
+        id: "log-1",
+        timestamp: 1_700_000_000_000,
+        level: "error",
+        channel: "pnw.workbench",
+        source: "fixture",
+        message: "ActivityBar 切换失败",
+      }],
+    });
+    expect(logHtml).toContain('role="log"');
+    expect(logHtml).toContain('aria-label="日志频道"');
+    expect(logHtml).toContain('aria-label="过滤日志"');
+    expect(logHtml).toContain("pnw.workbench");
+    expect(logHtml).toContain("ActivityBar 切换失败");
+    expect(logHtml).not.toContain("BOTTOM · VIEW CONTRIBUTION");
+
+    const problemsHtml = await pnwRenderComponent(PnwProblemsBlock, {
+      items: [{
+        id: "problem-1",
+        ownerId: "fixture",
+        severity: "warning",
+        message: "缺少 End 标记",
+        source: "codegen",
+        code: "marker.missing-end",
+        resource: "Foo.cpp",
+        line: 128,
+      }],
+    });
+    expect(problemsHtml).toContain('role="list"');
+    expect(problemsHtml).toContain('aria-label="问题来源"');
+    expect(problemsHtml).toContain("marker.missing-end");
+    expect(problemsHtml).toContain("Foo.cpp:128");
+
+    const emptyHtml = await pnwRenderComponent(PnwProblemsBlock, { items: [] });
+    expect(emptyHtml).toContain("未检测到问题");
   });
 });

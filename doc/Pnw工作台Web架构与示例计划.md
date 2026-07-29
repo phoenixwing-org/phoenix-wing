@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：下一次 Wing 0.5.x 兼容增量
+适用版本：Wing 0.6.0 本地候选（未发布）
 
-最后核验：2026-07-28
+最后核验：2026-07-29
 
 ## 1. 目的与边界
 
@@ -96,6 +96,7 @@ VS Code 插件继续使用既有 Webview/Custom Element 和固定样式，不强
 12. **公共完整设置对话框使用窄单列检查器。** Wing 将 `PnwWorkbenchDisplaySettingsPanel` 控制在约 `420px`，标题栏可拖动、内容独立滚动、底部动作保持可见；导航与 Ribbon 两个高频区块默认展开，主题折叠。fixture 的窄屏、CSS token 与 SVG 回归通过扩展 slot 追加，不复制公共表单。
 13. **分组关系进入独立 View。** 导航大分组、小模块归属、默认布局对照与恢复属于信息架构编辑，不放入即时外观浮动面板。仓内第一方 fixture consumer 在同一导航树的“系统 / 工作台配置 / 导航布局”节点打开 `PwwFixtureNavigationLayoutView`，以多列表格显示默认组、当前组和全部可移动小模块，并演示整体移动“问题跟踪”与恢复默认。该 View 属于 consumer 宿主，不因此新增 Wing 公共拖拽、权限或持久化协议。
 14. **大分组定义可编辑但稳定身份不可变。** consumer 可编辑一级大分组全名、Header 简称与显示顺序；稳定 `id`、内置/自定义来源和模块归属不随编辑改变。内置分组支持“恢复定义”，只恢复默认名称、简称与顺序，不连带恢复已经移动的小模块；模块仍使用“恢复本模块”或“全部恢复默认”。
+15. **窄模式是框架容器能力。** `PnwWorkbenchLayout` 观察自身容器而不是 UA 或整个窗口；宽度不超过 `840px` 时，当前有效导航统一为顶部 Ribbon，Header 内的 View 标签临时按 `after-navigation` 移到 Ribbon 后，Primary / Editor / Secondary / Bottom / Footer 按当前 contribution 进入同一个纵向内容滚动流。显式 `after-navigation` 标签位于 Primary 前，显式 `editor-bottom` 标签位于 Bottom 与 Footer 之间，其他位置不被重写。`presentation`、`tabBarPlacement` 与面板宽高仍是 consumer 可持久化偏好，响应式覆盖不发出更新、不改 Pinia，宽屏恢复后 Tree、Header 标签位置与四区尺寸自动还原。窄屏快捷菜单禁用 Tree 预设，完整设置锁定 Tree / Ribbon 大分类并显示实际 Ribbon，避免可点击却没有即时布局反馈；Ribbon 外观、主题及宽屏 Tree 外观预设仍可调整。Header 一级大分组只在有效 Ribbon 呈现时存在，宽屏 Tree 不重复显示。
 
 首批常用图标的确切名称、路径和消费者证据在完成仓库盘点后记录；在盘点完成前不预建大而全的图标包，也不复制来源/许可不清晰的 SVG。
 
@@ -115,6 +116,17 @@ VS Code 插件继续使用既有 Webview/Custom Element 和固定样式，不强
 首批 `PnwIconName` 固定为：`settings`、`more`、`close`、`chevron-left`、`chevron-right`、`chevron-up`、`chevron-down`、`panel-left`、`panel-bottom`、`panel-right`、`home`、`search`、`add`、`refresh`、`folder`、`document`。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带 iconfont 元数据和来源不明的 Admin SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
 
 本轮清理只建立公共真源并替换 Wing/fixture 自身的重复内联图形。Admin、BOM Studio、Open Issue、Desk Tools 的迁移必须在各自后续适配任务中逐项进行；当前任务不改这些业务仓或依赖。Desk 的 CAA/Widget 图标、FreeCAD Part、Gitee Logo，Admin 的上传文件类型与模块业务图标，BOM 的购物车/制造领域图标继续留在产品侧。
+
+### 2.4 W5 动态布局与诊断面板候选
+
+后续扩展分为两个独立方向，本计划只记录入口，不把未经双消费者验证的字段加入当前实验契约：
+
+1. View 标签栏已支持 Header 内、导航后/Editor 上方、Bottom 下方/Footer 上方三个受控位置；默认仍为 Header，移动时只渲染一个 TabBar。“导航前”因割裂 Ribbon 已删除，非法值由统一 checker 回到 Header。下一阶段布局编辑使用轻量遮罩、明确投放区和可取消 draft，先移动 Activity 与 View 标签。详见[《动态布局与拖动可行性》](Pnw工作台Web动态布局与拖动可行性.md)。
+2. Bottom 的“问题 / 运行日志”改为 VS Code 类紧凑面板。Wing 提供 Problems/Log Block 和实例级诊断总线，consumer 只桥接日志、诊断与定位动作；Admin 的审计日志、任务分页日志等业务 View 不进入框架。Log 已有三个 Web 消费者证据，Problems 在第二真实消费者前保持实验性。详见[《问题与日志 Block 方案》](Pnw工作台Web问题与日志Block方案.md)。
+3. 侧面目录保持 `presentation = tree`，`outline / admin-menu` 展开外观与 `leaf-rail / root-flyout` 收起外观已作为两个独立受控偏好落地；四种组合共用同一导航树与状态。现有“把所有叶子平铺成图标栏”保持默认兼容，“一级菜单图标 + 子菜单浮层”继续做真实消费者交互验证；Admin 权限只由 consumer adapter 计算成通用 hidden/disabled，共享递归 resolver 剪掉空目录，搜索、Router、权限 code 和后台菜单字段继续由 consumer 持有。详见[《侧目录外观可行性》](Pnw工作台Web侧目录外观可行性.md)。
+4. 完整显示设置已提升为 Shell 级单一实例，公共设置与 consumer 底部扩展共存；详细边界和示例见[《可扩展的工作台显示配置中心》](Pnw工作台Web可扩展显示配置中心.md)。
+
+任意业务 Block 跨 Primary/Secondary/Bottom 移动需要先分离稳定内容 ID 与 placement，并证明移动不会卸载重建 Vue 组件。Problems/Log 将作为首批生命周期原型，未通过前不增加通用 dock contribution API。
 
 选择仓内示例的原因：当前目标 Web 消费者均为 Vue 3 + Vite，示例需要直接验证 Wing 的公开组件、类型和样式；单独仓会新增版本、依赖和设计真源，容易与真实组件漂移。更重要的是，Function 正在迁移、DeskTools 保留但工具域较重、Open Issue 又刻意不使用 Primary/Secondary，三者都不适合作为最小架构样板。只有出现非 Vue Web 消费者、需要独立公开演示站或独立发布节奏时，才重新评估独立演示仓。
 
@@ -202,7 +214,7 @@ export interface PnwViewBlockContributions {
 
 外观组合由 `PnwRibbon` 验证：紧凑工具条允许 `16/24px`，大 Ribbon 允许 `24/36px`；两类各自保存 Title 开关，分组标签只由大 Ribbon 使用。非法组合应在开发期输出清晰诊断并回退到安全默认值。
 
-Footer 使用三个仅图标的布局开关：Primary、Bottom、Secondary。仅当前 View 对应 Block 可用时显示图标；Ribbon 的外观设置收敛到右侧 `…` 菜单，不散落多个 Header/Ribbon 按钮。
+Footer 使用三个固定顺序的仅图标布局开关：Primary、Bottom、Secondary。三个入口始终显示，当前 View 未贡献对应 Block 时使用原生 `disabled` 并提示原因；只有 consumer 显式设置 `showFooter = false` 时才移除整个 Footer。Ribbon 的外观设置收敛到右侧 `…` 菜单，不散落多个 Header/Ribbon 按钮。
 
 ## 5. 仓内示例方案
 
@@ -241,7 +253,7 @@ phoenix-wing/
 4. 大 Ribbon 的分组标签开关、紧凑模式强制无分组标签，以及 `…` 外观菜单；
 5. 无 Primary/Secondary 的 Issue 风格 View；
 6. 有 Primary、Secondary、可调 Bottom Panel 的完整工作台 View；
-7. Footer 三个仅图标开关按 View contribution 显示；
+7. Footer 三个仅图标开关始终显示，并按 View contribution 启用或禁用；
 8. 窄屏下 Tree、Ribbon 溢出和 Block 折叠行为。
 
 该示例是设计/视觉/交互回归夹具，不是新 npm 包、产品原型或第二套组件实现。它必须通过 Wing 的公开入口导入组件与类型，避免只验证源码内部偶然可用的 API。
@@ -252,12 +264,14 @@ phoenix-wing/
 |---|---|---|
 | W0 | 文档、术语、受控数据模型与消费者边界 | 本文、能力目录和 API 草案完成评审 |
 | W1 | `PnwActivityBar`、Tree 与 Ribbon 呈现适配 | 一份 fixture 树可无差别切换；类型/单测通过 |
-| W2 | Ribbon 外观、Block 容器、Footer 图标 | 尺寸组合、无内容隐藏、键盘和无障碍测试通过 |
+| W2 | Ribbon 外观、Block 容器、Footer 图标 | 尺寸组合、无内容禁用、键盘和无障碍测试通过 |
 | W3 | 仓内 `PwwWorkbenchWeb` 示例 | 八项演示场景可运行；不引入产品 API 或重复组件 |
 | W4 | 两个真实 Web 消费者验证 | Open Issue 验证简单壳层与无 Secondary 页面；Admin Host 验证权限、多 Tab、动态 Block 与偏好映射；详见[双消费者验证计划](Pnw工作台Web双消费者验证计划.md) |
 | W5 | 扩展验证 | 仅在 W4 仍有公共边界未被证明时，由 BOM Studio / DeskTools 做针对性 shell adapter 验证；Function 随 Admin 迁移消费，不单列独立接入 |
 
 W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证前，新增 API 保持实验性，不发布为不可变协议。
+
+2026-07-29 已完成 Desk Tools、Function Develop 与 KT BOM Studio 的 0.6.0 候选只读接入审计。三者现有 0.5.1 接口均保持兼容，本轮不修改业务仓或依赖；共同 adapter 边界与发布后验证顺序见[《扩展消费者接入审计》](Pnw工作台Web扩展消费者接入审计.md)。
 
 ### W0 基线结果
 
@@ -281,7 +295,7 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 - `PnwWorkbenchLayout` 只在 contribution 与对应 slot 同时存在时渲染 `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel`。Bottom 位于 Editor 栈内部，DOM 与 CSS Grid 均不会跨过 ActivityBar 或两个侧 Block。
 - `PnwWorkbenchLayout` 在组合层为 Primary 右边、Secondary 左边和 Bottom 顶边提供三个显式 `separator`；鼠标/触控与方向键都只更新同一份 `PnwWorkbenchLayoutState`。Bottom 不再使用浏览器右下角原生 `resize`，其高度只能从顶边改变；纯函数按 Editor 最小空间和面板上下限修正尺寸，可脱离 Vue 单测。
 - `PnwBottomPanel` 接收受控 `PnwBottomPanelTab[]` 和活动 Tab ID，可承载问题、日志等多个内容页；Wing 只渲染标签、计数、状态和插槽，不拥有 Desk Tools / Admin 的面板注册表或内容生命周期。
-- `PnwWorkbenchFooter` 左侧接受无业务语义的 consumer 内容 slot，右侧按当前 View 可用 contribution 渲染 Primary、Bottom、Secondary 三个仅图标按钮，输出 `aria-label` / `aria-pressed` 并只向宿主发送显隐状态更新；消费者只有状态内容而没有 Block 时也可单独显示 Footer。
+- `PnwWorkbenchFooter` 左侧接受无业务语义的 consumer 内容 slot，右侧固定渲染 Primary、Bottom、Secondary 三个仅图标按钮；当前 View 未提供的 Block 使用原生 `disabled`，可用按钮输出 `aria-label` / `aria-pressed` 并只向宿主发送显隐状态更新。`PnwWorkbenchLayout` 默认始终保留 Footer，避免切换 View 时三个入口和页面高度跳动；consumer 只有显式传入 `showFooter = false` 才关闭整个 Footer。
 - `light`、`dark`、`system` 由布局根提供默认 token；系统主题使用 `prefers-color-scheme`。示例和宿主可以在外层覆盖最终 `--pnw-*` token，例如：
 
   ```css
@@ -319,7 +333,7 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 - fixture 将“导航布局”放在“系统 / 工作台配置”下，但 `system` 不是 Wing 保留 ID，也不是固定配置 schema。真实消费者可在自己的最终导航树中追加任意数量的系统配置小模块；关系 View 按一级直接子节点自动枚举，并让每个大分组列独立纵向滚动。配置表单、配置数据来源和权限仍属于消费者。
 - fixture 的“新建大分组”只填写名称与可选 Header 简称；宿主生成 ID、排序和空 `children`，不会在同一动作里创建小模块或 View。新组为空时在同一树上标为 `hidden`，因此只作为布局表格下拉目标；移入小模块后才出现在 Ribbon/Tree。“全部恢复默认”会移除 fixture 新建组。
 - 大分组定义表同时显示全名、Header 简称、顺序、内置/自定义来源、空组状态和操作。consumer 可就地编辑全名、简称和顺序，但不改稳定 ID；是否内置由宿主不可变默认树中的 ID 判定，不污染公共 `PnwNavigationNode`。内置分组不可删除，可单独恢复默认定义且不改变当前模块归属；自定义分组可删除，但含有小模块时必须先移出，避免隐式丢失导航节点。
-- fixture 将当前导航布局迁入 `usePwwFixtureWorkbenchStore`。可持久化对象不是含图标/组件引用的整棵 `PnwNavigationNode`，而是带 `schemaVersion` 与 `baseLayoutVersion` 的纯数据：全部大分组共用同形的 `id/label/shortLabel/order` 定义，以及全部小模块的 `moduleId/rootId/order` 归属。内置/自定义由默认树推导，不再维护另一种分组数据类型。fixture 提供导出、hydrate 与版本不兼容时回退默认树的纯函数；不接 `localStorage` 或 API。Admin 后续可由自己的 Pinia action 通过后端 API 保存同形宿主状态，但数据库 DTO、用户/租户作用域、并发版本与权限不进入 Wing 公共协议。
+- fixture 将当前导航布局迁入 `usePwwFixtureWorkbenchStore`。可持久化对象不是含图标/组件引用的整棵 `PnwNavigationNode`，而是带 `schemaVersion` 与 `baseLayoutVersion` 的纯数据：全部大分组共用同形的 `id/label/shortLabel/order` 定义，以及全部小模块的 `moduleId/rootId/order` 归属。内置/自定义由默认树推导，不再维护另一种分组数据类型。fixture 作为真实前端 consumer 用 Pinia 持有当前树，并把该纯数据快照防抖写入独立 `localStorage` key；启动时 hydrate，损坏或基础版本不兼容时回退默认树。Wing 仍不选择存储介质；Admin 后续可由自己的 Pinia action 通过后端 API 保存同形宿主状态，但数据库 DTO、用户/租户作用域、并发版本与权限不进入 Wing 公共协议。
 - 四个 Web 的入口虽然业务状态不同，但都重复装配 Header、一级模块标签、已打开页面标签、Ribbon/Tree 和 View Blocks。Wing 因此增加实验性 `PnwWorkbenchShell` 组合入口：它只把现有 `PnwWorkbenchLayout`、`PnwWorkbenchHeader`、`PnwActivityBar` 和两个 TabBar 接到同一组受控 props/events；fixture 的 `App.vue` 从五个壳层组件引用收敛为一个。每个低层组件和原有兼容入口继续保留，消费者可以逐步采用或用命名 slot 覆盖任一层。
 - Shell 默认品牌由 `PnwPhoenixWingMark`、`brandTitle` 与 `brandSubtitle` 组成，`brand` slot 可整体替换；Header 右侧继续只由 `header-actions` slot 承载消费者账户/租户动作。fixture 删除了重复品牌模板，Admin 可只覆盖标题或完全覆盖品牌而不复制 Header。
 - Header 在没有打开 View 时不生成空的页面 Tab 区，右侧操作仍贴齐右边；关闭最后一个标签后，宿主可用 `showEmptyView` 显示 Wing 默认空状态，并以 `empty` slot 覆盖。Wing 不自动打开默认页、不关闭业务 View，也不决定欢迎页语义。
@@ -361,9 +375,10 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 ### 暂缓决策点
 
 - 导航节点的业务路由、权限表达式、徽标、命令参数和动态加载状态，需至少两个真实 Web 消费者证明后再讨论。
-- Block 的安全默认宽高、最小/最大尺寸和拖拽修正已由 Wing 提供；持久化 key、用户级默认值、移动端断点与跨版本合并仍属于宿主体验偏好。
+- Block 的安全默认宽高、最小/最大尺寸、拖拽修正与 `840px` 窄容器结构兜底由 Wing 提供；持久化 key、用户级默认值、手机产品体验和跨版本合并仍属于宿主边界。
 - 导航跨大分组移动的权限、可移动层级、空分组处理、默认布局版本升级与用户布局合并策略，需 Admin Host 与 BOM Studio 两个真实消费者共同证明；Wing 当前不拥有默认分组或偏好存储。
-- `700px` Tree 模式在 Rail 已收起时仍把 Activity 容器作为 Editor 上方整行，形成不必要的高度占位。候选语义为“常驻图标轨 + 临时目录抽屉”或“保持 Editor 左侧列并隐藏侧 Block”；需结合 Admin 与第二消费者的移动端布局决定，本轮只记录，不新增 overlay/drawer 公共状态。
+- `700px` Tree 空白占位已由统一响应式语义消除：窄容器实际渲染 Ribbon，不再把 Tree / Rail 放到 Editor 上方整行。框架同时把 Header 内 View 标签移到 Editor 顶部；保存的宽屏 Tree 与标签位置偏好保持不变。
+- 产品基线是工程师桌面效率工作台。0.6.0 候选优先保证桌面、笔记本半屏与嵌入分栏；手机只做结构可用兜底。触摸菜单、虚拟键盘、安全区和更小断点需结合 Cool Admin / Phoenix Admin 的真实移动端入口再验证，不能据 fixture 增加一组手机配置。
 - VS Code Webview 只可复用本文件中的纯 TypeScript 数据契约，不复用 Vue 组件或主题 CSS。
 
 ## 7. 风险与避免方式

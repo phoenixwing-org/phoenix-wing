@@ -1,12 +1,13 @@
-import { computed, ref, watch } from "vue";
+import { computed, onScopeDispose, ref, shallowRef, watch } from "vue";
 import { storeToRefs } from "pinia";
 import {
   pnwNavigationLeaves,
+  pnwCreateDiagnosticsHub,
   pnwViewBlockComponentAvailability,
   usePnwRegisteredViewContribution,
-  type PnwActivityBarPresentation,
-  type PnwColorScheme,
-  type PnwRibbonAppearance,
+  type PnwLogLevel,
+  type PnwProblemInput,
+  type PnwProblemItem,
   type PnwWorkbenchTabItem,
 } from "phoenix-wing";
 import {
@@ -26,7 +27,6 @@ import { usePwwFixtureWorkbenchStore } from "./PwwFixtureWorkbenchStore.js";
  * 示例 consumer 的选择。App.vue 只负责把这些状态接到公开壳层。
  */
 export function usePwwFixtureWorkbenchController() {
-  const pwwPresentation = ref<PnwActivityBarPresentation>("ribbon");
   const pwwActiveNodeId = ref("dashboard");
   const pwwExpandedNodeIds = ref<readonly string[]>([
     "workspace",
@@ -39,32 +39,38 @@ export function usePwwFixtureWorkbenchController() {
     "system",
     "system-workbench",
   ]);
-  const pwwTreeCollapsed = ref(false);
-  const pwwRibbonAppearance = ref<PnwRibbonAppearance>({
-    mode: "ribbon",
-    compact: {
-      iconSize: 24,
-      showTitles: true,
-      showGroupLabels: false,
-    },
-    ribbon: {
-      iconSize: 36,
-      showTitles: true,
-      showGroupLabels: true,
-    },
-  });
-  const pwwColorScheme = ref<PnwColorScheme>("light");
-  const pwwCustomTheme = ref(false);
   const pwwNarrowPreview = ref(false);
-  const pwwEventLog = ref<string[]>([
-    "Fixture 已加载：同一导航树等待 Ribbon / Tree 呈现。",
-  ]);
+  let pwwLogSequence = 1;
+  const pwwDiagnosticsHub = pnwCreateDiagnosticsHub({
+    maxLogEntries: 200,
+    initialLogs: [{
+      id: "fixture-log-0",
+      timestamp: Date.now(),
+      level: "info",
+      channel: "pnw.workbench",
+      source: "fixture",
+      message: "同一导航树已加载，等待 Ribbon / Tree 呈现。",
+    }],
+  });
+  const pwwDiagnosticsSnapshot = shallowRef(pwwDiagnosticsHub.getSnapshot());
+  const pwwUnsubscribeDiagnostics = pwwDiagnosticsHub.subscribe((snapshot) => {
+    pwwDiagnosticsSnapshot.value = snapshot;
+  });
+  onScopeDispose(pwwUnsubscribeDiagnostics);
 
   const pwwStore = usePwwFixtureWorkbenchStore();
   const {
     pwwActiveBottomTabId,
+    pwwPresentation,
+    pwwRibbonAppearance,
+    pwwTreeCollapsed,
+    pwwTreeAppearance,
+    pwwTabBarPlacement,
+    pwwColorScheme,
+    pwwCustomTheme,
     pwwNavigationNodes,
     pwwWorkbenchLayoutState,
+    pwwDisplaySettingsPositions,
   } = storeToRefs(pwwStore);
 
   const pwwCurrentView = computed(() => PWW_FIXTURE_VIEWS[pwwActiveNodeId.value]
@@ -98,16 +104,61 @@ export function usePwwFixtureWorkbenchController() {
     pwwWorkbenchLayoutState.value = {
       ...pwwWorkbenchLayoutState.value,
       visibility: {
-        primary: Boolean(contribution.primary),
-        bottom: Boolean(contribution.bottom),
-        secondary: Boolean(contribution.secondary),
+        primary: Boolean(contribution.primary)
+          && pwwWorkbenchLayoutState.value.visibility.primary,
+        bottom: Boolean(contribution.bottom)
+          && pwwWorkbenchLayoutState.value.visibility.bottom,
+        secondary: Boolean(contribution.secondary)
+          && pwwWorkbenchLayoutState.value.visibility.secondary,
       },
     };
-  }, { immediate: true });
+  });
 
-  function pwwPrependEvent(message: string): void {
-    pwwEventLog.value = [message, ...pwwEventLog.value].slice(0, 6);
+  function pwwAppendEvent(
+    message: string,
+    level: PnwLogLevel = "info",
+    channel = "fixture",
+  ): void {
+    pwwDiagnosticsHub.dispatch({
+      type: "log.append",
+      entry: {
+        id: `fixture-log-${pwwLogSequence++}`,
+        timestamp: Date.now(),
+        level,
+        channel,
+        source: "Pww",
+        message,
+      },
+    });
   }
+
+  watch(pwwActiveNodeId, (nodeId) => {
+    const items: readonly PnwProblemInput[] = nodeId === "validation"
+      ? [
+        {
+          id: "fixture-navigation-empty",
+          severity: "warning",
+          message: "检测到一个空导航分组",
+          source: "fixture",
+          code: "navigation.empty-group",
+          resource: "PwwFixtureNavigation.ts",
+          line: 1,
+        },
+        {
+          id: "fixture-host-route",
+          severity: "info",
+          message: "业务 Router 尚未连接",
+          source: "fixture",
+          code: "host.router.not-connected",
+        },
+      ]
+      : [];
+    pwwDiagnosticsHub.dispatch({
+      type: "problems.replace",
+      ownerId: "fixture.active-view",
+      items,
+    });
+  }, { immediate: true });
 
   function pwwActivateNode(nodeId: string): void {
     pwwActiveNodeId.value = nodeId;
@@ -121,7 +172,7 @@ export function usePwwFixtureWorkbenchController() {
       });
     }
     pwwActiveTabId.value = nodeId;
-    pwwPrependEvent(
+    pwwAppendEvent(
       `激活 ${nodeId}；呈现=${pwwPresentation.value}；未触发 Router 或业务 API。`,
     );
   }
@@ -161,19 +212,19 @@ export function usePwwFixtureWorkbenchController() {
 
   function pwwMoveNavigationNode(nodeId: string, targetRootId: string): void {
     pwwStore.pwwMoveNavigationModule(nodeId, targetRootId);
-    pwwPrependEvent(
+    pwwAppendEvent(
       `宿主布局调整：${nodeId} 移入 ${targetRootId}；ID 与 View 语义未改变。`,
     );
   }
 
   function pwwCreateNavigationRoot(label: string, shortLabel?: string): void {
     pwwStore.pwwCreateNavigationRoot(label, shortLabel);
-    pwwPrependEvent(`宿主新建空大分组：${label}；等待通过导航布局加入小模块。`);
+    pwwAppendEvent(`宿主新建空大分组：${label}；等待通过导航布局加入小模块。`);
   }
 
   function pwwDeleteNavigationRoot(rootId: string): void {
     pwwStore.pwwDeleteNavigationRoot(rootId);
-    pwwPrependEvent(`宿主删除空的自定义大分组：${rootId}。`);
+    pwwAppendEvent(`宿主删除空的自定义大分组：${rootId}。`);
   }
 
   function pwwUpdateNavigationRoot(
@@ -183,39 +234,57 @@ export function usePwwFixtureWorkbenchController() {
     order: number,
   ): void {
     pwwStore.pwwUpdateNavigationRoot(rootId, label, shortLabel, order);
-    pwwPrependEvent(`宿主更新大分组定义：${rootId}；稳定 ID 与小模块归属未改变。`);
+    pwwAppendEvent(`宿主更新大分组定义：${rootId}；稳定 ID 与小模块归属未改变。`);
   }
 
   function pwwRestoreNavigationRootDefinition(rootId: string): void {
     pwwStore.pwwRestoreNavigationRootDefinition(rootId);
-    pwwPrependEvent(`宿主恢复内置大分组定义：${rootId}；不恢复小模块归属。`);
+    pwwAppendEvent(`宿主恢复内置大分组定义：${rootId}；不恢复小模块归属。`);
   }
 
   function pwwRestoreDefaultNavigation(): void {
     pwwStore.pwwRestoreDefaultNavigation();
-    pwwPrependEvent("宿主恢复默认导航布局。");
+    pwwAppendEvent("宿主恢复默认导航布局。");
   }
 
   function pwwOpenConsumerUserArea(): void {
-    pwwPrependEvent("Header 右侧由 consumer 自定义；fixture 不实现真实用户或退出语义。");
+    pwwAppendEvent("Header 右侧由 consumer 自定义；fixture 不实现真实用户或退出语义。");
+  }
+
+  function pwwHandleViewAction(actionId: string): void {
+    pwwAppendEvent(`Consumer 处理 fixture View 动作：${actionId}。`);
   }
 
   function pwwHandleDisplaySettingsAction(actionId: string): void {
     if (actionId !== "fixture.log-display-state") {
-      pwwPrependEvent(`Consumer 收到未知显示菜单动作：${actionId}。`);
+      pwwAppendEvent(`Consumer 收到未知显示菜单动作：${actionId}。`, "warning");
       return;
     }
     const pwwModeAppearance = pwwRibbonAppearance.value[
       pwwRibbonAppearance.value.mode
     ];
-    pwwPrependEvent([
+    pwwAppendEvent([
       "Consumer 处理显示菜单动作",
       `呈现=${pwwPresentation.value}`,
       `模式=${pwwRibbonAppearance.value.mode}`,
       `图标=${pwwModeAppearance.iconSize}px`,
       `Title=${pwwModeAppearance.showTitles ? "开" : "关"}`,
       `主题=${pwwColorScheme.value}`,
+      `树=${pwwTreeAppearance.value.expanded}/${pwwTreeAppearance.value.collapsed}`,
+      `标签=${pwwTabBarPlacement.value}`,
     ].join("；"));
+  }
+
+  function pwwClearDiagnosticsLog(channel?: string): void {
+    pwwDiagnosticsHub.dispatch({ type: "log.clear", ...(channel ? { channel } : {}) });
+  }
+
+  function pwwOpenProblem(item: PnwProblemItem): void {
+    pwwAppendEvent(
+      `Consumer 收到问题定位动作：${item.resource ?? item.id}${item.line ? `:${item.line}` : ""}。`,
+      "info",
+      "fixture.problem",
+    );
   }
 
   return {
@@ -223,6 +292,7 @@ export function usePwwFixtureWorkbenchController() {
       presentation: pwwPresentation,
       ribbon: pwwRibbonAppearance,
       activeRibbon: pwwActiveRibbonAppearance,
+      tree: pwwTreeAppearance,
       colorScheme: pwwColorScheme,
       customTheme: pwwCustomTheme,
     },
@@ -235,14 +305,16 @@ export function usePwwFixtureWorkbenchController() {
     layout: {
       state: pwwWorkbenchLayoutState,
       activeBottomTabId: pwwActiveBottomTabId,
+      tabBarPlacement: pwwTabBarPlacement,
     },
     settings: {
       narrowPreview: pwwNarrowPreview,
+      displayPositions: pwwDisplaySettingsPositions,
     },
     view: {
       current: pwwCurrentView,
       blocks: pwwCurrentViewBlocks,
-      eventLog: pwwEventLog,
+      diagnostics: pwwDiagnosticsSnapshot,
     },
     tabs: {
       items: pwwOpenTabs,
@@ -261,7 +333,10 @@ export function usePwwFixtureWorkbenchController() {
       restoreNavigationRootDefinition: pwwRestoreNavigationRootDefinition,
       restoreDefaultNavigation: pwwRestoreDefaultNavigation,
       openConsumerUserArea: pwwOpenConsumerUserArea,
+      handleViewAction: pwwHandleViewAction,
       handleDisplaySettingsAction: pwwHandleDisplaySettingsAction,
+      clearDiagnosticsLog: pwwClearDiagnosticsLog,
+      openProblem: pwwOpenProblem,
     },
   };
 }

@@ -1,6 +1,9 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import type {
   PnwActivityBarPresentation,
+  PnwActivityTreeAppearance,
+  PnwActivityTreeCollapsedMode,
+  PnwActivityTreeExpandedMode,
   PnwNavigationNode,
   PnwRibbonAppearance,
   PnwRibbonDisplayMode,
@@ -8,6 +11,7 @@ import type {
   PnwRibbonMode,
   PnwViewBlockContributions,
   PnwViewBlockVisibility,
+  PnwWorkbenchTabBarPlacement,
 } from "./PnwWorkbenchWeb.js";
 
 describe("Pnw Web 工作台实验契约", () => {
@@ -37,9 +41,14 @@ describe("Pnw Web 工作台实验契约", () => {
 
   it("固定呈现、外观和 View Block 的受控状态形状", () => {
     expectTypeOf<PnwActivityBarPresentation>().toEqualTypeOf<"ribbon" | "tree">();
+    expectTypeOf<PnwActivityTreeExpandedMode>().toEqualTypeOf<"outline" | "admin-menu">();
+    expectTypeOf<PnwActivityTreeCollapsedMode>().toEqualTypeOf<"leaf-rail" | "root-flyout">();
     expectTypeOf<PnwRibbonDisplayMode>().toEqualTypeOf<"icon" | "icon-title" | "large">();
     expectTypeOf<PnwRibbonIconSize>().toEqualTypeOf<16 | 24 | 36>();
     expectTypeOf<PnwRibbonMode>().toEqualTypeOf<"ribbon" | "compact">();
+    expectTypeOf<PnwWorkbenchTabBarPlacement>().toEqualTypeOf<
+      "header" | "after-navigation" | "editor-bottom"
+    >();
 
     const appearance = {
       mode: "compact",
@@ -54,6 +63,10 @@ describe("Pnw Web 工作台实验契约", () => {
         showGroupLabels: false,
       },
     } as const satisfies PnwRibbonAppearance;
+    const treeAppearance = {
+      expanded: "admin-menu",
+      collapsed: "root-flyout",
+    } as const satisfies PnwActivityTreeAppearance;
     const contributions: PnwViewBlockContributions = { primary: true, bottom: true };
     const visibility = {
       primary: true,
@@ -62,6 +75,7 @@ describe("Pnw Web 工作台实验契约", () => {
     } satisfies PnwViewBlockVisibility;
 
     expect(appearance).toMatchObject({ mode: "compact", compact: { iconSize: 24 } });
+    expect(treeAppearance).toEqual({ expanded: "admin-menu", collapsed: "root-flyout" });
     expect(contributions.secondary).toBeUndefined();
     expect(visibility.bottom).toBe(false);
   });

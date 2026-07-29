@@ -35,37 +35,37 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
     <span class="pnw-workbench-footer-spacer" />
     <div class="pnw-workbench-footer-actions">
       <button
-        v-if="pnwHasBlock('primary')"
         type="button"
         class="pnw-workbench-footer-toggle"
-        :class="{ 'pnw-workbench-footer-toggle--active': visibility.primary }"
-        title="显示/隐藏 Primary Block"
+        :class="{ 'pnw-workbench-footer-toggle--active': pnwHasBlock('primary') && visibility.primary }"
+        :disabled="!pnwHasBlock('primary')"
+        :title="pnwHasBlock('primary') ? '显示/隐藏 Primary Block' : '当前 View 未提供 Primary Block'"
         aria-label="显示/隐藏 Primary Block"
-        :aria-pressed="visibility.primary"
+        :aria-pressed="pnwHasBlock('primary') && visibility.primary"
         @click="emit('toggle', 'primary')"
       >
         <PnwIcon name="panel-left" :size="15" />
       </button>
       <button
-        v-if="pnwHasBlock('bottom')"
         type="button"
         class="pnw-workbench-footer-toggle"
-        :class="{ 'pnw-workbench-footer-toggle--active': visibility.bottom }"
-        title="显示/隐藏 Bottom Panel"
+        :class="{ 'pnw-workbench-footer-toggle--active': pnwHasBlock('bottom') && visibility.bottom }"
+        :disabled="!pnwHasBlock('bottom')"
+        :title="pnwHasBlock('bottom') ? '显示/隐藏 Bottom Panel' : '当前 View 未提供 Bottom Panel'"
         aria-label="显示/隐藏 Bottom Panel"
-        :aria-pressed="visibility.bottom"
+        :aria-pressed="pnwHasBlock('bottom') && visibility.bottom"
         @click="emit('toggle', 'bottom')"
       >
         <PnwIcon name="panel-bottom" :size="15" />
       </button>
       <button
-        v-if="pnwHasBlock('secondary')"
         type="button"
         class="pnw-workbench-footer-toggle"
-        :class="{ 'pnw-workbench-footer-toggle--active': visibility.secondary }"
-        title="显示/隐藏 Secondary Block"
+        :class="{ 'pnw-workbench-footer-toggle--active': pnwHasBlock('secondary') && visibility.secondary }"
+        :disabled="!pnwHasBlock('secondary')"
+        :title="pnwHasBlock('secondary') ? '显示/隐藏 Secondary Block' : '当前 View 未提供 Secondary Block'"
         aria-label="显示/隐藏 Secondary Block"
-        :aria-pressed="visibility.secondary"
+        :aria-pressed="pnwHasBlock('secondary') && visibility.secondary"
         @click="emit('toggle', 'secondary')"
       >
         <PnwIcon name="panel-right" :size="15" />
@@ -134,6 +134,15 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
 .pnw-workbench-footer-toggle--active {
   background: var(--pnw-control-active-bg, var(--pnw-workbench-default-active-bg, rgba(37, 99, 235, 0.13)));
   color: var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #1d4ed8));
+}
+
+.pnw-workbench-footer-toggle:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.pnw-workbench-footer-toggle:disabled:hover {
+  background: transparent;
 }
 
 </style>

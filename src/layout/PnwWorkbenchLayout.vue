@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useSlots } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, useSlots } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type {
   PnwActivityBarPresentation,
@@ -9,12 +9,14 @@ import type {
   PnwViewBlockVisibility,
   PnwWorkbenchLayoutState,
   PnwWorkbenchLayoutViewport,
+  PnwWorkbenchTabBarPlacement,
 } from "../types/PnwWorkbenchWeb.js";
 import {
   PNW_DEFAULT_WORKBENCH_PANEL_SIZES,
+  PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
   PNW_WORKBENCH_PANEL_SIZE_LIMITS,
-  pnwAvailableViewBlockIds,
   pnwResizeWorkbenchLayoutState,
+  pnwResolveWorkbenchResponsiveState,
   pnwResolveWorkbenchLayoutState,
   pnwResolveViewBlockVisibility,
   pnwToggleViewBlockVisibility,
@@ -33,6 +35,8 @@ const props = withDefaults(defineProps<{
   bottomTabs?: readonly PnwBottomPanelTab[];
   activeBottomTabId?: string;
   colorScheme?: PnwColorScheme;
+  tabBarPlacement?: PnwWorkbenchTabBarPlacement;
+  showFooter?: boolean;
 }>(), {
   activityBarPresentation: "ribbon",
   contributions: () => ({}),
@@ -40,6 +44,8 @@ const props = withDefaults(defineProps<{
   bottomTabs: () => [],
   activeBottomTabId: "",
   colorScheme: "system",
+  tabBarPlacement: PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+  showFooter: true,
 });
 
 const emit = defineEmits<{
@@ -51,8 +57,10 @@ const emit = defineEmits<{
 }>();
 
 const pnwSlots = useSlots();
+const pnwLayoutElement = ref<HTMLElement>();
 const pnwMainElement = ref<HTMLElement>();
-const pnwActivitySideElement = ref<HTMLElement>();
+const pnwContainerWidth = ref<number>();
+let pnwResponsiveObserver: ResizeObserver | undefined;
 
 /** contribution 与实际 slot 必须同时存在，避免生成空面板。 */
 const pnwAvailableContributions = computed<PnwViewBlockContributions>(() => ({
@@ -71,12 +79,37 @@ const pnwVisibility = computed(() => pnwResolveViewBlockVisibility(
   pnwAvailableContributions.value,
   pnwLayoutState.value.visibility,
 ));
-const pnwAvailableBlockIds = computed(() => pnwAvailableViewBlockIds(
-  pnwAvailableContributions.value,
-));
 const pnwResolvedBottomTabId = computed(() => props.bottomTabs.some(
   (tab) => tab.id === props.activeBottomTabId && !tab.disabled,
 ) ? props.activeBottomTabId : props.bottomTabs.find((tab) => !tab.disabled)?.id ?? "");
+const pnwResponsiveState = computed(() => pnwResolveWorkbenchResponsiveState(
+  props.activityBarPresentation,
+  props.tabBarPlacement,
+  pnwContainerWidth.value,
+));
+
+function pnwMeasureContainer(): void {
+  const width = pnwLayoutElement.value?.clientWidth;
+  pnwContainerWidth.value = width && width > 0 ? width : undefined;
+}
+
+onMounted(() => {
+  pnwMeasureContainer();
+  if (typeof ResizeObserver !== "undefined") {
+    pnwResponsiveObserver = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      pnwContainerWidth.value = width && width > 0 ? width : undefined;
+    });
+    if (pnwLayoutElement.value) pnwResponsiveObserver.observe(pnwLayoutElement.value);
+  } else if (typeof window !== "undefined") {
+    window.addEventListener("resize", pnwMeasureContainer);
+  }
+});
+
+onBeforeUnmount(() => {
+  pnwResponsiveObserver?.disconnect();
+  if (typeof window !== "undefined") window.removeEventListener("resize", pnwMeasureContainer);
+});
 
 function pnwToggleBlock(blockId: PnwViewBlockId): void {
   const visibility = pnwToggleViewBlockVisibility(
@@ -93,7 +126,7 @@ function pnwLayoutViewport(): PnwWorkbenchLayoutViewport | undefined {
   const main = pnwMainElement.value;
   if (!main) return undefined;
   return {
-    width: Math.max(0, main.clientWidth - (pnwActivitySideElement.value?.clientWidth ?? 0)),
+    width: main.clientWidth,
     height: main.clientHeight,
   };
 }
@@ -158,128 +191,150 @@ function pnwSelectBottomTab(tabId: string): void {
 
 <template>
   <section
+    ref="pnwLayoutElement"
     class="pnw-workbench-layout"
     :data-pnw-color-scheme="colorScheme"
-    :data-pnw-activity-presentation="activityBarPresentation"
+    :data-pnw-narrow="pnwResponsiveState.narrow"
+    :data-pnw-preferred-activity-presentation="activityBarPresentation"
+    :data-pnw-activity-presentation="pnwResponsiveState.effectivePresentation"
+    :data-pnw-preferred-tab-bar-placement="tabBarPlacement"
+    :data-pnw-tab-bar-placement="pnwResponsiveState.effectiveTabBarPlacement"
   >
     <div v-if="$slots.header" class="pnw-workbench-header-slot">
-      <slot name="header" />
+      <slot name="header" v-bind="pnwResponsiveState" />
     </div>
 
     <div
-      v-if="activityBarPresentation === 'ribbon' && $slots.activity"
-      class="pnw-workbench-activity-top"
+      class="pnw-workbench-body"
+      :class="`pnw-workbench-body--${pnwResponsiveState.effectivePresentation}`"
     >
-      <slot name="activity" />
-    </div>
-
-    <div ref="pnwMainElement" class="pnw-workbench-main">
       <div
-        v-if="activityBarPresentation === 'tree' && $slots.activity"
-        ref="pnwActivitySideElement"
-        class="pnw-workbench-activity-side"
+        v-if="$slots.activity"
+        class="pnw-workbench-activity"
+        :class="pnwResponsiveState.effectivePresentation === 'ribbon'
+          ? 'pnw-workbench-activity-top'
+          : 'pnw-workbench-activity-side'"
       >
-        <slot name="activity" />
+        <slot name="activity" v-bind="pnwResponsiveState" />
       </div>
 
-      <Transition name="pnw-workbench-block">
-        <div
-          v-if="pnwAvailableContributions.primary && pnwVisibility.primary"
-          class="pnw-workbench-primary-region"
-          :style="{ width: `${pnwLayoutState.sizes.primaryWidth}px` }"
-        >
-          <PnwPrimaryBlock class="pnw-workbench-primary-slot" :resizable="false">
-            <slot name="primary" />
-          </PnwPrimaryBlock>
-          <div
-            class="pnw-workbench-resize-handle pnw-workbench-resize-handle--primary"
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="调节 Primary Block 宽度"
-            :aria-valuenow="pnwLayoutState.sizes.primaryWidth"
-            :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.primaryMin"
-            :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.primaryMax"
-            tabindex="0"
-            title="拖动调节 Primary Block 宽度"
-            @pointerdown="pnwStartBlockResize('primary', $event)"
-            @keydown="pnwResizeBlockByKeyboard('primary', $event)"
-          />
-        </div>
-      </Transition>
-
-      <div class="pnw-workbench-editor-stack">
-        <main class="pnw-workbench-editor">
-          <slot />
-        </main>
-        <Transition name="pnw-workbench-block">
-          <div
-            v-if="pnwAvailableContributions.bottom && pnwVisibility.bottom"
-            class="pnw-workbench-bottom-region"
-            :style="{ height: `${pnwLayoutState.sizes.bottomHeight}px` }"
-          >
+      <div class="pnw-workbench-content">
+        <div ref="pnwMainElement" class="pnw-workbench-main">
+          <Transition name="pnw-workbench-block">
             <div
-              class="pnw-workbench-resize-handle pnw-workbench-resize-handle--bottom"
-              role="separator"
-              aria-orientation="horizontal"
-              aria-label="调节 Bottom Panel 高度"
-              :aria-valuenow="pnwLayoutState.sizes.bottomHeight"
-              :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.bottomMin"
-              :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.bottomMax"
-              tabindex="0"
-              title="拖动调节 Bottom Panel 高度"
-              @pointerdown="pnwStartBlockResize('bottom', $event)"
-              @keydown="pnwResizeBlockByKeyboard('bottom', $event)"
-            />
-            <PnwBottomPanel
-              class="pnw-workbench-bottom-slot"
-              :resizable="false"
-              :tabs="bottomTabs"
-              :active-tab-id="activeBottomTabId"
-              @update:active-tab-id="pnwSelectBottomTab"
+              v-if="pnwAvailableContributions.primary && pnwVisibility.primary"
+              class="pnw-workbench-primary-region"
+              :style="{ width: `${pnwLayoutState.sizes.primaryWidth}px` }"
             >
-              <template v-if="pnwSlots['bottom-summary']" #summary>
-                <slot name="bottom-summary" />
-              </template>
-              <slot name="bottom" :active-tab-id="pnwResolvedBottomTabId" />
-            </PnwBottomPanel>
+              <PnwPrimaryBlock class="pnw-workbench-primary-slot" :resizable="false">
+                <slot name="primary" />
+              </PnwPrimaryBlock>
+              <div
+                class="pnw-workbench-resize-handle pnw-workbench-resize-handle--primary"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="调节 Primary Block 宽度"
+                :aria-valuenow="pnwLayoutState.sizes.primaryWidth"
+                :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.primaryMin"
+                :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.primaryMax"
+                tabindex="0"
+                title="拖动调节 Primary Block 宽度"
+                @pointerdown="pnwStartBlockResize('primary', $event)"
+                @keydown="pnwResizeBlockByKeyboard('primary', $event)"
+              />
+            </div>
+          </Transition>
+
+          <div class="pnw-workbench-editor-stack">
+            <div
+              v-if="pnwResponsiveState.effectiveTabBarPlacement === 'after-navigation'
+                && $slots['view-tabs']"
+              class="pnw-workbench-view-tabs pnw-workbench-view-tabs--editor-top"
+            >
+              <slot name="view-tabs" />
+            </div>
+            <main class="pnw-workbench-editor">
+              <slot />
+            </main>
+            <Transition name="pnw-workbench-block">
+              <div
+                v-if="pnwAvailableContributions.bottom && pnwVisibility.bottom"
+                class="pnw-workbench-bottom-region"
+                :style="{ height: `${pnwLayoutState.sizes.bottomHeight}px` }"
+              >
+                <div
+                  class="pnw-workbench-resize-handle pnw-workbench-resize-handle--bottom"
+                  role="separator"
+                  aria-orientation="horizontal"
+                  aria-label="调节 Bottom Panel 高度"
+                  :aria-valuenow="pnwLayoutState.sizes.bottomHeight"
+                  :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.bottomMin"
+                  :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.bottomMax"
+                  tabindex="0"
+                  title="拖动调节 Bottom Panel 高度"
+                  @pointerdown="pnwStartBlockResize('bottom', $event)"
+                  @keydown="pnwResizeBlockByKeyboard('bottom', $event)"
+                />
+                <PnwBottomPanel
+                  class="pnw-workbench-bottom-slot"
+                  :resizable="false"
+                  :tabs="bottomTabs"
+                  :active-tab-id="activeBottomTabId"
+                  @update:active-tab-id="pnwSelectBottomTab"
+                >
+                  <template v-if="pnwSlots['bottom-summary']" #summary>
+                    <slot name="bottom-summary" />
+                  </template>
+                  <slot name="bottom" :active-tab-id="pnwResolvedBottomTabId" />
+                </PnwBottomPanel>
+              </div>
+            </Transition>
+            <div
+              v-if="pnwResponsiveState.effectiveTabBarPlacement === 'editor-bottom'
+                && $slots['view-tabs']"
+              class="pnw-workbench-view-tabs pnw-workbench-view-tabs--editor-bottom"
+            >
+              <slot name="view-tabs" />
+            </div>
           </div>
-        </Transition>
-      </div>
 
-      <Transition name="pnw-workbench-block">
-        <div
-          v-if="pnwAvailableContributions.secondary && pnwVisibility.secondary"
-          class="pnw-workbench-secondary-region"
-          :style="{ width: `${pnwLayoutState.sizes.secondaryWidth}px` }"
-        >
-          <div
-            class="pnw-workbench-resize-handle pnw-workbench-resize-handle--secondary"
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="调节 Secondary Block 宽度"
-            :aria-valuenow="pnwLayoutState.sizes.secondaryWidth"
-            :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.secondaryMin"
-            :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.secondaryMax"
-            tabindex="0"
-            title="拖动调节 Secondary Block 宽度"
-            @pointerdown="pnwStartBlockResize('secondary', $event)"
-            @keydown="pnwResizeBlockByKeyboard('secondary', $event)"
-          />
-          <PnwSecondaryBlock class="pnw-workbench-secondary-slot" :resizable="false">
-            <slot name="secondary" />
-          </PnwSecondaryBlock>
+          <Transition name="pnw-workbench-block">
+            <div
+              v-if="pnwAvailableContributions.secondary && pnwVisibility.secondary"
+              class="pnw-workbench-secondary-region"
+              :style="{ width: `${pnwLayoutState.sizes.secondaryWidth}px` }"
+            >
+              <div
+                class="pnw-workbench-resize-handle pnw-workbench-resize-handle--secondary"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="调节 Secondary Block 宽度"
+                :aria-valuenow="pnwLayoutState.sizes.secondaryWidth"
+                :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.secondaryMin"
+                :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.secondaryMax"
+                tabindex="0"
+                title="拖动调节 Secondary Block 宽度"
+                @pointerdown="pnwStartBlockResize('secondary', $event)"
+                @keydown="pnwResizeBlockByKeyboard('secondary', $event)"
+              />
+              <PnwSecondaryBlock class="pnw-workbench-secondary-slot" :resizable="false">
+                <slot name="secondary" />
+              </PnwSecondaryBlock>
+            </div>
+          </Transition>
         </div>
-      </Transition>
-    </div>
 
-    <PnwWorkbenchFooter
-      v-if="pnwAvailableBlockIds.length > 0 || pnwSlots.footer"
-      :contributions="pnwAvailableContributions"
-      :visibility="pnwVisibility"
-      @toggle="pnwToggleBlock"
-    >
-      <slot name="footer" />
-    </PnwWorkbenchFooter>
+        <PnwWorkbenchFooter
+          v-if="showFooter"
+          class="pnw-workbench-footer-region"
+          :contributions="pnwAvailableContributions"
+          :visibility="pnwVisibility"
+          @toggle="pnwToggleBlock"
+        >
+          <slot name="footer" />
+        </PnwWorkbenchFooter>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -336,11 +391,44 @@ function pnwSelectBottomTab(tabId: string): void {
   --pnw-workbench-default-overlay-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
 }
 
+.pnw-workbench-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  overflow: hidden;
+}
+
+.pnw-workbench-body--ribbon {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: max-content minmax(0, 1fr) max-content;
+}
+
+.pnw-workbench-body--tree {
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) max-content;
+}
+
+.pnw-workbench-content {
+  display: contents;
+}
+
+.pnw-workbench-activity {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .pnw-workbench-activity-top {
   position: relative;
   z-index: 3;
-  flex: 0 0 auto;
-  min-width: 0;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.pnw-workbench-activity-side {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .pnw-workbench-header-slot {
@@ -350,25 +438,54 @@ function pnwSelectBottomTab(tabId: string): void {
   min-width: 0;
 }
 
+.pnw-workbench-view-tabs {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pnw-workbench-view-tabs--editor-bottom {
+  border-top: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+}
+
+.pnw-workbench-view-tabs--editor-bottom :deep(.pnw-tab-bar) {
+  padding-top: 0;
+  border-bottom: 0;
+}
+
 .pnw-workbench-main {
-  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   align-items: stretch;
   overflow: hidden;
 }
 
-.pnw-workbench-activity-side {
+.pnw-workbench-body--ribbon .pnw-workbench-main {
   grid-column: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+  grid-row: 2;
+}
+
+.pnw-workbench-body--tree .pnw-workbench-main {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.pnw-workbench-body--ribbon .pnw-workbench-footer-region {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.pnw-workbench-body--tree .pnw-workbench-footer-region {
+  grid-column: 1 / -1;
+  grid-row: 2;
 }
 
 .pnw-workbench-primary-region {
-  grid-column: 2;
+  grid-column: 1;
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -383,7 +500,7 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 .pnw-workbench-editor-stack {
-  grid-column: 3;
+  grid-column: 2;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -393,7 +510,7 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 .pnw-workbench-secondary-region {
-  grid-column: 4;
+  grid-column: 3;
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -519,32 +636,104 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 @container pnw-workbench (max-width: 840px) {
-  .pnw-workbench-main {
+  .pnw-workbench-body {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: max-content minmax(0, 1fr);
   }
 
-  .pnw-workbench-activity-side {
+  .pnw-workbench-content {
     grid-column: 1;
-    grid-row: 1;
-    max-height: 220px;
-    border-bottom: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .pnw-workbench-main {
+    min-height: 100%;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
   }
 
   .pnw-workbench-editor-stack {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .pnw-workbench-activity-side :deep(.pnw-activity-tree:not(.pnw-activity-tree--collapsed)) {
-    width: 100%;
-    max-width: none;
-    border-right: 0;
+    display: contents;
   }
 
   .pnw-workbench-primary-region,
   .pnw-workbench-secondary-region {
+    width: 100% !important;
+    flex: 0 0 auto;
+  }
+
+  .pnw-workbench-view-tabs--editor-top {
+    width: 100%;
+    order: -4;
+  }
+
+  .pnw-workbench-primary-region {
+    order: -3;
+  }
+
+  .pnw-workbench-editor {
+    order: -2;
+  }
+
+  .pnw-workbench-secondary-region {
+    order: -1;
+  }
+
+  .pnw-workbench-bottom-region {
+    order: 0;
+  }
+
+  .pnw-workbench-view-tabs--editor-bottom {
+    order: 1;
+  }
+
+  .pnw-workbench-editor,
+  .pnw-workbench-bottom-region,
+  .pnw-workbench-secondary-region,
+  .pnw-workbench-view-tabs--editor-bottom {
+    width: 100%;
+  }
+
+  .pnw-workbench-primary-slot,
+  .pnw-workbench-secondary-slot {
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    max-width: none;
+    overflow: visible;
+    border-right: 0;
+    border-left: 0;
+  }
+
+  .pnw-workbench-primary-slot {
+    border-bottom: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+  }
+
+  .pnw-workbench-secondary-slot {
+    border-top: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+  }
+
+  .pnw-workbench-editor {
+    min-height: var(--pnw-workbench-narrow-editor-min-height, 360px);
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .pnw-workbench-resize-handle {
     display: none;
+  }
+
+  .pnw-workbench-footer-region {
+    flex: 0 0 auto;
   }
 }
 </style>

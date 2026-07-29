@@ -22,6 +22,7 @@ export {
 
 export type {
   PnwGitCommitRecord,
+  PnwGitCommitSummary,
   PnwGitIdentity,
   PnwGitOperationState,
   PnwGitRefTarget,

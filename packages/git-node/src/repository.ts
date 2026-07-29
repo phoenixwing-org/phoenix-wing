@@ -39,13 +39,19 @@ export interface PnwGitRepositoryReadOptions {
   readonly gitExecutable?: string;
   /** Internal transaction refs that must not block a final repeated preflight. */
   readonly ignoredRefNames?: readonly string[];
+  readonly signal?: AbortSignal;
 }
 
 export async function pnwFindGitRepositoryRoot(
   startPath: string,
   gitExecutable?: string,
+  signal?: AbortSignal,
 ): Promise<string> {
-  const result = await pnwRunGitCommand(["rev-parse", "--show-toplevel"], { cwd: startPath, gitExecutable });
+  const result = await pnwRunGitCommand(["rev-parse", "--show-toplevel"], {
+    cwd: startPath,
+    ...(gitExecutable ? { gitExecutable } : {}),
+    ...(signal ? { signal } : {}),
+  });
   return path.resolve(result.stdout.trim());
 }
 
@@ -53,8 +59,12 @@ export async function pnwReadGitRepository(
   startPath: string,
   options: PnwGitRepositoryReadOptions = {},
 ): Promise<PnwGitRepositorySnapshot> {
-  const root = await pnwFindGitRepositoryRoot(startPath, options.gitExecutable);
-  const commandOptions: PnwGitCommandOptions = { cwd: root, gitExecutable: options.gitExecutable };
+  const root = await pnwFindGitRepositoryRoot(startPath, options.gitExecutable, options.signal);
+  const commandOptions: PnwGitCommandOptions = {
+    cwd: root,
+    ...(options.gitExecutable ? { gitExecutable: options.gitExecutable } : {}),
+    ...(options.signal ? { signal: options.signal } : {}),
+  };
   const headOid = (await pnwRunGitCommand(["rev-parse", "HEAD"], commandOptions)).stdout.trim();
   const symbolic = await pnwRunGitCommand(["symbolic-ref", "-q", "HEAD"], { ...commandOptions, allowFailure: true });
   const currentRef = symbolic.exitCode === 0 ? symbolic.stdout.trim() : undefined;
@@ -124,6 +134,7 @@ export async function pnwAnalyzeGitSquash(
     snapshot.currentRef,
     visibleRefTargets,
     options.gitExecutable,
+    options.signal,
   );
   const plan = pnwPlanGitSquash({
     history: snapshot.history,
@@ -148,12 +159,17 @@ async function readReachableLocalRefTargets(
   currentRef: string | undefined,
   refTargets: readonly PnwGitRefTarget[],
   gitExecutable: string | undefined,
+  signal: AbortSignal | undefined,
 ): Promise<PnwGitRefTarget[]> {
   if (affectedOids.length === 0) return [];
   const affected = new Set(affectedOids);
   const localRefs = [...new Set(refTargets.map((target) => target.name))]
     .filter((name) => name !== currentRef && (name.startsWith("refs/heads/") || name.startsWith("refs/tags/")));
-  const options: PnwGitCommandOptions = { cwd: root, gitExecutable };
+  const options: PnwGitCommandOptions = {
+    cwd: root,
+    ...(gitExecutable ? { gitExecutable } : {}),
+    ...(signal ? { signal } : {}),
+  };
   const occupied: PnwGitRefTarget[] = [];
   for (const refName of localRefs) {
     const reachable = await pnwRunGitCommand(["rev-list", refName], options);

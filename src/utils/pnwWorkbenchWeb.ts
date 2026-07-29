@@ -1,7 +1,13 @@
 import type {
+  PnwActivityBarPresentation,
+  PnwActivityTreeAppearance,
+  PnwWorkbenchDisplaySettingsPositions,
+  PnwWorkbenchDisplayPreferences,
   PnwWorkbenchLayoutState,
   PnwWorkbenchLayoutViewport,
   PnwWorkbenchPanelSizes,
+  PnwWorkbenchResponsiveState,
+  PnwWorkbenchTabBarPlacement,
   PnwRibbonAppearance,
   PnwRibbonDisplayMode,
   PnwRibbonIconSize,
@@ -10,6 +16,50 @@ import type {
   PnwViewBlockId,
   PnwViewBlockVisibility,
 } from "../types/PnwWorkbenchWeb.js";
+
+export const PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE: PnwActivityTreeAppearance = Object.freeze({
+  expanded: "outline",
+  collapsed: "leaf-rail",
+});
+
+export const PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT: PnwWorkbenchTabBarPlacement = "header";
+
+/** 持久化输入只接受当前三个位置；旧值或未知值直接回到默认 Header。 */
+export function pnwNormalizeWorkbenchTabBarPlacement(
+  value: unknown,
+  fallback: PnwWorkbenchTabBarPlacement = PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+): PnwWorkbenchTabBarPlacement {
+  return value === "header" || value === "after-navigation" || value === "editor-bottom"
+    ? value
+    : fallback;
+}
+
+/** 半屏窗口、嵌入分栏、平板竖屏与手机兜底统一按 Workbench 容器宽度判断。 */
+export const PNW_WORKBENCH_NARROW_BREAKPOINT = 840;
+
+/**
+ * 窄屏只覆盖当前呈现，不修改 consumer 保存的导航与 View 标签位置偏好。
+ * Tree 在窄屏转为顶部 Ribbon；Header 内页签转到 Ribbon 后的 Editor 顶部。
+ */
+export function pnwResolveWorkbenchResponsiveState(
+  preferredPresentation: PnwActivityBarPresentation,
+  preferredTabBarPlacement: PnwWorkbenchTabBarPlacement,
+  containerWidth?: number,
+): PnwWorkbenchResponsiveState {
+  const narrow = containerWidth !== undefined
+    && Number.isFinite(containerWidth)
+    && containerWidth > 0
+    && containerWidth <= PNW_WORKBENCH_NARROW_BREAKPOINT;
+  return {
+    narrow,
+    preferredPresentation,
+    effectivePresentation: narrow ? "ribbon" : preferredPresentation,
+    preferredTabBarPlacement,
+    effectiveTabBarPlacement: narrow && preferredTabBarPlacement === "header"
+      ? "after-navigation"
+      : preferredTabBarPlacement,
+  };
+}
 
 export const PNW_WORKBENCH_PANEL_SIZE_LIMITS = Object.freeze({
   primaryMin: 160,
@@ -26,6 +76,13 @@ export const PNW_DEFAULT_WORKBENCH_PANEL_SIZES: PnwWorkbenchPanelSizes = Object.
   primaryWidth: 260,
   secondaryWidth: 280,
   bottomHeight: 190,
+});
+
+/** consumer 可复制进自己的 store；完整设置默认靠近左上，窄屏无需滚动寻找主动作。 */
+export const PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS:
+PnwWorkbenchDisplaySettingsPositions = Object.freeze({
+  quick: Object.freeze({ x: 16, y: 72 }),
+  full: Object.freeze({ x: 8, y: 8 }),
 });
 
 export const PNW_DEFAULT_WORKBENCH_LAYOUT_STATE: PnwWorkbenchLayoutState = Object.freeze({
@@ -46,6 +103,152 @@ export const PNW_DEFAULT_RIBBON_APPEARANCE: PnwRibbonAppearance = Object.freeze(
     showGroupLabels: true,
   }),
 });
+
+export const PNW_DEFAULT_WORKBENCH_DISPLAY_PREFERENCES:
+PnwWorkbenchDisplayPreferences = Object.freeze({
+  presentation: "ribbon",
+  ribbonAppearance: PNW_DEFAULT_RIBBON_APPEARANCE,
+  treeCollapsed: false,
+  treeAppearance: PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+  tabBarPlacement: PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+  colorScheme: "system",
+  layoutState: PNW_DEFAULT_WORKBENCH_LAYOUT_STATE,
+  settingsPositions: PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS,
+});
+
+function pnwWorkbenchRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function pnwWorkbenchBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function pnwWorkbenchNumber(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+/**
+ * 修正 localStorage、后端用户偏好或旧 Pinia 快照中的缺字段与非法值。
+ * consumer 可传入自己的默认快照，但不能改变公共枚举和尺寸安全边界。
+ */
+export function pnwNormalizeWorkbenchDisplayPreferences(
+  value: unknown,
+  defaults: PnwWorkbenchDisplayPreferences = PNW_DEFAULT_WORKBENCH_DISPLAY_PREFERENCES,
+): PnwWorkbenchDisplayPreferences {
+  const input = pnwWorkbenchRecord(value);
+  const ribbon = pnwWorkbenchRecord(input.ribbonAppearance);
+  const compact = pnwWorkbenchRecord(ribbon.compact);
+  const large = pnwWorkbenchRecord(ribbon.ribbon);
+  const tree = pnwWorkbenchRecord(input.treeAppearance);
+  const layout = pnwWorkbenchRecord(input.layoutState);
+  const visibility = pnwWorkbenchRecord(layout.visibility);
+  const sizes = pnwWorkbenchRecord(layout.sizes);
+  const positions = pnwWorkbenchRecord(input.settingsPositions);
+  const quickPosition = pnwWorkbenchRecord(positions.quick);
+  const fullPosition = pnwWorkbenchRecord(positions.full);
+  const compactIconSize = compact.iconSize === 16 || compact.iconSize === 24
+    ? compact.iconSize
+    : defaults.ribbonAppearance.compact.iconSize;
+  const ribbonIconSize = large.iconSize === 24 || large.iconSize === 36
+    ? large.iconSize
+    : defaults.ribbonAppearance.ribbon.iconSize;
+
+  const layoutState = pnwResolveWorkbenchLayoutState({
+    visibility: {
+      primary: pnwWorkbenchBoolean(
+        visibility.primary,
+        defaults.layoutState.visibility.primary,
+      ),
+      bottom: pnwWorkbenchBoolean(
+        visibility.bottom,
+        defaults.layoutState.visibility.bottom,
+      ),
+      secondary: pnwWorkbenchBoolean(
+        visibility.secondary,
+        defaults.layoutState.visibility.secondary,
+      ),
+    },
+    sizes: {
+      primaryWidth: pnwWorkbenchNumber(
+        sizes.primaryWidth,
+        defaults.layoutState.sizes.primaryWidth,
+      ),
+      secondaryWidth: pnwWorkbenchNumber(
+        sizes.secondaryWidth,
+        defaults.layoutState.sizes.secondaryWidth,
+      ),
+      bottomHeight: pnwWorkbenchNumber(
+        sizes.bottomHeight,
+        defaults.layoutState.sizes.bottomHeight,
+      ),
+    },
+  });
+
+  return {
+    presentation: input.presentation === "tree" || input.presentation === "ribbon"
+      ? input.presentation
+      : defaults.presentation,
+    ribbonAppearance: {
+      mode: ribbon.mode === "compact" || ribbon.mode === "ribbon"
+        ? ribbon.mode
+        : defaults.ribbonAppearance.mode,
+      compact: {
+        iconSize: compactIconSize,
+        showTitles: pnwWorkbenchBoolean(
+          compact.showTitles,
+          defaults.ribbonAppearance.compact.showTitles,
+        ),
+        showGroupLabels: pnwWorkbenchBoolean(
+          compact.showGroupLabels,
+          defaults.ribbonAppearance.compact.showGroupLabels,
+        ),
+      },
+      ribbon: {
+        iconSize: ribbonIconSize,
+        showTitles: pnwWorkbenchBoolean(
+          large.showTitles,
+          defaults.ribbonAppearance.ribbon.showTitles,
+        ),
+        showGroupLabels: pnwWorkbenchBoolean(
+          large.showGroupLabels,
+          defaults.ribbonAppearance.ribbon.showGroupLabels,
+        ),
+      },
+    },
+    treeCollapsed: pnwWorkbenchBoolean(input.treeCollapsed, defaults.treeCollapsed),
+    treeAppearance: {
+      expanded: tree.expanded === "outline" || tree.expanded === "admin-menu"
+        ? tree.expanded
+        : defaults.treeAppearance.expanded,
+      collapsed: tree.collapsed === "leaf-rail" || tree.collapsed === "root-flyout"
+        ? tree.collapsed
+        : defaults.treeAppearance.collapsed,
+    },
+    tabBarPlacement: pnwNormalizeWorkbenchTabBarPlacement(
+      input.tabBarPlacement,
+      defaults.tabBarPlacement,
+    ),
+    colorScheme: input.colorScheme === "light"
+      || input.colorScheme === "dark"
+      || input.colorScheme === "system"
+      ? input.colorScheme
+      : defaults.colorScheme,
+    layoutState,
+    settingsPositions: {
+      quick: {
+        x: pnwWorkbenchNumber(quickPosition.x, defaults.settingsPositions.quick.x),
+        y: pnwWorkbenchNumber(quickPosition.y, defaults.settingsPositions.quick.y),
+      },
+      full: {
+        x: pnwWorkbenchNumber(fullPosition.x, defaults.settingsPositions.full.x),
+        y: pnwWorkbenchNumber(fullPosition.y, defaults.settingsPositions.full.y),
+      },
+    },
+  };
+}
 
 export const PNW_VIEW_BLOCK_IDS = ["primary", "bottom", "secondary"] as const;
 

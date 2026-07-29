@@ -5,29 +5,46 @@ import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
 import type {
   PnwActivityBarPresentation,
+  PnwActivityTreeAppearance,
+  PnwActivityTreeCollapsedMode,
+  PnwActivityTreeExpandedMode,
   PnwRibbonAppearance,
   PnwRibbonIconSize,
   PnwRibbonMode,
   PnwRibbonModeAppearance,
+  PnwWorkbenchTabBarPlacement,
 } from "../types/PnwWorkbenchWeb.js";
 import {
+  PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
   pnwRibbonIconSizesFor,
   pnwValidateRibbonAppearance,
 } from "../utils/pnwWorkbenchWeb.js";
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   open: boolean;
   position: PnwFloatingPanelPosition;
   presentation: PnwActivityBarPresentation;
+  /** Shell 响应式覆盖后的实际呈现；窄屏缺省为 Ribbon。 */
+  effectivePresentation?: PnwActivityBarPresentation;
+  responsiveNarrow?: boolean;
   appearance: PnwRibbonAppearance;
+  treeAppearance: PnwActivityTreeAppearance;
+  tabBarPlacement?: PnwWorkbenchTabBarPlacement;
   colorScheme: PnwColorScheme;
-}>();
+  showLayoutSettings?: boolean;
+}>(), {
+  tabBarPlacement: PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+  showLayoutSettings: false,
+  responsiveNarrow: false,
+});
 
 const emit = defineEmits<{
   close: [];
   "update:position": [position: PnwFloatingPanelPosition];
   "update:presentation": [presentation: PnwActivityBarPresentation];
   "update:appearance": [appearance: PnwRibbonAppearance];
+  "update:treeAppearance": [appearance: PnwActivityTreeAppearance];
+  "update:tabBarPlacement": [placement: PnwWorkbenchTabBarPlacement];
   "update:colorScheme": [colorScheme: PnwColorScheme];
 }>();
 
@@ -37,7 +54,25 @@ defineSlots<{
 
 const pnwPresentations = ["ribbon", "tree"] as const;
 const pnwColorSchemes = ["light", "dark", "system"] as const;
+const pnwTabBarPlacements = [
+  "header",
+  "after-navigation",
+  "editor-bottom",
+] as const satisfies readonly PnwWorkbenchTabBarPlacement[];
+const pnwTabBarPlacementLabels: Readonly<Record<PnwWorkbenchTabBarPlacement, string>> = {
+  header: "Header 内",
+  "after-navigation": "导航后",
+  "editor-bottom": "Editor 底部",
+};
 const pnwActiveAppearance = computed(() => props.appearance[props.appearance.mode]);
+const pnwDisplayedPresentation = computed<PnwActivityBarPresentation>(() => (
+  props.responsiveNarrow
+    ? props.effectivePresentation ?? "ribbon"
+    : props.presentation
+));
+const pnwPreferredPresentationLabel = computed(() => (
+  props.presentation === "tree" ? "侧面目录树" : "顶部 Ribbon"
+));
 const pnwAllowedIconSizes = computed(() => pnwRibbonIconSizesFor(props.appearance.mode));
 const pnwPanelClass = computed(() => [
   "pnw-workbench-display-full-panel",
@@ -52,6 +87,14 @@ const pnwRibbonDescription = computed(() => {
 
 function pnwUpdateRibbonMode(mode: PnwRibbonMode): void {
   emit("update:appearance", { ...props.appearance, mode });
+}
+
+function pnwUpdateTreeExpandedMode(expanded: PnwActivityTreeExpandedMode): void {
+  emit("update:treeAppearance", { ...props.treeAppearance, expanded });
+}
+
+function pnwUpdateTreeCollapsedMode(collapsed: PnwActivityTreeCollapsedMode): void {
+  emit("update:treeAppearance", { ...props.treeAppearance, collapsed });
 }
 
 function pnwUpdateActiveAppearance(patch: Partial<PnwRibbonModeAppearance>): void {
@@ -93,6 +136,14 @@ function pnwUpdateFlag(
         <strong>工作台显示设置</strong>
         <span>拖动这里可边看边调</span>
       </div>
+      <button
+        type="button"
+        class="pnw-workbench-display-full-done"
+        @pointerdown.stop
+        @click="emit('close')"
+      >
+        完成
+      </button>
     </template>
 
     <section class="pnw-workbench-display-full">
@@ -110,14 +161,99 @@ function pnwUpdateFlag(
                 type="button"
                 :class="{
                   'pnw-workbench-display-full-control--active':
-                    presentation === item,
+                    pnwDisplayedPresentation === item,
                 }"
-                :aria-pressed="presentation === item"
+                :aria-pressed="pnwDisplayedPresentation === item"
+                :disabled="responsiveNarrow"
+                :title="responsiveNarrow
+                  ? '窄屏固定使用顶部 Ribbon'
+                  : undefined"
                 @click="emit('update:presentation', item)"
               >
                 {{ item === "ribbon" ? "顶部 Ribbon" : "侧面目录树" }}
               </button>
             </div>
+            <small
+              v-if="responsiveNarrow"
+              class="pnw-workbench-display-full-hint"
+            >
+              窄屏固定使用顶部 Ribbon，导航结构暂不可切换；恢复宽屏后使用原偏好：{{ pnwPreferredPresentationLabel }}。
+            </small>
+            <div class="pnw-workbench-display-full-option">
+              <span>目录展开外观</span>
+              <div class="pnw-workbench-display-full-controls" aria-label="目录展开外观">
+                <button
+                  v-for="mode in (['outline', 'admin-menu'] as const)"
+                  :key="mode"
+                  type="button"
+                  :class="{
+                    'pnw-workbench-display-full-control--active':
+                      treeAppearance.expanded === mode,
+                  }"
+                  :aria-pressed="treeAppearance.expanded === mode"
+                  @click="pnwUpdateTreeExpandedMode(mode)"
+                >
+                  {{ mode === "outline" ? "紧凑大纲树" : "Admin 菜单" }}
+                </button>
+              </div>
+            </div>
+            <div class="pnw-workbench-display-full-option">
+              <span>目录收起外观</span>
+              <div class="pnw-workbench-display-full-controls" aria-label="目录收起外观">
+                <button
+                  v-for="mode in (['leaf-rail', 'root-flyout'] as const)"
+                  :key="mode"
+                  type="button"
+                  :class="{
+                    'pnw-workbench-display-full-control--active':
+                      treeAppearance.collapsed === mode,
+                  }"
+                  :aria-pressed="treeAppearance.collapsed === mode"
+                  @click="pnwUpdateTreeCollapsedMode(mode)"
+                >
+                  {{ mode === "leaf-rail"
+                    ? "所有叶子图标"
+                    : "一级菜单 + 子菜单浮层" }}
+                </button>
+              </div>
+            </div>
+            <small class="pnw-workbench-display-full-hint">
+              两项始终可预设；分别在目录展开或收起时生效。
+            </small>
+          </div>
+        </details>
+
+        <details
+          v-if="showLayoutSettings"
+          class="pnw-workbench-display-full-section"
+          open
+        >
+          <summary class="pnw-workbench-display-full-section-head">
+            <h3>View 标签位置</h3>
+            <span>{{ pnwTabBarPlacementLabels[tabBarPlacement] }}</span>
+          </summary>
+          <div class="pnw-workbench-display-full-section-body">
+            <div
+              class="pnw-workbench-display-full-controls pnw-workbench-display-full-controls--wrap"
+              aria-label="View 标签位置"
+            >
+              <button
+                v-for="placement in pnwTabBarPlacements"
+                :key="placement"
+                type="button"
+                :class="{
+                  'pnw-workbench-display-full-control--active':
+                    tabBarPlacement === placement,
+                }"
+                :aria-pressed="tabBarPlacement === placement"
+                @click="emit('update:tabBarPlacement', placement)"
+              >
+                {{ pnwTabBarPlacementLabels[placement] }}
+              </button>
+            </div>
+            <small class="pnw-workbench-display-full-hint">
+              同一组受控 View 标签只渲染一次；Tree 模式的“导航后”位于 Editor 顶部。
+            </small>
           </div>
         </details>
 
@@ -210,7 +346,6 @@ function pnwUpdateFlag(
 
       <footer class="pnw-workbench-display-full-footer">
         <span>状态由宿主受控；Wing 不选择持久化介质。</span>
-        <button type="button" @click="emit('close')">完成</button>
       </footer>
     </section>
   </PnwFloatingPanel>
@@ -252,6 +387,27 @@ function pnwUpdateFlag(
 .pnw-workbench-display-full-title span {
   color: var(--pnw-workbench-muted);
   font-size: 9px;
+}
+
+.pnw-workbench-display-full-done {
+  min-width: 48px;
+  height: 28px;
+  flex: none;
+  padding: 0 10px;
+  border: 1px solid var(--pnw-control-active-text);
+  border-radius: 5px;
+  background: var(--pnw-control-active-text);
+  color: var(--pnw-workbench-surface);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pnw-workbench-display-full-done:hover,
+.pnw-workbench-display-full-done:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pnw-control-active-text) 35%, transparent);
+  outline-offset: 1px;
 }
 
 .pnw-workbench-display-full {
@@ -332,12 +488,33 @@ function pnwUpdateFlag(
   gap: 6px;
 }
 
+.pnw-workbench-display-full-option {
+  display: grid;
+  gap: 4px;
+}
+
+.pnw-workbench-display-full-option > span,
+.pnw-workbench-display-full-hint {
+  color: var(--pnw-workbench-muted);
+  font-size: 10px;
+}
+
+.pnw-workbench-display-full-option .pnw-workbench-display-full-controls {
+  width: fit-content;
+}
+
 .pnw-workbench-display-full-controls {
   display: inline-flex;
   max-width: 100%;
   padding: 2px;
   border-radius: 7px;
   background: color-mix(in srgb, var(--pnw-workbench-text) 8%, transparent);
+}
+
+.pnw-workbench-display-full-controls--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
 }
 
 .pnw-workbench-display-full-controls button {
@@ -357,6 +534,11 @@ function pnwUpdateFlag(
   color: var(--pnw-control-active-text);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
   font-weight: 700;
+}
+
+.pnw-workbench-display-full-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .pnw-workbench-display-full-checks label {
@@ -386,24 +568,13 @@ function pnwUpdateFlag(
   bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 8px;
   border-top: 1px solid var(--pnw-workbench-border);
   background: var(--pnw-workbench-surface);
   color: var(--pnw-workbench-muted);
   font-size: 10px;
-}
-
-.pnw-workbench-display-full-footer button {
-  min-width: 72px;
-  min-height: 30px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--pnw-control-active-text);
-  color: var(--pnw-workbench-surface);
-  cursor: pointer;
-  font-weight: 700;
 }
 
 @media (prefers-color-scheme: dark) {

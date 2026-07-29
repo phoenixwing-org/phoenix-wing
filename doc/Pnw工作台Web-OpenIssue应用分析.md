@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers / Phoenix Open Issue maintainers
 
-适用版本：Wing 0.5.2 本地候选、Open Issue `codex/single-pnw-workbench`
+适用版本：Wing 0.6.0 本地候选、Open Issue `codex/single-pnw-workbench`
 
-最后核验：2026-07-28
+最后核验：2026-07-29
 
 ## 1. 目的
 
@@ -25,6 +25,8 @@ Owner：Phoenix Wing maintainers / Phoenix Open Issue maintainers
 
 - `0f5d692 工作台：接入本地Wing组合壳层`
 - `1ba5833 工作台：收敛快捷显示设置接线`
+- `023fa9b 工作台：适配 Wing 0.6.0 显示偏好与空状态`
+- `4fb5611 工作台：接入页面级 View 贡献`
 
 工作树在本次核验时干净。主要接入文件：
 
@@ -35,7 +37,17 @@ Owner：Phoenix Wing maintainers / Phoenix Open Issue maintainers
 | `packages/web/src/stores/workbench.ts` | 79 行 | 显示、布局与本地偏好状态 |
 | `packages/web/src/layout/workbench/openIssueNavigation.ts` | 15 行 | 既有 Ribbon contribution 到唯一导航树的投影 |
 
-当前通过进程级 resolver 消费并列 Wing 0.5.2 源码；Open Issue manifest 与 lockfile 继续精确锁定 Registry `phoenix-wing@0.5.1`。
+当前通过进程级 resolver 消费并列 Wing 0.6.0 源码；Open Issue manifest 与 lockfile 继续精确锁定 Registry `phoenix-wing@0.5.1`。
+
+2026-07-29 命令级复核：`pnpm wing:check-local` 与 `pnpm verify:wing-dependencies` 均通过，正确命中并列 Wing `0.6.0`，两处 manifest 引用仍是 Registry `0.5.1` 且无 override。`pnpm verify:local-wing` 完成 Wing 构建和 37 篇 Open Issue 文档门禁后，19 个测试文件中 17 通过、1 失败、1 跳过；140 项中 134 通过、1 失败、5 跳过。唯一失败是 `wing-registry-contract.test.ts` 在本地模式仍硬编码期待 `PNW_VERSION === '0.5.1'`，实际值正确为 `0.6.0`；这是消费者测试没有区分 Registry/LOCAL，不是 resolver 或 Wing API 回归。
+
+单独 `pnpm build:local-wing` 又证明 Open Issue core `tsc` 通过，但 Server `tsc` 在当前只读消费者仓写 `packages/server/dist` 时因 `EPERM` 中止，Web build 未开始。Open Issue 与 Wing tracked diff 均未由回归命令改变。当前 Node `23.7.0` / pnpm `9.15.9` 也不等于 Wing 文档统一的 Node 22 / pnpm 10.15.1 环境，因此本次结果只作为来源和局部回归证据，不能替代标准环境完整验收。
+
+随后两笔实际适配修正了上述产品缺口：Registry/LOCAL 版本测试不再硬编码本地 0.5.1；品牌显示实际 `PNW_VERSION`；v2 显示偏好 envelope 兼容读取旧 v1；关闭最后或全部 Tab 后进入稳定空工作台。`Poi*` registry 让 Dashboard、列表/详情、组织、设置、Issue 点检与设置修复在真实 setup/KeepAlive 生命周期贡献 Primary/Secondary/Bottom，根 Shell 的固定日志 Bottom 已删除。
+
+最终在可写消费者环境执行完整 `pnpm verify:local-wing`，Wing 0.6.0 构建、37 篇文档、19 个测试文件、Open Issue core/server/Web 构建全部通过：LOCAL 为 140 passed / 5 skipped，Web 生产构建转换 3453 个模块；另有 9 项生命周期与窄屏有效布局定向测试通过。Registry 对照仍为 138 passed / 7 skipped。构建只保留常规 chunk-size 提示，没有 manifest、lockfile、override 或 tracked diff 污染。该结果关闭了先前 `.vite-temp` / `dist` 写权限造成的验证缺口，但仍不等于 Registry 0.6.0 已发布。
+
+2026-07-29 的主题与 Footer 复核又形成 `2e900ad 工作台：接通应用主题与 Footer 契约`。Open Issue 使用 Wing 已有 `pnwApplyColorScheme`，把 `light / dark / system` 同步到 HTML `data-theme`、`.dark` 与 Element Plus 暗色变量；system 会响应 `prefers-color-scheme`，不新增公共主题 API。Wing 同期以 `88afafe` 将 Footer 的 Primary / Bottom / Secondary 三个入口改为固定渲染、无 contribution 时禁用，并让 Layout/Shell 默认保留 Footer；consumer 只有显式 `showFooter = false` 才关闭。Open Issue 没有伪造 contribution 或复制 Footer。最终 Registry 为 141 passed / 7 skipped，LOCAL 为 144 passed / 5 skipped，完整 local-Wing 构建通过，Web 转换 3455 个模块。
 
 ## 3. 当前适配矩阵
 
@@ -46,15 +58,16 @@ Owner：Phoenix Wing maintainers / Phoenix Open Issue maintainers
 | Router 与页面 Tab | 已接入第一轮 | 仍由 `useOpenIssueWorkbench` 持有，Wing 不读取 path |
 | 品牌与 Header actions | 已接入 | 品牌 slot、用户和退出保持产品语义 |
 | `PnwWorkbenchLayoutState` | 已接入 | 显隐和尺寸由产品 Pinia 持有 |
-| Footer | 已接入 | 左侧产品状态，右侧 Wing Block 开关 |
-| Bottom | 部分接入 | 已进入 Wing Bottom 区，但当前仍由根 Shell 固定贡献日志 |
-| 动态 View contribution | 未完成 | 真实页面尚未各自在 setup/KeepAlive 生命周期登记 Primary/Bottom/Secondary |
+| Footer | 已接入 | 左侧产品状态，右侧 Wing 三个固定 Block 开关；无 contribution 时禁用 |
+| Bottom | 已动态接入 | 设置数据库修正按当前 View 贡献真实 Bottom；根 Shell 不再固定日志内容 |
+| 动态 View contribution | 已接入 | Dashboard、列表/详情、组织、设置、Issue 点检在 setup/KeepAlive 生命周期登记并释放真实 Block |
 | Secondary 默认策略 | 符合 | 当前不默认显示 Secondary |
-| 工作台显示菜单 | 公共 UI 已接入，主题回写待补 | 浏览器已看到单行 PnwIcon 快捷菜单与公共完整对话框；当前只传入 `colorScheme`，未监听 `update:colorScheme`，点击主题后仍保持 `system` |
-| 窄屏 Tree | 待复盘 | 需要更多真实页面与约 700px 场景证据 |
-| layout 旧实现删除 | 第一轮完成 | 仍需扩大页面覆盖后检查遗留 CSS、状态和固定 Block |
+| 工作台显示菜单 | 已接线 | Tree 外观、Tab 位置、主题与设置浮窗坐标均由产品 Pinia 双向绑定；主题真实作用到应用根与 Element Plus |
+| 显示偏好持久化 | 已归一化 | v2 envelope 统一调用 normalizer，并兼容迁移旧 v1 快照 |
+| 窄屏 Tree | 自动布局已验证 | 定向测试证明窄容器只改变 effective Ribbon/Tab 位置，不覆盖保存偏好；发布前仍需浏览器视觉复核 |
+| layout 旧实现删除 | 已扩大覆盖 | 根 Shell 固定 Bottom 已删；真实筛选、组织树与点检内容迁入页面 contribution，生产 bundle 已通过 |
 
-当前结论只能是“第一轮壳层接入成功”，不能据此宣布 layout 已充分精简。
+当前代码、生命周期、类型与生产 bundle 证据已达到“简单消费者本地候选接入完成”。浏览器发布回归和 Registry 精确升级仍应在 Wing 0.6.0 真正发布后执行，不能把本地源码消费写成发布验收完成。
 
 ## 4. 已确认的产品边界
 
@@ -80,6 +93,10 @@ Owner：Phoenix Wing maintainers / Phoenix Open Issue maintainers
 9. 页面 CSS 是否依赖旧 Shell DOM、固定 viewport 高度或重复 padding；
 10. 能否删除兼容代码并给出删除清单、文件行数趋势与浏览器回归截图。
 
+2026-07-29 只读复核已复现一个产品生命周期缺口：关闭最后一个 dashboard 后再次 `push('/dashboard')` 属于同路由，route watcher 不会重开 Tab，因而可能出现标签为空但旧 View 仍渲染。Open Issue 必须在 adapter 内选择“显式重开默认 dashboard”或“真正进入 Shell 空态”，不能要求 Wing 猜默认路由。
+
+同次复核还确认：当前 store 直接断言 localStorage JSON，尚未保存 `treeAppearance / tabBarPlacement / settingsPositions`，Shell 也没有接齐这些 update 事件；根 Shell 的 Bottom 仍固定使用几乎没有生产者的字符串日志。O1/O2 应改为完整 `PnwWorkbenchDisplayPreferences` envelope，并把实际日志桥接到 `PnwLogBlock` 或实例 hub，再由真实页面注册 Bottom contribution。品牌副标题中的 “local 0.5.2” 也应改为 resolver 注入或当前 0.6 候选文案，但 Registry 依赖仍保持 0.5.1。
+
 ## 6. 显示设置与 consumer 扩展示例
 
 Open Issue 应直接获得 Wing 的公共显示能力：
@@ -93,10 +110,10 @@ Open Issue 应直接获得 Wing 的公共显示能力：
 
 ## 7. 后续阶段
 
-1. **O1：** 跟随 Wing 当前本地候选，补齐 `v-model:color-scheme` 或等价的 `update:colorScheme` 回写，再验证主题更新；公共快捷菜单和完整设置对话框已完成浏览器 smoke，产品 action/扩展 slot 按实际需要接入；
-2. **O2：** 选取真实页面建立实例级 View contribution，首先移除根 Shell 固定 Bottom；
-3. **O3：** 扩大到详情、组织和设置页面，执行本文 Layout 复盘；
-4. **O4：** 记录删除的旧 layout、保留的产品 adapter、行数趋势和窄屏证据；
-5. **O5：** 运行 `pnpm verify:local-wing` 与浏览器回归，再决定 Open Issue 适配是否可作为 W4 简单消费者完成证据。
+1. **O1 已完成：** v2 `PnwWorkbenchDisplayPreferences` envelope、normalizer 和完整双向接线；
+2. **O2 已完成：** 实例级真实 View contribution 与根 Shell 固定 Bottom 删除；
+3. **O3 已完成本地候选：** 已扩大到详情、组织和设置页面，生产 Web bundle 通过；发布前仍保留浏览器 CSS 冒烟；
+4. **O4 已完成语义修正：** 关闭最后/全部 Tab 使用 Shell 空态，不再同路由重建 dashboard；
+5. **O5 已完成本地候选：** Registry/LOCAL contract、两套全量测试、类型与 core/server/Web 构建通过；Registry 升级和发布浏览器回归不属于本地候选完成声明。
 
 任何阶段都不得通过 `link:`、`file:`、`workspace:`、`pnpm link`、override 或修改 `node_modules` 消费本地 Wing。

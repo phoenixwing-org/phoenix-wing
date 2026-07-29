@@ -7,6 +7,16 @@
 
 export type PnwActivityBarPresentation = "ribbon" | "tree";
 
+export type PnwActivityTreeExpandedMode = "outline" | "admin-menu";
+
+export type PnwActivityTreeCollapsedMode = "leaf-rail" | "root-flyout";
+
+/** Tree 展开与收起外观分别保存，切换 presentation/collapsed 不覆盖另一状态。 */
+export interface PnwActivityTreeAppearance {
+  readonly expanded: PnwActivityTreeExpandedMode;
+  readonly collapsed: PnwActivityTreeCollapsedMode;
+}
+
 export type PnwRibbonDisplayMode = "icon" | "icon-title" | "large";
 
 export type PnwRibbonIconSize = 16 | 24 | 36;
@@ -56,6 +66,29 @@ export interface PnwWorkbenchTabItem {
   readonly subtitle?: string;
 }
 
+/**
+ * View TabBar 的壳层位置。
+ *
+ * `after-navigation` 在 Ribbon 后或 Tree 的 Editor 顶部；`editor-bottom` 位于 Bottom 后。
+ */
+export type PnwWorkbenchTabBarPlacement =
+  | "header"
+  | "after-navigation"
+  | "editor-bottom";
+
+/**
+ * Workbench 根据自身容器宽度计算的瞬时呈现状态。
+ *
+ * `preferred*` 仍由 consumer 持久化；`effective*` 只负责当前布局，窄屏恢复后不覆盖偏好。
+ */
+export interface PnwWorkbenchResponsiveState {
+  readonly narrow: boolean;
+  readonly preferredPresentation: PnwActivityBarPresentation;
+  readonly effectivePresentation: PnwActivityBarPresentation;
+  readonly preferredTabBarPlacement: PnwWorkbenchTabBarPlacement;
+  readonly effectiveTabBarPlacement: PnwWorkbenchTabBarPlacement;
+}
+
 export type PnwViewBlockId = "primary" | "bottom" | "secondary";
 
 export type PnwBottomPanelTabTone = "default" | "warning" | "error";
@@ -90,6 +123,34 @@ export interface PnwWorkbenchPanelSizes {
 export interface PnwWorkbenchLayoutState {
   readonly visibility: PnwViewBlockVisibility;
   readonly sizes: PnwWorkbenchPanelSizes;
+}
+
+/**
+ * 工作台显示设置的两个浮层位置。
+ *
+ * Wing 负责拖动与可见边界修正；consumer 决定是否放入 Pinia、浏览器存储或后端偏好。
+ */
+export interface PnwWorkbenchDisplaySettingsPositions {
+  readonly quick: {
+    readonly x: number;
+    readonly y: number;
+  };
+  readonly full: {
+    readonly x: number;
+    readonly y: number;
+  };
+}
+
+/** 工作台第一层显示配置的完整可序列化快照。 */
+export interface PnwWorkbenchDisplayPreferences {
+  readonly presentation: PnwActivityBarPresentation;
+  readonly ribbonAppearance: PnwRibbonAppearance;
+  readonly treeCollapsed: boolean;
+  readonly treeAppearance: PnwActivityTreeAppearance;
+  readonly tabBarPlacement: PnwWorkbenchTabBarPlacement;
+  readonly colorScheme: "light" | "dark" | "system";
+  readonly layoutState: PnwWorkbenchLayoutState;
+  readonly settingsPositions: PnwWorkbenchDisplaySettingsPositions;
 }
 
 export interface PnwWorkbenchLayoutViewport {

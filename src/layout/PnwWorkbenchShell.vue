@@ -7,17 +7,22 @@ import type {
 } from "../types/PnwWorkbenchVue.js";
 import type {
   PnwActivityBarPresentation,
+  PnwActivityTreeAppearance,
   PnwBottomPanelTab,
   PnwNavigationNode,
   PnwRibbonAppearance,
   PnwViewBlockContributions,
   PnwViewBlockId,
   PnwViewBlockVisibility,
+  PnwWorkbenchDisplaySettingsPositions,
   PnwWorkbenchTabItem,
+  PnwWorkbenchTabBarPlacement,
   PnwWorkbenchLayoutState,
+  PnwWorkbenchResponsiveState,
 } from "../types/PnwWorkbenchWeb.js";
 import {
   pnwNavigationNodeContains,
+  pnwNormalizeNavigationVisibility,
   pnwVisibleNavigationNodes,
 } from "../utils/pnwNavigationTree.js";
 import {
@@ -25,11 +30,16 @@ import {
   pnwResolveViewBlockComponentProps,
   pnwViewBlockComponentAvailability,
 } from "../composables/pnwViewBlockComponents.js";
-import { PNW_DEFAULT_RIBBON_APPEARANCE } from "../utils/pnwWorkbenchWeb.js";
+import {
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+  PNW_DEFAULT_RIBBON_APPEARANCE,
+  PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+} from "../utils/pnwWorkbenchWeb.js";
 import PnwActivityBar from "./PnwActivityBar.vue";
 import PnwPhoenixWingMark from "../components/PnwPhoenixWingMark.vue";
 import PnwRibbonTabBar from "./PnwRibbonTabBar.vue";
 import PnwWorkbenchHeader from "./PnwWorkbenchHeader.vue";
+import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
 import PnwWorkbenchLayout from "./PnwWorkbenchLayout.vue";
 import PnwWorkbenchTabBar from "./PnwWorkbenchTabBar.vue";
 
@@ -40,6 +50,7 @@ const props = withDefaults(defineProps<{
   expandedNodeIds?: readonly string[];
   ribbonAppearance?: PnwRibbonAppearance;
   treeCollapsed?: boolean;
+  treeAppearance?: PnwActivityTreeAppearance;
   contributions?: PnwViewBlockContributions;
   viewBlocks?: PnwViewBlockComponentContributions;
   visibility?: PnwViewBlockVisibility;
@@ -48,6 +59,7 @@ const props = withDefaults(defineProps<{
   activeBottomTabId?: string;
   colorScheme?: PnwColorScheme;
   tabs?: readonly PnwWorkbenchTabItem[];
+  tabBarPlacement?: PnwWorkbenchTabBarPlacement;
   activeTabId?: string;
   pageIcon?: (pageId: string) => Component | undefined;
   canAddTab?: boolean;
@@ -55,11 +67,13 @@ const props = withDefaults(defineProps<{
   closingAllTabs?: boolean;
   showRibbonAppearanceMenu?: boolean;
   showAdvancedSettingsAction?: boolean;
+  displaySettingsPositions?: PnwWorkbenchDisplaySettingsPositions;
   headerAriaLabel?: string;
   activityAriaLabel?: string;
   treeHeaderLabel?: string;
   brandTitle?: string;
   brandSubtitle?: string;
+  showFooter?: boolean;
   showEmptyView?: boolean;
   emptyViewTitle?: string;
   emptyViewDescription?: string;
@@ -69,6 +83,7 @@ const props = withDefaults(defineProps<{
   expandedNodeIds: () => [],
   ribbonAppearance: () => PNW_DEFAULT_RIBBON_APPEARANCE,
   treeCollapsed: false,
+  treeAppearance: () => PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   contributions: () => ({}),
   viewBlocks: () => ({}),
   visibility: () => ({ primary: false, bottom: false, secondary: false }),
@@ -76,6 +91,7 @@ const props = withDefaults(defineProps<{
   activeBottomTabId: "",
   colorScheme: "system",
   tabs: () => [],
+  tabBarPlacement: PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
   activeTabId: "",
   canAddTab: false,
   canCloseAllTabs: false,
@@ -87,6 +103,7 @@ const props = withDefaults(defineProps<{
   treeHeaderLabel: "导航工具",
   brandTitle: "Pnw Workbench",
   brandSubtitle: "",
+  showFooter: true,
   showEmptyView: false,
   emptyViewTitle: "未打开任何 View",
   emptyViewDescription: "请从导航中选择一个工具或页面。",
@@ -108,13 +125,18 @@ const emit = defineEmits<{
   displaySettingsAction: [actionId: string];
   openWorkbenchSettings: [];
   "update:treeCollapsed": [collapsed: boolean];
+  "update:treeAppearance": [appearance: PnwActivityTreeAppearance];
   "update:visibility": [visibility: PnwViewBlockVisibility];
   "update:layoutState": [layoutState: PnwWorkbenchLayoutState];
   "update:activeBottomTabId": [tabId: string];
+  "update:tabBarPlacement": [placement: PnwWorkbenchTabBarPlacement];
+  "update:displaySettingsPositions": [positions: PnwWorkbenchDisplaySettingsPositions];
 }>();
 
 defineSlots<{
   default(): unknown;
+  header(props: PnwWorkbenchResponsiveState): unknown;
+  activity(props: PnwWorkbenchResponsiveState): unknown;
   "display-settings-actions"(
     props: PnwWorkbenchDisplaySettingsActionSlotProps,
   ): unknown;
@@ -134,7 +156,8 @@ const pnwResolvedContributions = computed<PnwViewBlockContributions>(() => ({
 const pnwResolvedBottomTabs = computed(() => props.viewBlocks.bottom?.tabs
   ? pnwResolveBottomViewBlockTabs(props.viewBlocks.bottom)
   : props.bottomTabs);
-const pnwRootNodes = computed(() => pnwVisibleNavigationNodes(props.nodes));
+const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
+const pnwRootNodes = computed(() => pnwVisibleNavigationNodes(pnwNavigationNodes.value));
 const pnwModuleTabs = computed(() => pnwRootNodes.value.map((node) => ({
   id: node.id,
   label: node.shortLabel ?? node.label,
@@ -154,17 +177,20 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
     :bottom-tabs="pnwResolvedBottomTabs"
     :active-bottom-tab-id="activeBottomTabId"
     :color-scheme="colorScheme"
+    :tab-bar-placement="tabBarPlacement"
+    :show-footer="showFooter"
     @update:visibility="emit('update:visibility', $event)"
     @update:layout-state="emit('update:layoutState', $event)"
     @update:active-bottom-tab-id="emit('update:activeBottomTabId', $event)"
     @select-bottom-tab="emit('selectBottomTab', $event)"
     @toggle="emit('toggleBlock', $event)"
   >
-    <template #header>
-      <slot name="header">
+    <template #header="pnwResponsiveState">
+      <slot name="header" v-bind="pnwResponsiveState">
         <PnwWorkbenchHeader
           :aria-label="headerAriaLabel"
-          :show-pages="tabs.length > 0 || Boolean(pnwSlots.pages)"
+          :show-pages="pnwResponsiveState.effectiveTabBarPlacement === 'header'
+            && (tabs.length > 0 || Boolean(pnwSlots.pages))"
         >
           <template #brand>
             <slot name="brand">
@@ -177,7 +203,10 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
               </div>
             </slot>
           </template>
-          <template #modules>
+          <template
+            v-if="pnwResponsiveState.effectivePresentation === 'ribbon'"
+            #modules
+          >
             <slot
               name="modules"
               :tabs="pnwModuleTabs"
@@ -190,7 +219,11 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
               />
             </slot>
           </template>
-          <template v-if="tabs.length > 0 || pnwSlots.pages" #pages>
+          <template
+            v-if="pnwResponsiveState.effectiveTabBarPlacement === 'header'
+              && (tabs.length > 0 || pnwSlots.pages)"
+            #pages
+          >
             <slot name="pages">
               <PnwWorkbenchTabBar
                 :tabs="tabs"
@@ -214,36 +247,86 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
       </slot>
     </template>
 
-    <template #activity>
-      <slot name="activity">
-        <PnwActivityBar
-          :nodes="nodes"
-          :presentation="presentation"
-          :active-node-id="activeNodeId"
-          :expanded-node-ids="expandedNodeIds"
-          :appearance="ribbonAppearance"
-          :color-scheme="colorScheme"
-          :tree-collapsed="treeCollapsed"
-          :show-ribbon-appearance-menu="showRibbonAppearanceMenu"
-          :show-advanced-settings-action="showAdvancedSettingsAction"
-          :aria-label="activityAriaLabel"
-          :tree-header-label="treeHeaderLabel"
-          @activate="emit('activate', $event)"
-          @update:expanded-node-ids="emit('update:expandedNodeIds', $event)"
-          @update:appearance="emit('update:ribbonAppearance', $event)"
-          @update:presentation="emit('update:presentation', $event)"
-          @update:color-scheme="emit('update:colorScheme', $event)"
-          @display-settings-action="emit('displaySettingsAction', $event)"
-          @open-advanced-settings="emit('openWorkbenchSettings')"
-          @update:tree-collapsed="emit('update:treeCollapsed', $event)"
+    <template
+      v-if="tabs.length > 0 || pnwSlots.pages"
+      #view-tabs
+    >
+      <slot name="pages">
+        <PnwWorkbenchTabBar
+          :tabs="tabs"
+          :active-tab-id="activeTabId"
+          :page-icon="pageIcon"
+          :can-add="canAddTab"
+          :can-close-all="canCloseAllTabs"
+          :closing-all="closingAllTabs"
+          @select="emit('selectTab', $event)"
+          @close="emit('closeTab', $event)"
+          @close-all="emit('closeAllTabs')"
+          @new-tab="emit('newTab')"
+        />
+      </slot>
+    </template>
+
+    <template #activity="pnwResponsiveState">
+      <slot name="activity" v-bind="pnwResponsiveState">
+        <div
+          class="pnw-workbench-activity-frame"
+          :class="`pnw-workbench-activity-frame--${pnwResponsiveState.effectivePresentation}`"
         >
-          <template #display-settings-actions="slotProps">
-            <slot name="display-settings-actions" v-bind="slotProps" />
-          </template>
-          <template #display-settings-panel-extra>
-            <slot name="display-settings-panel-extra" />
-          </template>
-        </PnwActivityBar>
+          <PnwActivityBar
+            :nodes="pnwNavigationNodes"
+            :presentation="pnwResponsiveState.effectivePresentation"
+            :active-node-id="activeNodeId"
+            :expanded-node-ids="expandedNodeIds"
+            :appearance="ribbonAppearance"
+            :color-scheme="colorScheme"
+            :tree-collapsed="treeCollapsed"
+            :tree-appearance="treeAppearance"
+            :show-ribbon-appearance-menu="false"
+            :show-advanced-settings-action="showAdvancedSettingsAction"
+            :aria-label="activityAriaLabel"
+            :tree-header-label="treeHeaderLabel"
+            @activate="emit('activate', $event)"
+            @update:expanded-node-ids="emit('update:expandedNodeIds', $event)"
+            @update:appearance="emit('update:ribbonAppearance', $event)"
+            @update:presentation="emit('update:presentation', $event)"
+            @update:color-scheme="emit('update:colorScheme', $event)"
+            @update:tree-collapsed="emit('update:treeCollapsed', $event)"
+            @update:tree-appearance="emit('update:treeAppearance', $event)"
+          />
+
+          <PnwWorkbenchDisplaySettings
+            v-if="showRibbonAppearanceMenu"
+            :presentation="presentation"
+            :effective-presentation="pnwResponsiveState.effectivePresentation"
+            :responsive-narrow="pnwResponsiveState.narrow"
+            :appearance="ribbonAppearance"
+            :tree-appearance="treeAppearance"
+            :color-scheme="colorScheme"
+            :tab-bar-placement="tabBarPlacement"
+            :positions="displaySettingsPositions"
+            show-layout-settings
+            :show-advanced-settings-action="showAdvancedSettingsAction"
+            :trigger-variant="pnwResponsiveState.effectivePresentation === 'ribbon'
+              ? 'ribbon'
+              : treeCollapsed ? 'rail' : 'tree'"
+            @update:presentation="emit('update:presentation', $event)"
+            @update:appearance="emit('update:ribbonAppearance', $event)"
+            @update:tree-appearance="emit('update:treeAppearance', $event)"
+            @update:color-scheme="emit('update:colorScheme', $event)"
+            @update:tab-bar-placement="emit('update:tabBarPlacement', $event)"
+            @update:positions="emit('update:displaySettingsPositions', $event)"
+            @display-settings-action="emit('displaySettingsAction', $event)"
+            @open-advanced-settings="emit('openWorkbenchSettings')"
+          >
+            <template #additional-actions="slotProps">
+              <slot name="display-settings-actions" v-bind="slotProps" />
+            </template>
+            <template #panel-extra>
+              <slot name="display-settings-panel-extra" />
+            </template>
+          </PnwWorkbenchDisplaySettings>
+        </div>
       </slot>
     </template>
 
@@ -294,6 +377,29 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
 </template>
 
 <style scoped>
+.pnw-workbench-activity-frame {
+  min-width: 0;
+  min-height: 0;
+}
+
+.pnw-workbench-activity-frame--ribbon {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+
+.pnw-workbench-activity-frame--tree {
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.pnw-workbench-activity-frame--ribbon > :deep(.pnw-workbench-display-settings) {
+  border-bottom: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+  background: var(--pnw-ribbon-bg, var(--pnw-workbench-default-ribbon-bg, #fff));
+}
+
 .pnw-workbench-default-brand {
   min-width: 188px;
   display: flex;

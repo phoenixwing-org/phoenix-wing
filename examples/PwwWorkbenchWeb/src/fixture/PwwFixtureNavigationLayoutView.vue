@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import {
+  PnwPageHeader,
   pnwNavigationLeaves,
   pnwVisibleNavigationNodes,
   type PnwNavigationNode,
@@ -138,19 +139,21 @@ function pwwToggleAllRoots(): void {
 
 <template>
   <article class="pww-navigation-layout-view">
-    <header class="pww-navigation-layout-head">
-      <div>
-        <span class="pww-navigation-layout-kicker">HOST-CONTROLLED FIXTURE VIEW</span>
-        <h1>导航分组布局</h1>
-        <p>每行是一级大分组下的一个小模块；选择“移动到”后，模块内工具与 View 整体移动。</p>
-      </div>
-      <div class="pww-navigation-layout-head-actions">
+    <PnwPageHeader
+      eyebrow="HOST-CONTROLLED FIXTURE VIEW"
+      title="导航分组布局"
+      description="每行是一级大分组下的一个小模块；选择“移动到”后，模块内工具与 View 整体移动。"
+      summary="NAVIGATION LAYOUT"
+    >
+      <template #actions>
+        <div class="pww-navigation-layout-head-actions">
         <button type="button" @click="pwwCreateRootOpen = !pwwCreateRootOpen">
           新建大分组
         </button>
         <button type="button" @click="emit('restore')">全部恢复默认</button>
-      </div>
-    </header>
+        </div>
+      </template>
+    </PnwPageHeader>
 
     <form
       v-if="pwwCreateRootOpen"
@@ -367,36 +370,16 @@ function pwwToggleAllRoots(): void {
 .pww-navigation-layout-view {
   width: min(1160px, 100%);
   margin: 0 auto;
-  padding: clamp(16px, 3vw, 32px);
+  padding: clamp(14px, 2vw, 24px);
   color: var(--pnw-workbench-text, #0f172a);
 }
 
-.pww-navigation-layout-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.pww-navigation-layout-head h1 {
-  margin: 4px 0 6px;
-  font-size: clamp(24px, 3vw, 34px);
-}
-
-.pww-navigation-layout-head p,
 .pww-navigation-layout-note,
 .pww-navigation-layout-empty-note {
   margin: 0;
   color: var(--pnw-workbench-muted, #64748b);
   font-size: 12px;
   line-height: 1.55;
-}
-
-.pww-navigation-layout-kicker {
-  color: var(--pnw-control-active-text, #1d4ed8);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
 }
 
 .pww-navigation-layout-head-actions {

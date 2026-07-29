@@ -2,13 +2,22 @@
 import { computed, nextTick, type Component, type ComponentPublicInstance } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwWorkbenchDisplaySettingsActionSlotProps } from "../types/PnwWorkbenchVue.js";
-import type { PnwNavigationNode, PnwRibbonAppearance } from "../types/PnwWorkbenchWeb.js";
-import { PNW_DEFAULT_RIBBON_APPEARANCE } from "../utils/pnwWorkbenchWeb.js";
+import type {
+  PnwActivityTreeAppearance,
+  PnwNavigationNode,
+  PnwRibbonAppearance,
+} from "../types/PnwWorkbenchWeb.js";
+import {
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+  PNW_DEFAULT_RIBBON_APPEARANCE,
+} from "../utils/pnwWorkbenchWeb.js";
 import {
   pnwFlattenNavigationTree,
-  pnwNavigationLeaves,
+  pnwNavigationNodeContains,
+  pnwNormalizeNavigationVisibility,
 } from "../utils/pnwNavigationTree.js";
 import PnwIcon from "../components/PnwIcon.vue";
+import PnwActivityTreeRail from "./PnwActivityTreeRail.vue";
 import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
 
 const props = withDefaults(defineProps<{
@@ -19,6 +28,7 @@ const props = withDefaults(defineProps<{
   headerLabel?: string;
   /** 受控收起态；只投影可激活末级节点，不改变导航树数据。 */
   collapsed?: boolean;
+  treeAppearance?: PnwActivityTreeAppearance;
   appearance?: PnwRibbonAppearance;
   colorScheme?: PnwColorScheme;
   showWorkbenchDisplaySettings?: boolean;
@@ -29,6 +39,7 @@ const props = withDefaults(defineProps<{
   ariaLabel: "全局导航",
   headerLabel: "导航工具",
   collapsed: false,
+  treeAppearance: () => PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   appearance: () => PNW_DEFAULT_RIBBON_APPEARANCE,
   colorScheme: "system",
   showWorkbenchDisplaySettings: false,
@@ -41,6 +52,7 @@ const emit = defineEmits<{
   "update:collapsed": [collapsed: boolean];
   "update:presentation": [presentation: "ribbon" | "tree"];
   "update:appearance": [appearance: PnwRibbonAppearance];
+  "update:treeAppearance": [appearance: PnwActivityTreeAppearance];
   "update:colorScheme": [colorScheme: PnwColorScheme];
   displaySettingsAction: [actionId: string];
   openAdvancedSettings: [];
@@ -53,8 +65,11 @@ defineSlots<{
   "display-settings-panel-extra"(): unknown;
 }>();
 
-const pnwRows = computed(() => pnwFlattenNavigationTree(props.nodes, props.expandedNodeIds));
-const pnwRailNodes = computed(() => pnwNavigationLeaves(props.nodes));
+const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
+const pnwRows = computed(() => pnwFlattenNavigationTree(
+  pnwNavigationNodes.value,
+  props.expandedNodeIds,
+));
 const pnwTreeButtons = new Map<string, HTMLButtonElement>();
 
 function pnwSetTreeButton(
@@ -73,15 +88,15 @@ function pnwVueIcon(icon: unknown): Component {
   return icon as Component;
 }
 
-function pnwNavigationInitial(label: string): string {
-  return Array.from(label.trim())[0] ?? "•";
-}
-
 function pnwToggleExpanded(nodeId: string): void {
   const next = new Set(props.expandedNodeIds);
   if (next.has(nodeId)) next.delete(nodeId);
   else next.add(nodeId);
   emit("update:expandedNodeIds", [...next]);
+}
+
+function pnwContainsActive(node: PnwNavigationNode): boolean {
+  return Boolean(props.activeNodeId && pnwNavigationNodeContains(node, props.activeNodeId));
 }
 
 function pnwActivateOrExpand(node: PnwNavigationNode, hasChildren: boolean): void {
@@ -148,8 +163,14 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
 <template>
   <nav
     class="pnw-activity-tree"
-    :class="{ 'pnw-activity-tree--collapsed': collapsed }"
+    :class="[
+      { 'pnw-activity-tree--collapsed': collapsed },
+      `pnw-activity-tree--expanded-${treeAppearance.expanded}`,
+      `pnw-activity-tree--collapsed-${treeAppearance.collapsed}`,
+    ]"
     :data-pnw-activity-tree-collapsed="collapsed"
+    :data-pnw-activity-tree-expanded-mode="treeAppearance.expanded"
+    :data-pnw-activity-tree-collapsed-mode="treeAppearance.collapsed"
     :aria-label="ariaLabel"
   >
     <header class="pnw-activity-tree-header">
@@ -166,37 +187,17 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
       </button>
     </header>
 
-    <div
+    <PnwActivityTreeRail
       v-if="collapsed"
-      class="pnw-activity-rail"
-      role="toolbar"
-      aria-orientation="vertical"
+      :nodes="pnwNavigationNodes"
+      :active-node-id="activeNodeId"
+      :expanded-node-ids="expandedNodeIds"
+      :mode="treeAppearance.collapsed"
       :aria-label="`${ariaLabel}快捷栏`"
-    >
-      <button
-        v-for="node in pnwRailNodes"
-        :key="node.id"
-        type="button"
-        class="pnw-activity-rail-item"
-        :class="{
-          'pnw-activity-rail-item--active': node.id === activeNodeId,
-          'pnw-activity-rail-item--disabled': node.disabled,
-        }"
-        :disabled="node.disabled"
-        :aria-label="node.label"
-        :aria-current="node.id === activeNodeId ? 'page' : undefined"
-        :title="node.label"
-        @click="emit('activate', node.id)"
-      >
-        <span class="pnw-activity-rail-icon" aria-hidden="true">
-          <template v-if="node.icon !== undefined">
-            <span v-if="pnwIsTextIcon(node.icon)">{{ node.icon }}</span>
-            <component :is="pnwVueIcon(node.icon)" v-else />
-          </template>
-          <span v-else>{{ pnwNavigationInitial(node.label) }}</span>
-        </span>
-      </button>
-    </div>
+      :color-scheme="colorScheme"
+      @activate="emit('activate', $event)"
+      @update:expanded-node-ids="emit('update:expandedNodeIds', $event)"
+    />
 
     <div v-else class="pnw-activity-tree-list" role="tree">
       <button
@@ -208,6 +209,9 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
         class="pnw-activity-tree-item"
         :class="{
           'pnw-activity-tree-item--active': row.node.id === activeNodeId,
+          'pnw-activity-tree-item--active-path': row.node.id !== activeNodeId
+            && pnwContainsActive(row.node),
+          'pnw-activity-tree-item--branch': row.hasChildren,
           'pnw-activity-tree-item--disabled': row.node.disabled,
         }"
         :style="{ '--pnw-activity-tree-depth': row.depth }"
@@ -240,11 +244,13 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
       v-if="showWorkbenchDisplaySettings"
       presentation="tree"
       :appearance="appearance"
+      :tree-appearance="treeAppearance"
       :color-scheme="colorScheme"
       :show-advanced-settings-action="showAdvancedSettingsAction"
       :trigger-variant="collapsed ? 'rail' : 'tree'"
       @update:presentation="emit('update:presentation', $event)"
       @update:appearance="emit('update:appearance', $event)"
+      @update:tree-appearance="emit('update:treeAppearance', $event)"
       @update:color-scheme="emit('update:colorScheme', $event)"
       @display-settings-action="emit('displaySettingsAction', $event)"
       @open-advanced-settings="emit('openAdvancedSettings')"
@@ -350,73 +356,6 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
   padding: 8px 6px;
 }
 
-.pnw-activity-rail {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 6px 4px;
-}
-
-.pnw-activity-rail-item {
-  width: 38px;
-  height: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 38px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--pnw-control-radius, 6px);
-  background: transparent;
-  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b));
-  cursor: pointer;
-  font: inherit;
-}
-
-.pnw-activity-rail-item:hover,
-.pnw-activity-rail-item:focus-visible {
-  outline: none;
-  background: var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(59, 130, 246, 0.09)));
-}
-
-.pnw-activity-rail-item:focus-visible {
-  border-color: var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
-}
-
-.pnw-activity-rail-item--active {
-  background: var(--pnw-control-active-bg, var(--pnw-workbench-default-active-bg, rgba(37, 99, 235, 0.13)));
-  color: var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #1d4ed8));
-}
-
-.pnw-activity-rail-item--disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-}
-
-.pnw-activity-rail-icon {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  text-overflow: clip;
-  white-space: nowrap;
-}
-
-.pnw-activity-rail-icon :deep(svg) {
-  width: 22px;
-  height: 22px;
-}
-
 .pnw-activity-tree-item {
   width: 100%;
   min-width: 180px;
@@ -452,6 +391,10 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
   font-weight: 600;
 }
 
+.pnw-activity-tree-item--active-path {
+  background: var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(59, 130, 246, 0.09)));
+}
+
 .pnw-activity-tree-item--disabled {
   opacity: 0.48;
   cursor: not-allowed;
@@ -481,5 +424,38 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pnw-activity-tree--expanded-admin-menu:not(.pnw-activity-tree--collapsed) .pnw-activity-tree-list {
+  padding: 6px;
+}
+
+.pnw-activity-tree--expanded-admin-menu:not(.pnw-activity-tree--collapsed) .pnw-activity-tree-item {
+  min-width: 188px;
+  height: 42px;
+  gap: 8px;
+  padding-left: calc(10px + (var(--pnw-activity-tree-depth) - 1) * 16px);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.pnw-activity-tree--expanded-admin-menu:not(.pnw-activity-tree--collapsed) .pnw-activity-tree-caret {
+  order: 3;
+  margin-left: auto;
+}
+
+.pnw-activity-tree--expanded-admin-menu:not(.pnw-activity-tree--collapsed) .pnw-activity-tree-icon {
+  order: 1;
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
+}
+
+.pnw-activity-tree--expanded-admin-menu:not(.pnw-activity-tree--collapsed) .pnw-activity-tree-label {
+  order: 2;
+}
+
+.pnw-activity-tree--expanded-admin-menu:not(.pnw-activity-tree--collapsed) .pnw-activity-tree-item--branch {
+  font-weight: 600;
 }
 </style>

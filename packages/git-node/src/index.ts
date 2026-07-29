@@ -15,6 +15,15 @@ export {
 } from "./repository.js";
 
 export {
+  type PnwGitCommitPage,
+  type PnwGitCommitPageReadOptions,
+  type PnwGitRepositorySummary,
+  type PnwGitRepositorySummaryReadOptions,
+  pnwReadGitCommitPage,
+  pnwReadGitRepositorySummary,
+} from "./repository-summary.js";
+
+export {
   type PnwGitSquashExecutionInput,
   type PnwGitSquashExecutionResult,
   pnwExecuteGitSquash,

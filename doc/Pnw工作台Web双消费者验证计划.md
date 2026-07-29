@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.5.2 本地候选（未发布）
+适用版本：Wing 0.6.0 本地候选（未发布）
 
-最后核验：2026-07-28
+最后核验：2026-07-29
 
 ## 1. 目标
 
@@ -22,11 +22,13 @@ W4 完成前，`PnwWorkbenchShell`、`PnwNavigationNode` 和 View Block componen
 
 | 工作线 | 仓库 / 分支 | 当前状态 | 允许写入 | 禁止事项 |
 |---|---|---|---|---|
-| Wing 真源 | `phoenix-wing` / `develop` | W0–W3 与 fixture 已完成，0.5.2 本地候选 | 公共契约、组件、纯函数、测试与文档 | 消费者 Router、权限、业务 API、偏好存储 |
-| Open Issue | `phoenix-open-issue` / `codex/single-pnw-workbench` | 第一轮本地适配已提交且工作树干净 | Open Issue 薄 adapter、产品 Pinia、View contribution 与回归测试 | 修改 Wing 真源、引入本地路径依赖、复制 fixture 业务假数据 |
-| Phoenix Admin | `phoenix-admin-vue` / 待建 `codex/pnw-workbench-shell` | 当前 `codex/open-issue-plugin` 有未归档改动 | 仅在独立干净分支或 worktree 中修改 `Pah*` adapter 与壳层 | 覆盖现有 dirty 文件、修改 Admin Node、一次替换 classic 模式 |
+| Wing 真源 | `phoenix-wing` / `develop` | W0–W3 与 fixture 已完成，0.6.0 本地候选 | 公共契约、组件、纯函数、测试与文档 | 消费者 Router、权限、业务 API、偏好存储 |
+| Open Issue | `phoenix-open-issue` / `codex/single-pnw-workbench` | 0.6.0 偏好、空态与真实 View contribution 已提交 | Open Issue 薄 adapter、产品 Pinia、View contribution 与回归测试 | 修改 Wing 真源、引入本地路径依赖、复制 fixture 业务假数据 |
+| Phoenix Admin | `phoenix-admin-vue` / `codex/pnw-workbench-shell` 隔离 worktree | 薄 adapter、权限导航投影、v3 偏好与 Shell 已提交 | 仅在独立干净分支或 worktree 中修改 `Pah*` adapter 与壳层 | 覆盖现有 dirty 文件、修改 Admin Node、一次替换 classic 模式 |
 
 消费者工作线可以分别启动、测试和提交，但不得同时改 Wing。若消费者暴露公共缺口，先在本计划的“决策记录”中写清两个消费者证据，再回到唯一 Wing 工作线修改、验证和提交。
+
+只读基线完成后，Open Issue、Phoenix Admin 与 Desk Tools 分别由独立 agent 在独立分支落地；Wing 公共契约、fixture 和文档仍只由主工作线写入。整个过程保持一仓一任务/分支，没有两个 agent 同时编辑同一消费者，也没有把消费者改动混入 Wing 提交。
 
 Phoenix Admin 当前工作树的 `.gitignore` 修改与 `build/cool/eps.*` 删除属于既有工作，不能由 W4 自动暂存、恢复或提交。开始 Admin 适配前必须先由其原任务归档，或从已确认的提交创建独立 worktree。
 
@@ -34,11 +36,19 @@ Phoenix Admin 当前工作树的 `.gitignore` 修改与 `build/cool/eps.*` 删�
 
 ### 已有基线
 
-- 通过进程级 resolver 消费并列 Wing 0.5.2 源码；manifest 与 lockfile 继续精确锁定 Registry `phoenix-wing@0.5.1`；
+- 通过进程级 resolver 消费并列 Wing 0.6.0 源码；manifest 与 lockfile 继续精确锁定 Registry `phoenix-wing@0.5.1`；
 - `PnwWorkbenchShell` 已接入现有 Ribbon 导航、Router、页面标签、Bottom 日志和 Footer；
 - “工作台显示设置”使用 Wing 单行图标快捷菜单与公共完整设置对话框；Open Issue 不复制表单，只绑定自己的 Pinia，并可按需提供 consumer action/界面 slot；
 - 默认 View 不贡献 Secondary；Footer 左侧保留产品状态，右侧由 Wing 生成可用 Block 开关；
 - 已通过 `verify:local-wing`，当前适配分支工作树干净。
+
+2026-07-29 对最终 0.6.0 API 的只读复核又确认：当前产品 store 已有 Pinia/localStorage，但还未用 `PnwWorkbenchDisplayPreferences` 与 `pnwNormalizeWorkbenchDisplayPreferences`；Shell 也未接 `treeAppearance`、`tabBarPlacement`、`displaySettingsPositions` 及相应 update 事件，`colorScheme` 目前只传入不回写。关闭最后一个 dashboard 标签后同路由 push 不触发 watcher，可能出现“标签已空、旧 View 仍在”；这是 Open Issue 的默认页/空态选择，不需要 Wing 新 API。
+
+同日实际命令复核确认 local resolver 与依赖图门禁通过；`verify:local-wing` 的 140 项测试为 134 通过、1 失败、5 跳过，唯一失败是 Registry contract 在 LOCAL 模式硬编码期待 `0.5.1`，实际正确解析 `0.6.0`。单独 build 已通过 core `tsc`，随后因当前只读消费者仓不能写 Server `dist` 而停止。该证据仍不足以关闭 A1：必须在消费者修正测试分流后，用标准 Node/pnpm 和可写目录完成整套测试、Server/Web build 与浏览器回归。
+
+后续实际适配已形成两笔中文提交：`023fa9b 工作台：适配 Wing 0.6.0 显示偏好与空状态`、`4fb5611 工作台：接入页面级 View 贡献`。Registry/LOCAL 版本期望已分流；v2 `PnwWorkbenchDisplayPreferences` envelope、Tree 外观、Tab 位置、设置坐标与最后 Tab 空态均已接通。Dashboard、列表/详情、组织和设置贡献真实 Primary，Issue 点检贡献真实 Secondary，设置数据库修正贡献真实 Bottom；根 Shell 不再固定业务 Block。
+
+最终完整 `pnpm verify:local-wing` 已通过：Wing 0.6.0 构建、37 篇文档、LOCAL 140 passed / 5 skipped、core/server/Web 生产构建全部完成，Web 转换 3453 个模块；另有 9 项 LOCAL 生命周期/窄屏定向测试通过。Registry 对照为 138 passed / 7 skipped。manifest、lockfile 与 override 均未改变，先前 `.vite-temp` 写权限缺口已经关闭。
 
 ### 本阶段任务
 
@@ -47,6 +57,8 @@ Phoenix Admin 当前工作树的 `.gitignore` 修改与 `build/cool/eps.*` 删�
 3. 验证 Bottom 日志多 Tab、Footer Bottom 开关和产品左侧状态；删除的旧 Footer 日志开关不得以第二套布局状态复活。
 4. 验证 Ribbon/Tree 切换保持节点 ID、权限过滤后的可见性、排序、当前路由与选中状态一致。
 5. 在约 700px 宽度验证 Activity Rail、页面标签和 Editor；只记录可复现的窄屏缺口，不先新增 Wing overlay/drawer API。
+6. 将产品显示偏好迁入版本化 envelope：读写前统一 normalize，补齐 Tree 两轴外观、三个标签位置和设置浮窗坐标；`expandedNodeIds` 与页面 session 继续单独保存。
+7. 明确关闭最后页面后的产品语义：选择显式重开 dashboard，或真正使用 Shell 空态；禁止留下已关闭 View。
 
 ### 扩大覆盖后的 Layout 复盘 TODO
 
@@ -77,9 +89,15 @@ pnpm verify:local-wing
 
 ### 当前只读审计
 
-Phoenix Admin 尚未适配 W4 的 `PnwWorkbenchShell`。当前 `PahWorkbenchShell.vue` 仍手工绘制 Header、Tree、四区、Bottom 拖拽和 Footer，只复用了 Wing 0.5.1 的低层 Ribbon/Tab/Log 组件；也尚未建立唯一 `PnwNavigationNode[]` 投影、`PnwWorkbenchLayoutState`、动态 View contribution、Bottom tabs 或公共显示设置接线。
+Phoenix Admin 尚未适配 W4 的 `PnwWorkbenchShell`。当前 `PahWorkbenchShell.vue` 仍手工绘制 Header、Tree、四区、Bottom 拖拽和 Footer，只复用了 Wing 0.5.1 的低层 Ribbon/Tab/Log 组件；也尚未建立唯一 `PnwNavigationNode[]` 投影、`PnwWorkbenchDisplayPreferences`、动态 View contribution、Bottom tabs 或公共显示设置接线。
 
 当前截图中多个功能都显示九宫格图标的直接原因也在 Admin：`ribbonGroupItems()` 把每个条目的图标硬编码为 `Grid`，而菜单数据与 `PahRibbonMenuAdapter` 已保留各自的 `icon` 字段。后续应先在 Admin 用产品侧 `PahMenuIcon` resolver 消费既有 SVG sprite；Wing 只继续维护跨至少两个 Web 消费者验证过的壳层通用图标，不把约 65 个 Admin 业务图标整体迁入公共库。
+
+2026-07-29 再次只读核验确认：Admin 当前分支 `codex/open-issue-plugin` 相对 develop 已有独立提交，且暂存区包含 `.gitignore` 与 `build/cool/eps.*` 的无关改动，不适合直接混入 0.6 适配。现有偏好模型还存在“类型定义为 v2、实际保存 version 1”的产品迁移问题。下一步必须从已确认提交建立独立 `codex/pnw-workbench-shell` worktree，再新增 `PahWorkbenchAdapter` 与 v3 display envelope；不得在 Wing 内增加 route path、权限表达式或 Admin 菜单类型。
+
+同日命令级基线显示当前仓甚至不具备直接开工条件：`pnpm test` 在 Vite 写根目录临时配置时受当前只读权限阻止，未执行测试；显式无增量 `vue-tsc` 则因暂存删除的 `build/cool/eps.d.ts` 报 `Cannot find namespace 'Eps'`。执行前后仍只有 `.gitignore` 与两个 EPS 文件的原暂存差异，没有生成新文件。该失败是 Admin 分支/EPS 基线与工作区权限问题，不是 Wing 0.6.0 类型或 API 回归；在独立干净 worktree 和 local-Wing resolver 建立前不得把它记为消费者适配失败。
+
+后续已从当前已提交 HEAD 建立 `/private/tmp/phoenix-admin-pnw-workbench` 隔离 worktree 和 `codex/pnw-workbench-shell`，提交 `d06b873 适配 Wing 0.6 工作台壳层`。该提交新增 local-Wing resolver、`PahWorkbenchAdapter`、唯一权限导航投影、v3 显示偏好迁移与 `PnwWorkbenchShell` 薄装配；默认不制造 Secondary，只保留真实全局日志 Bottom，`navigation.vue` 使用 `PnwPageHeader`。Wing 0.6.0 构建、Admin 聚焦 `vue-tsc`、8 个文件 26 项测试、2731 模块生产构建、Prettier 与 diff check 均通过；manifest/lock/workspace 未改。原 `codex/open-issue-plugin` 的 staged `.gitignore`/EPS 状态严格未变。
 
 因此 W4-B 必须从薄 adapter、偏好迁移和少量真实路由开始，不能把当前页面外观当作新框架 layout 已完成。Admin 详细文件级适配清单由后续独立消费者任务在干净分支中维护；本计划只固定公共边界和退出门禁。
 
@@ -97,6 +115,7 @@ Phoenix Admin 尚未适配 W4 的 `PnwWorkbenchShell`。当前 `PahWorkbenchShel
 3. 用 `PnwWorkbenchShell` 替换 `PahWorkbenchShell` 中可直接复用的 Header、Activity、Tab、四区布局、句柄与 Footer 结构；`<views />` 继续放 Editor，Admin 用户区继续放 `header-actions`。
 4. 建立 Admin 自己的 View contribution registry。普通页面默认 `Primary + Editor`；只为属性检查器、预览或 Desk Tools 类复杂页面贡献 Secondary；日志/问题面板投影为 Bottom tabs。
 5. 将现有 `PahWorkbenchPreferences` 映射为一份 `PnwWorkbenchLayoutState` 与 Ribbon/Tree 外观状态；Pinia、本地存储或未来后端数据库仍由 Admin 选择。
+   推荐新增 Admin 自有版本化 envelope，迁移旧 `navigationStyle / ribbonLayout / primaryOpen / propertiesOpen / logOpen / logHeight`，再由 `pnwNormalizeWorkbenchDisplayPreferences` 统一校验；设置坐标写入须防抖，旧 key 第一阶段保留用于回滚。
 6. 先验证少量 workbench 路由，再扩大覆盖。classic 模式始终可用于行为对照与安全回退。
 
 ### 退出门禁
@@ -151,11 +170,16 @@ pnpm build
 W4 按以下顺序关闭：
 
 1. **A0 已完成：** Open Issue 第一轮壳层接入、本地验证和分支归档；
-2. **A1 待完成：** Open Issue 真实 View contribution、窄屏与关闭生命周期回归；
-3. **B0 待开始：** Admin dirty 工作归档并建立独立适配分支/worktree；
-4. **B1 待完成：** Admin 薄 adapter 与少量 workbench 路由接入；
+2. **A1 已完成本地候选证据：** Open Issue 真实 View contribution、窄屏、关闭生命周期、类型与 core/server/Web 生产 bundle 全部通过；
+3. **B0 已完成：** 原 dirty 工作未动，已建立独立 `codex/pnw-workbench-shell` worktree；
+4. **B1 已完成：** Admin 薄 adapter、权限导航、偏好迁移与工作台路由接入；
 5. **B2 待完成：** Admin classic/workbench/hybrid、权限、多 Tab、动态 Block 和布局偏好回归；
-6. **C0 待完成：** 比较两个消费者，只把共同且稳定的最小差异回收到 Wing；
-7. **C1 待完成：** 决定实验契约是否冻结、是否仍需 BOM Studio/Desk Tools 针对性验证，以及何时发布 Wing 新版本。
+6. **C0 已完成本轮比较：** Open Issue/Admin 未要求扩充导航或 Shell 数据结构；真实 Desk 消费只暴露标题 composable 的只读输入类型过窄，已在 Wing 最小修正；
+7. **C1 进行中：** Desk Tools 已完成针对性布局接入与完整 local-Wing 测试/构建，BOM Studio 仍作为独立 Shell adapter 工作线；
+8. **C2 待完成：** 汇总四个消费者证据，决定实验契约是否冻结以及何时发布 Wing 新版本。
+
+2026-07-29 两个独立只读复核均得出相同结论：当前 0.6.0 候选不再缺强制公共 API。Open Issue 的最后页关闭、Admin 的权限/Router/KeepAlive/图标、两边的持久化 envelope 都属于产品 adapter；不得为这些差异继续扩充 `PnwNavigationNode` 或 Shell。
+
+同日 KT BOM Studio 的独立复核确认：当前仍是 `0.5.1 +` 五段自建壳，尚未接入 Shell、统一导航树、显示偏好、`PnwPageHeader` 或实例级 View contribution。它已正式纳入 C1；先补标准 local-Wing resolver，再在独立分支用一个 BOM Shell adapter 收敛，现有 24 个 Primary 页面作为真实生命周期证据，Secondary/Bottom 不造假数据。
 
 任一消费者“能启动”只表示进入 smoke，不等于 W4 完成；发布决定必须在 C0 之后单独确认。

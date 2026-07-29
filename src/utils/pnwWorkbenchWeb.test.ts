@@ -5,6 +5,9 @@ import type {
 } from "../types/PnwWorkbenchWeb.js";
 import {
   PNW_DEFAULT_WORKBENCH_LAYOUT_STATE,
+  PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+  PNW_WORKBENCH_NARROW_BREAKPOINT,
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   PNW_DEFAULT_RIBBON_APPEARANCE,
   pnwAvailableViewBlockIds,
   pnwNextRibbonFocusIndex,
@@ -14,6 +17,9 @@ import {
   pnwToggleViewBlockVisibility,
   pnwResolveWorkbenchLayoutState,
   pnwResizeWorkbenchLayoutState,
+  pnwResolveWorkbenchResponsiveState,
+  pnwNormalizeWorkbenchTabBarPlacement,
+  pnwNormalizeWorkbenchDisplayPreferences,
   pnwValidateRibbonAppearance,
 } from "./pnwWorkbenchWeb.js";
 
@@ -59,6 +65,91 @@ describe("PnwWorkbench 四区布局状态", () => {
       .toEqual(visibleState.sizes);
     expect(PNW_DEFAULT_WORKBENCH_LAYOUT_STATE.visibility)
       .toEqual({ primary: false, bottom: false, secondary: false });
+  });
+});
+
+describe("PnwWorkbench View 标签位置", () => {
+  it("默认保持既有 Header 内页签", () => {
+    expect(PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT).toBe("header");
+    expect(pnwNormalizeWorkbenchTabBarPlacement("unknown-placement")).toBe("header");
+    expect(pnwNormalizeWorkbenchTabBarPlacement("editor-bottom")).toBe("editor-bottom");
+  });
+
+  it("窄容器只覆盖实际呈现并保留 consumer 偏好", () => {
+    expect(pnwResolveWorkbenchResponsiveState(
+      "tree",
+      "header",
+      PNW_WORKBENCH_NARROW_BREAKPOINT,
+    )).toEqual({
+      narrow: true,
+      preferredPresentation: "tree",
+      effectivePresentation: "ribbon",
+      preferredTabBarPlacement: "header",
+      effectiveTabBarPlacement: "after-navigation",
+    });
+
+    expect(pnwResolveWorkbenchResponsiveState("tree", "header", 841)).toMatchObject({
+      narrow: false,
+      effectivePresentation: "tree",
+      effectiveTabBarPlacement: "header",
+    });
+    expect(pnwResolveWorkbenchResponsiveState("ribbon", "editor-bottom", 700)).toMatchObject({
+      narrow: true,
+      effectivePresentation: "ribbon",
+      effectiveTabBarPlacement: "editor-bottom",
+    });
+  });
+
+  it("统一修正持久化显示配置中的非法枚举、尺寸、布尔值和浮层坐标", () => {
+    expect(pnwNormalizeWorkbenchDisplayPreferences({
+      presentation: "drawer",
+      ribbonAppearance: {
+        mode: "wide",
+        compact: { iconSize: 36, showTitles: "yes" },
+        ribbon: { iconSize: 16, showTitles: false, showGroupLabels: false },
+      },
+      treeCollapsed: "yes",
+      treeAppearance: { expanded: "legacy", collapsed: "popup" },
+      tabBarPlacement: "unknown-placement",
+      colorScheme: "blue",
+      layoutState: {
+        visibility: { primary: true, bottom: "yes", secondary: false },
+        sizes: { primaryWidth: 900, secondaryWidth: Number.NaN, bottomHeight: -4 },
+      },
+      settingsPositions: {
+        quick: { x: Number.NaN, y: 120 },
+        full: { x: 44, y: "top" },
+      },
+    })).toMatchObject({
+      presentation: "ribbon",
+      ribbonAppearance: {
+        mode: "ribbon",
+        compact: { iconSize: 24, showTitles: true, showGroupLabels: false },
+        ribbon: { iconSize: 36, showTitles: false, showGroupLabels: false },
+      },
+      treeCollapsed: false,
+      treeAppearance: { expanded: "outline", collapsed: "leaf-rail" },
+      tabBarPlacement: "header",
+      colorScheme: "system",
+      layoutState: {
+        visibility: { primary: true, bottom: false, secondary: false },
+        sizes: { primaryWidth: 560, secondaryWidth: 280, bottomHeight: 112 },
+      },
+      settingsPositions: {
+        quick: { x: 16, y: 120 },
+        full: { x: 44, y: 8 },
+      },
+    });
+  });
+
+  it("允许 consumer 的合法默认标签位置参与缺省回退", () => {
+    expect(pnwNormalizeWorkbenchDisplayPreferences(
+      { tabBarPlacement: "unknown-placement" },
+      {
+        ...pnwNormalizeWorkbenchDisplayPreferences(undefined),
+        tabBarPlacement: "editor-bottom",
+      },
+    ).tabBarPlacement).toBe("editor-bottom");
   });
 });
 
@@ -132,6 +223,15 @@ describe("PnwRibbon 外观", () => {
     expect(pnwNextRibbonFocusIndex(1, 3, "Home")).toBe(0);
     expect(pnwNextRibbonFocusIndex(1, 3, "End")).toBe(2);
     expect(pnwNextRibbonFocusIndex(1, 3, "Enter")).toBeNull();
+  });
+});
+
+describe("PnwActivityTree 外观", () => {
+  it("默认保持既有大纲树与全部叶子图标栏", () => {
+    expect(PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE).toEqual({
+      expanded: "outline",
+      collapsed: "leaf-rail",
+    });
   });
 });
 
