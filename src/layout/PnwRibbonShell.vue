@@ -2,6 +2,8 @@
 defineProps<{
   collapsed?: boolean;
   layout?: "stacked" | "inline";
+  /** 兼容旧入口默认显示；新 PnwRibbon 将外观操作收敛到单一菜单。 */
+  showLayoutToggle?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -15,8 +17,11 @@ const emit = defineEmits<{
     <div class="pnw-ribbon-body">
       <slot />
     </div>
+    <div v-if="$slots.actions" class="pnw-ribbon-actions">
+      <slot name="actions" />
+    </div>
     <button
-      v-if="!collapsed"
+      v-if="!collapsed && showLayoutToggle !== false"
       class="pnw-ribbon-layout-toggle"
       :title="layout === 'inline' ? '双行显示' : '单行显示'"
       @click="emit('update:layout', layout === 'inline' ? 'stacked' : 'inline')"
@@ -36,8 +41,8 @@ const emit = defineEmits<{
 <style scoped>
 .pnw-ribbon-shell {
   flex-shrink: 0;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
+  background: var(--pnw-ribbon-bg, var(--pnw-workbench-default-ribbon-bg, #fff));
+  border-bottom: 1px solid var(--pnw-workbench-border, var(--border, var(--pnw-workbench-default-border, #dbe3ed)));
   display: flex;
   align-items: stretch;
 }
@@ -69,13 +74,23 @@ const emit = defineEmits<{
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
-  color: var(--phoenix-text-secondary, #64748b);
+  color: var(--pnw-workbench-muted, var(--phoenix-text-secondary, var(--pnw-workbench-default-muted, #64748b)));
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
 
 .pnw-ribbon-layout-toggle:hover {
-  background: var(--ribbon-btn-hover, rgba(148, 163, 184, 0.12));
-  color: var(--phoenix-text, #1e293b);
+  background: var(--pnw-control-hover-bg, var(--ribbon-btn-hover, var(--pnw-workbench-default-hover-bg, rgba(148, 163, 184, 0.12))));
+  color: var(--pnw-workbench-text, var(--phoenix-text, var(--pnw-workbench-default-text, #1e293b)));
+}
+
+.pnw-ribbon-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  background: inherit;
+  border-left: 1px solid var(--pnw-workbench-border, var(--border, var(--pnw-workbench-default-border, #e2e8f0)));
 }
 </style>

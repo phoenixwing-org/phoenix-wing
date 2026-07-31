@@ -1,11 +1,12 @@
-import { watch, type Ref } from "vue";
+import { toValue, watch, type MaybeRefOrGetter } from "vue";
 
 export const PNW_DEFAULT_APP_TITLE = "Phoenix";
 
 export function usePnwDocumentTitle(options: {
-  workspaceShort: Ref<string>;
-  workspacePath: Ref<string>;
-  pageLabel: Ref<string | undefined>;
+  /** 接受 ref、只读 computed 或 getter；标题同步不会回写 consumer 状态。 */
+  workspaceShort: MaybeRefOrGetter<string>;
+  workspacePath: MaybeRefOrGetter<string>;
+  pageLabel: MaybeRefOrGetter<string | undefined>;
   /** 应用标题，默认 "Phoenix" */
   appTitle?: string;
 }) {
@@ -13,10 +14,11 @@ export function usePnwDocumentTitle(options: {
 
   function syncTitle() {
     let title = TITLE;
-    if (options.workspacePath.value) {
-      title = `${TITLE} - ${options.workspaceShort.value}`;
+    const workspacePath = toValue(options.workspacePath);
+    if (workspacePath) {
+      title = `${TITLE} - ${toValue(options.workspaceShort)}`;
     }
-    const page = options.pageLabel.value;
+    const page = toValue(options.pageLabel);
     if (page && page !== "欢迎") {
       title = `${title} · ${page}`;
     }
@@ -24,7 +26,11 @@ export function usePnwDocumentTitle(options: {
   }
 
   watch(
-    [options.workspaceShort, options.workspacePath, options.pageLabel],
+    () => [
+      toValue(options.workspaceShort),
+      toValue(options.workspacePath),
+      toValue(options.pageLabel),
+    ],
     syncTitle,
     { immediate: true },
   );

@@ -8,6 +8,8 @@ export interface PnwGitCommandOptions {
   readonly timeoutMs?: number;
   readonly maxOutputBytes?: number;
   readonly allowFailure?: boolean;
+  /** Cancels the child process and rejects with an AbortError. */
+  readonly signal?: AbortSignal;
 }
 
 export interface PnwGitCommandResult {
@@ -34,6 +36,7 @@ export async function pnwRunGitCommand(
   args: readonly string[],
   options: PnwGitCommandOptions,
 ): Promise<PnwGitCommandResult> {
+  if (options.signal?.aborted) throw pnwCreateGitAbortError(options.signal.reason);
   const timeoutMs = options.timeoutMs ?? 30_000;
   const maxOutputBytes = options.maxOutputBytes ?? 16 * 1024 * 1024;
   return await new Promise<PnwGitCommandResult>((resolve, reject) => {
@@ -52,10 +55,15 @@ export async function pnwRunGitCommand(
       child.kill();
       finish(new Error(`git command timed out after ${timeoutMs}ms`));
     }, timeoutMs);
+    const onAbort = () => {
+      child.kill();
+      finish(pnwCreateGitAbortError(options.signal?.reason));
+    };
     const finish = (error?: Error, result?: PnwGitCommandResult) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
+      options.signal?.removeEventListener("abort", onAbort);
       if (error) reject(error);
       else resolve(result!);
     };
@@ -80,7 +88,19 @@ export async function pnwRunGitCommand(
       if (result.exitCode !== 0 && !options.allowFailure) finish(new PnwGitCommandError(args, result));
       else finish(undefined, result);
     });
+    options.signal?.addEventListener("abort", onAbort, { once: true });
+    if (options.signal?.aborted) {
+      onAbort();
+      return;
+    }
     if (options.input !== undefined) child.stdin.end(options.input, "utf8");
     else child.stdin.end();
   });
+}
+
+function pnwCreateGitAbortError(reason: unknown): Error {
+  if (reason instanceof Error && reason.name === "AbortError") return reason;
+  const error = new Error("Git command was aborted", reason === undefined ? undefined : { cause: reason });
+  error.name = "AbortError";
+  return error;
 }

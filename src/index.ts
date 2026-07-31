@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.5.1'
+export const PNW_VERSION = '0.6.0'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -53,6 +53,21 @@ export { type PnwColorScheme, pnwResolveColorScheme, pnwApplyColorScheme } from 
 // 指针拖拽
 // ---------------------------------------------------------------------------
 export { pnwBindPointerDrag } from './utils/pnwPointerDrag.js'
+export {
+  pnwClampFloatingPanelPosition,
+  type PnwFloatingPanelPosition,
+  type PnwFloatingPanelSize,
+} from './utils/pnwFloatingPanel.js'
+
+// ---------------------------------------------------------------------------
+// 常用 SVG 图标资源
+// ---------------------------------------------------------------------------
+export {
+  PNW_ICON_NAMES,
+  PNW_ICON_TEST_SIZES,
+  type PnwIconName,
+  type PnwIconTestSize,
+} from './icons/pnwIconCatalog.js'
 
 // ---------------------------------------------------------------------------
 // 浏览器存储
@@ -154,6 +169,81 @@ export {
 } from './types/PnwRibbonConfig.js'
 
 // ---------------------------------------------------------------------------
+// Pnw Web 工作台实验契约（W4 双消费者验证前不冻结为版本化协议）
+// ---------------------------------------------------------------------------
+export {
+  type PnwActivityBarPresentation,
+  type PnwActivityTreeExpandedMode,
+  type PnwActivityTreeCollapsedMode,
+  type PnwActivityTreeAppearance,
+  type PnwRibbonDisplayMode,
+  type PnwRibbonIconSize,
+  type PnwRibbonMode,
+  type PnwRibbonModeAppearance,
+  type PnwRibbonAppearance,
+  type PnwNavigationNode,
+  type PnwWorkbenchTabItem,
+  type PnwWorkbenchTabBarPlacement,
+  type PnwWorkbenchResponsiveState,
+  type PnwBottomPanelTabTone,
+  type PnwBottomPanelTab,
+  type PnwViewBlockId,
+  type PnwViewBlockContributions,
+  type PnwViewBlockVisibility,
+  type PnwWorkbenchPanelSizes,
+  type PnwWorkbenchLayoutState,
+  type PnwWorkbenchDisplaySettingsPositions,
+  type PnwWorkbenchDisplayPreferences,
+  type PnwWorkbenchLayoutViewport,
+} from './types/PnwWorkbenchWeb.js'
+
+export {
+  type PnwViewBlockComponentContribution,
+  type PnwBottomViewBlockComponentContribution,
+  type PnwViewBlockComponentContributions,
+  type PnwWorkbenchDisplaySettingsActionSlotProps,
+} from './types/PnwWorkbenchVue.js'
+
+export {
+  type PnwLogLevel,
+  type PnwLogEntry,
+  type PnwLogFilter,
+  type PnwProblemSeverity,
+  type PnwProblemInput,
+  type PnwProblemItem,
+  type PnwProblemFilter,
+  type PnwDiagnosticsSnapshot,
+  type PnwDiagnosticsCommand,
+  type PnwDiagnosticsListener,
+  type PnwDiagnosticsHub,
+  type PnwDiagnosticsHubOptions,
+} from './types/PnwDiagnostics.js'
+
+export {
+  PNW_DEFAULT_DIAGNOSTICS_MAX_LOG_ENTRIES,
+  PNW_DIAGNOSTICS_MAX_LOG_ENTRIES_LIMIT,
+  pnwCreateDiagnosticsHub,
+  pnwFilterLogEntries,
+  pnwFilterProblemItems,
+  pnwDiagnosticsLogChannels,
+} from './utils/pnwDiagnostics.js'
+
+export {
+  type PnwViewContributionRegistry,
+  type PnwViewContributionRegistration,
+  pnwCreateViewContributionRegistry,
+  pnwCreateViewContributionRegistration,
+  usePnwViewContribution,
+  usePnwRegisteredViewContribution,
+} from './composables/usePnwViewContribution.js'
+
+export {
+  pnwViewBlockComponentAvailability,
+  pnwResolveViewBlockComponentProps,
+  pnwResolveBottomViewBlockTabs,
+} from './composables/pnwViewBlockComponents.js'
+
+// ---------------------------------------------------------------------------
 // 工作台 Tab 管理
 // ---------------------------------------------------------------------------
 export {
@@ -173,6 +263,47 @@ export {
 // ---------------------------------------------------------------------------
 export { pnwRegisterRibbonIcons, pnwRibbonIconFor } from './composables/pnwRibbonIcons.js'
 export { usePnwRibbonTabs } from './composables/usePnwRibbonTabs.js'
+
+export {
+  pnwNavigationFromRibbonTabs,
+  pnwVisibleNavigationNodes,
+  pnwFlattenNavigationTree,
+  pnwNavigationLeaves,
+  pnwNavigationLeafIds,
+  pnwNavigationNodeContains,
+  pnwProjectNavigationRibbon,
+  type PnwNavigationTreeRow,
+  type PnwNavigationRibbonGroup,
+  type PnwNavigationRibbonModule,
+  type PnwRibbonNavigationAdapterOptions,
+} from './utils/pnwNavigationTree.js'
+
+export {
+  PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
+  PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
+  PNW_WORKBENCH_NARROW_BREAKPOINT,
+  PNW_DEFAULT_RIBBON_APPEARANCE,
+  PNW_WORKBENCH_PANEL_SIZE_LIMITS,
+  PNW_DEFAULT_WORKBENCH_PANEL_SIZES,
+  PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS,
+  PNW_DEFAULT_WORKBENCH_DISPLAY_PREFERENCES,
+  PNW_DEFAULT_WORKBENCH_LAYOUT_STATE,
+  PNW_VIEW_BLOCK_IDS,
+  pnwRibbonIconSizesFor,
+  pnwResolveRibbonNaturalHeight,
+  pnwValidateRibbonAppearance,
+  pnwNextRibbonFocusIndex,
+  pnwAvailableViewBlockIds,
+  pnwResolveViewBlockVisibility,
+  pnwToggleViewBlockVisibility,
+  pnwResolveWorkbenchLayoutState,
+  pnwResizeWorkbenchLayoutState,
+  pnwResolveWorkbenchResponsiveState,
+  pnwNormalizeWorkbenchTabBarPlacement,
+  pnwNormalizeWorkbenchDisplayPreferences,
+  type PnwRibbonAppearanceIssueCode,
+  type PnwRibbonAppearanceValidation,
+} from './utils/pnwWorkbenchWeb.js'
 
 // ---------------------------------------------------------------------------
 // URL 同步
@@ -219,18 +350,35 @@ export { default as PnwComboTextInput } from './components/PnwComboTextInput.vue
 export { default as PnwDictSelect } from './components/PnwDictSelect.vue'
 export { default as PnwEditorDrawerHost } from './components/PnwEditorDrawerHost.vue'
 export { default as PnwExpandCaret } from './components/PnwExpandCaret.vue'
+export { default as PnwFloatingPanel } from './components/PnwFloatingPanel.vue'
+export { default as PnwIcon } from './components/PnwIcon.vue'
+export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
 
 export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'
+export { default as PnwActivityBar } from './layout/PnwActivityBar.vue'
+export { default as PnwActivityTree } from './layout/PnwActivityTree.vue'
+export { default as PnwBottomPanel } from './layout/PnwBottomPanel.vue'
+export { default as PnwLogBlock } from './layout/PnwLogBlock.vue'
+export { default as PnwProblemsBlock } from './layout/PnwProblemsBlock.vue'
+export { default as PnwPrimaryBlock } from './layout/PnwPrimaryBlock.vue'
+export { default as PnwRibbon } from './layout/PnwRibbon.vue'
 export { default as PnwRibbonGroup } from './layout/PnwRibbonGroup.vue'
 export { default as PnwRibbonShell } from './layout/PnwRibbonShell.vue'
 export { default as PnwRibbonTabBar } from './layout/PnwRibbonTabBar.vue'
 export { default as PnwRibbonToolButton } from './layout/PnwRibbonToolButton.vue'
 export { default as PnwRibbonUtilButton } from './layout/PnwRibbonUtilButton.vue'
+export { default as PnwSecondaryBlock } from './layout/PnwSecondaryBlock.vue'
 export { default as PnwShellLogPanel } from './layout/PnwShellLogPanel.vue'
 export { default as PnwSidebarBlock } from './layout/PnwSidebarBlock.vue'
 export { default as PnwSidebarBlockHead } from './layout/PnwSidebarBlockHead.vue'
 export { default as PnwWelcomeShell } from './layout/PnwWelcomeShell.vue'
 export { default as PnwWorkbenchTabBar } from './layout/PnwWorkbenchTabBar.vue'
+export { default as PnwWorkbenchFooter } from './layout/PnwWorkbenchFooter.vue'
+export { default as PnwWorkbenchHeader } from './layout/PnwWorkbenchHeader.vue'
+export { default as PnwWorkbenchDisplaySettingsPanel } from './layout/PnwWorkbenchDisplaySettingsPanel.vue'
+export { default as PnwWorkbenchDisplaySettingsSection } from './layout/PnwWorkbenchDisplaySettingsSection.vue'
+export { default as PnwWorkbenchShell } from './layout/PnwWorkbenchShell.vue'
+export { default as PnwWorkbenchLayout } from './layout/PnwWorkbenchLayout.vue'
 
 // 0.4.x 兼容子路径（同样解析到编译后的 dist JS）:
 //   import PnwSidebarBlock from 'phoenix-wing/layout/PnwSidebarBlock.vue'
@@ -249,4 +397,6 @@ export { default as PnwWorkbenchTabBar } from './layout/PnwWorkbenchTabBar.vue'
 //   import PnwComboTextInput from 'phoenix-wing/components/PnwComboTextInput.vue'
 //   import PnwEditorDrawerHost from 'phoenix-wing/components/PnwEditorDrawerHost.vue'
 //   import PnwExpandCaret from 'phoenix-wing/components/PnwExpandCaret.vue'
+//   import PnwIcon from 'phoenix-wing/components/PnwIcon.vue'
 //   import PnwAsyncProgressOverlay from 'phoenix-wing/components/PnwAsyncProgressOverlay.vue'
+//   import PnwPhoenixWingMark from 'phoenix-wing/components/PnwPhoenixWingMark.vue'

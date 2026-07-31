@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pnwFormatGitGroupSummaries, pnwFormatGitGroupSummary, pnwShortestUniqueGitOid } from "./group-summary.js";
-import type { PnwGitCommitRecord } from "./types.js";
+import type { PnwGitCommitRecord, PnwGitCommitSummary } from "./types.js";
 
 const commit: PnwGitCommitRecord = {
   oid: "4b4622df4580439c1b93876a87565c2420a4f253",
@@ -15,6 +15,18 @@ const commit: PnwGitCommitRecord = {
 };
 
 describe("Git group summary", () => {
+  it("formats the lightweight read-only commit shape without rewrite metadata", () => {
+    const summary: PnwGitCommitSummary = {
+      oid: commit.oid,
+      author: commit.author,
+      committer: commit.committer,
+      subject: commit.subject,
+      body: commit.body,
+    };
+    expect(pnwFormatGitGroupSummary({ repositoryName: "PNXCaaStudy", branch: "main", commit: summary }).shortOid)
+      .toBe("4b4622d");
+  });
+
   it("formats the agreed group message and ++ code-updated marker", () => {
     expect(pnwFormatGitGroupSummary({ repositoryName: "PNXCaaStudy", upstream: "origin/sort", commit })).toEqual({
       text: "PNXCaaStudy origin/sort **Commit:** 4b4622d ++\n修复：补齐曲线分割命令构造控制符 审查：@Kevin",

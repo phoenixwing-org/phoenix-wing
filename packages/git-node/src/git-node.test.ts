@@ -1,9 +1,10 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { pnwRunGitCommand } from "./git-runner.js";
 import { pnwAnalyzeGitSquash, pnwReadGitRepository } from "./repository.js";
+import { pnwReadGitCommitPage, pnwReadGitRepositorySummary } from "./repository-summary.js";
 import { pnwExecuteGitSquash, pnwUndoGitSquash } from "./squash-transaction.js";
 
 const roots: string[] = [];
@@ -13,6 +14,81 @@ afterEach(async () => {
 });
 
 describe("Git Node adapter", () => {
+  it("reads a lightweight repository summary without full snapshot fields", async () => {
+    const root = await createRepository();
+    await git(root, ["commit", "--amend", "-m", "F", "-m", "Summary body line one\nSummary body line two"]);
+    const headOid = (await pnwRunGitCommand(["rev-parse", "HEAD"], { cwd: root })).stdout.trim();
+    await git(root, ["remote", "add", "origin", "https://example.com/phoenix/repository.git"]);
+    await git(root, ["update-ref", "refs/remotes/origin/main", headOid]);
+    await git(root, ["branch", "--set-upstream-to", "origin/main", "main"]);
+
+    const summary = await pnwReadGitRepositorySummary(root, {
+      maxCommits: 2,
+      includeRemoteUrl: true,
+    });
+
+    expect(summary).toEqual(expect.objectContaining({
+      root: await realpath(root),
+      headOid,
+      currentRef: "refs/heads/main",
+      branch: "main",
+      upstream: "origin/main",
+      remoteUrl: "https://example.com/phoenix/repository.git",
+    }));
+    expect(summary.commits.map((commit) => commit.subject)).toEqual(["F", "E"]);
+    expect(summary.commits[0]).toEqual(expect.objectContaining({
+      oid: headOid,
+      author: expect.objectContaining({ name: "Phoenix Wing", email: "wing@example.com" }),
+      committer: expect.objectContaining({ name: "Phoenix Wing", email: "wing@example.com" }),
+      body: "Summary body line one\nSummary body line two",
+    }));
+    expect(Object.keys(summary).sort()).toEqual([
+      "branch", "commits", "currentRef", "headOid", "remoteUrl", "root", "upstream",
+    ]);
+  }, GIT_INTEGRATION_TIMEOUT_MS);
+
+  it("pages first-parent commits by an exclusive OID cursor and rejects stale HEAD", async () => {
+    const root = await createRepository();
+    const headOid = (await pnwRunGitCommand(["rev-parse", "HEAD"], { cwd: root })).stdout.trim();
+    const first = await pnwReadGitCommitPage(root, { expectedHeadOid: headOid, limit: 2 });
+    expect(first.commits.map((commit) => commit.subject)).toEqual(["F", "E"]);
+    expect(first.hasMore).toBe(true);
+    expect(first.nextBeforeOid).toBe(first.commits[1]!.oid);
+
+    const second = await pnwReadGitCommitPage(root, {
+      expectedHeadOid: headOid,
+      beforeOid: first.nextBeforeOid,
+      limit: 2,
+    });
+    expect(second.commits.map((commit) => commit.subject)).toEqual(["D", "C"]);
+    expect(second.nextBeforeOid).toBe(second.commits[1]!.oid);
+
+    const third = await pnwReadGitCommitPage(root, {
+      expectedHeadOid: headOid,
+      beforeOid: second.nextBeforeOid,
+      limit: 2,
+    });
+    expect(third.commits.map((commit) => commit.subject)).toEqual(["B", "A"]);
+    expect(third.hasMore).toBe(false);
+    expect(third.nextBeforeOid).toBeUndefined();
+
+    await writeFile(path.join(root, "state.txt"), "G\n", "utf8");
+    await git(root, ["add", "state.txt"]);
+    await git(root, ["commit", "-m", "G"]);
+    await expect(pnwReadGitCommitPage(root, { expectedHeadOid: headOid, limit: 2 }))
+      .rejects.toThrow("Git HEAD changed");
+  }, GIT_INTEGRATION_TIMEOUT_MS);
+
+  it("supports AbortSignal on lightweight and compatible full reads", async () => {
+    const root = await createRepository();
+    const controller = new AbortController();
+    controller.abort();
+    await expect(pnwReadGitRepositorySummary(root, { signal: controller.signal }))
+      .rejects.toMatchObject({ name: "AbortError" });
+    await expect(pnwReadGitRepository(root, { signal: controller.signal }))
+      .rejects.toMatchObject({ name: "AbortError" });
+  }, GIT_INTEGRATION_TIMEOUT_MS);
+
   it("reads commits and rewrites a contiguous middle range in an isolated worktree", async () => {
     const root = await createRepository();
     const before = await pnwReadGitRepository(root);

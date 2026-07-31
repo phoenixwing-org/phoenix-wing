@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { Component } from "vue";
+import type { PnwWorkbenchTabItem } from "../types/PnwWorkbenchWeb.js";
 
 const props = withDefaults(
   defineProps<{
     /** Tab 列表 */
-    tabs: { id: string; pageId: string; title: string; dirty: boolean; subtitle?: string }[];
+    tabs: readonly PnwWorkbenchTabItem[];
     /** 当前激活 Tab ID */
     activeTabId: string;
     /** pageId → 图标组件 */
@@ -116,8 +117,8 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
   gap: 0;
   min-height: 36px;
   padding: 4px 8px 0;
-  background: var(--shell-bg, #f1f5f9);
-  border-bottom: 1px solid var(--border, #e2e8f0);
+  background: var(--shell-bg, var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, #f1f5f9)));
+  border-bottom: 1px solid var(--border, var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0)));
   overflow: hidden;
 }
 
@@ -144,19 +145,19 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
   border-bottom: none;
   border-radius: 6px 6px 0 0;
   background: transparent;
-  color: var(--muted, #64748b);
+  color: var(--muted, var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b)));
   font-size: 0.82rem;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.pnw-tab-item:hover { background: var(--nav-hover, rgba(148,163,184,.15)); color: var(--text, #334155); }
-.pnw-tab-item.active { background: var(--page-bg, #fff); border-color: var(--border, #e2e8f0); color: var(--text, #0f172a); margin-bottom: -1px; padding-bottom: 7px; }
+.pnw-tab-item:hover { background: var(--nav-hover, var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(148,163,184,.15)))); color: var(--text, var(--pnw-workbench-text, var(--pnw-workbench-default-text, #334155))); }
+.pnw-tab-item.active { background: var(--page-bg, var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff))); border-color: var(--border, var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0))); color: var(--text, var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a))); margin-bottom: -1px; padding-bottom: 7px; }
 
 .pnw-tab-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .pnw-tab-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; flex-shrink: 0; color: #94a3b8; }
 .pnw-tab-icon :deep(svg) { width: 14px; height: 14px; }
-.pnw-tab-item.active .pnw-tab-icon { color: #3b82f6; }
+.pnw-tab-item.active .pnw-tab-icon { color: var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #3b82f6)); }
 .pnw-tab-dot { color: #f59e0b; font-size: .65rem; line-height: 1; }
 .pnw-tab-close { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 2px; border-radius: 4px; font-size: 1rem; line-height: 1; opacity: .55; }
 .pnw-tab-close:hover { opacity: 1; background: rgba(148,163,184,.25); }
@@ -166,21 +167,21 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
   align-self: center; width: 28px; height: 28px; margin-left: 8px; padding: 0;
   border-radius: 6px; cursor: pointer;
 }
-.pnw-tab-close-all { border: 1px solid var(--border); background: var(--shell-bg); color: var(--muted); }
+.pnw-tab-close-all { border: 1px solid var(--border, var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0))); background: var(--shell-bg, var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, #f1f5f9))); color: var(--muted, var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b))); }
 .pnw-tab-close-all:hover:not(:disabled) { border-color: #f87171; color: #b91c1c; background: #fef2f2; }
 .pnw-tab-close-all:disabled { opacity: .55; cursor: default; }
-.pnw-tab-add { border: 1px dashed var(--border); background: var(--shell-bg); color: var(--muted); }
-.pnw-tab-add:hover { border-color: var(--accent, #3b82f6); color: var(--accent, #3b82f6); }
+.pnw-tab-add { border: 1px dashed var(--border, var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0))); background: var(--shell-bg, var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, #f1f5f9))); color: var(--muted, var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b))); }
+.pnw-tab-add:hover { border-color: var(--accent, var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6))); color: var(--accent, var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6))); }
 
 /* header mode */
 .pnw-tab-bar-header { flex: 1; min-width: 0; min-height: 0; height: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 2px 0 0; background: transparent; border-bottom: none; }
-.pnw-tab-bar-header .pnw-tab-scroll { flex: 1 1 auto; width: 100%; max-width: 100%; min-width: 0; align-items: center; justify-content: flex-start; gap: 5px; min-height: 36px; padding: 4px 6px; border-radius: var(--phoenix-radius-md, 8px); background: var(--phoenix-ribbon-tab-track, rgba(15,23,42,.055)); box-shadow: inset 0 1px 2px var(--phoenix-border-subtle, rgba(15,23,42,.05)); }
+.pnw-tab-bar-header .pnw-tab-scroll { flex: 1 1 auto; width: 100%; max-width: 100%; min-width: 0; align-items: center; justify-content: flex-start; gap: 5px; min-height: 36px; padding: 4px 6px; border-radius: var(--phoenix-radius-md, 8px); background: var(--phoenix-ribbon-tab-track, color-mix(in srgb, var(--pnw-workbench-text, #0f172a) 5.5%, transparent)); box-shadow: inset 0 1px 2px var(--phoenix-border-subtle, color-mix(in srgb, var(--pnw-workbench-text, #0f172a) 5%, transparent)); }
 .pnw-tab-bar-header .pnw-tab-item { max-width: 240px; height: 28px; padding: 0 10px 0 11px; gap: 6px; margin: 0; border-radius: calc(var(--phoenix-radius-md, 8px) - 2px); font-size: .74rem; font-weight: 500; transform: scale(.96); }
-.pnw-tab-bar-header .pnw-tab-item:hover:not(.active) { background: var(--phoenix-ribbon-tab-hover, rgba(255,255,255,.72)); border-color: rgba(148,163,184,.28); color: var(--phoenix-text-secondary, #334155); transform: scale(.98); }
-.pnw-tab-bar-header .pnw-tab-item.active { height: 32px; padding: 0 15px 0 13px; font-size: .78rem; font-weight: 600; margin-bottom: 0; padding-bottom: 0; transform: scale(1); z-index: 1; background: var(--phoenix-ribbon-tab-active-bg, #fff); border-color: var(--phoenix-border-subtle, #c8d3e0); color: var(--phoenix-text, #0f172a); box-shadow: var(--phoenix-shadow-sm, 0 1px 3px rgba(15,23,42,.1)), inset 0 0 0 1px rgba(255,255,255,.65)); }
+.pnw-tab-bar-header .pnw-tab-item:hover:not(.active) { background: var(--phoenix-ribbon-tab-hover, var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(255,255,255,.72)))); border-color: var(--pnw-workbench-border, rgba(148,163,184,.28)); color: var(--phoenix-text-secondary, var(--pnw-workbench-text, var(--pnw-workbench-default-text, #334155))); transform: scale(.98); }
+.pnw-tab-bar-header .pnw-tab-item.active { height: 32px; padding: 0 15px 0 13px; font-size: .78rem; font-weight: 600; margin-bottom: 0; padding-bottom: 0; transform: scale(1); z-index: 1; background: var(--phoenix-ribbon-tab-active-bg, var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff))); border-color: var(--phoenix-border-subtle, var(--pnw-workbench-border, var(--pnw-workbench-default-border, #c8d3e0))); color: var(--phoenix-text, var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a))); box-shadow: var(--phoenix-shadow-sm, 0 1px 3px rgba(15,23,42,.1)), inset 0 0 0 1px color-mix(in srgb, var(--pnw-workbench-surface, #fff) 65%, transparent); }
 .pnw-tab-bar-header .pnw-tab-icon { width: 16px; height: 16px; }
 .pnw-tab-bar-header .pnw-tab-icon :deep(svg) { width: 16px; height: 16px; }
-.pnw-tab-bar-header .pnw-tab-item.active .pnw-tab-icon { color: var(--phoenix-accent-hover, #2563eb); }
+.pnw-tab-bar-header .pnw-tab-item.active .pnw-tab-icon { color: var(--phoenix-accent-hover, var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #2563eb))); }
 .pnw-tab-bar-header .pnw-tab-close { width: 16px; height: 16px; margin-left: 0; border-radius: 4px; font-size: .92rem; opacity: .45; }
 .pnw-tab-bar-header .pnw-tab-item.active .pnw-tab-close { opacity: .6; }
 .pnw-tab-bar-header .pnw-tab-close:hover { opacity: 1; background: rgba(148,163,184,.22); color: #334155; }

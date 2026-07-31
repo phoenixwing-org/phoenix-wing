@@ -5,14 +5,23 @@ export interface PnwGitIdentity {
   readonly date: string;
 }
 
-export interface PnwGitCommitRecord {
+/**
+ * Commit fields needed by read-only history lists and message summaries.
+ *
+ * Unlike {@link PnwGitCommitRecord}, this deliberately omits tree, signature
+ * and extra-header data used by history rewrite safety checks.
+ */
+export interface PnwGitCommitSummary {
   readonly oid: string;
-  readonly parentOids: readonly string[];
-  readonly treeOid: string;
   readonly author: PnwGitIdentity;
   readonly committer: PnwGitIdentity;
   readonly subject: string;
   readonly body: string;
+}
+
+export interface PnwGitCommitRecord extends PnwGitCommitSummary {
+  readonly parentOids: readonly string[];
+  readonly treeOid: string;
   readonly hasSignature: boolean;
   readonly extraHeaders: readonly string[];
 }

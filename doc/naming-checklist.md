@@ -14,6 +14,15 @@
 | `ExpandCaret` | **`PnwExpandCaret`** |
 | `AsyncProgressOverlay` | **`PnwAsyncProgressOverlay`** |
 
+### Pnw Web 工作台实验组件
+
+- `PnwPhoenixWingMark`、`PnwIcon`、`PnwFloatingPanel`
+- `PnwActivityBar`
+- `PnwActivityTree`
+- `PnwRibbon`
+- `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel`
+- `PnwWorkbenchLayout`、`PnwWorkbenchShell`、`PnwWorkbenchFooter`
+
 ---
 
 ## CSS 类名（~60 个）— 必须加 `pnw-`
@@ -112,6 +121,46 @@
 | `PagePropertyField` | `PnwPagePropertyField` |
 | `PagePropertyGroup` | `PnwPagePropertyGroup` |
 | `PagePropertiesSheet` | `PnwPagePropertiesSheet` |
+
+### Pnw Web 工作台实验类型
+
+- `PnwActivityBarPresentation`
+- `PnwRibbonDisplayMode`、`PnwRibbonIconSize`、`PnwRibbonMode`、`PnwRibbonModeAppearance`、`PnwRibbonAppearance`
+- `PnwIconName`、`PnwIconTestSize`
+- `PnwFloatingPanelPosition`、`PnwFloatingPanelSize`
+- `PnwNavigationNode`、`PnwWorkbenchTabItem`
+- `PnwViewBlockId`、`PnwViewBlockContributions`、`PnwViewBlockVisibility`
+- `PnwViewBlockComponentContribution`、`PnwBottomViewBlockComponentContribution`、`PnwViewBlockComponentContributions`
+- `PnwViewContributionRegistry`、`PnwViewContributionRegistration`
+- `PnwNavigationTreeRow`、`PnwNavigationRibbonGroup`、`PnwNavigationRibbonModule`、`PnwRibbonNavigationAdapterOptions`
+- `PnwRibbonAppearanceIssueCode`、`PnwRibbonAppearanceValidation`
+
+### Pnw Web 工作台实验函数
+
+- `pnwVisibleNavigationNodes`
+- `pnwFlattenNavigationTree`
+- `pnwNavigationLeafIds`
+- `pnwNavigationLeaves`、`pnwNavigationNodeContains`
+- `pnwProjectNavigationRibbon`
+- `pnwNavigationFromRibbonTabs`
+- `pnwClampFloatingPanelPosition`
+- `pnwRibbonIconSizesFor`、`pnwResolveRibbonNaturalHeight`、`pnwValidateRibbonAppearance`、`pnwNextRibbonFocusIndex`
+- `pnwAvailableViewBlockIds`、`pnwResolveViewBlockVisibility`、`pnwToggleViewBlockVisibility`
+- `pnwCreateViewContributionRegistry`、`pnwCreateViewContributionRegistration`
+- `usePnwViewContribution`、`usePnwRegisteredViewContribution`
+- `pnwViewBlockComponentAvailability`、`pnwResolveViewBlockComponentProps`、`pnwResolveBottomViewBlockTabs`
+
+### Pnw Web 工作台实验常量
+
+- `PNW_DEFAULT_RIBBON_APPEARANCE`
+- `PNW_VIEW_BLOCK_IDS`
+- `PNW_ICON_NAMES`、`PNW_ICON_TEST_SIZES`
+
+### Pnw Web 工作台 CSS token
+
+- 主题表面：`--pnw-workbench-bg`、`--pnw-workbench-surface`、`--pnw-workbench-text`、`--pnw-workbench-muted`、`--pnw-workbench-border`
+- 导航与状态：`--pnw-activity-tree-bg`、`--pnw-ribbon-bg`、`--pnw-ribbon-module-bg`、`--pnw-ribbon-module-handle`、`--pnw-control-hover-bg`、`--pnw-control-active-bg`、`--pnw-control-active-text`、`--pnw-focus-ring`
+- 尺寸：`--pnw-activity-tree-width`、`--pnw-activity-rail-width`、`--pnw-primary-block-width`、`--pnw-secondary-block-width`、`--pnw-bottom-panel-height`、`--pnw-floating-panel-width`、`--pnw-floating-panel-max-height`、`--pnw-workbench-header-modules-max-width`、`--pnw-ribbon-module-tab-gap`、`--pnw-ribbon-module-tab-padding-inline`、`--pnw-ribbon-module-tab-font-size`、`--pnw-ribbon-module-tab-indicator-inset`
 
 ---
 

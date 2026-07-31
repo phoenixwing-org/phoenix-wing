@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
@@ -25,6 +25,10 @@
     "./components/*": {
       "types": "./dist/components/*.vue.d.ts",
       "import": "./dist/components/*.js"
+    },
+    "./icons/*": {
+      "types": "./dist/icons/*.d.ts",
+      "import": "./dist/icons/*.js"
     },
     "./layout/*.vue": {
       "types": "./dist/layout/*.vue.d.ts",
@@ -63,6 +67,10 @@
     "prepublishOnly": "node scripts/verify-publish-client.mjs",
     "prepack": "pnpm build && pnpm verify:aggregate-dist",
     "build": "vite build && vue-tsc -p tsconfig.build.json --declaration --emitDeclarationOnly",
+    "example:workbench:prepare": "pnpm build",
+    "example:workbench:typecheck": "pnpm example:workbench:prepare && vue-tsc -p examples/PwwWorkbenchWeb/tsconfig.json --noEmit --pretty false",
+    "example:workbench:build": "pnpm example:workbench:prepare && vite build --config examples/PwwWorkbenchWeb/vite.config.ts",
+    "example:workbench:dev": "pnpm example:workbench:prepare && vite --config examples/PwwWorkbenchWeb/vite.config.ts",
     "verify:aggregate-dist": "node scripts/verify-aggregate-dist.mjs",
     "test": "vitest run",
     "test:workspace": "pnpm -r --include-workspace-root --if-present test",
@@ -78,8 +86,8 @@
     "dev": "vitest"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.5.1",
-    "@phoenix-wing/db-node": "workspace:0.5.1",
+    "@phoenix-wing/code-core": "workspace:0.6.0",
+    "@phoenix-wing/db-node": "workspace:0.6.0",
     "element-plus": "^2.0.0"
   },
   "optionalDependencies": {
