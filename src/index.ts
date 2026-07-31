@@ -239,6 +239,7 @@ export {
 
 export {
   pnwViewBlockComponentAvailability,
+  pnwResolveBottomViewBlockComponent,
   pnwResolveViewBlockComponentProps,
   pnwResolveBottomViewBlockTabs,
 } from './composables/pnwViewBlockComponents.js'

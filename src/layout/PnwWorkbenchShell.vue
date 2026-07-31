@@ -2,6 +2,7 @@
 import { computed, useSlots, type Component } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type {
+  PnwBottomViewBlockComponentContribution,
   PnwViewBlockComponentContributions,
   PnwWorkbenchDisplaySettingsActionSlotProps,
 } from "../types/PnwWorkbenchVue.js";
@@ -26,6 +27,7 @@ import {
   pnwVisibleNavigationNodes,
 } from "../utils/pnwNavigationTree.js";
 import {
+  pnwResolveBottomViewBlockComponent,
   pnwResolveBottomViewBlockTabs,
   pnwResolveViewBlockComponentProps,
   pnwViewBlockComponentAvailability,
@@ -53,6 +55,8 @@ const props = withDefaults(defineProps<{
   treeAppearance?: PnwActivityTreeAppearance;
   contributions?: PnwViewBlockContributions;
   viewBlocks?: PnwViewBlockComponentContributions;
+  /** 应用级 Bottom；当前 View 未贡献 Bottom 时自动回退到这里。 */
+  defaultBottomBlock?: PnwBottomViewBlockComponentContribution;
   visibility?: PnwViewBlockVisibility;
   layoutState?: PnwWorkbenchLayoutState;
   bottomTabs?: readonly PnwBottomPanelTab[];
@@ -147,15 +151,22 @@ defineSlots<{
 const pnwSlots = useSlots();
 const pnwComponentAvailability = computed(() => pnwViewBlockComponentAvailability(
   props.viewBlocks,
+  props.defaultBottomBlock,
+));
+const pnwResolvedBottomBlock = computed(() => pnwResolveBottomViewBlockComponent(
+  props.viewBlocks.bottom,
+  props.defaultBottomBlock,
 ));
 const pnwResolvedContributions = computed<PnwViewBlockContributions>(() => ({
   primary: Boolean(props.contributions.primary || pnwComponentAvailability.value.primary),
   bottom: Boolean(props.contributions.bottom || pnwComponentAvailability.value.bottom),
   secondary: Boolean(props.contributions.secondary || pnwComponentAvailability.value.secondary),
 }));
-const pnwResolvedBottomTabs = computed(() => props.viewBlocks.bottom?.tabs
-  ? pnwResolveBottomViewBlockTabs(props.viewBlocks.bottom)
-  : props.bottomTabs);
+const pnwResolvedBottomTabs = computed(() => pnwResolveBottomViewBlockTabs(
+  props.viewBlocks.bottom,
+  props.defaultBottomBlock,
+  props.bottomTabs,
+));
 const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
 const pnwRootNodes = computed(() => pnwVisibleNavigationNodes(pnwNavigationNodes.value));
 const pnwModuleTabs = computed(() => pnwRootNodes.value.map((node) => ({
@@ -348,12 +359,12 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
         />
       </slot>
     </template>
-    <template v-if="pnwSlots.bottom || viewBlocks.bottom" #bottom="bottomSlotProps">
+    <template v-if="pnwSlots.bottom || pnwResolvedBottomBlock" #bottom="bottomSlotProps">
       <slot name="bottom" :active-tab-id="bottomSlotProps.activeTabId">
         <component
-          v-if="viewBlocks.bottom"
-          :is="viewBlocks.bottom.component"
-          v-bind="pnwResolveViewBlockComponentProps(viewBlocks.bottom)"
+          v-if="pnwResolvedBottomBlock"
+          :is="pnwResolvedBottomBlock.component"
+          v-bind="pnwResolveViewBlockComponentProps(pnwResolvedBottomBlock)"
           :active-tab-id="bottomSlotProps.activeTabId"
         />
       </slot>

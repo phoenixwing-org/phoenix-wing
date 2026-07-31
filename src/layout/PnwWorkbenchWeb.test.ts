@@ -532,6 +532,125 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html.match(/pnw-workbench-footer-toggle/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
+  it("WorkbenchShell 在 Dashboard、普通与空 View 自动回退应用默认 Bottom", async () => {
+    const PnwSsrDefaultBottom = defineComponent({
+      props: {
+        activeTabId: { type: String, default: "" },
+      },
+      setup: (props) => () => h("div", `Default Bottom:${props.activeTabId}`),
+    });
+    const PnwSsrPrimary = defineComponent({
+      setup: () => () => h("aside", "Ordinary Primary"),
+    });
+    const defaultBottomBlock = {
+      component: PnwSsrDefaultBottom,
+      tabs: [{ id: "messages", label: "工作台消息" }],
+    };
+    const scenarios = [
+      {
+        activeNodeId: "dashboard",
+        viewBlocks: {},
+        editor: "Dashboard Editor",
+      },
+      {
+        activeNodeId: "page",
+        viewBlocks: { primary: { component: PnwSsrPrimary } },
+        editor: "Ordinary Editor",
+      },
+      {
+        activeNodeId: "",
+        viewBlocks: {},
+        editor: "Empty Editor",
+        showEmptyView: true,
+      },
+    ];
+
+    for (const scenario of scenarios) {
+      const html = await pnwRenderComponent(
+        PnwWorkbenchShell,
+        {
+          nodes: PNW_SSR_NAVIGATION,
+          activeNodeId: scenario.activeNodeId,
+          viewBlocks: scenario.viewBlocks,
+          defaultBottomBlock,
+          layoutState: {
+            visibility: { primary: true, bottom: true, secondary: false },
+            sizes: { primaryWidth: 280, secondaryWidth: 280, bottomHeight: 216 },
+          },
+          activeBottomTabId: "messages",
+          showEmptyView: scenario.showEmptyView,
+        },
+        { default: () => [h("div", scenario.editor)] },
+      );
+
+      expect(html).toContain("Default Bottom:messages");
+      expect(html).toContain("工作台消息");
+      expect(html).toContain("height:216px");
+      expect(html).not.toContain("工作台未提供 Bottom Panel");
+      expect(html).toContain('aria-label="显示/隐藏 Bottom Panel" aria-pressed="true"');
+    }
+  });
+
+  it("专用 View Bottom 替换默认内容和页签但不改工作台布局状态", async () => {
+    const PnwSsrDefaultBottom = defineComponent({
+      setup: () => () => h("div", "Application Bottom"),
+    });
+    const PnwSsrSettingsBottom = defineComponent({
+      props: {
+        activeTabId: { type: String, default: "" },
+      },
+      setup: (props) => () => h("div", `Settings Bottom:${props.activeTabId}`),
+    });
+    const layoutState = {
+      visibility: { primary: false, bottom: true, secondary: false },
+      sizes: { primaryWidth: 300, secondaryWidth: 280, bottomHeight: 244 },
+    } as const;
+    const defaultBottomBlock = {
+      component: PnwSsrDefaultBottom,
+      tabs: [{ id: "messages", label: "工作台消息" }],
+    };
+    const settingsHtml = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        activeNodeId: "settings",
+        viewBlocks: {
+          bottom: {
+            component: PnwSsrSettingsBottom,
+            tabs: [{ id: "repair", label: "数据库修正结果" }],
+          },
+        },
+        defaultBottomBlock,
+        layoutState,
+        activeBottomTabId: "messages",
+      },
+      { default: () => [h("div", "Settings Editor")] },
+    );
+    const ordinaryHtml = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        activeNodeId: "page",
+        viewBlocks: {},
+        defaultBottomBlock,
+        layoutState,
+        activeBottomTabId: "messages",
+      },
+      { default: () => [h("div", "Ordinary Editor")] },
+    );
+
+    expect(settingsHtml).toContain("Settings Bottom:repair");
+    expect(settingsHtml).toContain("数据库修正结果");
+    expect(settingsHtml).not.toContain("Application Bottom");
+    expect(settingsHtml).not.toContain("工作台消息");
+    expect(ordinaryHtml).toContain("Application Bottom");
+    expect(ordinaryHtml).toContain("工作台消息");
+    expect(settingsHtml).toContain("height:244px");
+    expect(ordinaryHtml).toContain("height:244px");
+    expect(layoutState.visibility.bottom).toBe(true);
+    expect(layoutState.sizes.bottomHeight).toBe(244);
+  });
+
   it("默认品牌与受控空态可在 consumer 未提供 slot 时直接使用", async () => {
     const html = await pnwRenderComponent(
       PnwWorkbenchShell,

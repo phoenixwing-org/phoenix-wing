@@ -5,6 +5,7 @@ import {
   pnwCreateDiagnosticsHub,
   pnwViewBlockComponentAvailability,
   usePnwRegisteredViewContribution,
+  type PnwBottomViewBlockComponentContribution,
   type PnwLogLevel,
   type PnwProblemInput,
   type PnwProblemItem,
@@ -18,6 +19,7 @@ import {
   PWW_FIXTURE_EMPTY_VIEW_BLOCKS,
   PWW_FIXTURE_VIEW_BLOCK_REGISTRY,
 } from "./PwwFixtureViewBlockRegistry.js";
+import PwwFixtureViewBottom from "./PwwFixtureViewBottom.vue";
 import { usePwwFixtureWorkbenchStore } from "./PwwFixtureWorkbenchStore.js";
 
 /**
@@ -83,6 +85,32 @@ export function usePwwFixtureWorkbenchController() {
   const pwwCurrentContributions = computed(() => (
     pnwViewBlockComponentAvailability(pwwCurrentViewBlocks.value)
   ));
+  const pwwDefaultBottomProps = computed(() => ({
+    title: "工作台消息",
+    activeNodeId: pwwActiveNodeId.value,
+    entries: pwwDiagnosticsSnapshot.value.logs,
+    problems: pwwDiagnosticsSnapshot.value.problems,
+    onClearLog: pwwClearDiagnosticsLog,
+    onOpenProblem: pwwOpenProblem,
+  }));
+  const pwwDefaultBottomTabs = computed(() => [
+    {
+      id: "problems",
+      label: "问题",
+      count: pwwDiagnosticsSnapshot.value.problems.length,
+      tone: pwwDiagnosticsSnapshot.value.problems.some((item) => item.severity === "error")
+        ? "error" as const
+        : pwwDiagnosticsSnapshot.value.problems.length > 0
+          ? "warning" as const
+          : "default" as const,
+    },
+    { id: "output", label: "工作台消息", count: pwwDiagnosticsSnapshot.value.logs.length },
+  ]);
+  const pwwDefaultBottomBlock: PnwBottomViewBlockComponentContribution = {
+    component: PwwFixtureViewBottom,
+    props: pwwDefaultBottomProps,
+    tabs: pwwDefaultBottomTabs,
+  };
   const pwwActiveRibbonAppearance = computed(() => pwwRibbonAppearance.value[
     pwwRibbonAppearance.value.mode
   ]);
@@ -106,8 +134,8 @@ export function usePwwFixtureWorkbenchController() {
       visibility: {
         primary: Boolean(contribution.primary)
           && pwwWorkbenchLayoutState.value.visibility.primary,
-        bottom: Boolean(contribution.bottom)
-          && pwwWorkbenchLayoutState.value.visibility.bottom,
+        // Bottom 是工作台默认能力；切换 View 只替换内容，不改受控显隐状态。
+        bottom: pwwWorkbenchLayoutState.value.visibility.bottom,
         secondary: Boolean(contribution.secondary)
           && pwwWorkbenchLayoutState.value.visibility.secondary,
       },
@@ -314,6 +342,7 @@ export function usePwwFixtureWorkbenchController() {
     view: {
       current: pwwCurrentView,
       blocks: pwwCurrentViewBlocks,
+      defaultBottom: pwwDefaultBottomBlock,
       diagnostics: pwwDiagnosticsSnapshot,
     },
     tabs: {

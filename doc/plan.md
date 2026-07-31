@@ -6,9 +6,11 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.6.x
 
-当前仓库版本准备提升为 `0.6.0` 本地候选，用于承载工作台 Web 架构、可扩展显示配置中心与 Git 轻量读取增量；尚未执行 npm 发布，现有消费者继续以各自 manifest 中的已发布精确版本为准。
+`0.6.0` 已完成锁步发布、归档、主分支合并与标签封存。当前 `develop` 承载
+`0.6.1` 兼容增量；消费者仍以各自 manifest 中的已发布精确版本为准，未发布源码
+不得被描述为 Registry 能力。
 
-最后核验：2026-07-29
+最后核验：2026-07-31
 
 ## 已完成基线
 
@@ -61,8 +63,12 @@ Owner：Phoenix Wing maintainers
    - [x] 对照 BOM Studio 与 Desk Tools 的页面级 Primary registry，提炼 consumer 隔离的泛型 View contribution 生命周期；`PnwWorkbenchShell` 可动态装配当前 View 的三个 Block。`PwwWorkbenchWeb` 的 App 不再内置 Block 内容或展开三十余个 controller 变量，示例实现统一隔离在 `src/fixture/PwwFixture*`。
    - [x] 形成 Phoenix Admin 渐进适配映射：沿用 Admin 的权限菜单、Router、process/keep-alive 与 Pinia/后端持久化，只用薄 `Pah*` adapter 投影导航、Tab、布局和 Bottom contributions；本轮不改 Admin。
    - [x] Open Issue 已在独立分支完成第一轮本地 Wing 壳层接入、Footer/Bottom 与快捷显示设置验证，manifest 和 lockfile 仍保持 Registry 精确依赖。
-   - [x] Footer 的 Primary / Bottom / Secondary 三个固定入口不再随 View contribution 隐藏；无内容时原生禁用并提示原因。`PnwWorkbenchLayout` 默认保留 Footer，consumer 仅可通过 `showFooter = false` 显式关闭。
+   - [x] Footer 的 Primary / Bottom / Secondary 三个固定入口不再随 View contribution 隐藏；没有解析后内容时原生禁用并提示原因。`PnwWorkbenchLayout` 默认保留 Footer，consumer 仅可通过 `showFooter = false` 显式关闭。
    - [x] Footer 三个入口增加公共 on/off SVG 对：原 `panel-left / panel-bottom / panel-right` 保持轮廓兼容，新增对应 `-active` 名称并用 `currentColor` 填充左、下、右区域；Footer 按 contribution 与 visibility 选择图形，disabled 始终保持 off。on 不再产生常驻按钮底块，只有 hover 瞬时背景和 `focus-visible` 焦点环。
+   - [x] `0.6.1` 候选增加应用级 `defaultBottomBlock` 分层：当前 View 的专用 Bottom
+     优先，缺失时自动回退应用默认内容与 tabs；默认层使 Footer Bottom 在空 View、
+     Dashboard 和普通页面保持可用，切页不改受控显隐与高度。Primary/Secondary
+     继续由当前 View 决定，0.6.0 的 View Bottom、`bottomTabs` 与 slot 入口保持兼容。
    - [x] 2026-07-31 按锁步矩阵公开发布根包与 11 个 scoped packages 的 `0.6.0`；全部 `latest`、tarball 干净安装、可选 peer 补齐后的公共根入口及 `PNW_VERSION` 回归通过。详见[《0.6.0 发布验收》](0.6.0发布验收.md)。
    - [x] Open Issue 以 `2e900ad` 将 Wing 的 `light / dark / system` 真正同步到应用根与 Element Plus；Registry 141 项、LOCAL 144 项及完整 local-Wing build 通过。Desk 以 `81fdb7b` 修正 AppShell 自身不能 inject 自己 provide 的 Bottom context，并保留后代无参注入路径。
    - [x] 完成 0.6.0 候选后的 Desk Tools、Function Develop、KT BOM Studio 只读接入审计；新增 API 均不要求三个 0.5.1 消费者立即改动。Desk/BOM 等正式发布后走单一 Shell adapter，Function 随 Admin 迁移；未发现需要继续扩展的公共字段。详见[《扩展消费者接入审计》](Pnw工作台Web扩展消费者接入审计.md)。

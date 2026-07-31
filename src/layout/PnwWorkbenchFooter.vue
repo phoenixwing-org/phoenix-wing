@@ -52,7 +52,7 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
         type="button"
         class="pnw-workbench-footer-toggle"
         :disabled="!pnwHasBlock('bottom')"
-        :title="pnwHasBlock('bottom') ? '显示/隐藏 Bottom Panel' : '当前 View 未提供 Bottom Panel'"
+        :title="pnwHasBlock('bottom') ? '显示/隐藏 Bottom Panel' : '工作台未提供 Bottom Panel'"
         aria-label="显示/隐藏 Bottom Panel"
         :aria-pressed="pnwHasBlock('bottom') && visibility.bottom"
         @click="emit('toggle', 'bottom')"

@@ -67,7 +67,7 @@ export const PWW_FIXTURE_VIEWS: Readonly<Record<string, PwwFixtureViewDefinition
     kind: "issue",
     title: "Open Issue",
     eyebrow: "Issue 风格 View",
-    description: "当前 View 不贡献 Primary、Secondary 或 Bottom，因此不会生成空面板或 Footer 图标。",
+    description: "当前 View 不贡献 Primary、Secondary 或专用 Bottom；Bottom 自动回退到应用级工作台消息。",
   },
 };
 
