@@ -37,7 +37,7 @@ Owner：Phoenix Wing maintainers
    - [ ] Phoenix Open Issue 以 Issue 新建/编辑场景作为第二个真实消费者，精确使用 Registry `phoenix-wing@0.5.1`；复用抽屉契约但不共享业务表单。
    - [ ] 在 Open Issue 完成 Registry 验证后，检查 dirty 关闭保护、多 Tab 状态隔离、独立路由回退和键盘操作，再决定是否宣布公共契约稳定。
 
-5. **[进行中：Pnw Web 工作台 W4 双消费者验证]** W0–W3 的仓内架构、fixture、视觉与交互增补已完成；下一步以 Open Issue 验证简单消费者、Phoenix Admin 验证复杂消费者，比较后才冻结或继续调整公共契约。执行边界、分支、端口和门禁见[《Pnw 工作台 Web 双消费者验证计划》](Pnw工作台Web双消费者验证计划.md)，架构结果见[《Pnw 工作台 Web 架构与示例计划》](Pnw工作台Web架构与示例计划.md)。
+5. **[已发布 0.6.0；继续验证：Pnw Web 工作台]** W0–W3 的仓内架构、fixture、视觉与交互增补已完成并进入 `phoenix-wing@0.6.0`；后续消费者适配和 W5 研究不回写产品结果矩阵。执行边界见[《Pnw 工作台 Web 双消费者验证计划》](Pnw工作台Web双消费者验证计划.md)，架构结果见[《Pnw 工作台 Web 架构与示例计划》](Pnw工作台Web架构与示例计划.md)。
 
    - [x] 记录增补需求与边界：SVG 品牌真源归 Wing，图标资源只接纳至少两个 Web 消费者共有的壳层动作。
    - [x] 完成 Admin Host、BOM Studio、Open Issue、Desk Tools 图标用法盘点，记录设置、折叠、面板、关闭/更多及六类导航动作的重复证据；产品/领域图标不迁入。
@@ -63,6 +63,7 @@ Owner：Phoenix Wing maintainers
    - [x] Open Issue 已在独立分支完成第一轮本地 Wing 壳层接入、Footer/Bottom 与快捷显示设置验证，manifest 和 lockfile 仍保持 Registry 精确依赖。
    - [x] Footer 的 Primary / Bottom / Secondary 三个固定入口不再随 View contribution 隐藏；无内容时原生禁用并提示原因。`PnwWorkbenchLayout` 默认保留 Footer，consumer 仅可通过 `showFooter = false` 显式关闭。
    - [x] Footer 三个入口增加公共 on/off SVG 对：原 `panel-left / panel-bottom / panel-right` 保持轮廓兼容，新增对应 `-active` 名称并用 `currentColor` 填充左、下、右区域；Footer 按 contribution 与 visibility 选择图形，disabled 始终保持 off。on 不再产生常驻按钮底块，只有 hover 瞬时背景和 `focus-visible` 焦点环。
+   - [x] 2026-07-31 按锁步矩阵公开发布根包与 11 个 scoped packages 的 `0.6.0`；全部 `latest`、tarball 干净安装、可选 peer 补齐后的公共根入口及 `PNW_VERSION` 回归通过。详见[《0.6.0 发布验收》](0.6.0发布验收.md)。
    - [x] Open Issue 以 `2e900ad` 将 Wing 的 `light / dark / system` 真正同步到应用根与 Element Plus；Registry 141 项、LOCAL 144 项及完整 local-Wing build 通过。Desk 以 `81fdb7b` 修正 AppShell 自身不能 inject 自己 provide 的 Bottom context，并保留后代无参注入路径。
    - [x] 完成 0.6.0 候选后的 Desk Tools、Function Develop、KT BOM Studio 只读接入审计；新增 API 均不要求三个 0.5.1 消费者立即改动。Desk/BOM 等正式发布后走单一 Shell adapter，Function 随 Admin 迁移；未发现需要继续扩展的公共字段。详见[《扩展消费者接入审计》](Pnw工作台Web扩展消费者接入审计.md)。
    - [x] Open Issue 在 `023fa9b` / `4fb5611` 补齐完整显示偏好、稳定空态和真实页面级 View contribution；完整 `verify:local-wing` 已覆盖 LOCAL 140/5、9 项生命周期/窄屏定向测试及 core/server/Web 构建，Web 转换 3453 个模块；Registry 对照为 138/7。
@@ -85,7 +86,7 @@ Owner：Phoenix Wing maintainers
    - [ ] Open Issue / Admin 继续用真实导航树验证 `root-flyout` 菜单密度、权限剪枝、触屏和浏览器焦点；该项是消费者验收，不再扩展 Wing hover timer 或 Tree drawer API。
    - [x] 通过单元测试、typecheck、build、文档门禁，并在内置浏览器验证 light/dark/custom、桌面/窄屏和 `16/24/36/48/64px` SVG 清晰度。
 
-6. **[已完成：Git 轻量仓库读取与 OID 分页]** 为 Auto Git Block 首屏与增量历史新增 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。Auto 正式依赖继续保持 Registry `0.5.1`，等待 Wing 新版本发布后再精确升级。
+6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
 
 Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一优先级是 Desk Tools 的 Registry 0.4.3 升级与消费验收。Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 
