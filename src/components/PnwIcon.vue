@@ -51,12 +51,45 @@ withDefaults(defineProps<{
       <rect x="3" y="3" width="18" height="18" rx="2.5" />
       <path d="M8.5 3v18" />
     </g>
+    <g v-else-if="name === 'panel-left-active'">
+      <rect x="3" y="3" width="18" height="18" rx="2.5" />
+      <path
+        class="pnw-icon-panel-fill"
+        data-pnw-panel-fill="left"
+        d="M4 5.5A1.5 1.5 0 0 1 5.5 4h3v16h-3A1.5 1.5 0 0 1 4 18.5Z"
+        fill="currentColor"
+        stroke="none"
+      />
+      <path d="M8.5 3v18" />
+    </g>
     <g v-else-if="name === 'panel-bottom'">
       <rect x="3" y="3" width="18" height="18" rx="2.5" />
       <path d="M3 15.5h18" />
     </g>
+    <g v-else-if="name === 'panel-bottom-active'">
+      <rect x="3" y="3" width="18" height="18" rx="2.5" />
+      <path
+        class="pnw-icon-panel-fill"
+        data-pnw-panel-fill="bottom"
+        d="M4 15.5h16v3a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5Z"
+        fill="currentColor"
+        stroke="none"
+      />
+      <path d="M3 15.5h18" />
+    </g>
     <g v-else-if="name === 'panel-right'">
       <rect x="3" y="3" width="18" height="18" rx="2.5" />
+      <path d="M15.5 3v18" />
+    </g>
+    <g v-else-if="name === 'panel-right-active'">
+      <rect x="3" y="3" width="18" height="18" rx="2.5" />
+      <path
+        class="pnw-icon-panel-fill"
+        data-pnw-panel-fill="right"
+        d="M15.5 4h3A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-3Z"
+        fill="currentColor"
+        stroke="none"
+      />
       <path d="M15.5 3v18" />
     </g>
     <g v-else-if="name === 'navigation-tree'">

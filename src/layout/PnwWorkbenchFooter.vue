@@ -37,38 +37,44 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
       <button
         type="button"
         class="pnw-workbench-footer-toggle"
-        :class="{ 'pnw-workbench-footer-toggle--active': pnwHasBlock('primary') && visibility.primary }"
         :disabled="!pnwHasBlock('primary')"
         :title="pnwHasBlock('primary') ? '显示/隐藏 Primary Block' : '当前 View 未提供 Primary Block'"
         aria-label="显示/隐藏 Primary Block"
         :aria-pressed="pnwHasBlock('primary') && visibility.primary"
         @click="emit('toggle', 'primary')"
       >
-        <PnwIcon name="panel-left" :size="15" />
+        <PnwIcon
+          :name="pnwHasBlock('primary') && visibility.primary ? 'panel-left-active' : 'panel-left'"
+          :size="15"
+        />
       </button>
       <button
         type="button"
         class="pnw-workbench-footer-toggle"
-        :class="{ 'pnw-workbench-footer-toggle--active': pnwHasBlock('bottom') && visibility.bottom }"
         :disabled="!pnwHasBlock('bottom')"
         :title="pnwHasBlock('bottom') ? '显示/隐藏 Bottom Panel' : '当前 View 未提供 Bottom Panel'"
         aria-label="显示/隐藏 Bottom Panel"
         :aria-pressed="pnwHasBlock('bottom') && visibility.bottom"
         @click="emit('toggle', 'bottom')"
       >
-        <PnwIcon name="panel-bottom" :size="15" />
+        <PnwIcon
+          :name="pnwHasBlock('bottom') && visibility.bottom ? 'panel-bottom-active' : 'panel-bottom'"
+          :size="15"
+        />
       </button>
       <button
         type="button"
         class="pnw-workbench-footer-toggle"
-        :class="{ 'pnw-workbench-footer-toggle--active': pnwHasBlock('secondary') && visibility.secondary }"
         :disabled="!pnwHasBlock('secondary')"
         :title="pnwHasBlock('secondary') ? '显示/隐藏 Secondary Block' : '当前 View 未提供 Secondary Block'"
         aria-label="显示/隐藏 Secondary Block"
         :aria-pressed="pnwHasBlock('secondary') && visibility.secondary"
         @click="emit('toggle', 'secondary')"
       >
-        <PnwIcon name="panel-right" :size="15" />
+        <PnwIcon
+          :name="pnwHasBlock('secondary') && visibility.secondary ? 'panel-right-active' : 'panel-right'"
+          :size="15"
+        />
       </button>
     </div>
   </footer>
@@ -129,11 +135,6 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
 
 .pnw-workbench-footer-toggle:focus-visible {
   border-color: var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
-}
-
-.pnw-workbench-footer-toggle--active {
-  background: var(--pnw-control-active-bg, var(--pnw-workbench-default-active-bg, rgba(37, 99, 235, 0.13)));
-  color: var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #1d4ed8));
 }
 
 .pnw-workbench-footer-toggle:disabled {

@@ -4,12 +4,23 @@ import {
   PnwWorkbenchDisplaySettingsSection,
   PNW_ICON_TEST_SIZES,
   type PnwColorScheme,
+  type PnwIconName,
 } from "phoenix-wing";
 
 defineProps<{ colorScheme: PnwColorScheme }>();
 
 const pwwNarrowPreview = defineModel<boolean>("narrowPreview", { required: true });
 const pwwCustomTheme = defineModel<boolean>("customTheme", { required: true });
+
+const pwwPanelIconPairs = [
+  { label: "Primary", off: "panel-left", on: "panel-left-active" },
+  { label: "Bottom", off: "panel-bottom", on: "panel-bottom-active" },
+  { label: "Secondary", off: "panel-right", on: "panel-right-active" },
+] as const satisfies readonly {
+  label: string;
+  off: PnwIconName;
+  on: PnwIconName;
+}[];
 </script>
 
 <template>
@@ -43,6 +54,19 @@ const pwwCustomTheme = defineModel<boolean>("customTheme", { required: true });
         <span v-for="size in PNW_ICON_TEST_SIZES" :key="size">
           <PnwIcon name="settings" :size="size" />
           <small>{{ size }}px</small>
+        </span>
+      </div>
+    </PnwWorkbenchDisplaySettingsSection>
+
+    <PnwWorkbenchDisplaySettingsSection
+      title="Footer 面板状态图标"
+      summary="轮廓 off / 实心区域 on"
+    >
+      <div class="pww-display-settings-panel-icons" aria-label="Footer 面板状态图标回归">
+        <span v-for="pair in pwwPanelIconPairs" :key="pair.label">
+          <small>{{ pair.label }}</small>
+          <PnwIcon :name="pair.off" :size="24" />
+          <PnwIcon :name="pair.on" :size="24" />
         </span>
       </div>
     </PnwWorkbenchDisplaySettingsSection>
@@ -80,6 +104,19 @@ const pwwCustomTheme = defineModel<boolean>("customTheme", { required: true });
   display: grid;
   justify-items: center;
   gap: 4px;
+  color: var(--pnw-workbench-muted);
+}
+
+.pww-display-settings-panel-icons {
+  display: grid;
+  gap: 8px;
+}
+
+.pww-display-settings-panel-icons > span {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) 24px 24px;
+  align-items: center;
+  gap: 10px;
   color: var(--pnw-workbench-muted);
 }
 </style>

@@ -113,7 +113,7 @@ VS Code 插件继续使用既有 Webview/Custom Element 和固定样式，不强
 | 关闭/更多 | `close.svg`、`MoreFilled` | `Close` | `MoreFilled` | Tab 关闭与操作菜单 | `close` / `more` |
 | 通用导航/动作 | `home/search/plus/refresh/icon-folder/icon-file.svg` | `Search`、`Plus`、`Refresh`、`Folder`、`Document` | `HomeFilled`、`Search`、`Plus` | `HomeFilled`、`Search`、`Refresh`、`FolderOpened`、`Document` | `home` / `search` / `add` / `refresh` / `folder` / `document` |
 
-首批 `PnwIconName` 固定为：`settings`、`more`、`close`、`chevron-left`、`chevron-right`、`chevron-up`、`chevron-down`、`panel-left`、`panel-bottom`、`panel-right`、`home`、`search`、`add`、`refresh`、`folder`、`document`。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带 iconfont 元数据和来源不明的 Admin SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
+首批 `PnwIconName` 固定为：`settings`、`more`、`close`、`chevron-left`、`chevron-right`、`chevron-up`、`chevron-down`、`panel-left`、`panel-left-active`、`panel-bottom`、`panel-bottom-active`、`panel-right`、`panel-right-active`、`home`、`search`、`add`、`refresh`、`folder`、`document`。原有三个 `panel-*` 轮廓名称保持兼容并表示 off；对应 `panel-*-active` 使用同一几何并以 `currentColor` 实心填充左、下、右区域，供亮色/暗色 Footer 的 on 状态使用。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带 iconfont 元数据和来源不明的 Admin SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
 
 本轮清理只建立公共真源并替换 Wing/fixture 自身的重复内联图形。Admin、BOM Studio、Open Issue、Desk Tools 的迁移必须在各自后续适配任务中逐项进行；当前任务不改这些业务仓或依赖。Desk 的 CAA/Widget 图标、FreeCAD Part、Gitee Logo，Admin 的上传文件类型与模块业务图标，BOM 的购物车/制造领域图标继续留在产品侧。
 
@@ -214,7 +214,7 @@ export interface PnwViewBlockContributions {
 
 外观组合由 `PnwRibbon` 验证：紧凑工具条允许 `16/24px`，大 Ribbon 允许 `24/36px`；两类各自保存 Title 开关，分组标签只由大 Ribbon 使用。非法组合应在开发期输出清晰诊断并回退到安全默认值。
 
-Footer 使用三个固定顺序的仅图标布局开关：Primary、Bottom、Secondary。三个入口始终显示，当前 View 未贡献对应 Block 时使用原生 `disabled` 并提示原因；只有 consumer 显式设置 `showFooter = false` 时才移除整个 Footer。Ribbon 的外观设置收敛到右侧 `…` 菜单，不散落多个 Header/Ribbon 按钮。
+Footer 使用三个固定顺序的仅图标布局开关：Primary、Bottom、Secondary。每个按钮按受控 visibility 在 `panel-*` 轮廓图标与 `panel-*-active` 实心区域图标间切换，on/off 只由 SVG 图形表达，不产生常驻按钮底色、边框或阴影；鼠标 hover 保留轻量瞬时背景，键盘 `focus-visible` 保留焦点环。三个入口始终显示，当前 View 未贡献对应 Block 时使用原生 `disabled`、保持 off 图形并提示原因；只有 consumer 显式设置 `showFooter = false` 时才移除整个 Footer。Ribbon 的外观设置收敛到右侧 `…` 菜单，不散落多个 Header/Ribbon 按钮。
 
 ## 5. 仓内示例方案
 
@@ -295,7 +295,7 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 - `PnwWorkbenchLayout` 只在 contribution 与对应 slot 同时存在时渲染 `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel`。Bottom 位于 Editor 栈内部，DOM 与 CSS Grid 均不会跨过 ActivityBar 或两个侧 Block。
 - `PnwWorkbenchLayout` 在组合层为 Primary 右边、Secondary 左边和 Bottom 顶边提供三个显式 `separator`；鼠标/触控与方向键都只更新同一份 `PnwWorkbenchLayoutState`。Bottom 不再使用浏览器右下角原生 `resize`，其高度只能从顶边改变；纯函数按 Editor 最小空间和面板上下限修正尺寸，可脱离 Vue 单测。
 - `PnwBottomPanel` 接收受控 `PnwBottomPanelTab[]` 和活动 Tab ID，可承载问题、日志等多个内容页；Wing 只渲染标签、计数、状态和插槽，不拥有 Desk Tools / Admin 的面板注册表或内容生命周期。
-- `PnwWorkbenchFooter` 左侧接受无业务语义的 consumer 内容 slot，右侧固定渲染 Primary、Bottom、Secondary 三个仅图标按钮；当前 View 未提供的 Block 使用原生 `disabled`，可用按钮输出 `aria-label` / `aria-pressed` 并只向宿主发送显隐状态更新。`PnwWorkbenchLayout` 默认始终保留 Footer，避免切换 View 时三个入口和页面高度跳动；consumer 只有显式传入 `showFooter = false` 才关闭整个 Footer。
+- `PnwWorkbenchFooter` 左侧接受无业务语义的 consumer 内容 slot，右侧固定渲染 Primary、Bottom、Secondary 三个仅图标按钮；可用按钮按 visibility 切换公共 `panel-*` / `panel-*-active` SVG，on 不产生常驻按钮底块，hover 与 `focus-visible` 反馈仍保留。当前 View 未提供的 Block 使用原生 `disabled` 并保持轮廓 off 图形。按钮继续输出 `aria-label` / `aria-pressed`，只向宿主发送显隐状态更新。`PnwWorkbenchLayout` 默认始终保留 Footer，避免切换 View 时三个入口和页面高度跳动；consumer 只有显式传入 `showFooter = false` 才关闭整个 Footer。
 - `light`、`dark`、`system` 由布局根提供默认 token；系统主题使用 `prefers-color-scheme`。示例和宿主可以在外层覆盖最终 `--pnw-*` token，例如：
 
   ```css

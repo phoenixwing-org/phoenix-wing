@@ -62,6 +62,7 @@ Owner：Phoenix Wing maintainers
    - [x] 形成 Phoenix Admin 渐进适配映射：沿用 Admin 的权限菜单、Router、process/keep-alive 与 Pinia/后端持久化，只用薄 `Pah*` adapter 投影导航、Tab、布局和 Bottom contributions；本轮不改 Admin。
    - [x] Open Issue 已在独立分支完成第一轮本地 Wing 壳层接入、Footer/Bottom 与快捷显示设置验证，manifest 和 lockfile 仍保持 Registry 精确依赖。
    - [x] Footer 的 Primary / Bottom / Secondary 三个固定入口不再随 View contribution 隐藏；无内容时原生禁用并提示原因。`PnwWorkbenchLayout` 默认保留 Footer，consumer 仅可通过 `showFooter = false` 显式关闭。
+   - [x] Footer 三个入口增加公共 on/off SVG 对：原 `panel-left / panel-bottom / panel-right` 保持轮廓兼容，新增对应 `-active` 名称并用 `currentColor` 填充左、下、右区域；Footer 按 contribution 与 visibility 选择图形，disabled 始终保持 off。on 不再产生常驻按钮底块，只有 hover 瞬时背景和 `focus-visible` 焦点环。
    - [x] Open Issue 以 `2e900ad` 将 Wing 的 `light / dark / system` 真正同步到应用根与 Element Plus；Registry 141 项、LOCAL 144 项及完整 local-Wing build 通过。Desk 以 `81fdb7b` 修正 AppShell 自身不能 inject 自己 provide 的 Bottom context，并保留后代无参注入路径。
    - [x] 完成 0.6.0 候选后的 Desk Tools、Function Develop、KT BOM Studio 只读接入审计；新增 API 均不要求三个 0.5.1 消费者立即改动。Desk/BOM 等正式发布后走单一 Shell adapter，Function 随 Admin 迁移；未发现需要继续扩展的公共字段。详见[《扩展消费者接入审计》](Pnw工作台Web扩展消费者接入审计.md)。
    - [x] Open Issue 在 `023fa9b` / `4fb5611` 补齐完整显示偏好、稳定空态和真实页面级 View contribution；完整 `verify:local-wing` 已覆盖 LOCAL 140/5、9 项生命周期/窄屏定向测试及 core/server/Web 构建，Web 转换 3453 个模块；Registry 对照为 138/7。

@@ -91,7 +91,7 @@ pnpm example:workbench:dev
 13. 在 Bottom 的“问题 / 运行日志”受控 Tab 间切换；标签、计数、活动 ID 与内容生命周期由消费者持有，Wing 只提供 Tab 壳；
 14. 逐个关闭 Header 页面标签，确认活动标签被删除时切换到相邻 View；全部关闭后旧 View 不再渲染，中心显示 Wing 默认空状态。消费者可通过 `empty` slot 替换内容；
 15. 开启 `700px 窄屏`，确认框架把实际 Tree 偏好切为同树 Ribbon、把 Header View 标签移到 Ribbon 后，并把可见侧 Block、Editor、Bottom 与 Footer 纳入同一纵向滚动流；关闭预览后自动恢复原 Tree / Header 与面板尺寸偏好；
-16. 切换白天、黑天、跟随系统与自定义 CSS token，并以 `16/24/36/48/64px` 尺寸列检查公共 SVG 清晰度；
+16. 切换白天、黑天、跟随系统与自定义 CSS token，并以 `16/24/36/48/64px` 尺寸列检查公共 SVG 清晰度；同时确认 Footer 三组 `panel-*` / `panel-*-active` 图标在 off/on 时分别保持轮廓与对应区域实心填充；
 17. 修改导航呈现、Tree 两轴外观、Ribbon、主题、标签位置、面板尺寸、设置窗口位置或导航分组布局后刷新，确认 fixture Pinia 从 `localStorage` 恢复。显示偏好损坏或缺字段时先由 `pnwNormalizeWorkbenchDisplayPreferences` 修正；导航布局损坏或 `baseLayoutVersion` 变化时回退默认树。两个存储 key 分别为 `phoenix-wing.fixture.workbench.display-preferences.v1` 和 `phoenix-wing.fixture.navigation-layout.v1`，清除对应项可恢复相应 fixture 默认值；导航布局只保存大分组定义和模块归属的纯数据差量，不序列化 Vue 图标/组件。
 
 fixture View 在自己的 `setup` 中按需登记 Block。综合看板只登记 Primary 与 Bottom；模型目录额外登记 Secondary，但示例默认显隐状态仍关闭 Secondary。`PwwFixtureViewPrimary.vue`、`PwwFixtureViewSecondary.vue` 与 `PwwFixtureViewBottom.vue` 只是演示内容；`PnwWorkbenchShell` 只读取动态组件、props 和 Bottom tabs。切换 View 或 KeepAlive 停用/卸载时，`usePnwViewContribution` 会按 owner 释放旧登记，避免 App 维护固定面板或显示上一个页面的内容。

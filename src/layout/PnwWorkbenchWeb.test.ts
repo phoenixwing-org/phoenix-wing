@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { createSSRApp, defineComponent, h, type Component, type Slots } from "vue";
 import { renderToString, type SSRContext } from "vue/server-renderer";
 import { describe, expect, it } from "vitest";
@@ -39,6 +40,11 @@ const PNW_SSR_NAVIGATION = [
     children: [{ id: "other-page", label: "其他页面" }],
   },
 ] as const satisfies readonly PnwNavigationNode[];
+
+const PNW_WORKBENCH_FOOTER_SOURCE = readFileSync(
+  new URL("./PnwWorkbenchFooter.vue", import.meta.url),
+  "utf8",
+);
 
 async function pnwRenderComponent(
   component: Component,
@@ -276,6 +282,26 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain('height="64"');
     expect(html).toContain('aria-label="显示设置"');
     expect(html).toMatch(/<title[^>]*>显示设置<\/title>/u);
+  });
+
+  it("面板开关图标为三组独立 on/off SVG 且 on 区域使用 currentColor 实心填充", async () => {
+    const pairs = [
+      ["panel-left", "panel-left-active", "left"],
+      ["panel-bottom", "panel-bottom-active", "bottom"],
+      ["panel-right", "panel-right-active", "right"],
+    ] as const;
+
+    for (const [offName, onName, panel] of pairs) {
+      const offHtml = await pnwRenderComponent(PnwIcon, { name: offName, size: 16 });
+      const onHtml = await pnwRenderComponent(PnwIcon, { name: onName, size: 16 });
+
+      expect(offHtml).not.toContain("pnw-icon-panel-fill");
+      expect(onHtml).toContain('class="pnw-icon-panel-fill"');
+      expect(onHtml).toContain(`data-pnw-panel-fill="${panel}"`);
+      expect(onHtml).toContain('fill="currentColor"');
+      expect(onHtml).toContain('stroke="none"');
+      expect(onHtml).not.toBe(offHtml);
+    }
   });
 
   it("工作台显示快捷预设使用四个独立公共矢量图标", async () => {
@@ -550,8 +576,38 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain("Consumer status");
     expect(html).toContain('aria-label="显示/隐藏 Primary Block"');
     expect(html).toContain('aria-pressed="true"');
+    expect(html).not.toContain("pnw-workbench-footer-toggle--active");
+    expect(html).toContain('data-pnw-panel-fill="left"');
+    expect(html).not.toContain('data-pnw-panel-fill="bottom"');
+    expect(html).not.toContain('data-pnw-panel-fill="right"');
     expect(html).toContain('title="当前 View 未提供 Secondary Block"');
     expect(html).toMatch(/disabled[^>]*aria-label="显示\/隐藏 Secondary Block"/);
+  });
+
+  it("Footer 随受控 visibility 切换三组 on/off 图形且禁用项始终保持 off", async () => {
+    const html = await pnwRenderComponent(PnwWorkbenchFooter, {
+      contributions: { primary: true, bottom: true, secondary: false },
+      visibility: { primary: false, bottom: true, secondary: true },
+    });
+
+    expect(html).not.toContain('data-pnw-panel-fill="left"');
+    expect(html).toContain('data-pnw-panel-fill="bottom"');
+    expect(html).not.toContain('data-pnw-panel-fill="right"');
+    expect(html).toContain('aria-label="显示/隐藏 Primary Block" aria-pressed="false"');
+    expect(html).toContain('aria-label="显示/隐藏 Bottom Panel" aria-pressed="true"');
+    expect(html).not.toContain("pnw-workbench-footer-toggle--active");
+    expect(html).toMatch(/disabled[^>]*aria-label="显示\/隐藏 Secondary Block"[^>]*aria-pressed="false"/);
+  });
+
+  it("Footer on 状态保持扁平并保留 hover 与键盘焦点反馈", () => {
+    expect(PNW_WORKBENCH_FOOTER_SOURCE).not.toContain("pnw-workbench-footer-toggle--active");
+    expect(PNW_WORKBENCH_FOOTER_SOURCE).toMatch(
+      /\.pnw-workbench-footer-toggle:hover,[\s\S]*?background:/u,
+    );
+    expect(PNW_WORKBENCH_FOOTER_SOURCE).toMatch(
+      /\.pnw-workbench-footer-toggle:focus-visible\s*\{[\s\S]*?border-color:/u,
+    );
+    expect(PNW_WORKBENCH_FOOTER_SOURCE).toContain(".pnw-workbench-footer-toggle:disabled");
   });
 
   it("consumer 可只贡献 Footer 内容而不声明 View Block", async () => {
