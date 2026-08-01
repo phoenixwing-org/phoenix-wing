@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, type Component, type ComponentPublicInstance } from "vue";
+import { computed, nextTick, type ComponentPublicInstance } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwWorkbenchDisplaySettingsActionSlotProps } from "../types/PnwWorkbenchVue.js";
 import type {
@@ -17,8 +17,10 @@ import {
   pnwNormalizeNavigationVisibility,
 } from "../utils/pnwNavigationTree.js";
 import PnwIcon from "../components/PnwIcon.vue";
+import PnwIconRenderer from "../components/PnwIconRenderer.vue";
 import PnwActivityTreeRail from "./PnwActivityTreeRail.vue";
 import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
 const props = withDefaults(defineProps<{
   nodes: readonly PnwNavigationNode[];
@@ -36,8 +38,8 @@ const props = withDefaults(defineProps<{
 }>(), {
   activeNodeId: "",
   expandedNodeIds: () => [],
-  ariaLabel: "全局导航",
-  headerLabel: "导航工具",
+  ariaLabel: "",
+  headerLabel: "",
   collapsed: false,
   treeAppearance: () => PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   appearance: () => PNW_DEFAULT_RIBBON_APPEARANCE,
@@ -66,6 +68,9 @@ defineSlots<{
 }>();
 
 const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
+const { t: pnwT } = usePnwLocale();
+const pnwAriaLabel = computed(() => props.ariaLabel || pnwT("workbench.activity"));
+const pnwHeaderLabel = computed(() => props.headerLabel || pnwT("workbench.treeHeader"));
 const pnwRows = computed(() => pnwFlattenNavigationTree(
   pnwNavigationNodes.value,
   props.expandedNodeIds,
@@ -78,14 +83,6 @@ function pnwSetTreeButton(
 ): void {
   if (element instanceof HTMLButtonElement) pnwTreeButtons.set(nodeId, element);
   else pnwTreeButtons.delete(nodeId);
-}
-
-function pnwIsTextIcon(icon: unknown): icon is string | number {
-  return typeof icon === "string" || typeof icon === "number";
-}
-
-function pnwVueIcon(icon: unknown): Component {
-  return icon as Component;
 }
 
 function pnwToggleExpanded(nodeId: string): void {
@@ -171,15 +168,19 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
     :data-pnw-activity-tree-collapsed="collapsed"
     :data-pnw-activity-tree-expanded-mode="treeAppearance.expanded"
     :data-pnw-activity-tree-collapsed-mode="treeAppearance.collapsed"
-    :aria-label="ariaLabel"
+    :aria-label="pnwAriaLabel"
   >
     <header class="pnw-activity-tree-header">
-      <span v-if="!collapsed" class="pnw-activity-tree-header-label">{{ headerLabel }}</span>
+      <span v-if="!collapsed" class="pnw-activity-tree-header-label">{{ pnwHeaderLabel }}</span>
       <button
         type="button"
         class="pnw-activity-tree-toggle"
-        :aria-label="collapsed ? '展开目录树' : '折叠为 Activity Bar'"
-        :title="collapsed ? '展开目录树' : '折叠为 Activity Bar'"
+        :aria-label="pnwT(collapsed
+          ? 'workbench.activityTree.expand'
+          : 'workbench.activityTree.collapse')"
+        :title="pnwT(collapsed
+          ? 'workbench.activityTree.expand'
+          : 'workbench.activityTree.collapse')"
         :aria-expanded="!collapsed"
         @click="emit('update:collapsed', !collapsed)"
       >
@@ -193,7 +194,7 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
       :active-node-id="activeNodeId"
       :expanded-node-ids="expandedNodeIds"
       :mode="treeAppearance.collapsed"
-      :aria-label="`${ariaLabel}快捷栏`"
+      :aria-label="pnwT('workbench.activityTree.shortcuts', { label: pnwAriaLabel })"
       :color-scheme="colorScheme"
       @activate="emit('activate', $event)"
       @update:expanded-node-ids="emit('update:expandedNodeIds', $event)"
@@ -233,8 +234,7 @@ async function pnwHandleTreeKeydown(event: KeyboardEvent, rowIndex: number): Pro
           />
         </span>
         <span v-if="row.node.icon !== undefined" class="pnw-activity-tree-icon" aria-hidden="true">
-          <span v-if="pnwIsTextIcon(row.node.icon)">{{ row.node.icon }}</span>
-          <component :is="pnwVueIcon(row.node.icon)" v-else />
+          <PnwIconRenderer :icon="row.node.icon" size="100%" decorative />
         </span>
         <span class="pnw-activity-tree-label">{{ row.node.label }}</span>
       </button>

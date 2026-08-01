@@ -6,7 +6,6 @@ import {
   onMounted,
   ref,
   watch,
-  type Component,
   type ComponentPublicInstance,
 } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
@@ -22,6 +21,7 @@ import {
   pnwVisibleNavigationNodes,
 } from "../utils/pnwNavigationTree.js";
 import PnwIcon from "../components/PnwIcon.vue";
+import PnwIconRenderer from "../components/PnwIconRenderer.vue";
 import {
   PNW_ACTIVITY_TREE_FLYOUT_CLOSE_DELAY_MS,
   pnwCanHoverActivityTreeFlyout,
@@ -74,14 +74,6 @@ function pnwSetButton(
 ): void {
   if (element instanceof HTMLButtonElement) target.set(nodeId, element);
   else target.delete(nodeId);
-}
-
-function pnwIsTextIcon(icon: unknown): icon is string | number {
-  return typeof icon === "string" || typeof icon === "number";
-}
-
-function pnwVueIcon(icon: unknown): Component {
-  return icon as Component;
 }
 
 function pnwNavigationInitial(node: PnwNavigationNode): string {
@@ -369,8 +361,7 @@ onBeforeUnmount(() => {
     >
       <span class="pnw-activity-tree-rail-icon" aria-hidden="true">
         <template v-if="node.icon !== undefined">
-          <span v-if="pnwIsTextIcon(node.icon)">{{ node.icon }}</span>
-          <component :is="pnwVueIcon(node.icon)" v-else />
+          <PnwIconRenderer :icon="node.icon" size="100%" decorative />
         </template>
         <span v-else>{{ pnwNavigationInitial(node) }}</span>
       </span>
@@ -412,8 +403,7 @@ onBeforeUnmount(() => {
         @keydown="pnwHandleFlyoutKeydown($event, index)"
       >
         <span v-if="row.node.icon !== undefined" class="pnw-activity-tree-flyout-icon" aria-hidden="true">
-          <span v-if="pnwIsTextIcon(row.node.icon)">{{ row.node.icon }}</span>
-          <component :is="pnwVueIcon(row.node.icon)" v-else />
+          <PnwIconRenderer :icon="row.node.icon" size="100%" decorative />
         </span>
         <span class="pnw-activity-tree-flyout-label">{{ row.node.label }}</span>
         <PnwIcon

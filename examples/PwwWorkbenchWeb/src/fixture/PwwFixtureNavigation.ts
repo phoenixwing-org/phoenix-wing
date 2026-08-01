@@ -13,8 +13,8 @@ export const PWW_FIXTURE_NAVIGATION = [
         id: "workspace-overview",
         label: "空间概览",
         children: [
-          { id: "dashboard", label: "综合看板", icon: "▦", order: 10 },
-          { id: "models", label: "模型目录", icon: "◇", order: 20 },
+          { id: "dashboard", label: "综合看板", icon: "pnw:dashboard", order: 10 },
+          { id: "models", label: "模型目录", icon: "pnw:list", order: 20 },
         ],
       },
       {
@@ -40,7 +40,7 @@ export const PWW_FIXTURE_NAVIGATION = [
         label: "代码生成",
         order: 10,
         children: [
-          { id: "codegen", label: "参数代码", icon: "</>", order: 10 },
+          { id: "codegen", label: "参数代码", icon: "pnw:report", order: 10 },
           { id: "validation", label: "规则检查", order: 20 },
         ],
       },
@@ -57,7 +57,7 @@ export const PWW_FIXTURE_NAVIGATION = [
         id: "collaboration-issues",
         label: "问题跟踪",
         children: [
-          { id: "issues", label: "Open Issue", icon: "!" },
+          { id: "issues", label: "Open Issue", icon: "pnw:history" },
         ],
       },
     ],

@@ -1,5 +1,6 @@
 import type { Component, MaybeRefOrGetter } from "vue";
 import type { PnwBottomPanelTab } from "./PnwWorkbenchWeb.js";
+import type { PnwWorkbenchResponsiveState } from "./PnwWorkbenchWeb.js";
 
 /** Vue Web View 提供给工作台 Block 的动态组件；业务状态仍由 View 持有。 */
 export interface PnwViewBlockComponentContribution {
@@ -32,4 +33,10 @@ export interface PnwViewBlockComponentContributions {
  */
 export interface PnwWorkbenchDisplaySettingsActionSlotProps {
   readonly emitAction: (actionId: string) => void;
+}
+
+/** Layout 的 Header/Activity slot 可读取瞬时最大化状态并请求受控更新。 */
+export interface PnwWorkbenchLayoutSlotProps extends PnwWorkbenchResponsiveState {
+  readonly editorMaximized: boolean;
+  readonly requestEditorMaximized: (maximized: boolean) => void;
 }

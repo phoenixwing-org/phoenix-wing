@@ -21,6 +21,7 @@ import {
   pnwNormalizeWorkbenchTabBarPlacement,
   pnwNormalizeWorkbenchDisplayPreferences,
   pnwValidateRibbonAppearance,
+  pnwShouldRestoreEditorFromKeyboard,
 } from "./pnwWorkbenchWeb.js";
 
 describe("PnwWorkbench 四区布局状态", () => {
@@ -69,6 +70,12 @@ describe("PnwWorkbench 四区布局状态", () => {
 });
 
 describe("PnwWorkbench View 标签位置", () => {
+  it("只在 Escape 未被子浮层消费时请求退出 Editor 最大化", () => {
+    expect(pnwShouldRestoreEditorFromKeyboard("Escape")).toBe(true);
+    expect(pnwShouldRestoreEditorFromKeyboard("Escape", true)).toBe(false);
+    expect(pnwShouldRestoreEditorFromKeyboard("Enter")).toBe(false);
+  });
+
   it("默认保持既有 Header 内页签", () => {
     expect(PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT).toBe("header");
     expect(pnwNormalizeWorkbenchTabBarPlacement("unknown-placement")).toBe("header");

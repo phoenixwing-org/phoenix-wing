@@ -7,13 +7,14 @@ import type {
 } from "../types/PnwWorkbenchWeb.js";
 import { pnwAvailableViewBlockIds } from "../utils/pnwWorkbenchWeb.js";
 import PnwIcon from "../components/PnwIcon.vue";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
 const props = withDefaults(defineProps<{
   contributions: PnwViewBlockContributions;
   visibility: PnwViewBlockVisibility;
   ariaLabel?: string;
 }>(), {
-  ariaLabel: "工作台布局开关",
+  ariaLabel: "",
 });
 
 const emit = defineEmits<{
@@ -21,6 +22,8 @@ const emit = defineEmits<{
 }>();
 
 const pnwAvailableIds = computed(() => pnwAvailableViewBlockIds(props.contributions));
+const { t: pnwT } = usePnwLocale();
+const pnwAriaLabel = computed(() => props.ariaLabel || pnwT("workbench.footer"));
 
 function pnwHasBlock(blockId: PnwViewBlockId): boolean {
   return pnwAvailableIds.value.includes(blockId);
@@ -28,7 +31,7 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
 </script>
 
 <template>
-  <footer class="pnw-workbench-footer" :aria-label="ariaLabel">
+  <footer class="pnw-workbench-footer" :aria-label="pnwAriaLabel">
     <div v-if="$slots.default" class="pnw-workbench-footer-content">
       <slot />
     </div>
@@ -38,8 +41,10 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
         type="button"
         class="pnw-workbench-footer-toggle"
         :disabled="!pnwHasBlock('primary')"
-        :title="pnwHasBlock('primary') ? '显示/隐藏 Primary Block' : '当前 View 未提供 Primary Block'"
-        aria-label="显示/隐藏 Primary Block"
+        :title="pnwT(pnwHasBlock('primary')
+          ? 'workbench.footer.primaryToggle'
+          : 'workbench.footer.primaryUnavailable')"
+        :aria-label="pnwT('workbench.footer.primaryToggle')"
         :aria-pressed="pnwHasBlock('primary') && visibility.primary"
         @click="emit('toggle', 'primary')"
       >
@@ -52,8 +57,10 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
         type="button"
         class="pnw-workbench-footer-toggle"
         :disabled="!pnwHasBlock('bottom')"
-        :title="pnwHasBlock('bottom') ? '显示/隐藏 Bottom Panel' : '工作台未提供 Bottom Panel'"
-        aria-label="显示/隐藏 Bottom Panel"
+        :title="pnwT(pnwHasBlock('bottom')
+          ? 'workbench.footer.bottomToggle'
+          : 'workbench.footer.bottomUnavailable')"
+        :aria-label="pnwT('workbench.footer.bottomToggle')"
         :aria-pressed="pnwHasBlock('bottom') && visibility.bottom"
         @click="emit('toggle', 'bottom')"
       >
@@ -66,8 +73,10 @@ function pnwHasBlock(blockId: PnwViewBlockId): boolean {
         type="button"
         class="pnw-workbench-footer-toggle"
         :disabled="!pnwHasBlock('secondary')"
-        :title="pnwHasBlock('secondary') ? '显示/隐藏 Secondary Block' : '当前 View 未提供 Secondary Block'"
-        aria-label="显示/隐藏 Secondary Block"
+        :title="pnwT(pnwHasBlock('secondary')
+          ? 'workbench.footer.secondaryToggle'
+          : 'workbench.footer.secondaryUnavailable')"
+        :aria-label="pnwT('workbench.footer.secondaryToggle')"
         :aria-pressed="pnwHasBlock('secondary') && visibility.secondary"
         @click="emit('toggle', 'secondary')"
       >

@@ -8,13 +8,18 @@ import {
   PNW_DEFAULT_RIBBON_APPEARANCE,
 } from "../utils/pnwWorkbenchWeb.js";
 import PnwIcon from "../components/PnwIcon.vue";
+import PnwIconRenderer from "../components/PnwIconRenderer.vue";
 import PnwPhoenixWingMark from "../components/PnwPhoenixWingMark.vue";
+import PnwFloatingPanel from "../components/PnwFloatingPanel.vue";
+import { pnwProvideLocale } from "../composables/usePnwLocale.js";
+import { pnwRegisterIconNamespace } from "../composables/pnwIconRegistry.js";
 import PnwActivityBar from "./PnwActivityBar.vue";
 import PnwActivityTree from "./PnwActivityTree.vue";
 import PnwLogBlock from "./PnwLogBlock.vue";
 import PnwPageHeader from "./PnwPageHeader.vue";
 import PnwProblemsBlock from "./PnwProblemsBlock.vue";
 import PnwRibbon from "./PnwRibbon.vue";
+import PnwRibbonToolButton from "./PnwRibbonToolButton.vue";
 import PnwRibbonTabBar from "./PnwRibbonTabBar.vue";
 import PnwWorkbenchFooter from "./PnwWorkbenchFooter.vue";
 import PnwWorkbenchDisplaySettingsPanel from "./PnwWorkbenchDisplaySettingsPanel.vue";
@@ -43,6 +48,22 @@ const PNW_SSR_NAVIGATION = [
 
 const PNW_WORKBENCH_FOOTER_SOURCE = readFileSync(
   new URL("./PnwWorkbenchFooter.vue", import.meta.url),
+  "utf8",
+);
+const PNW_RIBBON_TOOL_BUTTON_SOURCE = readFileSync(
+  new URL("./PnwRibbonToolButton.vue", import.meta.url),
+  "utf8",
+);
+const PNW_WORKBENCH_LAYOUT_SOURCE = readFileSync(
+  new URL("./PnwWorkbenchLayout.vue", import.meta.url),
+  "utf8",
+);
+const PNW_ICON_SOURCE = readFileSync(
+  new URL("../components/PnwIcon.vue", import.meta.url),
+  "utf8",
+);
+const PNW_ICON_RENDERER_SOURCE = readFileSync(
+  new URL("../components/PnwIconRenderer.vue", import.meta.url),
   "utf8",
 );
 
@@ -147,6 +168,54 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain("pnw-workbench-display-full-done");
     expect(html).toMatch(/>\s*完成\s*<\/button>/u);
     expect(html).not.toContain("before-navigation");
+  });
+
+  it("完整设置可由 Host locale 驱动为英文", async () => {
+    const PnwEnglishSettings = defineComponent({
+      setup() {
+        pnwProvideLocale(() => "en-US");
+        return () => h(PnwWorkbenchDisplaySettingsPanel, {
+          open: true,
+          position: { x: 24, y: 56 },
+          presentation: "ribbon",
+          appearance: {
+            mode: "ribbon",
+            compact: { iconSize: 24, showTitles: true, showGroupLabels: false },
+            ribbon: { iconSize: 36, showTitles: true, showGroupLabels: true },
+          },
+          treeAppearance: { expanded: "outline", collapsed: "leaf-rail" },
+          colorScheme: "light",
+          showLayoutSettings: true,
+        });
+      },
+    });
+    const html = await pnwRenderComponent(PnwEnglishSettings, {});
+
+    expect(html).toContain("Workbench display settings");
+    expect(html).toContain("Navigation structure");
+    expect(html).toContain("View tab position");
+    expect(html).toContain("Color theme");
+    expect(html).toContain("Ribbon height and content");
+    expect(html).toContain("36px icon");
+    expect(html).not.toContain("工作台显示设置");
+    expect(html).not.toContain("图标");
+  });
+
+  it("浮动面板把公共 overlay layer 解析为可覆盖的稳定数值", async () => {
+    const html = await pnwRenderComponent(
+      PnwFloatingPanel,
+      {
+        open: true,
+        position: { x: 12, y: 16 },
+        layer: "hostTools",
+        title: "Host tools",
+      },
+      { default: () => [h("div", "Dropdown content")] },
+    );
+
+    expect(html).toContain("--pnw-floating-panel-layer-z-index:1400");
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-label="关闭浮动面板"');
   });
 
   it("consumer 扩展区复用公共折叠段，不复制配置中心结构样式", async () => {
@@ -282,6 +351,142 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain('height="64"');
     expect(html).toContain('aria-label="显示设置"');
     expect(html).toMatch(/<title[^>]*>显示设置<\/title>/u);
+  });
+
+  it("Ribbon 工具 normal、hover、active 使用次级、主前景与活动语义色", async () => {
+    const html = await pnwRenderComponent(PnwRibbonToolButton, {
+      label: "列表",
+      icon: "pnw:list",
+      displayMode: "icon-title",
+      iconSize: 24,
+    });
+
+    expect(html).toContain("--pnw-ribbon-tool-icon-size:24px");
+    expect(html).toContain('data-pnw-icon-id="pnw:list"');
+    expect(PNW_RIBBON_TOOL_BUTTON_SOURCE).toMatch(
+      /\.pnw-ribbon-tool-btn\s*\{[\s\S]*?--pnw-ribbon-tool-muted,[\s\S]*?--pnw-workbench-muted,[\s\S]*?--pnw-workbench-default-muted/u,
+    );
+    expect(PNW_RIBBON_TOOL_BUTTON_SOURCE).toMatch(
+      /\.pnw-ribbon-tool-btn:hover:not\(:disabled\)\s*\{[\s\S]*?--pnw-ribbon-tool-hover-text,[\s\S]*?--pnw-workbench-text,[\s\S]*?--pnw-workbench-default-text/u,
+    );
+    expect(PNW_RIBBON_TOOL_BUTTON_SOURCE).toMatch(
+      /\.pnw-ribbon-tool-btn\.active,[\s\S]*?\.pnw-ribbon-tool-btn\.active:hover:not\(:disabled\)\s*\{[\s\S]*?--pnw-control-active-text/u,
+    );
+    expect(PNW_RIBBON_TOOL_BUTTON_SOURCE).toMatch(
+      /\.pnw-ribbon-tool-icon\s*\{[\s\S]*?color:\s*inherit;/u,
+    );
+  });
+
+  it("Ribbon 状态色在亮暗主题分别有可辨的 normal、hover、active 回退", () => {
+    const matrix = [
+      { scheme: "light", normal: "#64748b", hover: "#0f172a", active: "#1d4ed8" },
+      { scheme: "dark", normal: "#94a3b8", hover: "#e5edf7", active: "#bfdbfe" },
+    ] as const;
+
+    for (const { scheme, normal, hover, active } of matrix) {
+      const selector = `.pnw-workbench-layout[data-pnw-color-scheme="${scheme}"]`;
+      const start = PNW_WORKBENCH_LAYOUT_SOURCE.indexOf(selector);
+      const blockEnd = PNW_WORKBENCH_LAYOUT_SOURCE.indexOf("}", start);
+      const block = PNW_WORKBENCH_LAYOUT_SOURCE.slice(start, blockEnd);
+
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(block).toContain(`--pnw-workbench-default-muted: ${normal}`);
+      expect(block).toContain(`--pnw-workbench-default-text: ${hover}`);
+      expect(block).toContain(`--pnw-workbench-default-active-text: ${active}`);
+    }
+  });
+
+  it("Ribbon 只统一 24px 占框与光学居中，不改 Host SVG 线重", () => {
+    expect(PNW_ICON_SOURCE).toContain('viewBox="0 0 24 24"');
+    expect(PNW_ICON_SOURCE).toContain('stroke-width="1.75"');
+    expect(PNW_ICON_SOURCE).toContain('stroke-linecap="round"');
+    expect(PNW_ICON_SOURCE).toContain('stroke-linejoin="round"');
+    expect(PNW_RIBBON_TOOL_BUTTON_SOURCE).toMatch(
+      /\.pnw-display-icon \.pnw-ribbon-tool-icon,[\s\S]*?width:\s*var\(--pnw-ribbon-tool-icon-size\);[\s\S]*?height:\s*var\(--pnw-ribbon-tool-icon-size\);/u,
+    );
+    expect(PNW_ICON_RENDERER_SOURCE).toMatch(
+      /\.pnw-icon-renderer\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;/u,
+    );
+    expect(PNW_RIBBON_TOOL_BUTTON_SOURCE).not.toContain("stroke-width:");
+    expect(PNW_ICON_RENDERER_SOURCE).not.toContain("stroke-width:");
+  });
+
+  it("统一图标渲染器解析 Host 命名空间并让未知 ID 保持可见", async () => {
+    const PnwHostFolderIcon = defineComponent({
+      name: "PnwHostFolderIcon",
+      render: () => h("svg", { "data-host-icon": "folder" }),
+    });
+    const unregister = pnwRegisterIconNamespace("cool", { folder: PnwHostFolderIcon });
+    try {
+      const hostHtml = await pnwRenderComponent(PnwIconRenderer, {
+        icon: "cool:folder",
+        size: 24,
+        decorative: false,
+        title: "Host folder",
+      });
+      const fallbackHtml = await pnwRenderComponent(PnwIconRenderer, {
+        icon: "folder-opened",
+        size: 24,
+      });
+
+      expect(hostHtml).toContain('data-pnw-icon-id="cool:folder"');
+      expect(hostHtml).toContain('data-host-icon="folder"');
+      expect(hostHtml).toContain('aria-label="Host folder"');
+      expect(fallbackHtml).toContain('data-pnw-icon-id="folder-opened"');
+      expect(fallbackHtml).toContain('data-pnw-icon-fallback="true"');
+      expect(fallbackHtml).toContain("pnw-icon");
+    } finally {
+      unregister();
+    }
+  });
+
+  it("统一图标渲染器呈现真实 manifest 使用的六个规范内置 ID", async () => {
+    const iconIds = [
+      "pnw:dashboard",
+      "pnw:list",
+      "pnw:document",
+      "pnw:history",
+      "pnw:report",
+      "pnw:folder",
+    ] as const;
+    const rendered = await Promise.all(iconIds.map((icon) => pnwRenderComponent(
+      PnwIconRenderer,
+      { icon, size: 24 },
+    )));
+
+    rendered.forEach((html, index) => {
+      expect(html).toContain(`data-pnw-icon-id="${iconIds[index]}"`);
+      expect(html).not.toContain("data-pnw-icon-fallback");
+      expect(html).toContain("pnw-icon");
+    });
+  });
+
+  it("Ribbon 与 Tree 对同一未知导航图标输出一致的可见 fallback", async () => {
+    const navigation = [{
+      id: "module",
+      label: "模块",
+      children: [{
+        id: "group",
+        label: "分组",
+        children: [{ id: "page", label: "页面", icon: "folder-opened" }],
+      }],
+    }] satisfies readonly PnwNavigationNode[];
+    const ribbonHtml = await pnwRenderComponent(PnwRibbon, {
+      nodes: navigation,
+      activeNodeId: "page",
+      showAppearanceMenu: false,
+    });
+    const treeHtml = await pnwRenderComponent(PnwActivityTree, {
+      nodes: navigation,
+      activeNodeId: "page",
+      expandedNodeIds: ["module", "group"],
+    });
+
+    for (const html of [ribbonHtml, treeHtml]) {
+      expect(html).toContain('data-pnw-icon-id="folder-opened"');
+      expect(html).toContain('data-pnw-icon-fallback="true"');
+      expect(html).toContain("pnw-icon");
+    }
   });
 
   it("面板开关图标为三组独立 on/off SVG 且 on 区域使用 currentColor 实心填充", async () => {
@@ -452,6 +657,90 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(treeAfterHtml).not.toContain('aria-label="模块"');
     expect(treeAfterHtml).toContain('data-pnw-activity-presentation="tree"');
     expect(treeAfterHtml).toContain('data-pnw-preferred-activity-presentation="tree"');
+  });
+
+  it("Editor 最大化保留唯一 Editor/TabBar 与明确还原动作并隐藏其他壳层区域", async () => {
+    const html = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        activeNodeId: "page",
+        tabs: [{ id: "page", pageId: "page", title: "页面", dirty: false }],
+        activeTabId: "page",
+        editorMaximized: true,
+        showEditorMaximizeAction: false,
+        tabBarPlacement: "header",
+        contributions: { primary: true, bottom: true, secondary: true },
+        visibility: { primary: true, bottom: true, secondary: true },
+      },
+      {
+        brand: () => [h("span", "Hidden Brand")],
+        "header-actions": () => [h("button", "Hidden Host Action")],
+        default: () => [h("div", { id: "unique-editor" }, "Editor survives")],
+        primary: () => [h("div", "Hidden Primary")],
+        bottom: () => [h("div", "Hidden Bottom")],
+        secondary: () => [h("div", "Hidden Secondary")],
+        footer: () => [h("span", "Hidden Footer")],
+      },
+    );
+
+    expect(html).toContain('data-pnw-editor-maximized="true"');
+    expect(html.match(/id="unique-editor"/gu)).toHaveLength(1);
+    expect(html.match(/aria-label="已打开页面"/gu)).toHaveLength(1);
+    expect(html).toContain('aria-label="还原工作台布局"');
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain("pnw-workbench-header--editor-maximized");
+    expect(html).not.toContain("Hidden Brand");
+    expect(html).not.toContain("Hidden Host Action");
+    expect(html).not.toContain("Hidden Primary");
+    expect(html).not.toContain("Hidden Bottom");
+    expect(html).not.toContain("Hidden Secondary");
+    expect(html).not.toContain("Hidden Footer");
+    expect(html).not.toContain("pnw-workbench-activity-frame");
+  });
+
+  it("非 Header 标签位置最大化时移除 Header 并仍保留唯一还原入口", async () => {
+    const html = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        editorMaximized: true,
+        tabBarPlacement: "after-navigation",
+        tabs: [],
+      },
+      { default: () => [h("div", "Empty Editor")], brand: () => [h("span", "Brand")] },
+    );
+
+    expect(html).not.toContain("pnw-workbench-header-slot");
+    expect(html).toContain("pnw-workbench-view-tabs--editor-top");
+    expect(html.match(/aria-label="还原工作台布局"/gu)).toHaveLength(1);
+    expect(html).toContain("Empty Editor");
+  });
+
+  it("TabBar 暴露刷新与关闭其他动作，并由 Host locale 切换 Wing 文案", async () => {
+    const html = await pnwRenderComponent(
+      PnwWorkbenchShell,
+      {
+        nodes: PNW_SSR_NAVIGATION,
+        locale: "en-US",
+        tabs: [
+          { id: "one", pageId: "one", title: "One", dirty: false },
+          { id: "two", pageId: "two", title: "Two", dirty: true },
+        ],
+        activeTabId: "one",
+        canRefreshActiveTab: true,
+        canCloseOtherTabs: true,
+      },
+      { default: () => [h("div", "Editor")] },
+    );
+
+    expect(html).toContain('aria-label="Refresh active tab"');
+    expect(html).toContain('aria-label="Close other tabs"');
+    expect(html).toContain('aria-label="Maximize current View"');
+    expect(html).toContain('aria-label="Unsaved"');
+    expect(html).toContain('aria-label="Workbench header"');
+    expect(html).toContain('aria-label="Global activity navigation"');
+    expect(html).not.toContain('aria-label="工作台页眉"');
   });
 
   it("WorkbenchShell 用一个组合入口装配受控 Header、ActivityBar 与 View Blocks", async () => {

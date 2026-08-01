@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { usePnwLocale } from "../composables/usePnwLocale.js";
+
 defineProps<{
   tabs: readonly { id: string; label: string; fullLabel?: string }[];
   activeTab: string;
 }>();
+
+const { t: pnwT } = usePnwLocale();
 
 const emit = defineEmits<{
   "update:activeTab": [id: string];
@@ -10,7 +14,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="pnw-ribbon-tabs" role="tablist" aria-label="功能区">
+  <div class="pnw-ribbon-tabs" role="tablist" :aria-label="pnwT('workbench.ribbonTabs')">
     <button
       v-for="tab in tabs"
       :key="tab.id"

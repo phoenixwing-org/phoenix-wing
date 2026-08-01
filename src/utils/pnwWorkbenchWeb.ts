@@ -61,6 +61,14 @@ export function pnwResolveWorkbenchResponsiveState(
   };
 }
 
+/** Escape 只在事件尚未被子浮层消费时退出 Editor 最大化。 */
+export function pnwShouldRestoreEditorFromKeyboard(
+  key: string,
+  defaultPrevented = false,
+): boolean {
+  return key === "Escape" && !defaultPrevented;
+}
+
 export const PNW_WORKBENCH_PANEL_SIZE_LIMITS = Object.freeze({
   primaryMin: 160,
   primaryMax: 560,

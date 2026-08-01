@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useSlots } from "vue";
 import type { PnwBottomPanelTab } from "../types/PnwWorkbenchWeb.js";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
 const props = withDefaults(defineProps<{
   ariaLabel?: string;
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const pnwSlots = useSlots();
+const { t: pnwT } = usePnwLocale();
 const pnwTabs = computed(() => props.tabs ?? []);
 const pnwActiveTabId = computed(() => pnwTabs.value.some(
   (tab) => tab.id === props.activeTabId && !tab.disabled,
@@ -42,7 +44,11 @@ function pnwSelectTab(tab: PnwBottomPanelTab): void {
       v-if="pnwTabs.length > 0 || pnwSlots.summary"
       class="pnw-bottom-panel-head"
     >
-      <div class="pnw-bottom-panel-tabs" role="tablist" :aria-label="`${ariaLabel}标签`">
+      <div
+        class="pnw-bottom-panel-tabs"
+        role="tablist"
+        :aria-label="pnwT('workbench.bottomTabs', { label: ariaLabel })"
+      >
         <button
           v-for="tab in pnwTabs"
           :id="`pnw-bottom-tab-${tab.id}`"

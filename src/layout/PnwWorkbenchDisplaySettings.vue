@@ -19,6 +19,7 @@ import {
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
 import PnwWorkbenchDisplaySettingsPanel from "./PnwWorkbenchDisplaySettingsPanel.vue";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
 type PnwWorkbenchDisplayPreset = "tree" | "compact-icon" | "compact-title" | "ribbon";
 
@@ -64,6 +65,7 @@ defineSlots<{
 }>();
 
 const pnwTrigger = ref<HTMLElement>();
+const { t: pnwT } = usePnwLocale();
 const pnwOpen = ref(false);
 const pnwFullOpen = ref(false);
 const pnwLocalPositions = ref<PnwWorkbenchDisplaySettingsPositions>({
@@ -71,16 +73,16 @@ const pnwLocalPositions = ref<PnwWorkbenchDisplaySettingsPositions>({
   full: { ...PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS.full },
 });
 const pnwPositions = computed(() => props.positions ?? pnwLocalPositions.value);
-const pnwPresets = [
-  { id: "tree", label: "侧面目录树", icon: "navigation-tree" },
-  { id: "compact-icon", label: "紧凑图标", icon: "compact-toolbar" },
-  { id: "compact-title", label: "紧凑图标 + Title", icon: "compact-toolbar-title" },
-  { id: "ribbon", label: "大 Ribbon", icon: "ribbon" },
-] as const satisfies readonly {
+const pnwPresets = computed(() => [
+  { id: "tree", label: pnwT("workbench.settings.tree"), icon: "navigation-tree" },
+  { id: "compact-icon", label: pnwT("workbench.settings.compactIcon"), icon: "compact-toolbar" },
+  { id: "compact-title", label: pnwT("workbench.settings.compactTitle"), icon: "compact-toolbar-title" },
+  { id: "ribbon", label: pnwT("workbench.settings.ribbon"), icon: "ribbon" },
+] satisfies readonly {
   id: PnwWorkbenchDisplayPreset;
   label: string;
   icon: PnwIconName;
-}[];
+}[]);
 const pnwActivePreset = computed<PnwWorkbenchDisplayPreset>(() => {
   if ((props.effectivePresentation ?? props.presentation) === "tree") return "tree";
   if (props.appearance.mode === "ribbon") return "ribbon";
@@ -171,28 +173,28 @@ function pnwOpenAdvancedSettings(): void {
       ref="pnwTrigger"
       type="button"
       class="pnw-workbench-display-trigger"
-      title="工作台显示设置"
-      aria-label="工作台显示设置"
+      :title="pnwT('workbench.settings.title')"
+      :aria-label="pnwT('workbench.settings.title')"
       aria-haspopup="dialog"
       :aria-expanded="pnwOpen || pnwFullOpen"
       @click="pnwShowSettings"
     >
       <PnwIcon :name="triggerVariant === 'ribbon' ? 'more' : 'settings'" :size="20" />
-      <span v-if="triggerVariant === 'tree'">工作台显示设置</span>
+      <span v-if="triggerVariant === 'tree'">{{ pnwT("workbench.settings.title") }}</span>
     </button>
 
     <PnwFloatingPanel
       :position="pnwPositions.quick"
       :open="pnwOpen"
-      title="工作台显示设置"
-      aria-label="工作台显示设置快捷菜单"
+      :title="pnwT('workbench.settings.title')"
+      :aria-label="pnwT('workbench.settings.quickMenu')"
       :panel-class="pnwPanelClass"
       @update:position="pnwUpdatePosition('quick', $event)"
       @close="pnwOpen = false"
     >
       <section class="pnw-workbench-display-content">
         <p v-if="responsiveNarrow" class="pnw-workbench-display-responsive-hint">
-          窄屏固定使用顶部 Ribbon；恢复宽屏后继续使用原导航偏好。
+          {{ pnwT("workbench.settings.narrowHint") }}
         </p>
         <div class="pnw-workbench-display-presets">
           <button
@@ -204,7 +206,7 @@ function pnwOpenAdvancedSettings(): void {
             :aria-pressed="pnwActivePreset === preset.id"
             :disabled="responsiveNarrow && preset.id === 'tree'"
             :title="responsiveNarrow && preset.id === 'tree'
-              ? '窄屏固定使用顶部 Ribbon'
+              ? pnwT('workbench.settings.narrowTreeDisabled')
               : undefined"
             @click="pnwApplyPreset(preset.id)"
           >
@@ -219,7 +221,7 @@ function pnwOpenAdvancedSettings(): void {
           @click="pnwShowFullSettings"
         >
           <PnwIcon name="settings" :size="18" />
-          <span>完整显示设置…</span>
+          <span>{{ pnwT("workbench.settings.full") }}</span>
         </button>
 
         <div class="pnw-workbench-display-additional-actions">
@@ -232,7 +234,7 @@ function pnwOpenAdvancedSettings(): void {
             type="button"
             @click="pnwOpenAdvancedSettings"
           >
-            更多产品设置…
+            {{ pnwT("workbench.settings.moreProduct") }}
           </button>
         </div>
       </section>

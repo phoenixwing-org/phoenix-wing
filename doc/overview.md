@@ -16,6 +16,7 @@ src/
 │   ├── pnwFloatingPanel.ts             ← 浮动面板可见范围修正
 │   ├── pnwBrowserStorage.ts            ← 浏览器存储
 │   ├── pnwNavigationTree.ts             ← 受控导航树纯投影
+│   ├── pnwIconId.ts                     ← 规范图标 ID 构造与校验
 │   ├── pnwWorkbenchWeb.ts               ← Ribbon 外观与 Block 状态纯规则
 │   └── pnwPagePropertySchema.ts        ← 属性表 schema 构建器
 ├── types/
@@ -23,6 +24,7 @@ src/
 │   ├── pnwComboTypes.ts                ← 下拉选项类型
 │   ├── PnwRibbonConfig.ts              ← Ribbon 配置类型
 │   ├── PnwWorkbench.ts                 ← 工作台 Tab 类型
+│   ├── PnwIcon.ts                      ← 可序列化图标 ID 类型
 │   └── PnwWorkbenchWeb.ts              ← Web 工作台实验契约
 ├── icons/
 │   └── pnwIconCatalog.ts               ← 常用 SVG 图标名称与尺寸清单
@@ -33,6 +35,7 @@ src/
 │   ├── PnwExpandCaret.vue              ← 展开三角图标
 │   ├── PnwFloatingPanel.vue            ← 无遮罩可拖动浮动面板
 │   ├── PnwIcon.vue                     ← 常用 currentColor SVG 图标
+│   ├── PnwIconRenderer.vue             ← namespace 图标解析与回退
 │   ├── PnwPhoenixWingMark.vue          ← Phoenix Wing 彩色品牌标志
 │   └── PnwAsyncProgressOverlay.vue     ← 任务进度浮层
 ├── layout/
@@ -61,6 +64,7 @@ src/
 │   ├── pnwCreateWorkbench.ts           ← Tab 管理引擎
 │   ├── pnwPagePropertiesHost.ts        ← 属性表注册中心
 │   ├── pnwRibbonIcons.ts               ← Ribbon 图标映射
+│   ├── pnwIconRegistry.ts              ← Host namespace 白名单注册
 │   ├── pnwShellUrlSync.ts              ← URL 同步
 │   ├── pnwSideDockLayout.ts            ← 侧栏布局计算
 │   ├── usePnwDocumentTitle.ts          ← 文档标题同步
@@ -107,7 +111,8 @@ src/
 | `PnwComboTextInput` | 带下拉选项的文本输入框 | Vue 3 |
 | `PnwExpandCaret` | 展开/折叠三角图标 | 无 |
 | `PnwFloatingPanel` | 无背景遮罩、受控位置、可拖动且自动修正到可见范围的浮动面板 | Vue 3 |
-| `PnwIcon` | 首批 16 个常用壳层 currentColor SVG 图标，回归 16/24/36/48/64px | Vue 3 |
+| `PnwIcon` | 公共壳层与导航 currentColor SVG catalog，回归 16/24/36/48/64px | Vue 3 |
+| `PnwIconRenderer` | 解析规范 `PnwIconId`、Host namespace 与旧运行时图标，未知 ID 可见回退 | Vue 3 |
 | `PnwAsyncProgressOverlay` | 任务进度浮层（全屏/浮动/最小化三态） | Vue 3 + Element Plus + Pinia |
 
 ### 壳层布局组件
@@ -123,8 +128,8 @@ src/
 | `PnwPrimaryBlock` / `PnwSecondaryBlock` | 当前 View 可选侧 Block | Vue 3 |
 | `PnwBottomPanel` | 与 Editor 左右边界对齐、由顶边句柄调高的受控多 Tab 底部面板 | Vue 3 |
 | `PnwWorkbenchHeader` | 品牌、Ribbon 大分组、打开页签和操作区的无状态插槽壳 | Vue 3 |
-| `PnwWorkbenchLayout` | 以统一 `PnwWorkbenchLayoutState` 受控 Header、ActivityBar、四区尺寸/显隐、Bottom Tab 与主题 token | Vue 3 |
-| `PnwWorkbenchShell` | 默认 Phoenix 品牌/空状态、动态 View Block 组件与全层命名 slot 的消费者组合入口 | Vue 3 |
+| `PnwWorkbenchLayout` | 以统一 `PnwWorkbenchLayoutState` 受控 Header、ActivityBar、四区尺寸/显隐、Bottom Tab、主题 token 与瞬时 Editor 最大化 | Vue 3 |
+| `PnwWorkbenchShell` | 默认 Phoenix 品牌/空状态、动态 View Block、Host locale、标签动作与全层命名 slot 的消费者组合入口 | Vue 3 |
 | `PnwWorkbenchFooter` | 按 contribution 显示三个仅图标布局开关 | Vue 3 |
 | `PnwRibbonShell` | Ribbon 容器（折叠/展开） | Vue 3 |
 | `PnwRibbonTabBar` | Ribbon 功能标签切换条 | Vue 3 |
@@ -133,7 +138,7 @@ src/
 | `PnwRibbonUtilButton` | Ribbon 通用工具按钮 | Vue 3 |
 | `PnwPageHeader` | 页面标题头（标题 + 操作区 + 帮助区） | Vue 3 |
 | `PnwShellLogPanel` | 日志面板（自动滚动 + 清空/关闭） | PnwSidebarBlock |
-| `PnwWorkbenchTabBar` | 页面标签栏（支持 header 模式） | Vue 3 |
+| `PnwWorkbenchTabBar` | 页面标签栏（支持 header、刷新当前、关闭其他与最大化/还原） | Vue 3 |
 | `PnwWelcomeShell` | 欢迎页骨架（品牌栏 + 操作 + 主内容区，slot 化） | Vue 3 |
 
 ### 组合式函数 / 引擎
@@ -143,6 +148,8 @@ src/
 | `pnwCreateWorkbench`      | Tab 管理引擎（开/关/切换/去重/session 恢复）                                |
 | `usePnwRibbonTabs`        | Ribbon Tab 切换逻辑（module 联动过滤）                                  |
 | `pnwRibbonIcons`          | Ribbon 图标注册与查找（`pnwRegisterRibbonIcons` + `pnwRibbonIconFor`） |
+| `pnwIconRegistry`         | `pnwRegisterIconNamespace` / `pnwResolveIcon` 显式 namespace 白名单与统一解析 |
+| `pnwIconId`               | `pnwBuiltinIconId` / `pnwCreateIconId` / `pnwIsIconId` 持久化边界 |
 | `pnwShellUrlSync`         | URL ↔ 应用状态同步（`pnwParseShellUrl`, `pnwReplaceShellUrl`）        |
 | `pnwSideDockLayout`       | 侧栏布局可见性计算                                                     |
 | `usePnwDocumentTitle`     | 文档标题同步                                                        |

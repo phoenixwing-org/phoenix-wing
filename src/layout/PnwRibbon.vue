@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, type Component } from "vue";
+import { computed, watch } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwWorkbenchDisplaySettingsActionSlotProps } from "../types/PnwWorkbenchVue.js";
 import type {
@@ -25,6 +25,7 @@ import {
 import PnwRibbonGroup from "./PnwRibbonGroup.vue";
 import PnwRibbonShell from "./PnwRibbonShell.vue";
 import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
 const props = withDefaults(defineProps<{
   nodes: readonly PnwNavigationNode[];
@@ -43,7 +44,7 @@ const props = withDefaults(defineProps<{
   presentation: "ribbon",
   treeAppearance: () => PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   colorScheme: "system",
-  ariaLabel: "功能区导航",
+  ariaLabel: "",
   showAppearanceMenu: true,
   showAdvancedSettingsAction: false,
 });
@@ -66,6 +67,8 @@ defineSlots<{
 }>();
 
 const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
+const { t: pnwT } = usePnwLocale();
+const pnwAriaLabel = computed(() => props.ariaLabel || pnwT("workbench.activity"));
 const pnwModules = computed(() => pnwProjectNavigationRibbon(pnwNavigationNodes.value));
 const pnwActiveModuleId = computed(() => pnwVisibleNavigationNodes(pnwNavigationNodes.value)
   .find((node) => pnwNavigationNodeContains(node, props.activeNodeId))?.id
@@ -90,8 +93,8 @@ watch(pnwAppearanceValidation, (validation) => {
   if (!validation.valid) console.warn(validation.message);
 }, { immediate: true });
 
-function pnwRibbonItemIcon(icon: unknown): Component | string {
-  return (icon ?? "•") as Component | string;
+function pnwRibbonItemIcon(icon: unknown): unknown {
+  return icon ?? "•";
 }
 
 function pnwHandleRibbonKeydown(event: KeyboardEvent): void {
@@ -118,7 +121,7 @@ function pnwHandleRibbonKeydown(event: KeyboardEvent): void {
     :style="{ '--pnw-ribbon-natural-height': `${pnwRibbonNaturalHeight}px` }"
     :show-layout-toggle="false"
   >
-    <nav class="pnw-ribbon-navigation" :aria-label="ariaLabel" @keydown="pnwHandleRibbonKeydown">
+    <nav class="pnw-ribbon-navigation" :aria-label="pnwAriaLabel" @keydown="pnwHandleRibbonKeydown">
       <section
         v-for="module in pnwVisibleModules"
         :key="module.id"

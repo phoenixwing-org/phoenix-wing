@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
@@ -86,8 +86,8 @@
     "dev": "vitest"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.6.0",
-    "@phoenix-wing/db-node": "workspace:0.6.0",
+    "@phoenix-wing/code-core": "workspace:0.6.1",
+    "@phoenix-wing/db-node": "workspace:0.6.1",
     "element-plus": "^2.0.0"
   },
   "optionalDependencies": {

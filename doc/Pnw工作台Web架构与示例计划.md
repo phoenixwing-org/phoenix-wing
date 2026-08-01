@@ -115,7 +115,18 @@ VS Code 插件继续使用既有 Webview/Custom Element 和固定样式，不强
 | 关闭/更多 | `close.svg`、`MoreFilled` | `Close` | `MoreFilled` | Tab 关闭与操作菜单 | `close` / `more` |
 | 通用导航/动作 | `home/search/plus/refresh/icon-folder/icon-file.svg` | `Search`、`Plus`、`Refresh`、`Folder`、`Document` | `HomeFilled`、`Search`、`Plus` | `HomeFilled`、`Search`、`Refresh`、`FolderOpened`、`Document` | `home` / `search` / `add` / `refresh` / `folder` / `document` |
 
-首批 `PnwIconName` 固定为：`settings`、`more`、`close`、`chevron-left`、`chevron-right`、`chevron-up`、`chevron-down`、`panel-left`、`panel-left-active`、`panel-bottom`、`panel-bottom-active`、`panel-right`、`panel-right-active`、`home`、`search`、`add`、`refresh`、`folder`、`document`。原有三个 `panel-*` 轮廓名称保持兼容并表示 off；对应 `panel-*-active` 使用同一几何并以 `currentColor` 实心填充左、下、右区域，供亮色/暗色 Footer 的 on 状态使用。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带 iconfont 元数据和来源不明的 Admin SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
+公共 `PnwIconName` 在首批壳层图标上继续增量演进；0.6.1 新增 `unknown`、
+`dashboard`、`list`、`history`、`report` 五个导航语义。原有三个 `panel-*` 轮廓
+名称保持兼容并表示 off；对应 `panel-*-active` 使用同一几何并以 `currentColor`
+实心填充左、下、右区域。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带
+iconfont 元数据和来源不明的产品 SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
+
+新 manifest / DTO 的图标采用显式 namespace 的 `PnwIconId`：内置写成
+`pnw:dashboard`，Host 资源写成 `cool:folder`。`pnw` 由 Wing 保留，Host 只能通过
+`pnwRegisterIconNamespace` 注册自己的白名单；裸 `PnwIconName`、旧 Vue Component
+与 pageId 图标表只作运行时兼容。`PnwIconRenderer` 统一 Ribbon、Tree 与 Activity Rail
+解析，未知 ID 显示可见 `unknown` fallback。详见
+[《Pnw 工作台 Web 图标契约》](Pnw工作台Web图标契约.md)。
 
 本轮清理只建立公共真源并替换 Wing/fixture 自身的重复内联图形。Admin、BOM Studio、Open Issue、Desk Tools 的迁移必须在各自后续适配任务中逐项进行；当前任务不改这些业务仓或依赖。Desk 的 CAA/Widget 图标、FreeCAD Part、Gitee Logo，Admin 的上传文件类型与模块业务图标，BOM 的购物车/制造领域图标继续留在产品侧。
 
@@ -295,6 +306,9 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 - `pnwNavigationTree` 纯函数负责隐藏过滤、稳定同级排序、Tree 可见行和 Ribbon 模块/分组投影。两种呈现激活相同的末级节点对象，保留节点 ID、禁用状态和宿主图标引用。
 - Tree 支持受控展开、上下/左右/Home/End/Enter/Space 键盘行为和 `tree` / `treeitem` / `aria-*` 语义；分支仅展开，末级节点通过 `activate(id)` 把动作交回宿主。
 - `PnwRibbonShell` 仅新增默认开启的 `showLayoutToggle` 可选属性，`PnwRibbonGroup` / `PnwRibbonToolButton` 只放宽文本图标兼容；既有 props、事件和直接子路径入口保持不变。
+- 0.6.1 在不收紧 `PnwNavigationNode.icon: unknown` 的前提下增加规范 `PnwIconId`、
+  Host namespace 白名单、统一 Renderer 与可见 fallback；新序列化数据必须带 namespace，
+  旧 pageId / Component / 文本入口继续通过兼容测试。
 
 ### W2 实现结果
 

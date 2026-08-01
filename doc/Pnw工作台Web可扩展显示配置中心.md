@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.6.0（已发布）
+适用版本：Wing 0.6.1
 
-最后核验：2026-07-29
+最后核验：2026-08-01
 
 ## 1. 定位
 
@@ -133,6 +133,20 @@ interface ProductWorkbenchDisplayPreferences {
 这是一份只描述公共显示字段的轻量快照，不包含 Router、权限、业务 View、导航分组或用户身份。设置面板位置也是受控状态：快捷面板默认 `{ x: 16, y: 72 }`，完整面板默认 `{ x: 8, y: 8 }`；打开和拖动时 `PnwFloatingPanel` 仍把它修正到可见边界。完整面板的“完成”位于固定 Header，长内容滚动时无需回到底部。
 
 不同产品仍可采用前端缓存、登录用户数据库或完全不持久化；Wing 不选择介质，也不自动读取浏览器存储。consumer 保存自己的 envelope 版本，读入后先调用 checker，再绑定给 Shell。仓内 fixture 作为真实 consumer，使用 Pinia + `localStorage` 演示刷新恢复；未来 Admin 可以把同一快照接到后端用户偏好。
+
+Editor 最大化是独立的瞬时壳层状态，刻意不加入上述快照。`editorMaximized` 只由
+Shell/Layout 受控输入与更新事件承载；还原后继续使用最大化前同一份
+`PnwWorkbenchDisplayPreferences`。
+
+### 6.1 国际化与叠层
+
+Shell 的 `locale` 由 Host 传入，Wing 不持久化语言。完整设置和快捷菜单的 Wing
+文案随 `zh-CN / en-US` 切换；consumer slot 内文案仍由产品自己的国际化系统处理。
+
+设置面板使用 `PNW_WORKBENCH_OVERLAY_LAYERS.floatingPanel`。Header 用户区、语言
+dropdown 等 Host 工具使用更高的 `hostTools`，模态框使用 `modal`。若第三方组件
+Teleport 到 body，Host 应把该常量传给第三方 z-index 配置，而不是覆盖 Wing 内部
+选择器。
 
 ## 7. 后续扩展顺序
 
