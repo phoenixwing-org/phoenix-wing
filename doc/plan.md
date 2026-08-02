@@ -87,6 +87,7 @@ Owner：Phoenix Wing maintainers
    - [ ] W5 下一步提供可取消的布局编辑 overlay。Activity/标签移动先行，任意 Block 拖动须先证明 Vue 实例不重建。见[《动态布局与拖动可行性》](Pnw工作台Web动态布局与拖动可行性.md)。
    - [x] W5 已将 fixture 的文章式 Bottom 改为 VS Code 类紧凑 `PnwProblemsBlock / PnwLogBlock`，并提炼实例级有界诊断总线、owner 问题快照与过滤纯函数；`PnwShellLogPanel` 保持兼容。Log 已有三个 Web 证据，Problems 契约在 Admin 或第二真实消费者完成前继续标为实验性，不增加全局 singleton 或 Router 语义。见[《问题与日志 Block 方案》](Pnw工作台Web问题与日志Block方案.md)。
    - [x] W5 统一业务 View 内部 Header：fixture 删除重复的 `PwwFixtureViewHeader`，直接使用 Desk Tools 与 Open Issue 已消费的 `PnwPageHeader`；新增可选 eyebrow、summary、description 和窄容器 actions 排布，旧 `title / subtitle / actions / help` 入口保持兼容。
+   - [ ] 根据 Open Issue SettingsView 的真实消费证据，评估由 `PnwWorkbenchShell` 原生提供 Editor 左上角的 Primary 悬浮展开/收起入口：仅在当前 View 贡献 Primary 时启用，继续使用受控 `PnwWorkbenchLayoutState.visibility` 与既有 Block toggle 事件，并统一图标、Tooltip、无障碍名称、焦点态及窄容器定位；获得第二消费者证据前不扩展公共 API。
    - [x] `0.6.1` 恢复受控 Editor 最大化：Shell/Layout 使用瞬时 `editorMaximized`，TabBar 提供最大化/还原且 Escape 退出；Header placement 退化为只含同一 TabBar 的还原条，其他壳层区域隐藏，Router/Process/KeepAlive、显示偏好和面板尺寸不被改写。
    - [x] `0.6.1` 增加 Host 驱动 `zh-CN / en-US` 工作台文案、TabBar 的刷新当前/关闭其他通用动作，以及 `floatingPanel < hostTools < modal` 公共叠层契约；语言持久化、标签行为和产品链接继续由 Host 持有。详见[《Editor 最大化、标签动作与国际化》](Pnw工作台Web编辑器最大化与国际化.md)。
    - [x] `0.6.1` 增加规范 `PnwIconId`、保留 `pnw` namespace、Host 白名单注册、
