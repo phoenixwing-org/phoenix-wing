@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.6.0'
+export const PNW_VERSION = '0.6.1'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -65,9 +65,21 @@ export {
 export {
   PNW_ICON_NAMES,
   PNW_ICON_TEST_SIZES,
+  pnwIsIconName,
   type PnwIconName,
   type PnwIconTestSize,
 } from './icons/pnwIconCatalog.js'
+
+export {
+  type PnwBuiltinIconId,
+  type PnwIconId,
+} from './types/PnwIcon.js'
+
+export {
+  pnwBuiltinIconId,
+  pnwCreateIconId,
+  pnwIsIconId,
+} from './utils/pnwIconId.js'
 
 // ---------------------------------------------------------------------------
 // 浏览器存储
@@ -83,6 +95,26 @@ export { pnwCanCloseEditorDrawer } from './utils/pnwEditorDrawer.js'
 // Types
 // ---------------------------------------------------------------------------
 export { type PnwComboOption } from './types/pnwComboTypes.js'
+
+export {
+  type PnwLocale,
+  type PnwLocaleMessageValues,
+} from './types/PnwLocale.js'
+
+export {
+  PNW_DEFAULT_LOCALE,
+  PNW_LOCALE_MESSAGES,
+  pnwNormalizeLocale,
+  pnwTranslateLocaleMessage,
+  type PnwLocaleMessageKey,
+  type PnwLocaleMessages,
+} from './utils/pnwLocale.js'
+
+export {
+  PNW_WORKBENCH_OVERLAY_LAYERS,
+  pnwResolveWorkbenchOverlayZIndex,
+  type PnwWorkbenchOverlayLayer,
+} from './utils/pnwOverlayStacking.js'
 
 export {
   type PnwEditorDrawerMode,
@@ -202,6 +234,7 @@ export {
   type PnwBottomViewBlockComponentContribution,
   type PnwViewBlockComponentContributions,
   type PnwWorkbenchDisplaySettingsActionSlotProps,
+  type PnwWorkbenchLayoutSlotProps,
 } from './types/PnwWorkbenchVue.js'
 
 export {
@@ -239,6 +272,7 @@ export {
 
 export {
   pnwViewBlockComponentAvailability,
+  pnwResolveBottomViewBlockComponent,
   pnwResolveViewBlockComponentProps,
   pnwResolveBottomViewBlockTabs,
 } from './composables/pnwViewBlockComponents.js'
@@ -262,7 +296,19 @@ export {
 // Ribbon 图标 & Tab 切换
 // ---------------------------------------------------------------------------
 export { pnwRegisterRibbonIcons, pnwRibbonIconFor } from './composables/pnwRibbonIcons.js'
+export {
+  pnwRegisterIconNamespace,
+  pnwResolveIcon,
+  type PnwIconNamespaceEntry,
+  type PnwIconNamespaceMap,
+  type PnwResolvedIcon,
+} from './composables/pnwIconRegistry.js'
 export { usePnwRibbonTabs } from './composables/usePnwRibbonTabs.js'
+export {
+  pnwProvideLocale,
+  usePnwLocale,
+  type PnwLocaleContext,
+} from './composables/usePnwLocale.js'
 
 export {
   pnwNavigationFromRibbonTabs,
@@ -301,6 +347,7 @@ export {
   pnwResolveWorkbenchResponsiveState,
   pnwNormalizeWorkbenchTabBarPlacement,
   pnwNormalizeWorkbenchDisplayPreferences,
+  pnwShouldRestoreEditorFromKeyboard,
   type PnwRibbonAppearanceIssueCode,
   type PnwRibbonAppearanceValidation,
 } from './utils/pnwWorkbenchWeb.js'
@@ -352,6 +399,7 @@ export { default as PnwEditorDrawerHost } from './components/PnwEditorDrawerHost
 export { default as PnwExpandCaret } from './components/PnwExpandCaret.vue'
 export { default as PnwFloatingPanel } from './components/PnwFloatingPanel.vue'
 export { default as PnwIcon } from './components/PnwIcon.vue'
+export { default as PnwIconRenderer } from './components/PnwIconRenderer.vue'
 export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
 
 export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'

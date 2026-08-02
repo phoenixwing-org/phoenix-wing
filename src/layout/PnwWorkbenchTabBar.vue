@@ -2,6 +2,8 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { Component } from "vue";
 import type { PnwWorkbenchTabItem } from "../types/PnwWorkbenchWeb.js";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
+import PnwIcon from "../components/PnwIcon.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -19,12 +21,24 @@ const props = withDefaults(
     canCloseAll?: boolean;
     /** 全部关闭中 */
     closingAll?: boolean;
+    /** Host 是否实现刷新当前标签。 */
+    canRefreshActiveTab?: boolean;
+    /** Host 是否实现关闭其他标签。 */
+    canCloseOtherTabs?: boolean;
+    /** 当前 Editor 是否处于工作台最大化状态。 */
+    editorMaximized?: boolean;
+    /** 是否显示 Wing 布局级最大化/还原动作。 */
+    showEditorMaximizeAction?: boolean;
   }>(),
   {
     inHeader: false,
     canAdd: false,
     canCloseAll: false,
     closingAll: false,
+    canRefreshActiveTab: false,
+    canCloseOtherTabs: false,
+    editorMaximized: false,
+    showEditorMaximizeAction: false,
   },
 );
 
@@ -32,11 +46,15 @@ const emit = defineEmits<{
   select: [tabId: string];
   close: [tabId: string];
   closeAll: [];
+  closeOtherTabs: [];
+  refreshActiveTab: [];
   newTab: [];
+  "update:editorMaximized": [maximized: boolean];
 }>();
 
 const scrollEl = ref<HTMLElement | null>(null);
 const tabEls = new Map<string, HTMLElement>();
+const { t: pnwT } = usePnwLocale();
 
 function setTabRef(tabId: string, el: Element | null) {
   if (el instanceof HTMLElement) tabEls.set(tabId, el);
@@ -68,7 +86,7 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
 
 <template>
   <div class="pnw-tab-bar" :class="{ 'pnw-tab-bar-header': inHeader }">
-    <div ref="scrollEl" class="pnw-tab-scroll" role="tablist" aria-label="已打开页面">
+    <div ref="scrollEl" class="pnw-tab-scroll" role="tablist" :aria-label="pnwT('workbench.tabs')">
       <span v-if="inHeader" class="pnw-tab-scroll-edge" aria-hidden="true" />
       <button
         v-for="tab in tabs"
@@ -86,24 +104,55 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
           <component :is="pageIcon(tab.pageId)" />
         </span>
         <span class="pnw-tab-title">{{ tab.title }}</span>
-        <span v-if="tab.dirty" class="pnw-tab-dot" aria-label="未保存">●</span>
-        <span class="pnw-tab-close" title="关闭" @click.stop="emit('close', tab.id)">×</span>
+        <span v-if="tab.dirty" class="pnw-tab-dot" :aria-label="pnwT('workbench.tab.unsaved')">●</span>
+        <span class="pnw-tab-close" :title="pnwT('workbench.tab.close')" @click.stop="emit('close', tab.id)">×</span>
       </button>
       <span v-if="inHeader" class="pnw-tab-scroll-edge" aria-hidden="true" />
+    </div>
+    <div class="pnw-tab-actions" role="toolbar" :aria-label="pnwT('workbench.tab.actions')">
+      <button
+        v-if="canRefreshActiveTab"
+        type="button"
+        class="pnw-tab-action"
+        :disabled="!activeTabId"
+        :title="pnwT('workbench.tab.refresh')"
+        :aria-label="pnwT('workbench.tab.refresh')"
+        @click="emit('refreshActiveTab')"
+      ><PnwIcon name="refresh" :size="16" /></button>
+      <button
+        v-if="canCloseOtherTabs"
+        type="button"
+        class="pnw-tab-action"
+        :disabled="tabs.length <= 1 || !activeTabId"
+        :title="pnwT('workbench.tab.closeOthers')"
+        :aria-label="pnwT('workbench.tab.closeOthers')"
+        @click="emit('closeOtherTabs')"
+      ><PnwIcon name="close-others" :size="16" /></button>
+      <button
+        v-if="showEditorMaximizeAction"
+        type="button"
+        class="pnw-tab-action"
+        :aria-pressed="editorMaximized"
+        :title="pnwT(editorMaximized ? 'workbench.tab.restore' : 'workbench.tab.maximize')"
+        :aria-label="pnwT(editorMaximized ? 'workbench.tab.restore' : 'workbench.tab.maximize')"
+        @click="emit('update:editorMaximized', !editorMaximized)"
+      ><PnwIcon :name="editorMaximized ? 'editor-restore' : 'editor-maximize'" :size="16" /></button>
     </div>
     <button
       v-if="canCloseAll"
       type="button"
       class="pnw-tab-close-all"
       :disabled="closingAll"
-      title="关闭全部"
+      :title="pnwT('workbench.tab.closeAll')"
+      :aria-label="pnwT('workbench.tab.closeAll')"
       @click="emit('closeAll')"
-    >✕</button>
+    ><PnwIcon name="close" :size="16" /></button>
     <button
       v-if="canAdd"
       type="button"
       class="pnw-tab-add"
-      title="新建"
+      :title="pnwT('workbench.tab.new')"
+      :aria-label="pnwT('workbench.tab.new')"
       @click="emit('newTab')"
     >+</button>
   </div>
@@ -161,6 +210,43 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
 .pnw-tab-dot { color: #f59e0b; font-size: .65rem; line-height: 1; }
 .pnw-tab-close { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 2px; border-radius: 4px; font-size: 1rem; line-height: 1; opacity: .55; }
 .pnw-tab-close:hover { opacity: 1; background: rgba(148,163,184,.25); }
+
+.pnw-tab-actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.pnw-tab-action {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted, var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b)));
+  cursor: pointer;
+}
+
+.pnw-tab-action:hover:not(:disabled) {
+  background: var(--nav-hover, var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(148,163,184,.15))));
+  color: var(--text, var(--pnw-workbench-text, var(--pnw-workbench-default-text, #334155)));
+}
+
+.pnw-tab-action:focus-visible {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: -2px;
+}
+
+.pnw-tab-action:disabled {
+  opacity: .38;
+  cursor: default;
+}
 
 .pnw-tab-close-all, .pnw-tab-add {
   flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;

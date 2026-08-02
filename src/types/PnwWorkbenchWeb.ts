@@ -41,8 +41,10 @@ export interface PnwRibbonAppearance {
 /**
  * 由产品宿主过滤并受控传入的导航节点。
  *
- * `icon` 保持为 unknown，使纯 TypeScript 契约不依赖 Vue 或任一图标库；
- * Vue 呈现层接受文本图标或宿主提供的 Vue Component。
+ * `icon` 保持为 unknown，使纯 TypeScript 契约不依赖 Vue 或任一图标库。
+ * 新可序列化数据应传显式 PnwIconId（例如 `pnw:dashboard` 或 `cool:folder`）；
+ * 裸 PnwIconName 只作运行时兼容，不应继续写入 manifest / DTO；
+ * Vue 呈现层继续兼容旧文本图标或宿主提供的 Vue Component。
  */
 export interface PnwNavigationNode {
   readonly id: string;

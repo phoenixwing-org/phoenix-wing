@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
+import type { PnwBuiltinIconId, PnwIconId } from "./PnwIcon.js";
 import type {
   PnwActivityBarPresentation,
   PnwActivityTreeAppearance,
@@ -49,6 +50,8 @@ describe("Pnw Web 工作台实验契约", () => {
     expectTypeOf<PnwWorkbenchTabBarPlacement>().toEqualTypeOf<
       "header" | "after-navigation" | "editor-bottom"
     >();
+    expectTypeOf<PnwBuiltinIconId>().toMatchTypeOf<PnwIconId>();
+    const iconId = "pnw:dashboard" as const satisfies PnwIconId;
 
     const appearance = {
       mode: "compact",
@@ -78,5 +81,6 @@ describe("Pnw Web 工作台实验契约", () => {
     expect(treeAppearance).toEqual({ expanded: "admin-menu", collapsed: "root-flyout" });
     expect(contributions.secondary).toBeUndefined();
     expect(visibility.bottom).toBe(false);
+    expect(iconId).toBe("pnw:dashboard");
   });
 });

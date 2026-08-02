@@ -13,10 +13,17 @@ const required = [
   "components/PnwChoiceDialogHost.vue.d.ts",
   "components/PnwEditorDrawerHost.js",
   "components/PnwEditorDrawerHost.vue.d.ts",
+  "components/PnwIconRenderer.js",
+  "components/PnwIconRenderer.vue.d.ts",
   "composables/pnwChoiceDialog.js",
   "composables/pnwChoiceDialog.d.ts",
+  "composables/pnwIconRegistry.js",
+  "composables/pnwIconRegistry.d.ts",
   "layout/PnwPageHeader.js",
   "layout/PnwPageHeader.vue.d.ts",
+  "types/PnwIcon.d.ts",
+  "utils/pnwIconId.js",
+  "utils/pnwIconId.d.ts",
 ];
 
 for (const relative of required) {

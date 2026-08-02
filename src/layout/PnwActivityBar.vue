@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwWorkbenchDisplaySettingsActionSlotProps } from "../types/PnwWorkbenchVue.js";
 import type {
@@ -14,8 +15,9 @@ import {
 import PnwActivityTree from "./PnwActivityTree.vue";
 import PnwRibbon from "./PnwRibbon.vue";
 import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   nodes: readonly PnwNavigationNode[];
   presentation: PnwActivityBarPresentation;
   activeNodeId?: string;
@@ -32,14 +34,18 @@ withDefaults(defineProps<{
   activeNodeId: "",
   expandedNodeIds: () => [],
   appearance: () => PNW_DEFAULT_RIBBON_APPEARANCE,
-  ariaLabel: "全局活动导航",
+  ariaLabel: "",
   showRibbonAppearanceMenu: true,
-  treeHeaderLabel: "导航工具",
+  treeHeaderLabel: "",
   treeCollapsed: false,
   treeAppearance: () => PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   colorScheme: "system",
   showAdvancedSettingsAction: false,
 });
+
+const { t: pnwT } = usePnwLocale();
+const pnwAriaLabel = computed(() => props.ariaLabel || pnwT("workbench.activity"));
+const pnwTreeHeaderLabel = computed(() => props.treeHeaderLabel || pnwT("workbench.treeHeader"));
 
 const emit = defineEmits<{
   activate: [nodeId: string];
@@ -65,7 +71,7 @@ defineSlots<{
   <section
     class="pnw-activity-bar"
     :class="`pnw-activity-bar--${presentation}`"
-    :aria-label="ariaLabel"
+    :aria-label="pnwAriaLabel"
   >
     <PnwRibbon
       v-if="presentation === 'ribbon'"
@@ -76,7 +82,7 @@ defineSlots<{
       :presentation="presentation"
       :color-scheme="colorScheme"
       :show-advanced-settings-action="showAdvancedSettingsAction"
-      :aria-label="ariaLabel"
+      :aria-label="pnwAriaLabel"
       :show-appearance-menu="false"
       @activate="emit('activate', $event)"
       @update:appearance="emit('update:appearance', $event)"
@@ -98,8 +104,8 @@ defineSlots<{
       :nodes="nodes"
       :active-node-id="activeNodeId"
       :expanded-node-ids="expandedNodeIds"
-      :aria-label="ariaLabel"
-      :header-label="treeHeaderLabel"
+      :aria-label="pnwAriaLabel"
+      :header-label="pnwTreeHeaderLabel"
       :collapsed="treeCollapsed"
       :tree-appearance="treeAppearance"
       :appearance="appearance"

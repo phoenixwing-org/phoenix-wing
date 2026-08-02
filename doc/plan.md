@@ -6,9 +6,12 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.6.x
 
-当前仓库版本准备提升为 `0.6.0` 本地候选，用于承载工作台 Web 架构、可扩展显示配置中心与 Git 轻量读取增量；尚未执行 npm 发布，现有消费者继续以各自 manifest 中的已发布精确版本为准。
+`0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1` 已完成 12 个 npm
+发布单元的锁步公开发布和 Registry 干净消费验收。当前 `develop` 保留 0.6.1 发布
+归档，后续公共增量须先决定下一补丁版本；消费者仍以各自 manifest 中的已发布精确
+版本为准。
 
-最后核验：2026-07-29
+最后核验：2026-08-02
 
 ## 已完成基线
 
@@ -41,7 +44,7 @@ Owner：Phoenix Wing maintainers
 
    - [x] 记录增补需求与边界：SVG 品牌真源归 Wing，图标资源只接纳至少两个 Web 消费者共有的壳层动作。
    - [x] 完成 Admin Host、BOM Studio、Open Issue、Desk Tools 图标用法盘点，记录设置、折叠、面板、关闭/更多及六类导航动作的重复证据；产品/领域图标不迁入。
-   - [x] 建立 `PnwIcon` 首批 16 个矢量资源，替换 Wing/fixture 内联重复；消费者业务仓只记录后续迁移点，不在本任务改动。
+   - [x] 建立 `PnwIcon` 公共矢量 catalog，替换 Wing/fixture 内联重复；消费者业务仓只记录后续迁移点，不在本任务改动。
    - [x] 将高层 Ribbon 外观整理为“大 Ribbon / 紧凑工具条”两类同形嵌套设置；共用一个数据类型，各自保存状态，紧凑模式使用时忽略分组标签。
    - [x] 紧凑工具条高度只跟随 16/24px 图标收缩为约 28/34px；Title 仅横向呈现，不改变同尺寸工具条高度。
    - [x] Header 一级大分组只投影当前分组的 Ribbon 内容；移除重复的竖排模块名，以 `3px` 非交互句柄分隔当前分组内模块。
@@ -61,8 +64,12 @@ Owner：Phoenix Wing maintainers
    - [x] 对照 BOM Studio 与 Desk Tools 的页面级 Primary registry，提炼 consumer 隔离的泛型 View contribution 生命周期；`PnwWorkbenchShell` 可动态装配当前 View 的三个 Block。`PwwWorkbenchWeb` 的 App 不再内置 Block 内容或展开三十余个 controller 变量，示例实现统一隔离在 `src/fixture/PwwFixture*`。
    - [x] 形成 Phoenix Admin 渐进适配映射：沿用 Admin 的权限菜单、Router、process/keep-alive 与 Pinia/后端持久化，只用薄 `Pah*` adapter 投影导航、Tab、布局和 Bottom contributions；本轮不改 Admin。
    - [x] Open Issue 已在独立分支完成第一轮本地 Wing 壳层接入、Footer/Bottom 与快捷显示设置验证，manifest 和 lockfile 仍保持 Registry 精确依赖。
-   - [x] Footer 的 Primary / Bottom / Secondary 三个固定入口不再随 View contribution 隐藏；无内容时原生禁用并提示原因。`PnwWorkbenchLayout` 默认保留 Footer，consumer 仅可通过 `showFooter = false` 显式关闭。
+   - [x] Footer 的 Primary / Bottom / Secondary 三个固定入口不再随 View contribution 隐藏；没有解析后内容时原生禁用并提示原因。`PnwWorkbenchLayout` 默认保留 Footer，consumer 仅可通过 `showFooter = false` 显式关闭。
    - [x] Footer 三个入口增加公共 on/off SVG 对：原 `panel-left / panel-bottom / panel-right` 保持轮廓兼容，新增对应 `-active` 名称并用 `currentColor` 填充左、下、右区域；Footer 按 contribution 与 visibility 选择图形，disabled 始终保持 off。on 不再产生常驻按钮底块，只有 hover 瞬时背景和 `focus-visible` 焦点环。
+   - [x] `0.6.1` 候选增加应用级 `defaultBottomBlock` 分层：当前 View 的专用 Bottom
+     优先，缺失时自动回退应用默认内容与 tabs；默认层使 Footer Bottom 在空 View、
+     Dashboard 和普通页面保持可用，切页不改受控显隐与高度。Primary/Secondary
+     继续由当前 View 决定，0.6.0 的 View Bottom、`bottomTabs` 与 slot 入口保持兼容。
    - [x] 2026-07-31 按锁步矩阵公开发布根包与 11 个 scoped packages 的 `0.6.0`；全部 `latest`、tarball 干净安装、可选 peer 补齐后的公共根入口及 `PNW_VERSION` 回归通过。详见[《0.6.0 发布验收》](0.6.0发布验收.md)。
    - [x] Open Issue 以 `2e900ad` 将 Wing 的 `light / dark / system` 真正同步到应用根与 Element Plus；Registry 141 项、LOCAL 144 项及完整 local-Wing build 通过。Desk 以 `81fdb7b` 修正 AppShell 自身不能 inject 自己 provide 的 Bottom context，并保留后代无参注入路径。
    - [x] 完成 0.6.0 候选后的 Desk Tools、Function Develop、KT BOM Studio 只读接入审计；新增 API 均不要求三个 0.5.1 消费者立即改动。Desk/BOM 等正式发布后走单一 Shell adapter，Function 随 Admin 迁移；未发现需要继续扩展的公共字段。详见[《扩展消费者接入审计》](Pnw工作台Web扩展消费者接入审计.md)。
@@ -80,11 +87,18 @@ Owner：Phoenix Wing maintainers
    - [ ] W5 下一步提供可取消的布局编辑 overlay。Activity/标签移动先行，任意 Block 拖动须先证明 Vue 实例不重建。见[《动态布局与拖动可行性》](Pnw工作台Web动态布局与拖动可行性.md)。
    - [x] W5 已将 fixture 的文章式 Bottom 改为 VS Code 类紧凑 `PnwProblemsBlock / PnwLogBlock`，并提炼实例级有界诊断总线、owner 问题快照与过滤纯函数；`PnwShellLogPanel` 保持兼容。Log 已有三个 Web 证据，Problems 契约在 Admin 或第二真实消费者完成前继续标为实验性，不增加全局 singleton 或 Router 语义。见[《问题与日志 Block 方案》](Pnw工作台Web问题与日志Block方案.md)。
    - [x] W5 统一业务 View 内部 Header：fixture 删除重复的 `PwwFixtureViewHeader`，直接使用 Desk Tools 与 Open Issue 已消费的 `PnwPageHeader`；新增可选 eyebrow、summary、description 和窄容器 actions 排布，旧 `title / subtitle / actions / help` 入口保持兼容。
+   - [x] `0.6.1` 恢复受控 Editor 最大化：Shell/Layout 使用瞬时 `editorMaximized`，TabBar 提供最大化/还原且 Escape 退出；Header placement 退化为只含同一 TabBar 的还原条，其他壳层区域隐藏，Router/Process/KeepAlive、显示偏好和面板尺寸不被改写。
+   - [x] `0.6.1` 增加 Host 驱动 `zh-CN / en-US` 工作台文案、TabBar 的刷新当前/关闭其他通用动作，以及 `floatingPanel < hostTools < modal` 公共叠层契约；语言持久化、标签行为和产品链接继续由 Host 持有。详见[《Editor 最大化、标签动作与国际化》](Pnw工作台Web编辑器最大化与国际化.md)。
+   - [x] `0.6.1` 增加规范 `PnwIconId`、保留 `pnw` namespace、Host 白名单注册、
+     `PnwIconRenderer` 与未知 ID 可见 fallback；新 manifest/DTO 必须显式写
+     `pnw:*` / `cool:*`，裸名称与旧 pageId/Component 仅作运行时兼容。详见
+     [《工作台 Web 图标契约》](Pnw工作台Web图标契约.md)。
    - [x] W5 将 fixture Editor 拆成摘要、目录、Codegen、检查和 Issue 五类真实工程 View；每类直接组合同一个 `PnwPageHeader`，Codegen 示例提供文件摘要、预检/Apply/保存动作与独立页内工具条，点击动作由 consumer controller 接收，不新增公共命令协议。
    - [x] W5 在 `tree` 呈现内实现 `outline / admin-menu` 展开外观与 `leaf-rail / root-flyout` 收起外观；四种组合独立受控并共享导航树、active 与 expanded，共享 resolver 剪掉 hidden 空目录。Router、权限 code 和后台菜单字段未进入 Wing。
    - [x] Wing 已统一 `root-flyout` 的桌面时序：精细指针 `280ms` 首开、`120ms` 跨一级分组切换、离开安全区 `280ms` 关闭；触摸只使用 click，键盘立即操作且关闭后恢复触发项焦点；窄屏由壳层统一使用 Ribbon，不再单独扩展 Tree drawer。见[《侧目录外观可行性》](Pnw工作台Web侧目录外观可行性.md)。
    - [ ] Open Issue / Admin 继续用真实导航树验证 `root-flyout` 菜单密度、权限剪枝、触屏和浏览器焦点；该项是消费者验收，不再扩展 Wing hover timer 或 Tree drawer API。
    - [x] 通过单元测试、typecheck、build、文档门禁，并在内置浏览器验证 light/dark/custom、桌面/窄屏和 `16/24/36/48/64px` SVG 清晰度。
+   - [x] `0.6.1` 的代码、tarball 与真实 Host 候选验收通过，8 月 1 日的四条本地提交合并为一条；8 月 2 日更新 npm Token 后按依赖顺序发布 11 个 scoped packages 和根包。12 个 `latest` 均为 `0.6.1`，无相邻源码的 Registry 安装、精确内部依赖和公共入口 smoke 通过。详见[《0.6.1 发布验收》](0.6.1发布验收.md)。
 
 6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
 

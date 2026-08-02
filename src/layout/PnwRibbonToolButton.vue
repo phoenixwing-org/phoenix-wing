@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, type Component } from "vue";
+import { computed } from "vue";
 import type {
   PnwRibbonDisplayMode,
   PnwRibbonIconSize,
 } from "../types/PnwWorkbenchWeb.js";
+import PnwIconRenderer from "../components/PnwIconRenderer.vue";
 
 const props = defineProps<{
   label: string;
-  icon: Component | string;
+  icon: unknown;
   size?: "large" | "small";
   layout?: "inline" | "stacked";
   displayMode?: PnwRibbonDisplayMode;
@@ -51,8 +52,7 @@ const pnwShowTitle = computed(() => props.showTitle
     @click="emit('click')"
   >
     <span class="pnw-ribbon-tool-icon" aria-hidden="true">
-      <span v-if="typeof icon === 'string'">{{ icon }}</span>
-      <component :is="icon" v-else />
+      <PnwIconRenderer :icon="icon" size="100%" decorative />
     </span>
     <span v-if="pnwShowTitle" class="pnw-ribbon-tool-label">{{ label }}</span>
   </button>
@@ -70,7 +70,10 @@ const pnwShowTitle = computed(() => props.showTitle
   border: 1px solid transparent;
   border-radius: var(--ribbon-btn-radius, 2px);
   background: transparent;
-  color: var(--pnw-workbench-text, var(--text, var(--pnw-workbench-default-text, #0f172a)));
+  color: var(
+    --pnw-ribbon-tool-muted,
+    var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b))
+  );
   cursor: pointer;
   min-width: 0;
 }
@@ -154,9 +157,14 @@ const pnwShowTitle = computed(() => props.showTitle
 .pnw-ribbon-tool-btn:hover:not(:disabled) {
   background: var(--pnw-control-hover-bg, var(--ribbon-btn-hover, var(--pnw-workbench-default-hover-bg, rgba(148, 163, 184, 0.12))));
   border-color: transparent;
+  color: var(
+    --pnw-ribbon-tool-hover-text,
+    var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a))
+  );
 }
 
-.pnw-ribbon-tool-btn.active {
+.pnw-ribbon-tool-btn.active,
+.pnw-ribbon-tool-btn.active:hover:not(:disabled) {
   background: var(--pnw-control-active-bg, var(--pnw-workbench-default-active-bg, rgba(33, 115, 70, 0.1)));
   border-color: var(--pnw-control-active-border, rgba(33, 115, 70, 0.25));
   color: var(--pnw-control-active-text, var(--phoenix-wps-accent, var(--pnw-workbench-default-active-text, #217346)));
@@ -172,11 +180,7 @@ const pnwShowTitle = computed(() => props.showTitle
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #334155));
-}
-
-.pnw-ribbon-tool-btn.active .pnw-ribbon-tool-icon {
-  color: var(--pnw-control-active-text, var(--phoenix-wps-accent, var(--pnw-workbench-default-active-text, #217346)));
+  color: inherit;
 }
 
 .pnw-ribbon-tool-btn.pnw-display-icon {

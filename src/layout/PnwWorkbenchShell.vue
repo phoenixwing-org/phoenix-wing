@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, useSlots, type Component } from "vue";
+import type { PnwLocale } from "../types/PnwLocale.js";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type {
+  PnwBottomViewBlockComponentContribution,
   PnwViewBlockComponentContributions,
   PnwWorkbenchDisplaySettingsActionSlotProps,
+  PnwWorkbenchLayoutSlotProps,
 } from "../types/PnwWorkbenchVue.js";
 import type {
   PnwActivityBarPresentation,
@@ -18,7 +21,6 @@ import type {
   PnwWorkbenchTabItem,
   PnwWorkbenchTabBarPlacement,
   PnwWorkbenchLayoutState,
-  PnwWorkbenchResponsiveState,
 } from "../types/PnwWorkbenchWeb.js";
 import {
   pnwNavigationNodeContains,
@@ -26,6 +28,7 @@ import {
   pnwVisibleNavigationNodes,
 } from "../utils/pnwNavigationTree.js";
 import {
+  pnwResolveBottomViewBlockComponent,
   pnwResolveBottomViewBlockTabs,
   pnwResolveViewBlockComponentProps,
   pnwViewBlockComponentAvailability,
@@ -42,6 +45,7 @@ import PnwWorkbenchHeader from "./PnwWorkbenchHeader.vue";
 import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
 import PnwWorkbenchLayout from "./PnwWorkbenchLayout.vue";
 import PnwWorkbenchTabBar from "./PnwWorkbenchTabBar.vue";
+import { pnwProvideLocale, usePnwLocale } from "../composables/usePnwLocale.js";
 
 const props = withDefaults(defineProps<{
   nodes: readonly PnwNavigationNode[];
@@ -53,6 +57,8 @@ const props = withDefaults(defineProps<{
   treeAppearance?: PnwActivityTreeAppearance;
   contributions?: PnwViewBlockContributions;
   viewBlocks?: PnwViewBlockComponentContributions;
+  /** 应用级 Bottom；当前 View 未贡献 Bottom 时自动回退到这里。 */
+  defaultBottomBlock?: PnwBottomViewBlockComponentContribution;
   visibility?: PnwViewBlockVisibility;
   layoutState?: PnwWorkbenchLayoutState;
   bottomTabs?: readonly PnwBottomPanelTab[];
@@ -65,6 +71,12 @@ const props = withDefaults(defineProps<{
   canAddTab?: boolean;
   canCloseAllTabs?: boolean;
   closingAllTabs?: boolean;
+  canRefreshActiveTab?: boolean;
+  canCloseOtherTabs?: boolean;
+  showEditorMaximizeAction?: boolean;
+  editorMaximized?: boolean;
+  /** Host 受控语言；Wing 不读取或写入持久化偏好。 */
+  locale?: PnwLocale;
   showRibbonAppearanceMenu?: boolean;
   showAdvancedSettingsAction?: boolean;
   displaySettingsPositions?: PnwWorkbenchDisplaySettingsPositions;
@@ -96,17 +108,22 @@ const props = withDefaults(defineProps<{
   canAddTab: false,
   canCloseAllTabs: false,
   closingAllTabs: false,
+  canRefreshActiveTab: false,
+  canCloseOtherTabs: false,
+  showEditorMaximizeAction: true,
+  editorMaximized: false,
+  locale: "zh-CN",
   showRibbonAppearanceMenu: true,
   showAdvancedSettingsAction: false,
-  headerAriaLabel: "工作台页眉",
-  activityAriaLabel: "全局活动导航",
-  treeHeaderLabel: "导航工具",
+  headerAriaLabel: "",
+  activityAriaLabel: "",
+  treeHeaderLabel: "",
   brandTitle: "Pnw Workbench",
   brandSubtitle: "",
   showFooter: true,
   showEmptyView: false,
-  emptyViewTitle: "未打开任何 View",
-  emptyViewDescription: "请从导航中选择一个工具或页面。",
+  emptyViewTitle: "",
+  emptyViewDescription: "",
 });
 
 const emit = defineEmits<{
@@ -115,6 +132,8 @@ const emit = defineEmits<{
   selectTab: [tabId: string];
   closeTab: [tabId: string];
   closeAllTabs: [];
+  closeOtherTabs: [];
+  refreshActiveTab: [];
   newTab: [];
   toggleBlock: [blockId: PnwViewBlockId];
   selectBottomTab: [tabId: string];
@@ -131,12 +150,13 @@ const emit = defineEmits<{
   "update:activeBottomTabId": [tabId: string];
   "update:tabBarPlacement": [placement: PnwWorkbenchTabBarPlacement];
   "update:displaySettingsPositions": [positions: PnwWorkbenchDisplaySettingsPositions];
+  "update:editorMaximized": [maximized: boolean];
 }>();
 
 defineSlots<{
   default(): unknown;
-  header(props: PnwWorkbenchResponsiveState): unknown;
-  activity(props: PnwWorkbenchResponsiveState): unknown;
+  header(props: PnwWorkbenchLayoutSlotProps): unknown;
+  activity(props: PnwWorkbenchLayoutSlotProps): unknown;
   "display-settings-actions"(
     props: PnwWorkbenchDisplaySettingsActionSlotProps,
   ): unknown;
@@ -145,17 +165,33 @@ defineSlots<{
 }>();
 
 const pnwSlots = useSlots();
+pnwProvideLocale(() => props.locale);
+const { t: pnwT } = usePnwLocale(() => props.locale);
+const pnwHeaderAriaLabel = computed(() => props.headerAriaLabel || pnwT("workbench.header"));
+const pnwActivityAriaLabel = computed(() => props.activityAriaLabel || pnwT("workbench.activity"));
+const pnwTreeHeaderLabel = computed(() => props.treeHeaderLabel || pnwT("workbench.treeHeader"));
+const pnwEmptyViewTitle = computed(() => props.emptyViewTitle || pnwT("workbench.emptyTitle"));
+const pnwEmptyViewDescription = computed(() => (
+  props.emptyViewDescription || pnwT("workbench.emptyDescription")
+));
 const pnwComponentAvailability = computed(() => pnwViewBlockComponentAvailability(
   props.viewBlocks,
+  props.defaultBottomBlock,
+));
+const pnwResolvedBottomBlock = computed(() => pnwResolveBottomViewBlockComponent(
+  props.viewBlocks.bottom,
+  props.defaultBottomBlock,
 ));
 const pnwResolvedContributions = computed<PnwViewBlockContributions>(() => ({
   primary: Boolean(props.contributions.primary || pnwComponentAvailability.value.primary),
   bottom: Boolean(props.contributions.bottom || pnwComponentAvailability.value.bottom),
   secondary: Boolean(props.contributions.secondary || pnwComponentAvailability.value.secondary),
 }));
-const pnwResolvedBottomTabs = computed(() => props.viewBlocks.bottom?.tabs
-  ? pnwResolveBottomViewBlockTabs(props.viewBlocks.bottom)
-  : props.bottomTabs);
+const pnwResolvedBottomTabs = computed(() => pnwResolveBottomViewBlockTabs(
+  props.viewBlocks.bottom,
+  props.defaultBottomBlock,
+  props.bottomTabs,
+));
 const pnwNavigationNodes = computed(() => pnwNormalizeNavigationVisibility(props.nodes));
 const pnwRootNodes = computed(() => pnwVisibleNavigationNodes(pnwNavigationNodes.value));
 const pnwModuleTabs = computed(() => pnwRootNodes.value.map((node) => ({
@@ -179,18 +215,22 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
     :color-scheme="colorScheme"
     :tab-bar-placement="tabBarPlacement"
     :show-footer="showFooter"
+    :editor-maximized="editorMaximized"
+    :locale="locale"
     @update:visibility="emit('update:visibility', $event)"
     @update:layout-state="emit('update:layoutState', $event)"
     @update:active-bottom-tab-id="emit('update:activeBottomTabId', $event)"
     @select-bottom-tab="emit('selectBottomTab', $event)"
     @toggle="emit('toggleBlock', $event)"
+    @update:editor-maximized="emit('update:editorMaximized', $event)"
   >
     <template #header="pnwResponsiveState">
       <slot name="header" v-bind="pnwResponsiveState">
         <PnwWorkbenchHeader
-          :aria-label="headerAriaLabel"
+          :aria-label="pnwHeaderAriaLabel"
+          :editor-maximized="editorMaximized"
           :show-pages="pnwResponsiveState.effectiveTabBarPlacement === 'header'
-            && (tabs.length > 0 || Boolean(pnwSlots.pages))"
+            && (tabs.length > 0 || Boolean(pnwSlots.pages) || editorMaximized)"
         >
           <template #brand>
             <slot name="brand">
@@ -221,7 +261,7 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
           </template>
           <template
             v-if="pnwResponsiveState.effectiveTabBarPlacement === 'header'
-              && (tabs.length > 0 || pnwSlots.pages)"
+              && (tabs.length > 0 || pnwSlots.pages || editorMaximized)"
             #pages
           >
             <slot name="pages">
@@ -232,11 +272,18 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
                 :can-add="canAddTab"
                 :can-close-all="canCloseAllTabs"
                 :closing-all="closingAllTabs"
+                :can-refresh-active-tab="canRefreshActiveTab"
+                :can-close-other-tabs="canCloseOtherTabs"
+                :show-editor-maximize-action="showEditorMaximizeAction || editorMaximized"
+                :editor-maximized="editorMaximized"
                 in-header
                 @select="emit('selectTab', $event)"
                 @close="emit('closeTab', $event)"
                 @close-all="emit('closeAllTabs')"
+                @close-other-tabs="emit('closeOtherTabs')"
+                @refresh-active-tab="emit('refreshActiveTab')"
                 @new-tab="emit('newTab')"
+                @update:editor-maximized="emit('update:editorMaximized', $event)"
               />
             </slot>
           </template>
@@ -248,7 +295,7 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
     </template>
 
     <template
-      v-if="tabs.length > 0 || pnwSlots.pages"
+      v-if="tabs.length > 0 || pnwSlots.pages || editorMaximized"
       #view-tabs
     >
       <slot name="pages">
@@ -259,10 +306,17 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
           :can-add="canAddTab"
           :can-close-all="canCloseAllTabs"
           :closing-all="closingAllTabs"
+          :can-refresh-active-tab="canRefreshActiveTab"
+          :can-close-other-tabs="canCloseOtherTabs"
+          :show-editor-maximize-action="showEditorMaximizeAction || editorMaximized"
+          :editor-maximized="editorMaximized"
           @select="emit('selectTab', $event)"
           @close="emit('closeTab', $event)"
           @close-all="emit('closeAllTabs')"
+          @close-other-tabs="emit('closeOtherTabs')"
+          @refresh-active-tab="emit('refreshActiveTab')"
           @new-tab="emit('newTab')"
+          @update:editor-maximized="emit('update:editorMaximized', $event)"
         />
       </slot>
     </template>
@@ -284,8 +338,8 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
             :tree-appearance="treeAppearance"
             :show-ribbon-appearance-menu="false"
             :show-advanced-settings-action="showAdvancedSettingsAction"
-            :aria-label="activityAriaLabel"
-            :tree-header-label="treeHeaderLabel"
+            :aria-label="pnwActivityAriaLabel"
+            :tree-header-label="pnwTreeHeaderLabel"
             @activate="emit('activate', $event)"
             @update:expanded-node-ids="emit('update:expandedNodeIds', $event)"
             @update:appearance="emit('update:ribbonAppearance', $event)"
@@ -334,8 +388,8 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
     <slot v-else name="empty">
       <div class="pnw-workbench-empty-view">
         <PnwPhoenixWingMark class="pnw-workbench-empty-view-mark" decorative />
-        <strong>{{ emptyViewTitle }}</strong>
-        <span>{{ emptyViewDescription }}</span>
+        <strong>{{ pnwEmptyViewTitle }}</strong>
+        <span>{{ pnwEmptyViewDescription }}</span>
       </div>
     </slot>
 
@@ -348,12 +402,12 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
         />
       </slot>
     </template>
-    <template v-if="pnwSlots.bottom || viewBlocks.bottom" #bottom="bottomSlotProps">
+    <template v-if="pnwSlots.bottom || pnwResolvedBottomBlock" #bottom="bottomSlotProps">
       <slot name="bottom" :active-tab-id="bottomSlotProps.activeTabId">
         <component
-          v-if="viewBlocks.bottom"
-          :is="viewBlocks.bottom.component"
-          v-bind="pnwResolveViewBlockComponentProps(viewBlocks.bottom)"
+          v-if="pnwResolvedBottomBlock"
+          :is="pnwResolvedBottomBlock.component"
+          v-bind="pnwResolveViewBlockComponentProps(pnwResolvedBottomBlock)"
           :active-tab-id="bottomSlotProps.activeTabId"
         />
       </slot>

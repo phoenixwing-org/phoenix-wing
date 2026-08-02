@@ -1,26 +1,39 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
+import { computed } from "vue";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
+
+const props = withDefaults(defineProps<{
   ariaLabel?: string;
   /** 条件 slot 在 Vue 中仍可能被注册；由组合壳显式控制空页签区。 */
   showPages?: boolean;
+  /** 最大化时只保留承载还原动作的 View 标签区。 */
+  editorMaximized?: boolean;
 }>(), {
-  ariaLabel: "工作台页眉",
+  ariaLabel: "",
   showPages: true,
+  editorMaximized: false,
 });
+
+const { t: pnwT } = usePnwLocale();
+const pnwAriaLabel = computed(() => props.ariaLabel || pnwT("workbench.header"));
 </script>
 
 <template>
-  <header class="pnw-workbench-header" :aria-label="ariaLabel">
-    <div v-if="$slots.brand" class="pnw-workbench-header-brand">
+  <header
+    class="pnw-workbench-header"
+    :class="{ 'pnw-workbench-header--editor-maximized': editorMaximized }"
+    :aria-label="pnwAriaLabel"
+  >
+    <div v-if="!editorMaximized && $slots.brand" class="pnw-workbench-header-brand">
       <slot name="brand" />
     </div>
-    <div v-if="$slots.modules" class="pnw-workbench-header-modules">
+    <div v-if="!editorMaximized && $slots.modules" class="pnw-workbench-header-modules">
       <slot name="modules" />
     </div>
     <div v-if="showPages && $slots.pages" class="pnw-workbench-header-pages">
       <slot name="pages" />
     </div>
-    <div v-if="$slots.actions" class="pnw-workbench-header-actions">
+    <div v-if="!editorMaximized && $slots.actions" class="pnw-workbench-header-actions">
       <slot name="actions" />
     </div>
   </header>
@@ -46,9 +59,15 @@ withDefaults(defineProps<{
 .pnw-workbench-header-modules,
 .pnw-workbench-header-pages,
 .pnw-workbench-header-actions {
+  position: relative;
+  z-index: var(--pnw-workbench-overlay-host-tools, 1400);
   min-width: 0;
   display: flex;
   align-items: stretch;
+}
+
+.pnw-workbench-header--editor-maximized .pnw-workbench-header-pages {
+  width: 100%;
 }
 
 .pnw-workbench-header-brand,

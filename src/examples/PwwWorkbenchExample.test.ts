@@ -87,6 +87,8 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
     expect(pwwReadFile("src/App.vue")).not.toContain("PnwRibbonTabBar");
     expect(pwwReadFile("src/App.vue")).not.toContain("PnwWorkbenchTabBar");
     expect(pwwReadFile("src/App.vue")).toContain(':view-blocks="pwwFixture.view.blocks"');
+    expect(pwwReadFile("src/App.vue"))
+      .toContain(':default-bottom-block="pwwFixture.view.defaultBottom"');
     expect(pwwReadFile("src/App.vue")).toContain("reactive(usePwwFixtureWorkbenchController())");
     expect(pwwReadFile("src/App.vue")).not.toContain("#primary");
     expect(pwwReadFile("src/App.vue")).not.toContain("#secondary");

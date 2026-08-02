@@ -83,6 +83,13 @@
       "lastVerified": "2026-07-31"
     },
     {
+      "path": "doc/0.6.1发布验收.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.6.x",
+      "lastVerified": "2026-07-31"
+    },
+    {
       "path": "doc/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
@@ -219,7 +226,21 @@
       "lastVerified": "2026-07-31"
     },
     {
+      "path": "doc/Pnw-SVG图标制作与选型规范.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.6.x",
+      "lastVerified": "2026-07-31"
+    },
+    {
       "path": "doc/Pnw工作台Web-OpenIssue应用分析.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.6.x",
+      "lastVerified": "2026-07-31"
+    },
+    {
+      "path": "doc/Pnw工作台Web编辑器最大化与国际化.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
@@ -262,6 +283,13 @@
     },
     {
       "path": "doc/Pnw工作台Web双消费者验证计划.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.6.x",
+      "lastVerified": "2026-07-31"
+    },
+    {
+      "path": "doc/Pnw工作台Web图标契约.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",

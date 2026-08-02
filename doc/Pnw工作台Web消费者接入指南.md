@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.6.0（已发布）
+适用版本：Wing 0.6.1 候选（兼容 0.6.0）
 
-最后核验：2026-07-29
+最后核验：2026-08-01
 
 本文同时给 Web 开发者与执行迁移的 AI 使用。目标是让消费者复用工作台结构，同时继续拥有 Router、权限、业务 API、页面状态和用户偏好。
 
@@ -19,8 +19,10 @@ Owner：Phoenix Wing maintainers
 1. 普通业务 Web 使用 `Activity + Primary + Editor`；
 2. 筛选、目录和当前对象的简要属性可在 Primary 内上下分区；
 3. Secondary 只给独立属性检查器、实时预览等复杂场景，默认隐藏；
-4. Bottom 用于问题、输出、日志等可切换页签；
-5. 没有 contribution 的 Block 不应生成空容器或 Footer 开关。
+4. Bottom 是工作台实例级能力，用于问题、输出、日志等可切换页签；应用提供默认
+   Bottom，页面只在确有专用内容时覆盖；
+5. 没有 contribution 的 Primary/Secondary 不生成空容器；Footer 三个入口仍保留，
+   其中 Bottom 由应用默认层保持可用。
 
 Desk Tools 可能同时使用 Primary 与 Secondary；Codegen、Open Issue 等多数页面通常一个 Primary 即可。消费者应按 View 贡献内容，不要在应用根组件写固定假面板。
 
@@ -41,7 +43,7 @@ export const APP_NAVIGATION: readonly PnwNavigationNode[] = [
         id: "project-tools",
         label: "项目工具",
         children: [
-          { id: "dashboard", label: "仪表盘", icon: DashboardIcon },
+          { id: "dashboard", label: "仪表盘", icon: "pnw:dashboard" },
         ],
       },
     ],
@@ -57,6 +59,13 @@ const nodes = pnwNavigationFromRibbonTabs(existingRibbonTabs, {
 });
 ```
 
+新 manifest / DTO 的图标必须使用显式 namespace 的 `PnwIconId`，例如
+`pnw:dashboard` 或 `cool:folder`。`pnw` 由 Wing 保留；Host 用
+`pnwRegisterIconNamespace("cool", { folder: CoolFolderIcon })` 注册自己的白名单。
+裸 `home / search / document` 和 Vue Component 只作运行时兼容，不得再写入新的
+持久化数据。未知 ID 会统一显示 `unknown` fallback，不再产生空 SVG。完整规则见
+[《Pnw 工作台 Web 图标契约》](Pnw工作台Web图标契约.md)。
+
 根组件只装配受控状态与产品动作：
 
 ```vue
@@ -68,6 +77,7 @@ const nodes = pnwNavigationFromRibbonTabs(existingRibbonTabs, {
   :tabs="app.tabs.items"
   :active-tab-id="app.tabs.activeId"
   :view-blocks="app.view.blocks"
+  :default-bottom-block="app.view.defaultBottom"
   :layout-state="preferences.layoutState"
   :tree-collapsed="preferences.treeCollapsed"
   :tree-appearance="preferences.treeAppearance"
@@ -96,7 +106,8 @@ export const APP_VIEW_BLOCKS =
   pnwCreateViewContributionRegistry<PnwViewBlockComponentContributions>();
 ```
 
-页面在自己的 setup 中登记；KeepAlive 激活、停用和卸载由 `usePnwViewContribution` 管理：
+页面在自己的 setup 中登记；KeepAlive 激活、停用和卸载由 `usePnwViewContribution` 管理。
+普通页面只贡献自己的 Primary/Secondary：
 
 ```ts
 usePnwViewContribution(APP_VIEW_BLOCKS, () => props.viewId, {
@@ -104,25 +115,60 @@ usePnwViewContribution(APP_VIEW_BLOCKS, () => props.viewId, {
     component: AppProjectPrimary,
     props: computed(() => ({ projectId: props.projectId })),
   },
-  bottom: {
-    component: AppProblemsAndOutput,
-    tabs: computed(() => problemTabs.value),
-  },
 });
 ```
 
-只有复杂 View 才增加：
+只有复杂 View 才增加 Secondary；只有 Settings、任务执行结果等确有专用 Bottom
+的页面才增加 Bottom：
 
 ```ts
 secondary: {
   component: AppPropertyInspector,
   props: computed(() => ({ selection: selection.value })),
-}
+},
+bottom: {
+  component: AppDatabaseRepairResults,
+  tabs: computed(() => repairResultTabs.value),
+},
 ```
 
 组件、业务 props 与 Bottom 内容均属于消费者。Wing 只负责容器、显隐、句柄、页签外观和生命周期接线。
 
-### 3.1 业务 View 自己的内部 Header
+### 3.1 应用级默认 Bottom
+
+认证工作台应为每个 Shell 实例创建一个默认 Bottom，而不是要求 Dashboard、空页面
+和每个普通业务 View 重复注册日志/消息组件：
+
+```ts
+const appDefaultBottom: PnwBottomViewBlockComponentContribution = {
+  component: AppWorkbenchMessages,
+  props: computed(() => ({
+    logs: diagnostics.value.logs,
+    problems: diagnostics.value.problems,
+  })),
+  tabs: computed(() => appBottomTabs.value),
+}
+```
+
+把它传给 `PnwWorkbenchShell.defaultBottomBlock` 后，Wing 使用固定分层：
+
+1. 当前 `viewBlocks.bottom` 存在时，显示当前 View 的专用 Bottom；
+2. 当前 View 未贡献 Bottom 时，自动显示 `defaultBottomBlock`；
+3. tabs 按“当前 View tabs、默认 Bottom tabs、旧 `bottomTabs`”顺序回退；
+4. 默认 Bottom 决定跨 View 的 Bottom 可用性；Primary/Secondary 仍只看当前 View；
+5. 切换 View 只替换解析出的组件与 tabs，不修改受控
+   `layoutState.visibility.bottom` 或 `layoutState.sizes.bottomHeight`。
+
+因此 consumer 不应监听当前 View contribution 并在缺少 `bottom` 时把
+`layoutState.visibility.bottom` 写成 `false`。显隐与高度由用户布局状态持有；页面
+专用 tabs 中不存在当前 `activeBottomTabId` 时，容器只在呈现层临时选择第一个可用
+tab，不改面板显隐和尺寸。
+
+旧 `#bottom` slot 仍是显式结构覆盖入口，0.6.0 的 `viewBlocks.bottom` 和
+`bottomTabs` 也保持兼容。新消费者优先使用 `defaultBottomBlock + viewBlocks.bottom`，
+避免在 `#bottom` 内重复编写组件优先级。
+
+### 3.2 业务 View 自己的内部 Header
 
 `PnwWorkbenchHeader` 是整个壳层的品牌、一级导航、打开页签和用户区；每个业务页面自己的标题、当前对象和操作应放在 `PnwPageHeader`，不要继续堆入壳层 Header：
 
@@ -145,6 +191,30 @@ secondary: {
 `eyebrow / summary / description` 都是可选的；既有消费者只传 `title / subtitle / actions / help` 时保持紧凑兼容。工具条过宽时由组件允许横向滚动，窄工作台把 actions 放到第二行。Router、文件名、保存和帮助内容仍由 View 持有。
 
 Desk Tools 与 Open Issue 已有多个真实页面使用 `PnwPageHeader`；fixture 也直接消费该公共组件，不再保留一份 `PwwFixtureViewHeader`。示例把摘要、目录、Codegen、检查和 Issue 五种 Editor View 分文件呈现，证明差异应留在业务 View 的 props、actions/help slot 与页内工具条，而不是复制五套 Header。新消费者只参考最接近自己的 View 组合，不要整目录复制或改名一个 Header 组件。
+
+### 3.3 Editor 最大化、标签动作与语言
+
+最大化是 Shell/Layout 瞬时状态，不是 View contribution，也不加入显示偏好：
+
+```vue
+<PnwWorkbenchShell
+  v-model:editor-maximized="workbenchEditorMaximized"
+  :locale="locale"
+  :can-refresh-active-tab="Boolean(activeTabId)"
+  :can-close-other-tabs="tabs.length > 1"
+  @refresh-active-tab="refreshActiveTab"
+  @close-other-tabs="closeOtherTabs"
+/>
+```
+
+Wing 最大化时隐藏 Header chrome、导航、三个 Block 与 Footer，保留唯一 Editor 和
+TabBar；Header placement 仍以仅标签还原条提供出口，Escape 发出受控还原事件。
+Host 不应为了最大化改写 `layoutState.visibility` 或尺寸。
+
+`locale` 只接受 `zh-CN / en-US` 并驱动 Wing 自有设置、动作与 a11y 文案。Host
+继续持有语言 store、Element Plus locale 和持久化。刷新当前标签与关闭其他标签只
+发事件；Router、Process、KeepAlive 和 dirty 处理仍由 consumer 执行。完整边界见
+[《Editor 最大化、标签动作与国际化》](Pnw工作台Web编辑器最大化与国际化.md)。
 
 ## 4. Problems / Log 与实例级诊断
 
@@ -198,7 +268,9 @@ checker 为缺字段、非法枚举、非有限坐标和越界面板尺寸补默
 
 Wing 只发出完整新状态，不选择 localStorage、IndexedDB 或后端数据库。若未来由 Admin 后端保存，用户/租户作用域、权限、并发版本和布局升级合并都应留在 Admin。
 
-不要序列化含 Vue 组件或图标引用的整棵导航树。保存稳定 ID、顺序、分组归属和文本覆盖，再由产品默认树 hydrate；这样升级时可以恢复默认并处理新增模块。
+不要序列化含 Vue Component 的整棵导航树。保存稳定 ID、顺序、分组归属和文本覆盖，
+再由产品默认树 hydrate；确需随菜单/manifest 保存图标时，只保存经过
+`pnwIsIconId` 校验的显式 namespace ID。这样升级时可以恢复默认并处理新增模块。
 
 ## 6. 品牌、Header 与主题
 
@@ -206,10 +278,14 @@ Wing 只发出完整新状态，不选择 localStorage、IndexedDB 或后端数�
 - 用户、租户、显示身份和退出放 `header-actions`；
 - Ribbon 最右侧 `…` 与 Tree 底部设置图标打开 Wing 公共单行快捷菜单；“完整显示设置…”继续打开 Wing 公共 `PnwWorkbenchDisplaySettingsPanel`，consumer 只绑定受控状态，不复制设置表单；
 - consumer 可在 `display-settings-actions` 追加源码定义的快捷动作，通过 `display-settings-action` 处理 action ID；也可在 `display-settings-panel-extra` 插入自己的 Vue 设置区，例如句柄方式或产品主题。Wing 不提供最终用户编辑菜单定义的 UI，也不读取扩展字段；
-- Footer 左侧 `footer` slot 可显示消费者自己的页面、连接或任务状态，右侧面板开关仍由 Wing 根据当前 View contribution 生成；
+- Footer 左侧 `footer` slot 可显示消费者自己的页面、连接或任务状态；右侧三个面板
+  开关始终由 Wing 生成。Primary/Secondary 根据当前 View contribution 启用，
+  Bottom 在提供 `defaultBottomBlock` 后跨 Dashboard、空 View 和普通页面保持启用；
 - `light`、`dark`、`system` 通过受控 `colorScheme` 传入；
 - 产品主题覆盖 `--pnw-*` CSS token，不依赖组件内部 DOM，也不要复制 Wing scoped CSS；
 - 用户贡献 CSS 时应由产品白名单、作用域和发布流程治理，Wing 不执行任意远程 CSS。
+- Host dropdown/popover 使用 `PNW_WORKBENCH_OVERLAY_LAYERS.hostTools`，业务模态框使用
+  `modal`；Wing 显示设置使用较低的 `floatingPanel`，避免语言菜单被遮挡。
 
 ## 7. 本地未发布 Wing 联调
 
@@ -230,8 +306,10 @@ Open Issue 的独立验证分支采用上述方式：manifest 仍锁定 `phoenix
 
 1. Ribbon/Tree 来自同一节点树，切换后 ID、排序、隐藏、选中和动作不变；
 2. Header 页面标签关闭后，当前业务 View 也同步切换或卸载；
-3. 无 contribution 时不出现空 Primary、Secondary、Bottom 或 Footer；
+3. 无 contribution 时不出现空 Primary/Secondary；应用默认 Bottom 在空 View、
+   Dashboard 和普通页面都可用，专用 View Bottom 能自动覆盖后再回退；
 4. Primary/Secondary/Bottom 尺寸由消费者状态写回，Bottom 只与 Editor 对齐；
+   切换 View 不修改 Bottom 显隐与高度；
 5. 紧凑 16/24px 与大 Ribbon 24/36px 外观有效，Title 不撑高紧凑工具条；
 6. light/dark/system 与产品 token 覆盖均可读；
 7. 700px 附近的窄屏行为不遮挡活动 View；
@@ -240,6 +318,8 @@ Open Issue 的独立验证分支采用上述方式：manifest 仍锁定 `phoenix
 10. manifest、lockfile、node_modules 没有本地路径污染；
 11. 记录尚无两个真实消费者证明的产品语义，不把它扩成 Wing API。
 12. diagnostics hub 按工作台实例创建；日志有界，问题可按 owner 替换/清除，定位动作仍由 consumer 处理。
+13. Editor 最大化不改显示偏好或 View contribution；三个标签位置均有还原入口，Escape 与浮动面板不重复响应。
+14. zh-CN/en-US、刷新当前、关闭其他和 Host dropdown 层级均通过键盘与 a11y 检查。
 
 AI 修改消费者前应完整阅读该仓 `AGENTS.md`、现有 Shell/Router/Pinia 和本地联调规则。优先建立产品侧薄 adapter，避免把几十个 ref 逐项暴露到 `App.vue`，也不要把示例的 `PwwFixture*` 复制成公共协议。
 

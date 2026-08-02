@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Component } from "vue";
 import type {
   PnwRibbonDisplayMode,
   PnwRibbonIconSize,
@@ -9,7 +8,7 @@ import PnwRibbonToolButton from "./PnwRibbonToolButton.vue";
 export type PnwRibbonGroupItem = {
   pageId: string;
   label: string;
-  icon: Component | string;
+  icon: unknown;
   active: boolean;
   disabled: boolean;
   title: string;

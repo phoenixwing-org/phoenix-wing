@@ -39,6 +39,7 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
         :nodes="pwwFixture.navigation.nodes"
         :active-node-id="pwwFixture.navigation.activeNodeId"
         :view-blocks="pwwFixture.view.blocks"
+        :default-bottom-block="pwwFixture.view.defaultBottom"
         :tabs="pwwFixture.tabs.items"
         :active-tab-id="pwwFixture.tabs.activeId"
         :can-close-all-tabs="pwwFixture.tabs.items.length > 0"

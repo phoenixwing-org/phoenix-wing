@@ -19,6 +19,7 @@ import {
   pnwRibbonIconSizesFor,
   pnwValidateRibbonAppearance,
 } from "../utils/pnwWorkbenchWeb.js";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -53,17 +54,18 @@ defineSlots<{
 }>();
 
 const pnwPresentations = ["ribbon", "tree"] as const;
+const { t: pnwT } = usePnwLocale();
 const pnwColorSchemes = ["light", "dark", "system"] as const;
 const pnwTabBarPlacements = [
   "header",
   "after-navigation",
   "editor-bottom",
 ] as const satisfies readonly PnwWorkbenchTabBarPlacement[];
-const pnwTabBarPlacementLabels: Readonly<Record<PnwWorkbenchTabBarPlacement, string>> = {
-  header: "Header 内",
-  "after-navigation": "导航后",
-  "editor-bottom": "Editor 底部",
-};
+const pnwTabBarPlacementLabels = computed<Readonly<Record<PnwWorkbenchTabBarPlacement, string>>>(() => ({
+  header: pnwT("workbench.settings.headerPlacement"),
+  "after-navigation": pnwT("workbench.settings.afterNavigationPlacement"),
+  "editor-bottom": pnwT("workbench.settings.editorBottomPlacement"),
+}));
 const pnwActiveAppearance = computed(() => props.appearance[props.appearance.mode]);
 const pnwDisplayedPresentation = computed<PnwActivityBarPresentation>(() => (
   props.responsiveNarrow
@@ -71,7 +73,9 @@ const pnwDisplayedPresentation = computed<PnwActivityBarPresentation>(() => (
     : props.presentation
 ));
 const pnwPreferredPresentationLabel = computed(() => (
-  props.presentation === "tree" ? "侧面目录树" : "顶部 Ribbon"
+  props.presentation === "tree"
+    ? pnwT("workbench.settings.tree")
+    : pnwT("workbench.settings.topRibbon")
 ));
 const pnwAllowedIconSizes = computed(() => pnwRibbonIconSizesFor(props.appearance.mode));
 const pnwPanelClass = computed(() => [
@@ -79,10 +83,10 @@ const pnwPanelClass = computed(() => [
   `pnw-workbench-display-full-panel--${props.colorScheme}`,
 ].join(" "));
 const pnwRibbonDescription = computed(() => {
-  if (props.appearance.mode === "compact") return "紧凑工具条";
+  if (props.appearance.mode === "compact") return pnwT("workbench.settings.compactToolbar");
   return pnwActiveAppearance.value.showTitles
-    ? "大 Ribbon · 带 Title"
-    : "大 Ribbon · 仅图标";
+    ? pnwT("workbench.settings.ribbonWithTitle")
+    : pnwT("workbench.settings.ribbonIconOnly");
 });
 
 function pnwUpdateRibbonMode(mode: PnwRibbonMode): void {
@@ -126,15 +130,15 @@ function pnwUpdateFlag(
   <PnwFloatingPanel
     :open="open"
     :position="position"
-    aria-label="工作台显示设置"
+    :aria-label="pnwT('workbench.settings.title')"
     :panel-class="pnwPanelClass"
     @update:position="emit('update:position', $event)"
     @close="emit('close')"
   >
     <template #header>
       <div class="pnw-workbench-display-full-title">
-        <strong>工作台显示设置</strong>
-        <span>拖动这里可边看边调</span>
+        <strong>{{ pnwT("workbench.settings.title") }}</strong>
+        <span>{{ pnwT("workbench.settings.dragHint") }}</span>
       </div>
       <button
         type="button"
@@ -142,7 +146,7 @@ function pnwUpdateFlag(
         @pointerdown.stop
         @click="emit('close')"
       >
-        完成
+        {{ pnwT("workbench.settings.done") }}
       </button>
     </template>
 
@@ -150,11 +154,11 @@ function pnwUpdateFlag(
       <div class="pnw-workbench-display-full-grid">
         <details class="pnw-workbench-display-full-section" open>
           <summary class="pnw-workbench-display-full-section-head">
-            <h3>导航结构</h3>
-            <span>同一份 PnwNavigationNode</span>
+            <h3>{{ pnwT("workbench.settings.navigationStructure") }}</h3>
+            <span>{{ pnwT("workbench.settings.sameNavigation") }}</span>
           </summary>
           <div class="pnw-workbench-display-full-section-body">
-            <div class="pnw-workbench-display-full-controls" aria-label="导航呈现">
+            <div class="pnw-workbench-display-full-controls" :aria-label="pnwT('workbench.settings.navigationPresentation')">
               <button
                 v-for="item in pnwPresentations"
                 :key="item"
@@ -166,22 +170,26 @@ function pnwUpdateFlag(
                 :aria-pressed="pnwDisplayedPresentation === item"
                 :disabled="responsiveNarrow"
                 :title="responsiveNarrow
-                  ? '窄屏固定使用顶部 Ribbon'
+                  ? pnwT('workbench.settings.narrowTreeDisabled')
                   : undefined"
                 @click="emit('update:presentation', item)"
               >
-                {{ item === "ribbon" ? "顶部 Ribbon" : "侧面目录树" }}
+                {{ item === "ribbon"
+                  ? pnwT("workbench.settings.topRibbon")
+                  : pnwT("workbench.settings.tree") }}
               </button>
             </div>
             <small
               v-if="responsiveNarrow"
               class="pnw-workbench-display-full-hint"
             >
-              窄屏固定使用顶部 Ribbon，导航结构暂不可切换；恢复宽屏后使用原偏好：{{ pnwPreferredPresentationLabel }}。
+              {{ pnwT("workbench.settings.narrowDetail", {
+                presentation: pnwPreferredPresentationLabel,
+              }) }}
             </small>
             <div class="pnw-workbench-display-full-option">
-              <span>目录展开外观</span>
-              <div class="pnw-workbench-display-full-controls" aria-label="目录展开外观">
+              <span>{{ pnwT("workbench.settings.treeExpanded") }}</span>
+              <div class="pnw-workbench-display-full-controls" :aria-label="pnwT('workbench.settings.treeExpanded')">
                 <button
                   v-for="mode in (['outline', 'admin-menu'] as const)"
                   :key="mode"
@@ -193,13 +201,15 @@ function pnwUpdateFlag(
                   :aria-pressed="treeAppearance.expanded === mode"
                   @click="pnwUpdateTreeExpandedMode(mode)"
                 >
-                  {{ mode === "outline" ? "紧凑大纲树" : "Admin 菜单" }}
+                  {{ mode === "outline"
+                    ? pnwT("workbench.settings.outline")
+                    : pnwT("workbench.settings.adminMenu") }}
                 </button>
               </div>
             </div>
             <div class="pnw-workbench-display-full-option">
-              <span>目录收起外观</span>
-              <div class="pnw-workbench-display-full-controls" aria-label="目录收起外观">
+              <span>{{ pnwT("workbench.settings.treeCollapsed") }}</span>
+              <div class="pnw-workbench-display-full-controls" :aria-label="pnwT('workbench.settings.treeCollapsed')">
                 <button
                   v-for="mode in (['leaf-rail', 'root-flyout'] as const)"
                   :key="mode"
@@ -212,13 +222,13 @@ function pnwUpdateFlag(
                   @click="pnwUpdateTreeCollapsedMode(mode)"
                 >
                   {{ mode === "leaf-rail"
-                    ? "所有叶子图标"
-                    : "一级菜单 + 子菜单浮层" }}
+                    ? pnwT("workbench.settings.leafRail")
+                    : pnwT("workbench.settings.rootFlyout") }}
                 </button>
               </div>
             </div>
             <small class="pnw-workbench-display-full-hint">
-              两项始终可预设；分别在目录展开或收起时生效。
+              {{ pnwT("workbench.settings.treeModesHint") }}
             </small>
           </div>
         </details>
@@ -229,13 +239,13 @@ function pnwUpdateFlag(
           open
         >
           <summary class="pnw-workbench-display-full-section-head">
-            <h3>View 标签位置</h3>
+            <h3>{{ pnwT("workbench.settings.tabPlacement") }}</h3>
             <span>{{ pnwTabBarPlacementLabels[tabBarPlacement] }}</span>
           </summary>
           <div class="pnw-workbench-display-full-section-body">
             <div
               class="pnw-workbench-display-full-controls pnw-workbench-display-full-controls--wrap"
-              aria-label="View 标签位置"
+              :aria-label="pnwT('workbench.settings.tabPlacement')"
             >
               <button
                 v-for="placement in pnwTabBarPlacements"
@@ -252,18 +262,18 @@ function pnwUpdateFlag(
               </button>
             </div>
             <small class="pnw-workbench-display-full-hint">
-              同一组受控 View 标签只渲染一次；Tree 模式的“导航后”位于 Editor 顶部。
+              {{ pnwT("workbench.settings.tabPlacementHint") }}
             </small>
           </div>
         </details>
 
         <details class="pnw-workbench-display-full-section">
           <summary class="pnw-workbench-display-full-section-head">
-            <h3>颜色主题</h3>
-            <span>宿主 CSS token</span>
+            <h3>{{ pnwT("workbench.settings.colorScheme") }}</h3>
+            <span>{{ pnwT("workbench.settings.hostTokens") }}</span>
           </summary>
           <div class="pnw-workbench-display-full-section-body">
-            <div class="pnw-workbench-display-full-controls" aria-label="颜色主题">
+            <div class="pnw-workbench-display-full-controls" :aria-label="pnwT('workbench.settings.colorScheme')">
               <button
                 v-for="scheme in pnwColorSchemes"
                 :key="scheme"
@@ -275,7 +285,11 @@ function pnwUpdateFlag(
                 :aria-pressed="colorScheme === scheme"
                 @click="emit('update:colorScheme', scheme)"
               >
-                {{ scheme === "light" ? "白天" : scheme === "dark" ? "黑天" : "跟随系统" }}
+                {{ pnwT(scheme === "light"
+                  ? "workbench.settings.light"
+                  : scheme === "dark"
+                    ? "workbench.settings.dark"
+                    : "workbench.settings.system") }}
               </button>
             </div>
           </div>
@@ -283,12 +297,15 @@ function pnwUpdateFlag(
 
         <details class="pnw-workbench-display-full-section" open>
           <summary class="pnw-workbench-display-full-section-head">
-            <h3>Ribbon 高度与内容</h3>
-            <span>{{ pnwRibbonDescription }} · {{ pnwActiveAppearance.iconSize }}px 图标</span>
+            <h3>{{ pnwT("workbench.settings.ribbonContent") }}</h3>
+            <span>{{ pnwT("workbench.settings.ribbonSummary", {
+              description: pnwRibbonDescription,
+              size: pnwActiveAppearance.iconSize,
+            }) }}</span>
           </summary>
           <div class="pnw-workbench-display-full-section-body">
             <div class="pnw-workbench-display-full-row">
-              <div class="pnw-workbench-display-full-controls" aria-label="Ribbon 外观类别">
+              <div class="pnw-workbench-display-full-controls" :aria-label="pnwT('workbench.settings.ribbonAppearance')">
                 <button
                   v-for="mode in (['ribbon', 'compact'] as const)"
                   :key="mode"
@@ -300,10 +317,12 @@ function pnwUpdateFlag(
                   :aria-pressed="appearance.mode === mode"
                   @click="pnwUpdateRibbonMode(mode)"
                 >
-                  {{ mode === "ribbon" ? "大 Ribbon" : "紧凑工具条" }}
+                  {{ mode === "ribbon"
+                    ? pnwT("workbench.settings.ribbon")
+                    : pnwT("workbench.settings.compactToolbar") }}
                 </button>
               </div>
-              <div class="pnw-workbench-display-full-controls" aria-label="Ribbon 图标尺寸">
+              <div class="pnw-workbench-display-full-controls" :aria-label="pnwT('workbench.settings.ribbonIconSize')">
                 <button
                   v-for="size in pnwAllowedIconSizes"
                   :key="size"
@@ -326,7 +345,7 @@ function pnwUpdateFlag(
                   :checked="pnwActiveAppearance.showTitles"
                   @change="pnwUpdateFlag('showTitles', $event)"
                 >
-                显示 Title
+                {{ pnwT("workbench.settings.showTitle") }}
               </label>
               <label v-if="appearance.mode === 'ribbon'">
                 <input
@@ -334,9 +353,9 @@ function pnwUpdateFlag(
                   :checked="appearance.ribbon.showGroupLabels"
                   @change="pnwUpdateFlag('showGroupLabels', $event)"
                 >
-                Ribbon 分组标签
+                {{ pnwT("workbench.settings.showGroupLabels") }}
               </label>
-              <span v-else>Title 不改变高度；紧凑工具条不显示分组标签。</span>
+              <span v-else>{{ pnwT("workbench.settings.compactHint") }}</span>
             </div>
           </div>
         </details>
@@ -345,7 +364,7 @@ function pnwUpdateFlag(
       </div>
 
       <footer class="pnw-workbench-display-full-footer">
-        <span>状态由宿主受控；Wing 不选择持久化介质。</span>
+        <span>{{ pnwT("workbench.settings.hostControlled") }}</span>
       </footer>
     </section>
   </PnwFloatingPanel>

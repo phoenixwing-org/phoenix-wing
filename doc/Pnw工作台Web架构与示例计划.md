@@ -4,13 +4,13 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.6.0（已发布）
+适用版本：Wing 0.6.1 候选（兼容 0.6.0）
 
-最后核验：2026-07-29
+最后核验：2026-07-31
 
 ## 1. 目的与边界
 
-本计划定义 Phoenix 的 Web 工作台公共呈现层，供 Phoenix Admin Host、DeskTools、Open Issue 与 BOM Studio 复用。Function 正在向 Phoenix Admin 迁移，不作为独立 Web 示例或独立消费者验收对象；其后续页面通过 Admin Host 消费此架构。首要目标是让一份导航树可以在 Ribbon 与侧面大目录树之间切换，并让当前 View 按需贡献 Primary Block、Secondary Block、Bottom Panel。
+本计划定义 Phoenix 的 Web 工作台公共呈现层，供 Phoenix Admin Host、DeskTools、Open Issue 与 BOM Studio 复用。Function 正在向 Phoenix Admin 迁移，不作为独立 Web 示例或独立消费者验收对象；其后续页面通过 Admin Host 消费此架构。首要目标是让一份导航树可以在 Ribbon 与侧面大目录树之间切换，让当前 View 按需贡献 Primary/Secondary 与专用 Bottom，并由 Shell 实例提供跨 View 稳定的应用默认 Bottom。
 
 本计划不迁移任何业务页面、路由、菜单权限、用户偏好存储或领域数据；这些仍是各产品宿主的责任。
 
@@ -21,7 +21,9 @@ VS Code 插件继续使用既有 Webview/Custom Element 和固定样式，不强
 1. Web 呈现层采用 Wing Vue 组件，不先注册浏览器原生 Custom Element。
 2. `PnwActivityBar` 维护一份受控导航树，内部切换 `ribbon` 与 `tree` 两种呈现；两种模式不得维护两份菜单配置。
 3. `PnwRibbon` 负责 Ribbon 的尺寸、分组标签、溢出、键盘导航、tooltip 与无障碍语义；产品只提供数据、路由动作与外观偏好。
-4. `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel` 均由当前 View 显式贡献；没有内容时不得留下空白区域。
+4. `PnwPrimaryBlock`、`PnwSecondaryBlock` 由当前 View 显式贡献；认证工作台由
+   Shell 实例提供应用级默认 `PnwBottomPanel`，当前 View 可贡献专用 Bottom 覆盖，
+   缺失时自动回退。没有 Primary/Secondary 内容时不得留下空白区域。
 5. Bottom Panel 采用 VS Code 式 Editor 底部布局：左右边界与 Editor 对齐，不横跨 ActivityBar、Primary Block 或 Secondary Block。
 6. 首个示例放在 Wing 仓内，不新建 `phoenix-架构-示例` 独立 Git 仓。
 
@@ -113,7 +115,18 @@ VS Code 插件继续使用既有 Webview/Custom Element 和固定样式，不强
 | 关闭/更多 | `close.svg`、`MoreFilled` | `Close` | `MoreFilled` | Tab 关闭与操作菜单 | `close` / `more` |
 | 通用导航/动作 | `home/search/plus/refresh/icon-folder/icon-file.svg` | `Search`、`Plus`、`Refresh`、`Folder`、`Document` | `HomeFilled`、`Search`、`Plus` | `HomeFilled`、`Search`、`Refresh`、`FolderOpened`、`Document` | `home` / `search` / `add` / `refresh` / `folder` / `document` |
 
-首批 `PnwIconName` 固定为：`settings`、`more`、`close`、`chevron-left`、`chevron-right`、`chevron-up`、`chevron-down`、`panel-left`、`panel-left-active`、`panel-bottom`、`panel-bottom-active`、`panel-right`、`panel-right-active`、`home`、`search`、`add`、`refresh`、`folder`、`document`。原有三个 `panel-*` 轮廓名称保持兼容并表示 off；对应 `panel-*-active` 使用同一几何并以 `currentColor` 实心填充左、下、右区域，供亮色/暗色 Footer 的 on 状态使用。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带 iconfont 元数据和来源不明的 Admin SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
+公共 `PnwIconName` 在首批壳层图标上继续增量演进；0.6.1 新增 `unknown`、
+`dashboard`、`list`、`history`、`report` 五个导航语义。原有三个 `panel-*` 轮廓
+名称保持兼容并表示 off；对应 `panel-*-active` 使用同一几何并以 `currentColor`
+实心填充左、下、右区域。它们统一使用 Wing 自有的干净 SVG 几何，不直接复制带
+iconfont 元数据和来源不明的产品 SVG，也不把 Element Plus 组件重新导出成 Wing 名称。
+
+新 manifest / DTO 的图标采用显式 namespace 的 `PnwIconId`：内置写成
+`pnw:dashboard`，Host 资源写成 `cool:folder`。`pnw` 由 Wing 保留，Host 只能通过
+`pnwRegisterIconNamespace` 注册自己的白名单；裸 `PnwIconName`、旧 Vue Component
+与 pageId 图标表只作运行时兼容。`PnwIconRenderer` 统一 Ribbon、Tree 与 Activity Rail
+解析，未知 ID 显示可见 `unknown` fallback。详见
+[《Pnw 工作台 Web 图标契约》](Pnw工作台Web图标契约.md)。
 
 本轮清理只建立公共真源并替换 Wing/fixture 自身的重复内联图形。Admin、BOM Studio、Open Issue、Desk Tools 的迁移必须在各自后续适配任务中逐项进行；当前任务不改这些业务仓或依赖。Desk 的 CAA/Widget 图标、FreeCAD Part、Gitee Logo，Admin 的上传文件类型与模块业务图标，BOM 的购物车/制造领域图标继续留在产品侧。
 
@@ -214,7 +227,7 @@ export interface PnwViewBlockContributions {
 
 外观组合由 `PnwRibbon` 验证：紧凑工具条允许 `16/24px`，大 Ribbon 允许 `24/36px`；两类各自保存 Title 开关，分组标签只由大 Ribbon 使用。非法组合应在开发期输出清晰诊断并回退到安全默认值。
 
-Footer 使用三个固定顺序的仅图标布局开关：Primary、Bottom、Secondary。每个按钮按受控 visibility 在 `panel-*` 轮廓图标与 `panel-*-active` 实心区域图标间切换，on/off 只由 SVG 图形表达，不产生常驻按钮底色、边框或阴影；鼠标 hover 保留轻量瞬时背景，键盘 `focus-visible` 保留焦点环。三个入口始终显示，当前 View 未贡献对应 Block 时使用原生 `disabled`、保持 off 图形并提示原因；只有 consumer 显式设置 `showFooter = false` 时才移除整个 Footer。Ribbon 的外观设置收敛到右侧 `…` 菜单，不散落多个 Header/Ribbon 按钮。
+Footer 使用三个固定顺序的仅图标布局开关：Primary、Bottom、Secondary。每个按钮按受控 visibility 在 `panel-*` 轮廓图标与 `panel-*-active` 实心区域图标间切换，on/off 只由 SVG 图形表达，不产生常驻按钮底色、边框或阴影；鼠标 hover 保留轻量瞬时背景，键盘 `focus-visible` 保留焦点环。三个入口始终显示，Primary/Secondary 在当前 View 未贡献时使用原生 `disabled`；Bottom 在 Shell 提供应用默认层后跨 View 保持可用，只有 legacy consumer 完全未提供默认或页面 Bottom 时才禁用。只有 consumer 显式设置 `showFooter = false` 时才移除整个 Footer。Ribbon 的外观设置收敛到右侧 `…` 菜单，不散落多个 Header/Ribbon 按钮。
 
 ## 5. 仓内示例方案
 
@@ -253,7 +266,8 @@ phoenix-wing/
 4. 大 Ribbon 的分组标签开关、紧凑模式强制无分组标签，以及 `…` 外观菜单；
 5. 无 Primary/Secondary 的 Issue 风格 View；
 6. 有 Primary、Secondary、可调 Bottom Panel 的完整工作台 View；
-7. Footer 三个仅图标开关始终显示，并按 View contribution 启用或禁用；
+7. Footer 三个仅图标开关始终显示；Primary/Secondary 按 View contribution
+   启用，Bottom 由应用默认层保持可用；
 8. 窄屏下 Tree、Ribbon 溢出和 Block 折叠行为。
 
 该示例是设计/视觉/交互回归夹具，不是新 npm 包、产品原型或第二套组件实现。它必须通过 Wing 的公开入口导入组件与类型，避免只验证源码内部偶然可用的 API。
@@ -278,7 +292,12 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 - 实验契约真源为 `src/types/PnwWorkbenchWeb.ts`，由根入口导出，但不建立 schema version，也不声明为稳定跨宿主协议；W4 完成 Open Issue 与 Admin Host 两个差异化真实 Web 消费者验证后再评估冻结。若两者仍无法证明某项复杂面板语义，再由 BOM Studio / Desk Tools 做针对性验证。
 - 导航树只包含身份、标签、宿主图标、受控禁用/隐藏/同级排序和子节点；Router、URL、权限、模块 manifest、业务 metadata 与激活动作继续由宿主 adapter 持有。
 - Ribbon 把第一层投影为模块、下一层投影为分组、末级可激活节点投影为工具项；若真实消费者需要不同层级语义，先由宿主适配，不向节点增加产品专有 role 字段。
-- View contribution 只声明 Primary、Bottom、Secondary 是否有内容；`PnwWorkbenchLayoutState` 用一份纯 TypeScript 受控状态承载三块显隐和 `primaryWidth` / `secondaryWidth` / `bottomHeight`。Wing 负责安全缺省、边界修正与交互事件，持久化 key、用户作用域和保存介质仍不进入 Wing。
+- View contribution 声明当前页面的 Primary、专用 Bottom、Secondary；Shell 的
+  `defaultBottomBlock` 是每个工作台实例的应用默认层。`PnwWorkbenchLayoutState`
+  用一份纯 TypeScript 受控状态承载三块显隐和 `primaryWidth` /
+  `secondaryWidth` / `bottomHeight`。切换页面只重新解析 Bottom 内容与 tabs，不写
+  显隐或尺寸；Wing 负责安全缺省、边界修正与交互事件，持久化 key、用户作用域和
+  保存介质仍不进入 Wing。
 - Web 样式以 `--pnw-*` token 为扩展面，内置 light/dark 基线且不依赖 Element Plus 主题实现。宿主可提供 Vue 图标组件、覆盖 token 或追加自己的作用域 CSS；Wing 不接管主题偏好存储。
 
 ### W1 实现结果
@@ -287,15 +306,21 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 - `pnwNavigationTree` 纯函数负责隐藏过滤、稳定同级排序、Tree 可见行和 Ribbon 模块/分组投影。两种呈现激活相同的末级节点对象，保留节点 ID、禁用状态和宿主图标引用。
 - Tree 支持受控展开、上下/左右/Home/End/Enter/Space 键盘行为和 `tree` / `treeitem` / `aria-*` 语义；分支仅展开，末级节点通过 `activate(id)` 把动作交回宿主。
 - `PnwRibbonShell` 仅新增默认开启的 `showLayoutToggle` 可选属性，`PnwRibbonGroup` / `PnwRibbonToolButton` 只放宽文本图标兼容；既有 props、事件和直接子路径入口保持不变。
+- 0.6.1 在不收紧 `PnwNavigationNode.icon: unknown` 的前提下增加规范 `PnwIconId`、
+  Host namespace 白名单、统一 Renderer 与可见 fallback；新序列化数据必须带 namespace，
+  旧 pageId / Component / 文本入口继续通过兼容测试。
 
 ### W2 实现结果
 
 - 高层 `PnwRibbon` 使用“大 Ribbon / 紧凑工具条”两个外观类别，两类共用 `PnwRibbonModeAppearance` 数据形状并分别保留配置；纯函数明确紧凑图标仅 `16/24px`、大 Ribbon 图标仅 `24/36px`，非法组合返回诊断并安全回退到 `24px`。`pnwResolveRibbonNaturalHeight` 让紧凑 16px / 24px 图标对应 28px / 34px 自然高度，Title 开关不改变高度；低层 `PnwRibbonDisplayMode` 的 `icon` / `icon-title` / `large` 继续供既有 Group/ToolButton 兼容入口使用。
 - 大 Ribbon 提供 Title 与分组标签，紧凑工具条只使用 Title；外观类别、合法尺寸和当前类别开关只出现在 Ribbon 右侧单一 `…` 菜单中。`PnwRibbonShell` 原布局切换入口仍默认保留，只有新 `PnwRibbon` 主动关闭它。
-- `PnwWorkbenchLayout` 只在 contribution 与对应 slot 同时存在时渲染 `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel`。Bottom 位于 Editor 栈内部，DOM 与 CSS Grid 均不会跨过 ActivityBar 或两个侧 Block。
+- `PnwWorkbenchLayout` 只在解析后 contribution 与对应 slot 同时存在时渲染
+  `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel`。Shell 先以“当前
+  View Bottom → 应用默认 Bottom”分层生成同一个 Bottom slot。Bottom 位于 Editor
+  栈内部，DOM 与 CSS Grid 均不会跨过 ActivityBar 或两个侧 Block。
 - `PnwWorkbenchLayout` 在组合层为 Primary 右边、Secondary 左边和 Bottom 顶边提供三个显式 `separator`；鼠标/触控与方向键都只更新同一份 `PnwWorkbenchLayoutState`。Bottom 不再使用浏览器右下角原生 `resize`，其高度只能从顶边改变；纯函数按 Editor 最小空间和面板上下限修正尺寸，可脱离 Vue 单测。
 - `PnwBottomPanel` 接收受控 `PnwBottomPanelTab[]` 和活动 Tab ID，可承载问题、日志等多个内容页；Wing 只渲染标签、计数、状态和插槽，不拥有 Desk Tools / Admin 的面板注册表或内容生命周期。
-- `PnwWorkbenchFooter` 左侧接受无业务语义的 consumer 内容 slot，右侧固定渲染 Primary、Bottom、Secondary 三个仅图标按钮；可用按钮按 visibility 切换公共 `panel-*` / `panel-*-active` SVG，on 不产生常驻按钮底块，hover 与 `focus-visible` 反馈仍保留。当前 View 未提供的 Block 使用原生 `disabled` 并保持轮廓 off 图形。按钮继续输出 `aria-label` / `aria-pressed`，只向宿主发送显隐状态更新。`PnwWorkbenchLayout` 默认始终保留 Footer，避免切换 View 时三个入口和页面高度跳动；consumer 只有显式传入 `showFooter = false` 才关闭整个 Footer。
+- `PnwWorkbenchFooter` 左侧接受无业务语义的 consumer 内容 slot，右侧固定渲染 Primary、Bottom、Secondary 三个仅图标按钮；可用按钮按 visibility 切换公共 `panel-*` / `panel-*-active` SVG，on 不产生常驻按钮底块，hover 与 `focus-visible` 反馈仍保留。Primary/Secondary 未由当前 View 提供时使用原生 `disabled` 并保持轮廓 off 图形；提供 `defaultBottomBlock` 后 Bottom 的 availability 由应用默认层稳定提供。按钮继续输出 `aria-label` / `aria-pressed`，只向宿主发送显隐状态更新。`PnwWorkbenchLayout` 默认始终保留 Footer，避免切换 View 时三个入口和页面高度跳动；consumer 只有显式传入 `showFooter = false` 才关闭整个 Footer。
 - `light`、`dark`、`system` 由布局根提供默认 token；系统主题使用 `prefers-color-scheme`。示例和宿主可以在外层覆盖最终 `--pnw-*` token，例如：
 
   ```css
@@ -313,7 +338,7 @@ W0–W3 只能构建通用壳和 fixture。没有第二个真实消费者验证�
 ### W3 实现结果
 
 - 非发布示例位于 `examples/PwwWorkbenchWeb/`，定位为仓内第一方 fixture consumer，而不是公共实现目录。根 `src/` 只保留 `App.vue` 与 `main.ts`；假导航、假 View、Pinia 状态、设置面板和布局管理页全部进入 `src/fixture/`，文件统一使用 `PwwFixture*`，因此新 consumer 不应误以为这些文件都必须复制或改名。消费者只需参考 Shell、受控状态和 View registry 的接线，直接绑定已有 Router/Pinia 或建立自己的薄 adapter；选择性复制 fixture 片段时才替换 `PwwFixture*` 命名。Wing 导入的 `Pnw*`、`pnw*`、`usePnw*`、`PNW_*` 和 `--pnw-*` 公共名称保持不变。示例没有 `package.json`、产品 API 或源码 alias；typecheck/build 先构建根包，再从 `phoenix-wing` 与 `phoenix-wing/style.css` 公共 export 消费。
-- fixture 覆盖同树 Ribbon/Tree、受控展开与选中、两类同形 Ribbon 外观及合法尺寸、分组标签、Issue 无 Block、完整三 Block、Footer 开关、可调 Bottom 和 700px 窄屏。
+- fixture 覆盖同树 Ribbon/Tree、受控展开与选中、两类同形 Ribbon 外观及合法尺寸、分组标签、Issue 无 Primary/Secondary 或专用 Bottom、应用默认 Bottom 回退、完整三 Block、Footer 开关、可调 Bottom 和 700px 窄屏。
 - 示例额外覆盖 `light` / `dark` / `system` 与宿主自定义 CSS token。主题切换和 token 覆盖只保存在示例内存状态，不写浏览器存储。
 - 本地开发固定 `127.0.0.1:41789` 且 `strictPort`；2026-07-28 已用内置浏览器验证桌面/窄屏、ARIA 状态、实际计算颜色、Ribbon 横向溢出和 Block DOM 数量，控制台无 error/warn。
 - 浏览器视觉回归发现并修正了自定义 `--pnw-workbench-surface` 未向 Editor/Block 传播的问题；最终自定义浅色 token 可覆盖 dark 基线，同时保持可读对比度。

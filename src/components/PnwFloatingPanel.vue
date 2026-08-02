@@ -9,7 +9,12 @@ import {
 } from "vue";
 import type { PnwFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
 import { pnwClampFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
+import {
+  pnwResolveWorkbenchOverlayZIndex,
+  type PnwWorkbenchOverlayLayer,
+} from "../utils/pnwOverlayStacking.js";
 import { pnwBindPointerDrag } from "../utils/pnwPointerDrag.js";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 import PnwIcon from "./PnwIcon.vue";
 
 const props = withDefaults(defineProps<{
@@ -20,12 +25,17 @@ const props = withDefaults(defineProps<{
   panelClass?: string;
   constrainMargin?: number;
   closeOnEscape?: boolean;
+  /** 叠层语义；Host 工具浮层应使用公开的 hostTools 层。 */
+  layer?: PnwWorkbenchOverlayLayer;
+  /** 仅在确有第三方叠层集成时覆盖 layer 的数值。 */
+  zIndex?: number;
 }>(), {
-  title: "浮动面板",
+  title: "",
   ariaLabel: "",
   panelClass: "",
   constrainMargin: 8,
   closeOnEscape: true,
+  layer: "floatingPanel",
 });
 
 const emit = defineEmits<{
@@ -35,10 +45,15 @@ const emit = defineEmits<{
 
 const pnwPanel = ref<HTMLElement>();
 let pnwResizeObserver: ResizeObserver | undefined;
+const { t: pnwT } = usePnwLocale();
+const pnwResolvedTitle = computed(() => props.title || pnwT("floatingPanel.title"));
 
 const pnwPositionStyle = computed(() => ({
   left: `${Number.isFinite(props.position.x) ? props.position.x : props.constrainMargin}px`,
   top: `${Number.isFinite(props.position.y) ? props.position.y : props.constrainMargin}px`,
+  "--pnw-floating-panel-layer-z-index": String(
+    pnwResolveWorkbenchOverlayZIndex(props.layer, props.zIndex),
+  ),
 }));
 
 function pnwConstrainPosition(): void {
@@ -79,7 +94,10 @@ function pnwStartDrag(event: PointerEvent): void {
 }
 
 function pnwHandleKeydown(event: KeyboardEvent): void {
-  if (props.open && props.closeOnEscape && event.key === "Escape") emit("close");
+  if (props.open && props.closeOnEscape && event.key === "Escape" && !event.defaultPrevented) {
+    event.preventDefault();
+    emit("close");
+  }
 }
 
 watch(
@@ -118,16 +136,16 @@ onBeforeUnmount(() => {
       :class="panelClass"
       :style="pnwPositionStyle"
       role="dialog"
-      :aria-label="ariaLabel || title"
+      :aria-label="ariaLabel || pnwResolvedTitle"
     >
       <header class="pnw-floating-panel__header" @pointerdown="pnwStartDrag">
         <slot name="header">
-          <strong>{{ title }}</strong>
+          <strong>{{ pnwResolvedTitle }}</strong>
         </slot>
         <button
           type="button"
           class="pnw-floating-panel__close"
-          aria-label="关闭浮动面板"
+          :aria-label="pnwT('floatingPanel.close')"
           @pointerdown.stop
           @click="emit('close')"
         >
@@ -144,7 +162,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .pnw-floating-panel {
   position: fixed;
-  z-index: var(--pnw-floating-panel-z-index, 8400);
+  z-index: var(--pnw-floating-panel-z-index, var(--pnw-floating-panel-layer-z-index, 1200));
   width: min(var(--pnw-floating-panel-width, 640px), calc(100vw - 16px));
   max-height: var(--pnw-floating-panel-max-height, calc(100vh - 16px));
   display: flex;
