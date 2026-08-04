@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PnwPageHeader } from "phoenix-wing";
+import { PnwPageLayout } from "phoenix-wing";
 import type { PwwFixtureEditorViewProps } from "./PwwFixtureEditorView.js";
 
 defineProps<PwwFixtureEditorViewProps>();
@@ -7,14 +7,13 @@ defineEmits<{ action: [actionId: string] }>();
 </script>
 
 <template>
-  <article class="pww-summary-view">
-    <PnwPageHeader
-      :eyebrow="view.eyebrow"
-      :title="view.title"
-      :description="view.description"
-      :summary="ribbonSummary"
-    />
-
+  <PnwPageLayout
+    class="pww-summary-view"
+    :eyebrow="view.eyebrow"
+    :title="view.title"
+    :description="view.description"
+    :summary="ribbonSummary"
+  >
     <div class="pww-summary-cards">
       <section>
         <span>受控节点</span>
@@ -48,17 +47,17 @@ defineEmits<{ action: [actionId: string] }>();
         </div>
       </div>
     </section>
-  </article>
+  </PnwPageLayout>
 </template>
 
 <style scoped>
-.pww-summary-view { width: min(980px, 100%); margin: 0 auto; padding: clamp(14px, 2vw, 24px); }
-.pww-summary-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pww-summary-view { width: 100%; margin: 0; padding: 0; }
+.pww-summary-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: min(980px, 100%); margin: 0 auto; }
 .pww-summary-cards section { min-width: 0; display: grid; gap: 7px; padding: 16px; border: 1px solid var(--pnw-workbench-border); border-radius: 10px; background: var(--pnw-workbench-surface); }
 .pww-summary-cards span,
 .pww-summary-cards small { overflow: hidden; color: var(--pnw-workbench-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .pww-summary-cards strong { overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
-.pww-summary-section { margin-top: 28px; }
+.pww-summary-section { width: min(980px, 100%); margin: 28px auto 0; }
 .pww-summary-section h2 { margin: 4px 0 14px; font-size: 15px; }
 .pww-summary-kicker { color: var(--pnw-workbench-muted); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; }
 .pww-summary-table { overflow: hidden; border: 1px solid var(--pnw-workbench-border); border-radius: 9px; background: var(--pnw-workbench-surface); font-size: 12px; }

@@ -12,6 +12,9 @@
 - 不承载 Admin、Open Issue、Function、DeskTools、BOM Studio 或 VS Code 插件的业务适配；
 - 构建产物仅用于本地验证，不进入根包发布文件。
 
+`PwwFixtureViewPrimary.vue` 演示 `PnwPrimaryPanel` 与 `PnwPrimarySection`：Wing 负责无 inset
+Primary 结构和默认折叠交互，fixture 只保留表单、树与属性数据。
+
 ## 新 consumer 如何采用
 
 不要把 `src/fixture/` 整目录复制成产品代码。这里的 `PwwFixture*` 是为了运行和

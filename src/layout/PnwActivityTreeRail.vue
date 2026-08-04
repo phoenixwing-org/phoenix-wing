@@ -22,6 +22,7 @@ import {
 } from "../utils/pnwNavigationTree.js";
 import PnwIcon from "../components/PnwIcon.vue";
 import PnwIconRenderer from "../components/PnwIconRenderer.vue";
+import PnwOverlayThemeProvider from "../components/PnwOverlayThemeProvider.vue";
 import {
   PNW_ACTIVITY_TREE_FLYOUT_CLOSE_DELAY_MS,
   pnwCanHoverActivityTreeFlyout,
@@ -369,50 +370,53 @@ onBeforeUnmount(() => {
   </div>
 
   <Teleport to="body">
-    <div
+    <PnwOverlayThemeProvider
       v-if="mode === 'root-flyout' && pnwOpenRoot"
-      ref="pnwFlyout"
-      class="pnw-activity-tree-flyout"
-      :class="`pnw-activity-tree-flyout--${colorScheme}`"
-      :style="{ left: `${pnwFlyoutPosition.x}px`, top: `${pnwFlyoutPosition.y}px` }"
-      role="tree"
-      :aria-label="`${pnwOpenRoot.label} 子菜单`"
-      @pointerenter="pnwCancelFlyoutClose"
-      @pointerleave="pnwScheduleFlyoutClose"
+      :color-scheme="colorScheme"
     >
-      <div class="pnw-activity-tree-flyout-title">{{ pnwOpenRoot.label }}</div>
-      <button
-        v-for="(row, index) in pnwFlyoutRows"
-        :key="row.node.id"
-        :ref="(element) => pnwSetButton(pnwFlyoutButtons, row.node.id, element)"
-        type="button"
-        role="treeitem"
-        class="pnw-activity-tree-flyout-item"
-        :class="{
-          'pnw-activity-tree-flyout-item--active': row.node.id === activeNodeId,
-          'pnw-activity-tree-flyout-item--active-path': pnwContainsActive(row.node),
-          'pnw-activity-tree-flyout-item--disabled': row.node.disabled,
-        }"
-        :style="{ '--pnw-activity-tree-depth': row.depth }"
-        :disabled="row.node.disabled"
-        :tabindex="row.node.id === activeNodeId || (!activeNodeId && index === 0) ? 0 : -1"
-        :aria-level="row.depth"
-        :aria-expanded="row.hasChildren ? expandedNodeIds.includes(row.node.id) : undefined"
-        :aria-current="row.node.id === activeNodeId ? 'page' : undefined"
-        @click="pnwActivateFlyoutNode(row.node, row.hasChildren)"
-        @keydown="pnwHandleFlyoutKeydown($event, index)"
+      <div
+        ref="pnwFlyout"
+        class="pnw-activity-tree-flyout"
+        :style="{ left: `${pnwFlyoutPosition.x}px`, top: `${pnwFlyoutPosition.y}px` }"
+        role="tree"
+        :aria-label="`${pnwOpenRoot.label} 子菜单`"
+        @pointerenter="pnwCancelFlyoutClose"
+        @pointerleave="pnwScheduleFlyoutClose"
       >
-        <span v-if="row.node.icon !== undefined" class="pnw-activity-tree-flyout-icon" aria-hidden="true">
-          <PnwIconRenderer :icon="row.node.icon" size="100%" decorative />
-        </span>
-        <span class="pnw-activity-tree-flyout-label">{{ row.node.label }}</span>
-        <PnwIcon
-          v-if="row.hasChildren"
-          :name="expandedNodeIds.includes(row.node.id) ? 'chevron-down' : 'chevron-right'"
-          :size="12"
-        />
-      </button>
-    </div>
+        <div class="pnw-activity-tree-flyout-title">{{ pnwOpenRoot.label }}</div>
+        <button
+          v-for="(row, index) in pnwFlyoutRows"
+          :key="row.node.id"
+          :ref="(element) => pnwSetButton(pnwFlyoutButtons, row.node.id, element)"
+          type="button"
+          role="treeitem"
+          class="pnw-activity-tree-flyout-item"
+          :class="{
+            'pnw-activity-tree-flyout-item--active': row.node.id === activeNodeId,
+            'pnw-activity-tree-flyout-item--active-path': pnwContainsActive(row.node),
+            'pnw-activity-tree-flyout-item--disabled': row.node.disabled,
+          }"
+          :style="{ '--pnw-activity-tree-depth': row.depth }"
+          :disabled="row.node.disabled"
+          :tabindex="row.node.id === activeNodeId || (!activeNodeId && index === 0) ? 0 : -1"
+          :aria-level="row.depth"
+          :aria-expanded="row.hasChildren ? expandedNodeIds.includes(row.node.id) : undefined"
+          :aria-current="row.node.id === activeNodeId ? 'page' : undefined"
+          @click="pnwActivateFlyoutNode(row.node, row.hasChildren)"
+          @keydown="pnwHandleFlyoutKeydown($event, index)"
+        >
+          <span v-if="row.node.icon !== undefined" class="pnw-activity-tree-flyout-icon" aria-hidden="true">
+            <PnwIconRenderer :icon="row.node.icon" size="100%" decorative />
+          </span>
+          <span class="pnw-activity-tree-flyout-label">{{ row.node.label }}</span>
+          <PnwIcon
+            v-if="row.hasChildren"
+            :name="expandedNodeIds.includes(row.node.id) ? 'chevron-down' : 'chevron-right'"
+            :size="12"
+          />
+        </button>
+      </div>
+    </PnwOverlayThemeProvider>
   </Teleport>
 </template>
 
@@ -498,17 +502,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2);
 }
 
-.pnw-activity-tree-flyout--dark {
-  color-scheme: dark;
-  --pnw-workbench-surface: #111827;
-  --pnw-workbench-text: #e5edf7;
-  --pnw-workbench-muted: #94a3b8;
-  --pnw-workbench-border: #2a3a50;
-  --pnw-control-hover-bg: rgba(96, 165, 250, 0.14);
-  --pnw-control-active-bg: rgba(59, 130, 246, 0.24);
-  --pnw-control-active-text: #bfdbfe;
-}
-
 .pnw-activity-tree-flyout-title {
   overflow: hidden;
   padding: 5px 8px 7px;
@@ -572,16 +565,4 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-@media (prefers-color-scheme: dark) {
-  .pnw-activity-tree-flyout--system {
-    color-scheme: dark;
-    --pnw-workbench-surface: #111827;
-    --pnw-workbench-text: #e5edf7;
-    --pnw-workbench-muted: #94a3b8;
-    --pnw-workbench-border: #2a3a50;
-    --pnw-control-hover-bg: rgba(96, 165, 250, 0.14);
-    --pnw-control-active-bg: rgba(59, 130, 246, 0.24);
-    --pnw-control-active-text: #bfdbfe;
-  }
-}
 </style>

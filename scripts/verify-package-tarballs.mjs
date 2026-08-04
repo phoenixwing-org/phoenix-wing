@@ -189,6 +189,7 @@ function packPackage(directoryName) {
     directoryName,
     tarball: path.isAbsolute(info.filename) ? info.filename : path.join(packRoot, info.filename),
     expectedName: JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")).name,
+    expectedVersion: releaseVersion,
   };
 }
 
@@ -242,13 +243,16 @@ function verifyPackedManifest(item) {
   if (manifest.name !== item.expectedName) {
     throw new Error(`${item.directoryName} packed name changed to ${JSON.stringify(manifest.name)}`);
   }
+  if (manifest.version !== item.expectedVersion || manifest.private === true) {
+    throw new Error(`${manifest.name} packed identity must remain public ${item.expectedVersion}`);
+  }
   const serialized = JSON.stringify({
     dependencies: manifest.dependencies,
     optionalDependencies: manifest.optionalDependencies,
     peerDependencies: manifest.peerDependencies,
   });
-  if (serialized.includes("workspace:")) {
-    throw new Error(`${manifest.name} tarball still contains a workspace: dependency`);
+  if (/(?:workspace:|file:|link:)/u.test(serialized)) {
+    throw new Error(`${manifest.name} tarball still contains a local dependency specifier`);
   }
   for (const required of ["README.md", "LICENSE", "NOTICE", "dist/index.js", "dist/index.d.ts"]) {
     const file = path.join(packageRoot, required);
@@ -290,8 +294,8 @@ function verifyAggregateManifest(item) {
     optionalDependencies: manifest.optionalDependencies,
     peerDependencies: manifest.peerDependencies,
   });
-  if (serialized.includes("workspace:")) {
-    throw new Error("phoenix-wing aggregate tarball still contains a workspace: dependency");
+  if (/(?:workspace:|file:|link:)/u.test(serialized)) {
+    throw new Error("phoenix-wing aggregate tarball still contains a local dependency specifier");
   }
   for (const dependency of ["@phoenix-wing/code-core", "@phoenix-wing/db-node"]) {
     if (manifest.dependencies?.[dependency] !== manifest.version) {
@@ -306,13 +310,45 @@ function verifyAggregateManifest(item) {
     "dist/style.css",
     "dist/components/PnwChoiceDialogHost.js",
     "dist/components/PnwChoiceDialogHost.vue.d.ts",
+    "dist/components/PnwOverlayThemeProvider.js",
+    "dist/components/PnwOverlayThemeProvider.vue.d.ts",
     "dist/composables/pnwChoiceDialog.js",
+    "dist/composables/usePnwOverlayTheme.js",
+    "dist/layout/PnwPrimaryPanel.js",
+    "dist/layout/PnwPrimaryPanel.vue.d.ts",
+    "dist/layout/PnwPrimarySection.js",
+    "dist/layout/PnwPrimarySection.vue.d.ts",
+    "dist/types/PnwDiagnostics.d.ts",
+    "dist/types/PnwWorkbenchWeb.d.ts",
+    "dist/types/PnwRibbonConfig.js",
+    "dist/types/PnwRibbonConfig.d.ts",
     "fixtures/ribbon-contribution-v1.json",
   ]) {
     const file = path.join(packageRoot, required);
     if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
       throw new Error(`phoenix-wing aggregate tarball is missing ${required}`);
     }
+  }
+  for (const forbidden of [
+    "dist/types/PnwDiagnostics.js",
+    "dist/types/PnwEditorDrawer.js",
+    "dist/types/PnwIcon.js",
+    "dist/types/PnwLocale.js",
+    "dist/types/PnwWorkbench.js",
+    "dist/types/PnwWorkbenchVue.js",
+    "dist/types/PnwWorkbenchWeb.js",
+    "dist/types/pnwComboTypes.js",
+    "dist/types/pnwPageProperties.js",
+  ]) {
+    if (fs.existsSync(path.join(packageRoot, forbidden))) {
+      throw new Error(`phoenix-wing aggregate tarball emitted type-only JavaScript ${forbidden}`);
+    }
+  }
+  if (manifest.exports?.["./types/*"]?.import !== undefined) {
+    throw new Error("phoenix-wing type-only wildcard must not expose a runtime import target");
+  }
+  if (manifest.exports?.["./types/PnwRibbonConfig"]?.import !== "./dist/types/PnwRibbonConfig.js") {
+    throw new Error("phoenix-wing runtime PnwRibbonConfig subpath export changed");
   }
   for (const file of walk(packageRoot)) {
     const relative = path.relative(packageRoot, file).split(path.sep).join("/");
@@ -323,6 +359,37 @@ function verifyAggregateManifest(item) {
 }
 
 function verifyAggregateUiConsumer() {
+  fs.writeFileSync(path.join(consumerRoot, "types-smoke.ts"), `
+import type { PnwNavigationNode } from "phoenix-wing/types/PnwWorkbenchWeb";
+import {
+  PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION,
+  pnwCheckRibbonContributionCompatibility,
+} from "phoenix-wing/types/PnwRibbonConfig";
+
+const node: PnwNavigationNode = { id: "dashboard", label: "Dashboard" };
+if (node.id !== "dashboard" || PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION !== 1) {
+  throw new Error("type subpath smoke failed");
+}
+pnwCheckRibbonContributionCompatibility({ schemaVersion: 1, tabs: [] });
+`);
+  fs.writeFileSync(path.join(consumerRoot, "tsconfig.json"), `${JSON.stringify({
+    compilerOptions: {
+      lib: ["ES2022", "DOM"],
+      module: "NodeNext",
+      moduleResolution: "NodeNext",
+      noEmit: true,
+      skipLibCheck: true,
+      strict: true,
+      target: "ES2022",
+    },
+    include: ["types-smoke.ts"],
+  }, null, 2)}\n`);
+  run(process.execPath, [
+    path.join(root, "node_modules", "typescript", "bin", "tsc"),
+    "-p",
+    path.join(consumerRoot, "tsconfig.json"),
+  ], { cwd: consumerRoot });
+
   const loader = path.join(consumerRoot, "css-loader.mjs");
   fs.writeFileSync(loader, `
 export async function load(url, context, nextLoad) {
@@ -337,13 +404,29 @@ export async function load(url, context, nextLoad) {
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import CompatChoiceDialogHost from "phoenix-wing/components/PnwChoiceDialogHost.vue";
+import CompatOverlayThemeProvider from "phoenix-wing/components/PnwOverlayThemeProvider.vue";
+import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
+import CompatPrimarySection from "phoenix-wing/layout/PnwPrimarySection.vue";
 import {
+  PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION as PNW_RIBBON_SUBPATH_SCHEMA_VERSION,
+} from "phoenix-wing/types/PnwRibbonConfig";
+import {
+  PNW_VERSION,
   PnwChoiceDialogHost,
+  PnwOverlayThemeProvider,
+  PnwPrimaryPanel,
+  PnwPrimarySection,
+  pnwApplyColorScheme,
   pnwCheckRibbonContributionCompatibility,
   pnwChoiceDialogOpen,
+  pnwGetAppliedColorScheme,
   pnwPromptChoice,
   pnwResolveChoice,
 } from "phoenix-wing";
+
+if (PNW_VERSION !== "${releaseVersion}") {
+  throw new Error("aggregate runtime version changed to " + PNW_VERSION);
+}
 
 const ribbonFixture = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(
   "phoenix-wing/fixtures/ribbon-contribution-v1.json",
@@ -351,9 +434,22 @@ const ribbonFixture = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(
 if (!pnwCheckRibbonContributionCompatibility(ribbonFixture).compatible) {
   throw new Error("aggregate ribbon contribution fixture smoke failed");
 }
+if (PNW_RIBBON_SUBPATH_SCHEMA_VERSION !== 1) {
+  throw new Error("runtime PnwRibbonConfig subpath smoke failed");
+}
 if (PnwChoiceDialogHost !== CompatChoiceDialogHost) {
   throw new Error("root and compatibility subpath resolved different component instances");
 }
+if (PnwOverlayThemeProvider !== CompatOverlayThemeProvider) {
+  throw new Error("root and compatibility subpath resolved different overlay theme providers");
+}
+if (PnwPrimaryPanel !== CompatPrimaryPanel || PnwPrimarySection !== CompatPrimarySection) {
+  throw new Error("root and compatibility subpath resolved different Primary components");
+}
+if (pnwApplyColorScheme("dark") !== "dark" || pnwGetAppliedColorScheme() !== "dark") {
+  throw new Error("aggregate overlay color-scheme contract did not share applied state");
+}
+pnwApplyColorScheme("light");
 const pending = pnwPromptChoice({
   title: "singleton smoke",
   message: "compiled entry",
@@ -370,9 +466,22 @@ if (result.choiceId !== "ok" || pnwChoiceDialogOpen.value !== false) {
 
   fs.writeFileSync(path.join(consumerRoot, "index.html"), '<div id="app"></div><script type="module" src="/ui-entry.js"></script>\n');
   fs.writeFileSync(path.join(consumerRoot, "ui-entry.js"), `
-import { PnwChoiceDialogHost, pnwPromptChoice } from "phoenix-wing";
+import {
+  PnwChoiceDialogHost,
+  PnwOverlayThemeProvider,
+  PnwPrimaryPanel,
+  PnwPrimarySection,
+  pnwPromptChoice,
+} from "phoenix-wing";
 import CompatChoiceDialogHost from "phoenix-wing/components/PnwChoiceDialogHost.vue";
-if (PnwChoiceDialogHost !== CompatChoiceDialogHost || typeof pnwPromptChoice !== "function") {
+import CompatOverlayThemeProvider from "phoenix-wing/components/PnwOverlayThemeProvider.vue";
+import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
+import CompatPrimarySection from "phoenix-wing/layout/PnwPrimarySection.vue";
+if (PnwChoiceDialogHost !== CompatChoiceDialogHost
+  || PnwOverlayThemeProvider !== CompatOverlayThemeProvider
+  || PnwPrimaryPanel !== CompatPrimaryPanel
+  || PnwPrimarySection !== CompatPrimarySection
+  || typeof pnwPromptChoice !== "function") {
   throw new Error("aggregate UI exports are inconsistent");
 }
 `);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import PnwFloatingPanel from "../components/PnwFloatingPanel.vue";
 import PnwIcon from "../components/PnwIcon.vue";
 import type { PnwIconName } from "../icons/pnwIconCatalog.js";
@@ -17,7 +17,10 @@ import {
   PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
 } from "../utils/pnwWorkbenchWeb.js";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
-import type { PnwFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
+import type {
+  PnwFloatingPanelInsets,
+  PnwFloatingPanelPosition,
+} from "../utils/pnwFloatingPanel.js";
 import PnwWorkbenchDisplaySettingsPanel from "./PnwWorkbenchDisplaySettingsPanel.vue";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
 
@@ -65,9 +68,16 @@ defineSlots<{
 }>();
 
 const pnwTrigger = ref<HTMLElement>();
+const pnwRoot = ref<HTMLElement>();
 const { t: pnwT } = usePnwLocale();
 const pnwOpen = ref(false);
 const pnwFullOpen = ref(false);
+const pnwConstrainInsets = ref<PnwFloatingPanelInsets>({
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+});
 const pnwLocalPositions = ref<PnwWorkbenchDisplaySettingsPositions>({
   quick: { ...PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS.quick },
   full: { ...PNW_DEFAULT_WORKBENCH_DISPLAY_SETTINGS_POSITIONS.full },
@@ -105,7 +115,25 @@ function pnwUpdatePosition(
   emit("update:positions", next);
 }
 
+/** 让 Teleport 面板避开同一工作台的 Header，不改变公共 overlay 层级。 */
+function pnwMeasureWorkbenchSafeArea(): void {
+  if (typeof window === "undefined") return;
+  const pnwLayout = pnwRoot.value?.closest<HTMLElement>(".pnw-workbench-layout");
+  const pnwHeader = pnwLayout?.querySelector<HTMLElement>(".pnw-workbench-header");
+  const pnwHeaderRect = pnwHeader?.getBoundingClientRect();
+  const pnwHeaderBottom = pnwHeaderRect && pnwHeaderRect.height > 0
+    ? Math.min(window.innerHeight, Math.max(0, Math.ceil(pnwHeaderRect.bottom)))
+    : 0;
+  pnwConstrainInsets.value = {
+    top: pnwHeaderBottom,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  };
+}
+
 async function pnwShowSettings(): Promise<void> {
+  pnwMeasureWorkbenchSafeArea();
   const rect = pnwTrigger.value?.getBoundingClientRect();
   if (rect && props.positions === undefined) {
     pnwUpdatePosition("quick", props.triggerVariant === "ribbon"
@@ -139,6 +167,7 @@ function pnwApplyPreset(preset: PnwWorkbenchDisplayPreset): void {
 }
 
 function pnwShowFullSettings(): void {
+  pnwMeasureWorkbenchSafeArea();
   const rect = pnwTrigger.value?.getBoundingClientRect();
   if (rect && typeof window !== "undefined" && props.positions === undefined) {
     pnwUpdatePosition("full", {
@@ -162,10 +191,19 @@ function pnwOpenAdvancedSettings(): void {
   pnwOpen.value = false;
   emit("openAdvancedSettings");
 }
+
+onMounted(() => {
+  window.addEventListener("resize", pnwMeasureWorkbenchSafeArea);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", pnwMeasureWorkbenchSafeArea);
+});
 </script>
 
 <template>
   <div
+    ref="pnwRoot"
     class="pnw-workbench-display-settings"
     :data-pnw-display-trigger="triggerVariant"
   >
@@ -189,6 +227,8 @@ function pnwOpenAdvancedSettings(): void {
       :title="pnwT('workbench.settings.title')"
       :aria-label="pnwT('workbench.settings.quickMenu')"
       :panel-class="pnwPanelClass"
+      :color-scheme="colorScheme"
+      :constrain-insets="pnwConstrainInsets"
       @update:position="pnwUpdatePosition('quick', $event)"
       @close="pnwOpen = false"
     >
@@ -251,6 +291,7 @@ function pnwOpenAdvancedSettings(): void {
       :tab-bar-placement="tabBarPlacement"
       :color-scheme="colorScheme"
       :show-layout-settings="showLayoutSettings"
+      :constrain-insets="pnwConstrainInsets"
       @update:position="pnwUpdatePosition('full', $event)"
       @update:presentation="emit('update:presentation', $event)"
       @update:appearance="emit('update:appearance', $event)"

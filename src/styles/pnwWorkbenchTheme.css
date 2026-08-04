@@ -1,0 +1,86 @@
+.pnw-workbench-theme-root[data-pnw-color-scheme="light"],
+.pnw-workbench-theme-root[data-pnw-color-scheme="system"] {
+  color-scheme: light;
+  --pnw-workbench-default-bg: #f8fafc;
+  --pnw-workbench-default-surface: #ffffff;
+  --pnw-workbench-default-text: #0f172a;
+  --pnw-workbench-default-muted: #64748b;
+  --pnw-workbench-default-border: #dbe3ed;
+  --pnw-workbench-default-tree-bg: #f8fafc;
+  --pnw-workbench-default-ribbon-bg: #ffffff;
+  --pnw-workbench-default-module-bg: #f1f5f9;
+  --pnw-workbench-default-footer-bg: #eef2f7;
+  --pnw-workbench-default-hover-bg: rgba(59, 130, 246, 0.09);
+  --pnw-workbench-default-active-bg: rgba(37, 99, 235, 0.13);
+  --pnw-workbench-default-active-text: #1d4ed8;
+  --pnw-workbench-default-focus: #3b82f6;
+  --pnw-workbench-default-overlay-backdrop: rgba(15, 23, 42, 0.48);
+  --pnw-workbench-default-overlay-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  --pnw-workbench-default-control-bg: #ffffff;
+  --pnw-workbench-default-control-hover-bg: #f1f5f9;
+  --pnw-workbench-default-primary-bg: #2563eb;
+  --pnw-workbench-default-primary-hover-bg: #1d4ed8;
+  --pnw-workbench-default-primary-text: #ffffff;
+  --pnw-workbench-default-danger-bg: #fef2f2;
+  --pnw-workbench-default-danger-hover-bg: #fee2e2;
+  --pnw-workbench-default-danger-border: #fecaca;
+  --pnw-workbench-default-danger-text: #b91c1c;
+}
+
+.pnw-workbench-theme-root[data-pnw-color-scheme="dark"] {
+  color-scheme: dark;
+  --pnw-workbench-default-bg: #0b1220;
+  --pnw-workbench-default-surface: #111827;
+  --pnw-workbench-default-text: #e5edf7;
+  --pnw-workbench-default-muted: #94a3b8;
+  --pnw-workbench-default-border: #2a3a50;
+  --pnw-workbench-default-tree-bg: #0f172a;
+  --pnw-workbench-default-ribbon-bg: #111827;
+  --pnw-workbench-default-module-bg: #172033;
+  --pnw-workbench-default-footer-bg: #0f172a;
+  --pnw-workbench-default-hover-bg: rgba(96, 165, 250, 0.14);
+  --pnw-workbench-default-active-bg: rgba(59, 130, 246, 0.24);
+  --pnw-workbench-default-active-text: #bfdbfe;
+  --pnw-workbench-default-focus: #60a5fa;
+  --pnw-workbench-default-overlay-backdrop: rgba(2, 6, 23, 0.72);
+  --pnw-workbench-default-overlay-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
+  --pnw-workbench-default-control-bg: #172033;
+  --pnw-workbench-default-control-hover-bg: #22304a;
+  --pnw-workbench-default-primary-bg: #3b82f6;
+  --pnw-workbench-default-primary-hover-bg: #60a5fa;
+  --pnw-workbench-default-primary-text: #07101f;
+  --pnw-workbench-default-danger-bg: rgba(248, 113, 113, 0.16);
+  --pnw-workbench-default-danger-hover-bg: rgba(248, 113, 113, 0.24);
+  --pnw-workbench-default-danger-border: #ef4444;
+  --pnw-workbench-default-danger-text: #fecaca;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pnw-workbench-theme-root[data-pnw-color-scheme="system"] {
+    color-scheme: dark;
+    --pnw-workbench-default-bg: #0b1220;
+    --pnw-workbench-default-surface: #111827;
+    --pnw-workbench-default-text: #e5edf7;
+    --pnw-workbench-default-muted: #94a3b8;
+    --pnw-workbench-default-border: #2a3a50;
+    --pnw-workbench-default-tree-bg: #0f172a;
+    --pnw-workbench-default-ribbon-bg: #111827;
+    --pnw-workbench-default-module-bg: #172033;
+    --pnw-workbench-default-footer-bg: #0f172a;
+    --pnw-workbench-default-hover-bg: rgba(96, 165, 250, 0.14);
+    --pnw-workbench-default-active-bg: rgba(59, 130, 246, 0.24);
+    --pnw-workbench-default-active-text: #bfdbfe;
+    --pnw-workbench-default-focus: #60a5fa;
+    --pnw-workbench-default-overlay-backdrop: rgba(2, 6, 23, 0.72);
+    --pnw-workbench-default-overlay-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
+    --pnw-workbench-default-control-bg: #172033;
+    --pnw-workbench-default-control-hover-bg: #22304a;
+    --pnw-workbench-default-primary-bg: #3b82f6;
+    --pnw-workbench-default-primary-hover-bg: #60a5fa;
+    --pnw-workbench-default-primary-text: #07101f;
+    --pnw-workbench-default-danger-bg: rgba(248, 113, 113, 0.16);
+    --pnw-workbench-default-danger-hover-bg: rgba(248, 113, 113, 0.24);
+    --pnw-workbench-default-danger-border: #ef4444;
+    --pnw-workbench-default-danger-text: #fecaca;
+  }
+}

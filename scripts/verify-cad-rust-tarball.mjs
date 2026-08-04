@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageRoot = path.join(root, "packages", "cad-rust-source");
+const releaseVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phoenix-cad-rust-tarball-"));
 const unpackRoot = path.join(tempRoot, "unpacked");
 const cargoTargetDir = path.join(tempRoot, "target");
@@ -26,6 +27,7 @@ try {
   run("tar", ["-xzf", tarball, "-C", unpackRoot]);
   const extracted = path.join(unpackRoot, "package");
   assertFiles(extracted, [
+    "package.json",
     "Cargo.toml",
     "Cargo.lock",
     "source-manifest.json",
@@ -34,6 +36,20 @@ try {
     "crates/fcstd-query/Cargo.toml",
     "fixtures/database/query-v13.sql",
   ]);
+  const packedManifest = JSON.parse(fs.readFileSync(path.join(extracted, "package.json"), "utf8"));
+  assertEqual(packedManifest.name, "@phoenix-wing/cad-rust-source", "Rust source package name");
+  assertEqual(packedManifest.version, releaseVersion, "Rust source package version");
+  assertEqual(packedManifest.publishConfig?.access, "public", "Rust source publish access");
+  const serializedDependencies = JSON.stringify({
+    dependencies: packedManifest.dependencies,
+    optionalDependencies: packedManifest.optionalDependencies,
+    peerDependencies: packedManifest.peerDependencies,
+  });
+  if (/(?:workspace:|file:|link:)/u.test(serializedDependencies)) {
+    throw new Error("Rust source tarball contains a local dependency specifier");
+  }
+  const sourceManifest = JSON.parse(fs.readFileSync(path.join(extracted, "source-manifest.json"), "utf8"));
+  assertEqual(sourceManifest.package_version, releaseVersion, "Rust source manifest package version");
 
   run("cargo", [
     "test",
@@ -109,4 +125,3 @@ function assertEqual(actual, expected, label) {
     throw new Error(`${label} must equal ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
   }
 }
-

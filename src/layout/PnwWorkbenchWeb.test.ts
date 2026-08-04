@@ -16,6 +16,7 @@ import { pnwRegisterIconNamespace } from "../composables/pnwIconRegistry.js";
 import PnwActivityBar from "./PnwActivityBar.vue";
 import PnwActivityTree from "./PnwActivityTree.vue";
 import PnwLogBlock from "./PnwLogBlock.vue";
+import PnwOutputBlock from "./PnwOutputBlock.vue";
 import PnwPageHeader from "./PnwPageHeader.vue";
 import PnwProblemsBlock from "./PnwProblemsBlock.vue";
 import PnwRibbon from "./PnwRibbon.vue";
@@ -54,8 +55,16 @@ const PNW_RIBBON_TOOL_BUTTON_SOURCE = readFileSync(
   new URL("./PnwRibbonToolButton.vue", import.meta.url),
   "utf8",
 );
+const PNW_PAGE_HEADER_SOURCE = readFileSync(
+  new URL("./PnwPageHeader.vue", import.meta.url),
+  "utf8",
+);
 const PNW_WORKBENCH_LAYOUT_SOURCE = readFileSync(
   new URL("./PnwWorkbenchLayout.vue", import.meta.url),
+  "utf8",
+);
+const PNW_WORKBENCH_THEME_SOURCE = readFileSync(
+  new URL("../styles/pnwWorkbenchTheme.css", import.meta.url),
   "utf8",
 );
 const PNW_ICON_SOURCE = readFileSync(
@@ -384,10 +393,10 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     ] as const;
 
     for (const { scheme, normal, hover, active } of matrix) {
-      const selector = `.pnw-workbench-layout[data-pnw-color-scheme="${scheme}"]`;
-      const start = PNW_WORKBENCH_LAYOUT_SOURCE.indexOf(selector);
-      const blockEnd = PNW_WORKBENCH_LAYOUT_SOURCE.indexOf("}", start);
-      const block = PNW_WORKBENCH_LAYOUT_SOURCE.slice(start, blockEnd);
+      const selector = `.pnw-workbench-theme-root[data-pnw-color-scheme="${scheme}"]`;
+      const start = PNW_WORKBENCH_THEME_SOURCE.indexOf(selector);
+      const blockEnd = PNW_WORKBENCH_THEME_SOURCE.indexOf("}", start);
+      const block = PNW_WORKBENCH_THEME_SOURCE.slice(start, blockEnd);
 
       expect(start).toBeGreaterThanOrEqual(0);
       expect(block).toContain(`--pnw-workbench-default-muted: ${normal}`);
@@ -509,6 +518,93 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     }
   });
 
+  it("Workbench chrome 只为当前 Primary contribution 提供受控开关", async () => {
+    const hiddenHtml = await pnwRenderComponent(
+      PnwWorkbenchLayout,
+      {
+        contributions: { primary: true },
+        visibility: { primary: false, bottom: false, secondary: false },
+      },
+      {
+        default: () => [h("div", "Editor")],
+        primary: () => [h("div", "Primary")],
+      },
+    );
+    const visibleHtml = await pnwRenderComponent(
+      PnwWorkbenchLayout,
+      {
+        locale: "en-US",
+        contributions: { primary: true },
+        visibility: { primary: true, bottom: false, secondary: false },
+      },
+      {
+        default: () => [h("div", "Editor")],
+        primary: () => [h("div", "Primary")],
+      },
+    );
+    const unavailableHtml = await pnwRenderComponent(
+      PnwWorkbenchLayout,
+      {
+        contributions: { primary: true },
+        visibility: { primary: true, bottom: false, secondary: false },
+      },
+      { default: () => [h("div", "Editor")] },
+    );
+    const maximizedHtml = await pnwRenderComponent(
+      PnwWorkbenchLayout,
+      {
+        editorMaximized: true,
+        contributions: { primary: true },
+        visibility: { primary: true, bottom: false, secondary: false },
+      },
+      {
+        default: () => [h("div", "Editor")],
+        primary: () => [h("div", "Primary")],
+      },
+    );
+
+    expect(hiddenHtml).toContain("data-pnw-workbench-primary-toggle");
+    expect(hiddenHtml).toContain('data-pnw-primary-toggle-placement="editor-header"');
+    expect(hiddenHtml).toContain('data-pnw-primary-expanded="false"');
+    expect(hiddenHtml).toContain('data-pnw-primary-available="true"');
+    expect(hiddenHtml).toContain('aria-label="展开 Primary Block"');
+    expect(hiddenHtml).toContain('aria-expanded="false"');
+    expect(visibleHtml).toContain('data-pnw-primary-toggle-placement="editor-header"');
+    expect(visibleHtml).toContain('data-pnw-primary-expanded="true"');
+    expect(visibleHtml).toContain('aria-label="Collapse Primary Block"');
+    expect(visibleHtml).toContain('aria-expanded="true"');
+    expect((hiddenHtml.match(/data-pnw-workbench-primary-toggle/gu) ?? [])).toHaveLength(1);
+    expect((visibleHtml.match(/data-pnw-workbench-primary-toggle/gu) ?? [])).toHaveLength(1);
+    expect(unavailableHtml).not.toContain("data-pnw-workbench-primary-toggle");
+    expect(unavailableHtml).not.toContain('data-pnw-primary-available="true"');
+    expect(maximizedHtml).not.toContain("data-pnw-workbench-primary-toggle");
+  });
+
+  it("Primary 开关始终落在 Editor Header 前导位且无 contribution 不留空位", () => {
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).toContain("@click=\"pnwToggleBlock('primary')\"");
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).toMatch(
+      /grid-template-columns:\s*max-content minmax\(0, 1fr\) max-content;/u,
+    );
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).not.toContain("pnw-workbench-primary-chrome");
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).toMatch(
+      /\.pnw-workbench-editor\[data-pnw-primary-available="true"\]\s*\{[\s\S]*?--pnw-workbench-view-header-leading-space:\s*32px;/u,
+    );
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).toMatch(
+      /\.pnw-workbench-editor\[data-pnw-primary-available="true"\]:not\(:has\(\.pnw-page-head\)\)\s*\{[\s\S]*?padding-inline-start:\s*var\(--pnw-workbench-view-header-legacy-leading-space, 40px\);/u,
+    );
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).toMatch(
+      /\.pnw-workbench-primary-toggle--editor-header\s*\{[\s\S]*?--pnw-workbench-view-header-height, 40px[\s\S]*?left:\s*10px;/u,
+    );
+    const toggleBlock = PNW_WORKBENCH_LAYOUT_SOURCE.match(
+      /\.pnw-workbench-primary-toggle\s*\{([\s\S]*?)\}/u,
+    )?.[1] ?? "";
+    expect(toggleBlock).toContain("position: absolute");
+    expect(toggleBlock).toContain("width: 26px");
+    expect(PNW_WORKBENCH_LAYOUT_SOURCE).toMatch(
+      /\.pnw-workbench-primary-toggle:focus-visible\s*\{[\s\S]*?--pnw-focus-ring/u,
+    );
+  });
+
   it("工作台显示快捷预设使用四个独立公共矢量图标", async () => {
     const iconNames = [
       "navigation-tree",
@@ -590,6 +686,12 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain("工作台 Header 不重复业务标题");
     expect(html.indexOf("代码生成")).toBeLessThan(html.indexOf("执行"));
     expect(html.indexOf("执行")).toBeLessThan(html.indexOf("帮助"));
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-default-text");
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-default-muted");
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-view-header-leading-space");
+    expect(PNW_PAGE_HEADER_SOURCE).toMatch(
+      /\.pnw-page-head\s*\{[\s\S]*?padding:\s*var\(--pnw-page-header-padding, 3px 12px\);[\s\S]*?min-height:\s*var\(--pnw-workbench-view-header-height, 40px\);/u,
+    );
   });
 
   it("无打开 View 时移除空页签区，Header 操作区仍保留", async () => {
@@ -782,6 +884,8 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain("Bottom");
     expect(html).toContain("Secondary");
     expect(html).toContain("Consumer status");
+    expect(html).toContain("data-pnw-workbench-primary-toggle");
+    expect(html).toContain('aria-label="收起 Primary Block"');
     expect(html.match(/pnw-workbench-footer-toggle/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -818,6 +922,7 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html).toContain("View Bottom:output");
     expect(html).toContain("View Secondary:");
     expect(html).toContain("输出");
+    expect(html).toContain("data-pnw-workbench-primary-toggle");
     expect(html.match(/pnw-workbench-footer-toggle/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -1150,5 +1255,22 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
 
     const emptyHtml = await pnwRenderComponent(PnwProblemsBlock, { items: [] });
     expect(emptyHtml).toContain("未检测到问题");
+  });
+
+  it("Output Block 原样显示自由文本且不混入诊断过滤控件", async () => {
+    const html = await pnwRenderComponent(PnwOutputBlock, {
+      text: "[Runtime] wingMode=local\nPhoenix Admin 工作台已就绪\n",
+    });
+
+    expect(html).toContain('role="log"');
+    expect(html).toContain('aria-label="输出"');
+    expect(html).toContain("[Runtime] wingMode=local");
+    expect(html).toContain("Phoenix Admin 工作台已就绪");
+    expect(html).not.toContain("日志频道");
+    expect(html).not.toContain("过滤日志");
+    expect(html).not.toContain("DEBUG");
+
+    const emptyHtml = await pnwRenderComponent(PnwOutputBlock, { text: "" });
+    expect(emptyHtml).toContain("暂无输出");
   });
 });

@@ -104,8 +104,8 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
     expect(pwwFixtureView).toContain("PwwFixtureCodegenView");
     expect(pwwFixtureView).toContain("PwwFixtureInspectionView");
     expect(pwwFixtureView).toContain("PwwFixtureIssueView");
+    expect(pwwReadFile("src/fixture/PwwFixtureSummaryView.vue")).toContain("PnwPageLayout");
     for (const relativePath of [
-      "src/fixture/PwwFixtureSummaryView.vue",
       "src/fixture/PwwFixtureCatalogView.vue",
       "src/fixture/PwwFixtureCodegenView.vue",
       "src/fixture/PwwFixtureInspectionView.vue",

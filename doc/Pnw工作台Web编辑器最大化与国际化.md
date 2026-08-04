@@ -90,6 +90,12 @@ Plus 专用配置。
 低层 `PnwFloatingPanel` 提供 `layer` 与有限的 `zIndex` 覆盖；CSS 还可通过
 `--pnw-floating-panel-z-index` 适配既有叠层系统。自定义值应保持上述相对顺序。
 
+叠层顺序与空间避让是两件事。工作台显示设置继续位于 `floatingPanel`，不会为了越过
+Header 而提升到 `hostTools`；它使用 `PnwFloatingPanel.constrainInsets` 和纯函数
+`pnwClampFloatingPanelPosition` 避让同一 Workbench Header，并按剩余 viewport 高度滚动
+正文。其他 Host chrome 也可传入 `top/right/bottom/left` 安全区域，但 Wing 不持久化
+这些瞬时几何值。
+
 ## 5. 验收
 
 - Header、Editor 顶部和 Editor 底部三种标签位置都只有一个 TabBar；
@@ -98,4 +104,5 @@ Plus 专用配置。
 - Escape 不与已打开的 modeless 设置面板同时触发；
 - zh-CN/en-US 下按钮 title、aria-label、设置文案一致；
 - Host dropdown 层高于 Wing 设置面板，modal 又高于 Host dropdown；
+- 工作台设置面板位于 Header 下方，受控旧坐标和窗口 resize 后仍保留可见标题与关闭动作；
 - 最大化不进入显示偏好 normalizer，也不改变面板显隐或尺寸。

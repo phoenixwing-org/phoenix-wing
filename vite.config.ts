@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import vue from "@vitejs/plugin-vue";
+import ts from "typescript";
 import { defineConfig, type Plugin, type UserConfig } from "vite";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -15,11 +16,26 @@ function collectEntries(directory: string, entries: Record<string, string> = {})
       continue;
     }
     if (!/\.(?:ts|vue)$/u.test(item.name) || /(?:\.test|\.d)\.ts$/u.test(item.name)) continue;
+    if (item.name.endsWith(".ts") && !pnwEmitsRuntimeJavaScript(absolute)) continue;
     const relative = path.relative(sourceRoot, absolute).replaceAll(path.sep, "/");
     const name = relative.replace(/\.(?:ts|vue)$/u, "");
     entries[name] = absolute;
   }
   return entries;
+}
+
+/** 纯类型模块只由 vue-tsc 生成 .d.ts，不应成为 Rollup JavaScript entry。 */
+function pnwEmitsRuntimeJavaScript(file: string): boolean {
+  const output = ts.transpileModule(fs.readFileSync(file, "utf8"), {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022,
+      removeComments: true,
+      verbatimModuleSyntax: true,
+    },
+    fileName: file,
+  }).outputText.replaceAll(/\s/gu, "");
+  return output !== "" && output !== "export{};" && output !== "export{}";
 }
 
 /** Direct component subpath imports keep their scoped CSS without reintroducing source SFCs. */

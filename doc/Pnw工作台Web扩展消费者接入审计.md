@@ -4,15 +4,15 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.6.0 本地候选（未发布）
+适用版本：Wing 0.6.0（已发布）
 
-最后核验：2026-07-29
+最后核验：2026-07-31（发布后静态审计）
 
 ## 1. 结论
 
-W0–W3 与 0.6.0 候选完成后，先对 Phoenix Open Issue、Phoenix Admin、Phoenix Desk Tools、Phoenix Function Develop、KT BOM Studio 做按仓隔离的只读审计；随后 Open Issue、Admin、Desk 分别在独立分支落地真实适配。Function 与 BOM 仍保持只读证据。各消费者 manifest/lock 继续精确消费 Registry `phoenix-wing@0.5.1`，本地 0.6.0 只通过进程级 resolver 验证，不发布、不 push。
+W0–W3 与本地候选验证完成后，Wing 0.6.0 已于 2026-07-31 公开发布。发布后静态复核确认：Open Issue、Phoenix Admin、Phoenix Function Develop 与 KT BOM Studio 的 manifest 已精确升级到 Registry `phoenix-wing@0.6.0`；Desk Tools 仍精确锁定 `phoenix-wing@0.5.1` 和六个 `@phoenix-wing/*@0.5.1`，只在 `codex/pnw-workbench-060` 分支通过进程级 resolver 消费并列 Wing 0.6.0 源码。
 
-实际适配没有修改任何消费者依赖、lockfile、workspace、override 或 `node_modules`。Open Issue `023fa9b` / `4fb5611` / `2e900ad`、Admin `d06b873`、Desk `8fa3d47` / `81fdb7b` 均只提交各自薄 adapter、产品偏好和真实 View 接线；正式 Registry 升级仍等待 Wing 0.6.0 发布后单独执行。
+Open Issue、Admin、Desk、Function 与 BOM 均已有 `PnwWorkbenchShell` 真实接线，但收敛程度不同。BOM 和 Function 已删除第一批旧壳文件；Desk 的旧 Toolbar/Ribbon/Tab 文件仍形成无生产入口的封闭引用簇；Open Issue 与 Admin 在本次审计时分别有活动 Codex 任务和未提交改动，当前不得进入清理。发布后统计、问题和删除候选见第 9 节；以下第 3–5 节继续保留 2026-07-29 本地候选阶段的基线与回执。
 
 审计同时确认，现有公共契约已经覆盖下一步共同接入缝，不需要为了三个消费者继续扩充公共数据结构：
 
@@ -24,15 +24,17 @@ W0–W3 与 0.6.0 候选完成后，先对 Phoenix Open Issue、Phoenix Admin、
 
 ## 2. 接入矩阵
 
-| 消费者 | 当前接入 | 0.6.0 直接影响 | 本轮决定 |
+| 消费者 | 当前接入 | 0.6.0 发布后状态 | 本轮决定 |
 |---|---|---|---|
-| Desk Tools | `codex/pnw-workbench-060` 已用 `PnwWorkbenchShell` 接管外壳；自有导航、Tab、Primary/Secondary/Bottom、Footer 与后端布局偏好保留 | `usePnwDocumentTitle` 的输入类型需接受只读 computed；无新导航/Block 字段 | 本地候选适配已提交，正式依赖升级待发布 |
-| Function Develop | Ribbon/Tab/Sidebar/Log 等低层组件和 `PnwEditorDrawerHost`；自有五段壳与页面注册表 | 无。旧入口保持兼容；本地候选脚本仍固定检查 0.5.1 | 不继续建设独立工作台，随 Function 迁入 Admin 时适配 |
-| KT BOM Studio | `PnwRibbonShell`、`PnwRibbonGroup`、`PnwWorkbenchTabBar`、`PnwSidebarBlock`、`PnwEditorDrawerHost`；产品自建壳 | 无。当前没有 `PnwWorkbenchShell`，零散增加新 prop 没有正确挂载点 | 纳入独立 0.6.0 布局适配；先补 local-Wing resolver，再用一个 Shell adapter 一次收敛，避免双真相 |
+| Open Issue | `legacy` 已用 `PnwWorkbenchShell`、实例级 View registry 和页面 contribution；根 `AppShell.vue` 仍保留应用级 Bottom 的兼容写法 | manifest 已精确升级到 0.6.0；当前有活动任务修改业务功能和 `AppShell.vue` | 等活动任务完成后再采用 `defaultBottomBlock` 收敛根壳，不并行清理 |
+| Phoenix Admin | `PahWorkbenchShell` 已接入 `PnwWorkbenchShell`、同树导航、显示偏好与 View registry；Cool classic/hybrid 入口继续保留 | manifest 已精确升级到 0.6.0 | Cool 遗留只列清单，不进入直接删除候选；后续单独讨论迁移策略 |
+| Desk Tools | `codex/pnw-workbench-060` 已用 `PnwWorkbenchShell` 接管外壳；自有导航、Tab、Primary/Secondary/Bottom、Footer 与后端布局偏好保留 | manifest 仍为 0.5.1；本地 0.6.0 适配已提交 | 先升级 Registry 精确依赖并修复巡游锚点，再删除 11 个旧壳文件 |
+| Function Develop | `develop` 已用 `PnwWorkbenchShell`，删除旧 Toolbar/Ribbon/Output 外壳并升级精确依赖 | manifest 已精确升级到 0.6.0 | 下一步删除 Editor 内第二套 `el-tabs`；`PhoenixPage` 兼容层按页面迁移，不整文件先删 |
+| KT BOM Studio | `tree` 已用 `AppWorkbenchShell` 薄装配 `PnwWorkbenchShell`，删除旧 Header/Ribbon/Tabs/Content 与对应 CSS | manifest 已精确升级到 0.6.0 | 继续收敛 `KtDataPageLayout` 页眉和模块级 Primary registry，不重复拆壳 |
 
 Open Issue 与 Phoenix Admin 作为 W4 主证据单独维护在[《双消费者验证计划》](Pnw工作台Web双消费者验证计划.md)和[《Open Issue 应用分析》](Pnw工作台Web-OpenIssue应用分析.md)。两者的最后页关闭、权限导航、process/KeepAlive、主题/图标和偏好迁移均已证明属于产品 adapter，没有要求新增 `PnwNavigationNode`、Shell 或 View contribution 字段。
 
-## 3. Desk Tools
+## 3. Desk Tools（2026-07-29 本地候选基线与回执）
 
 ### 3.1 当前证据
 
@@ -70,7 +72,7 @@ Desk 已在 `codex/pnw-workbench-060` 提交 `8fa3d47 feat: Desk接入Pnw工作�
 
 直接运行 Registry 0.5.1 的 Web 测试会有 3 项 0.6 显示偏好测试因 `pnwNormalizeWorkbenchDisplayPreferences` 尚未发布而失败，这是刻意保留的 Registry/local 对照，不是本地 0.6 回归；正式依赖仍需等待 Wing 0.6.0 发布后精确升级。
 
-## 4. Function Develop
+## 4. Function Develop（2026-07-29 本地候选基线）
 
 ### 4.1 当前证据
 
@@ -92,7 +94,7 @@ Desk 已在 `codex/pnw-workbench-060` 提交 `8fa3d47 feat: Desk接入Pnw工作�
 
 Function 正在迁入 Phoenix Admin，不作为 W4/W5 独立示范消费者，也不据此扩展 Wing 公共协议。
 
-## 5. KT BOM Studio
+## 5. KT BOM Studio（2026-07-29 本地候选基线）
 
 ### 5.1 当前证据
 
@@ -139,15 +141,19 @@ Open Issue 与 Phoenix Admin 主验证、Desk Tools 针对性接入及完整本�
 
 ## 7. 发布后验证入口
 
-Wing 发布前仍以仓内 0.6.0 候选门禁为准；消费者 manifest 和 lockfile 在正式发布前继续保持 0.5.1。
+Wing 0.6.0 已发布。Open Issue、Admin、Function 与 BOM 的 manifest 已精确升级到 0.6.0；Desk
+仍保持 0.5.1，必须先完成 Registry 基线，再在独立提交中升级并重复来源、测试与构建门禁。
 
-- Desk Tools：`pnpm verify:wing-dependencies`、`pnpm test:registry`、`pnpm build:registry`，升级后再运行 `pnpm test:local-wing`、`pnpm build:local-wing`。
-- Function Develop：仅在仍需独立回归时运行 frontend 测试、Registry build、local-Wing build 和认证工作台浏览器冒烟。
-- KT BOM Studio：升级后运行 `pnpm --filter kt-bom-web typecheck`、`pnpm --filter kt-bom-web test`、`pnpm --filter kt-bom-web build` 与根 `pnpm verify`。
+- Desk Tools：当前先运行 `pnpm verify:wing-dependencies`、`pnpm test:registry`、`pnpm build:registry`；
+  精确升级 0.6.0 后再次运行 Registry 门禁及 `pnpm test:local-wing`、`pnpm build:local-wing`。
+- Function Develop：运行 frontend 测试、Registry build、local-Wing build 和认证工作台浏览器冒烟。
+- KT BOM Studio：运行 `pnpm --filter kt-bom-web typecheck`、`pnpm --filter kt-bom-web test`、
+  `pnpm --filter kt-bom-web build` 与根 `pnpm verify`。
 
-以上 Registry 命令仍是发布后的执行顺序；Desk 的 local-Wing 测试与构建、Open Issue 的完整 local-Wing verify、Admin 隔离 worktree 的类型/测试/构建已在本次本地候选阶段完成。
+Desk 的 local-Wing 测试与构建、Open Issue 的完整 local-Wing verify、Admin 隔离 worktree 的
+类型/测试/构建已在本地候选阶段完成；它们不替代发布后精确 Registry 依赖的对照门禁。
 
-## 8. 导航布局持久化复核
+## 8. 导航布局持久化复核（2026-07-29 本地候选记录）
 
 fixture 已用 consumer 自己的 Pinia store 演示可刷新恢复的导航布局：它只保存带
 `schemaVersion`、`baseLayoutVersion`、大分组定义和小模块归属的纯数据快照，启动时
@@ -172,3 +178,154 @@ fixture 已用 consumer 自己的 Pinia store 演示可刷新恢复的导航布�
 因此本轮不增加 Wing 公共导航偏好类型、存储接口或拖拽事件。只有至少两个真实消费者证明
 相同的可移动层级、空组规则、权限求交、基础版本升级和冲突合并语义后，才考虑把无业务含义
 的纯校验/应用函数提升为 `pnw*` 公共能力；持久化介质和后端 DTO 始终由 consumer 选择。
+2026-07-31 的发布后状态和 BOM Shell 接入结果以第 9 节为准。
+
+## 9. 2026-07-31 发布后统计与清理审计
+
+### 9.1 口径与执行边界
+
+本节是发布后的只读静态审计，不修改消费者源码，不删除文件，也不运行可能写入缓存、构建目录
+或数据库的测试。统计以各仓当前工作树为准；版本读取 `package.json`，行数使用 `wc -l`，生产
+引用使用 `rg` 覆盖 Vue/TypeScript 源码，历史差异使用已提交的适配提交。行数只用于发现壳层
+责任是否迁移，不把“单文件变短”当作架构完成。
+
+本次审计开始时只有两个相关 Codex 任务处于 active：
+
+| 仓库 | 分支 / 状态 | 任务占用 | 本轮约束 |
+|---|---|---|---|
+| `phoenix-open-issue` | `legacy`，工作树有业务与 `AppShell.vue` 未提交改动 | `Open Issue 适配layout` 正在实现推送、8D 等业务 | 不修改、不删除；清理只登记为后续 |
+| `phoenix-admin-vue` | `codex/open-issue-plugin`，Pah 文件有未提交改动，另有用户已暂存 Cool 文件 | Admin 工作台任务仍显示 active | 不修改；Cool 遗留只列清单，不给直接删除结论 |
+| `phoenix-desk-tools` | `codex/pnw-workbench-060`，clean | 没有 active 任务 | 可作为第一条独立清理工作线 |
+| `phoenix-function-develop` | `develop`，clean | 相关任务 idle | 可规划小步收敛，不与 Admin 迁移混改 |
+| `kt-bom-studio` | `tree`，clean | 相关任务 not loaded | 可规划 Page layout 小步 |
+| `phoenix-wing` | `develop`，审计前 clean | W0–W3 任务 idle | 本文是本轮唯一写入 |
+
+任务状态只是 2026-07-31 的瞬时协调证据，不是跨任务锁。任何实际删除开始前必须重新查询任务
+状态和 `git status --short --branch`；出现 active 任务、dirty worktree 或目标文件被另一任务修改时
+立即停止该仓清理。
+
+### 9.2 当前规模与收敛结果
+
+| 消费者 | Registry manifest | 主入口适配前 → 当前 | 已完成清理 | 当前主要遗留 |
+|---|---:|---:|---|---|
+| Open Issue | `0.6.0` | `AppShell.vue` 207 → HEAD 332 行；当前工作树 333 行 | 页面级实例 View registry、Primary/Secondary/Bottom 生命周期已接入 | 根壳仍手写 `contributions.bottom + #bottom` 回退；活动任务占用中 |
+| Phoenix Admin | `0.6.0` | `PahWorkbenchShell.vue` 1323 → 576 行 | Pnw Shell、同树导航、偏好、View registry 已接入 | Cool classic/hybrid 壳继续兼容；不以删除换取行数 |
+| Desk Tools | `0.5.1` | `AppShell.vue` 560 → 557 行 | 外层四区、Bottom、Footer 已交给 Pnw Shell | 11 个旧 Toolbar/Ribbon/Tab 文件共 2136 行仍在仓内；巡游仍引用旧 DOM 锚点 |
+| Function Develop | `0.6.0` | `HomeView.vue` 138 → 148 行 | 已删除 5 个旧壳文件共 751 行；提交净减少 335 行 | Editor 内第二套 `el-tabs`；385 行 `PhoenixPage` 仍保留 Teleport/旧 Aside 双路径 |
+| KT BOM Studio | `0.6.0` | `App.vue` 90 → 72 行 | 已删除 8 个旧 Layout/CSS 文件共 676 行；提交净减少 449 行 | 375 行 `KtDataPageLayout` 被 22 个页面使用，另有 2 个手写 `.page-header`；Primary registry 仍为模块级 singleton |
+
+解释：Open Issue 与 Function 的主入口没有继续变短，不等于接入失败。Open Issue 把更多真实页面
+贡献和应用品牌接到了根壳；Function 把旧文件责任合并进一个受控 Shell adapter。真正需要关注的
+是是否仍有第二套可见导航、Tab、Block、尺寸或生命周期真源，以及旧文件是否已经没有生产入口。
+
+### 9.3 已发现问题
+
+#### D1：Desk 界面巡游仍指向已经退出生产装配的旧 DOM
+
+`useShellTour.ts` 仍查找 `data-tour='ribbon-tabs'`、`ribbon-bar` 和 `tab-bar`。当前生产
+`AppShell.vue` 只保留 `main-content`，`ribbon-tabs` / `tab-bar` 只存在于未被生产入口导入的旧
+`AppToolbar.vue` / `WorkbenchTabBar.vue`，`ribbon-bar` 在当前源码中完全没有提供者。因此旧文件
+不能直接删除后就结束：应先把巡游锚点映射到 Pnw Header/Ribbon/TabBar 的稳定 consumer wrapper
+或公共可访问节点，并做一次实际巡游回归。
+
+#### D2：Desk 存在 11 文件、2136 行的封闭旧壳引用簇
+
+以下生产文件没有从当前 `AppShell.vue`、页面 registry 或其他生产入口进入；搜索到的源码引用只在
+该旧簇内部。`ribbonConfig.ts` 与 `ribbonIcons.ts` 仍由新 Shell 使用，不在删除清单。
+
+| 待删除候选 | 行数 | 当前引用结论 |
+|---|---:|---|
+| `web-ui/src/layout/AppToolbar.vue` | 328 | 只引用旧 RibbonTabBar / WorkbenchTabBar；自身无生产导入 |
+| `web-ui/src/layout/NavSidebar.vue` | 116 | 无生产导入；文档仍称“保留待用” |
+| `web-ui/src/layout/WorkbenchTabBar.vue` | 526 | 只由旧 AppToolbar 导入 |
+| `web-ui/src/layout/ribbon/RibbonGroup.vue` | 64 | 只在旧 RibbonPanel 簇内使用 |
+| `web-ui/src/layout/ribbon/RibbonModuleToggles.vue` | 128 | 只在旧 RibbonPanel 簇内使用 |
+| `web-ui/src/layout/ribbon/RibbonPanel.vue` | 203 | 无生产导入 |
+| `web-ui/src/layout/ribbon/RibbonTabBar.vue` | 82 | 只由旧 AppToolbar 导入 |
+| `web-ui/src/layout/ribbon/RibbonToolButton.vue` | 161 | 只在旧 RibbonGroup / RibbonPanel 内使用 |
+| `web-ui/src/layout/ribbon/RibbonUtilButton.vue` | 70 | 无生产导入 |
+| `web-ui/src/layout/ribbon/RibbonWorkspaceSwitcher.vue` | 371 | 只在旧 RibbonPanel 内使用 |
+| `web-ui/src/layout/ribbon/useRibbonTabs.ts` | 87 | 无生产调用；新 Shell 只在注释中提到旧行为 |
+
+同时发现 `AppShell.vue` 连续两次写了相同的 `v-else-if="loadError"`，第二个分支永远不可达。该项可
+与旧簇清理一起删除。旧壳文件仍被若干规划、用户说明和新手指引文档点名；删除提交必须同步把
+current 文档改为 Pnw Shell 真源，历史归档只需注明文件已移除，不改写历史事实。
+
+#### F1：Function 仍在 Editor 内显示第二套页面 Tab
+
+`PnwWorkbenchShell` 已渲染并管理 Header 页面标签，但 `HomeView.vue` 仍用 `el-tabs / el-tab-pane`
+遍历 `pfdVisiblePages`。这会保留第二套可见标签和第二套页面容器语义。下一步应只渲染活动页面组件，
+选择、关闭和 dirty 守卫继续由现有 `tabStore` 与 Wing Header 事件处理。
+
+#### F2：Function 的 `PhoenixPage` 仍是 13 个页面共用的过渡兼容层
+
+`PhoenixPage.vue` 共 385 行；13 个 View 使用它，其中 11 个传入 `pfd-primary-id`。它同时维护：
+
+- Teleport 到 `PfdPrimaryPanel`；
+- Primary 关闭时的隐藏 fallback host；
+- 找不到 Pnw Primary host 时的旧右侧 `el-aside` 与独立宽度/localStorage；
+- 自绘 48px Page Header。
+
+该文件不能直接删除。应先把 11 个 Primary 页面改为显式 contribution/受控 props，再把 13 个页面
+的 Header 迁入 `PnwPageHeader`；只有无 Teleport、无旧 Aside、无调用者后才删除兼容分支或文件。
+
+#### B1：BOM 已完成壳层删除，但页面布局仍有第二层公共页眉
+
+BOM 本次已删除 `AppContent.vue`、`AppHeader.vue`、`AppRibbon.vue`、`AppTabs.vue` 以及对应 4 个
+CSS 文件，共 676 行，不能重复列为待删。剩余 `KtDataPageLayout.vue` 被 22 个真实页面使用，除滚动、
+业务右栏外还自绘 Page Header；`DispatchManifest.vue` 与 `ModuleRelDetail.vue` 又各自保留一套
+`.page-header`。正确动作是先让 `KtDataPageLayout` 内部组合 `PnwPageHeader`，再处理两个例外页，
+不是一次删除 375 行组件。
+
+#### B2：BOM Primary registry 仍是模块级 singleton
+
+`primaryContributions.ts` 已提供可实例化 `createPrimaryContributionRegistry()`，但生产 composable
+仍读取文件级 `primaryRegistry`。当前单工作台不会串页，未来测试、多工作台或嵌入宿主会共享状态。
+应由 `AppWorkbenchShell` 创建并 provide 实例，页面 inject 同一实例；该修正是状态所有权收敛，不能
+和 Page Header 大批迁移放进同一提交。
+
+#### O1：Open Issue 根 Bottom 仍走兼容结构覆盖
+
+当前根壳固定 `workbenchContributions = { bottom: true }`、`WORKBENCH_BOTTOM_TABS` 和 `#bottom`
+手工回退 `PoiWorkbenchBottom`。Wing 0.6.0 已提供 `defaultBottomBlock`，可表达“页面专用 Bottom
+优先，否则应用默认 Bottom”。待活动任务完成后应迁入该入口，删除根壳固定 contribution、手工
+component 分支和重复 tabs；当前没有证据支持删除任一业务 Primary/Bottom 文件。
+
+### 9.4 Phoenix Admin Cool 遗留清单（只列出，不删除）
+
+Admin 的 classic/workbench/hybrid 是明确的产品兼容策略。本次只记录布局表面，不把它们归为死文件：
+
+| 文件 | 行数 | 当前责任 |
+|---|---:|---|
+| `src/modules/base/pages/main/index.vue` | 150 | classic / workbench / hybrid 路由级分流 |
+| `src/modules/base/pages/main/components/topbar.vue` | 223 | classic 使用，workbench 也通过 slot 复用 |
+| `src/modules/base/pages/main/components/slider.vue` | 188 | Cool classic 左侧菜单 |
+| `src/modules/base/pages/main/components/process.vue` | 279 | Cool classic Process 标签 |
+| `src/modules/base/pages/main/components/views.vue` | 99 | classic 与 Pah workbench 共用 Router/KeepAlive View |
+| `src/pah/PahWorkbenchShell.vue` | 576 | Pnw 0.6 adapter、权限导航、Process/KeepAlive 与产品 slot |
+
+前五个 Cool 文件合计 939 行，但 `topbar.vue` 和 `views.vue` 已被两个模式共享，不能按 939 行直接
+认定重复。后续讨论应先确定是否长期保留 classic 回退、hybrid 的路由粒度和 Cool 升级策略，再决定
+`slider.vue` / `process.vue` 是否迁移或冻结；本轮不创建 Admin 删除清单。
+
+### 9.5 分批执行计划
+
+1. **C0：清理前协调门禁。** 每次开工前重查 Codex active tasks、仓库分支和 dirty 文件；Open Issue
+   与 Admin 当前暂停清理。每仓单独分支、单独提交，不跨仓批量删除。
+2. **C1：Desk Registry 与巡游先行。** 先把根包和六个 scoped 包精确升级到 Registry 0.6.0，执行
+   来源门禁；把三处旧巡游锚点迁到当前 Pnw Shell 实际 DOM，并完成真实巡游回归。
+3. **C2：Desk 删除封闭旧簇。** 删除 D2 的 11 个文件和不可达 `loadError` 分支；同步 current 用户
+   文档与新手指引。执行 `pnpm verify:wing-dependencies`、Registry/local Wing 全量测试和构建；确认
+   Ribbon/Tree、Tab 关闭、Workspace 切换、Bottom、Footer 和巡游无回归。
+4. **C3：Function 去除双 Tab。** 先只删除 Editor 内 `el-tabs` 外壳并保持 active component、关闭守卫
+   和 KeepAlive 行为；再以 1–2 个页面为一批迁移 `PhoenixPage` Primary/Header，禁止一次改完 13 页。
+5. **C4：BOM 状态所有权与页眉分开。** 第一提交把 Primary registry 改为每 Shell 实例；第二阶段让
+   `KtDataPageLayout` 内部采用 `PnwPageHeader`，再处理两个例外页。22 页迁移完成前不删除组件。
+6. **C5：Open Issue 等活动任务结束。** 重查 `AppShell.vue` 差异后采用 `defaultBottomBlock`，目标是
+   删除兼容接线而不是删除业务 Block；用 `pnpm verify:local-wing` 和 Registry 对照闭环。
+7. **C6：Admin 单独决策。** 基于 Cool 升级路线、classic 使用量和 hybrid 路由覆盖率讨论保留/冻结/
+   迁移，不把其他简单消费者的删除策略机械套到 Admin。
+
+本轮只完成统计、问题登记和执行排序，没有删除消费者文件，也没有运行消费者测试。D2 的 11 文件
+是唯一已具备“无生产入口”静态证据的整文件删除批次，但仍受 D1 巡游修正、文档同步、任务占用复查
+和完整门禁四个前置条件约束。

@@ -130,7 +130,7 @@ interface ProductWorkbenchDisplayPreferences {
 }
 ```
 
-这是一份只描述公共显示字段的轻量快照，不包含 Router、权限、业务 View、导航分组或用户身份。设置面板位置也是受控状态：快捷面板默认 `{ x: 16, y: 72 }`，完整面板默认 `{ x: 8, y: 8 }`；打开和拖动时 `PnwFloatingPanel` 仍把它修正到可见边界。完整面板的“完成”位于固定 Header，长内容滚动时无需回到底部。
+这是一份只描述公共显示字段的轻量快照，不包含 Router、权限、业务 View、导航分组或用户身份。设置面板位置也是受控状态：快捷面板默认 `{ x: 16, y: 72 }`，完整面板默认 `{ x: 8, y: 8 }`；打开和拖动时 `PnwFloatingPanel` 仍把它修正到可见边界。设置入口会测量同一 Workbench Header 的 viewport 底边，通过 `constrainInsets.top` 把快捷/完整面板夹到 Header 下方；因此旧 Pinia 坐标即使位于顶部，也不会遮住标题、完成或关闭。长内容受安全区域高度限制，只滚动面板正文。
 
 不同产品仍可采用前端缓存、登录用户数据库或完全不持久化；Wing 不选择介质，也不自动读取浏览器存储。consumer 保存自己的 envelope 版本，读入后先调用 checker，再绑定给 Shell。仓内 fixture 作为真实 consumer，使用 Pinia + `localStorage` 演示刷新恢复；未来 Admin 可以把同一快照接到后端用户偏好。
 

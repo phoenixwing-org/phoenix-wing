@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from "vue";
 import { ElCheckbox, ElCheckboxGroup } from "element-plus";
+import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import {
   pnwChoiceDialogOpen,
   pnwChoiceDialogRequest,
   pnwResolveChoice,
   type PnwChoiceDialogOption,
 } from "../composables/pnwChoiceDialog";
+import PnwAppModalOverlay from "./PnwAppModalOverlay.vue";
+
+defineProps<{
+  /** 显式覆盖全局 overlay scheme；缺省跟随 Host 的 pnwApplyColorScheme。 */
+  colorScheme?: PnwColorScheme;
+}>();
 
 const open = pnwChoiceDialogOpen;
 const request = pnwChoiceDialogRequest;
@@ -109,9 +116,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div v-if="open && request" class="pnw-choice-overlay" @click.self="onCancel">
-      <div class="pnw-choice-dialog" role="dialog" aria-modal="true" :aria-label="request.title">
+  <PnwAppModalOverlay
+    :open="open && request !== null"
+    :aria-label="request?.title ?? '选择对话框'"
+    panel-class="pnw-choice-dialog"
+    :color-scheme="colorScheme"
+    @close="onCancel"
+  >
+    <template v-if="request">
         <h2 class="pnw-choice-title">{{ request.title }}</h2>
         <div class="pnw-choice-message">
           <template v-for="(line, idx) in messageLines" :key="idx">
@@ -165,31 +177,16 @@ onUnmounted(() => {
             {{ opt.label }}
           </button>
         </div>
-      </div>
-    </div>
-  </Teleport>
+    </template>
+  </PnwAppModalOverlay>
 </template>
 
 <style scoped>
-.pnw-choice-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.45);
-}
-
-.pnw-choice-dialog {
+:global(.pnw-modal-panel.pnw-choice-dialog) {
   width: min(560px, calc(100vw - 48px));
   max-height: min(80vh, 640px);
-  overflow: auto;
   padding: 20px 22px;
   border-radius: 10px;
-  background: var(--page-bg, #fff);
-  border: 1px solid var(--border-strong, #cbd5e1);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
 }
 
 .pnw-choice-title {
@@ -201,7 +198,7 @@ onUnmounted(() => {
   margin: 0 0 14px;
   font-size: 0.88rem;
   line-height: 1.55;
-  color: var(--text, #0f172a);
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
 }
 
 .pnw-choice-message-line {
@@ -215,9 +212,10 @@ onUnmounted(() => {
 .pnw-choice-checkboxes {
   margin: 0 0 16px;
   padding: 10px 12px;
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0));
   border-radius: 8px;
-  background: var(--el-fill-color-lighter, #f8fafc);
+  background: var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, #f8fafc));
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
 }
 
 .pnw-choice-check-toolbar {
@@ -227,11 +225,12 @@ onUnmounted(() => {
   gap: 8px;
   margin-bottom: 8px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0));
 }
 
 .pnw-choice-check-count {
   font-size: 0.75rem;
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b));
 }
 
 .pnw-choice-check-list {
@@ -240,6 +239,30 @@ onUnmounted(() => {
   gap: 4px;
   max-height: min(240px, 40vh);
   overflow-y: auto;
+}
+
+.pnw-choice-checkboxes :deep(.el-checkbox) {
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
+}
+
+.pnw-choice-checkboxes :deep(.el-checkbox__label) {
+  color: inherit;
+}
+
+.pnw-choice-checkboxes :deep(.el-checkbox__inner) {
+  border-color: var(--pnw-workbench-border, var(--pnw-workbench-default-border, #cbd5e1));
+  background: var(--pnw-control-bg, var(--pnw-workbench-default-control-bg, #fff));
+}
+
+.pnw-choice-checkboxes :deep(.el-checkbox__input.is-checked .el-checkbox__inner),
+.pnw-choice-checkboxes :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
+  border-color: var(--pnw-primary-bg, var(--pnw-workbench-default-primary-bg, #2563eb));
+  background: var(--pnw-primary-bg, var(--pnw-workbench-default-primary-bg, #2563eb));
+}
+
+.pnw-choice-checkboxes :deep(.el-checkbox__input.is-focus .el-checkbox__inner) {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: 1px;
 }
 
 .pnw-choice-check-item {
@@ -261,9 +284,9 @@ onUnmounted(() => {
 
 .pnw-choice-path-fold {
   margin: 0 0 10px;
-  border: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  border: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0));
   border-radius: 6px;
-  background: var(--el-fill-color-blank, #fff);
+  background: var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff));
 }
 
 .pnw-choice-path-summary {
@@ -272,19 +295,19 @@ onUnmounted(() => {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.82rem;
   line-height: 1.45;
-  color: var(--el-text-color-regular, #475569);
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #475569));
   overflow-wrap: anywhere;
   word-break: break-all;
 }
 
 .pnw-choice-path-summary:hover {
-  color: var(--el-text-color-primary, #0f172a);
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
 }
 
 .pnw-choice-path-body {
   margin: 0;
   padding: 8px 10px 10px;
-  border-top: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  border-top: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #e2e8f0));
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.45;
@@ -293,7 +316,7 @@ onUnmounted(() => {
   word-break: break-all;
   max-height: 120px;
   overflow-y: auto;
-  color: var(--el-text-color-primary, #0f172a);
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
 }
 
 .pnw-choice-actions {
@@ -306,6 +329,24 @@ onUnmounted(() => {
   width: 100%;
   text-align: center;
   padding: 10px 14px;
+  border: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #cbd5e1));
+  border-radius: var(--pnw-control-radius, 6px);
+  background: var(--pnw-control-bg, var(--pnw-workbench-default-control-bg, #fff));
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
+  cursor: pointer;
+  font: inherit;
+}
+
+.pnw-choice-btn:hover:not(:disabled) {
+  background: var(
+    --pnw-control-hover-bg,
+    var(--pnw-workbench-default-control-hover-bg, #f1f5f9)
+  );
+}
+
+.pnw-choice-btn:focus-visible {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: 1px;
 }
 
 .pnw-choice-btn:disabled {
@@ -314,12 +355,32 @@ onUnmounted(() => {
 }
 
 .pnw-choice-btn.danger {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #b91c1c;
+  background: var(--pnw-danger-bg, var(--pnw-workbench-default-danger-bg, #fef2f2));
+  border-color: var(--pnw-danger-border, var(--pnw-workbench-default-danger-border, #fecaca));
+  color: var(--pnw-danger-text, var(--pnw-workbench-default-danger-text, #b91c1c));
 }
 
 .pnw-choice-btn.danger:hover:not(:disabled) {
-  background: #fee2e2;
+  background: var(
+    --pnw-danger-hover-bg,
+    var(--pnw-workbench-default-danger-hover-bg, #fee2e2)
+  );
+}
+
+.pnw-choice-btn.primary {
+  border-color: var(--pnw-primary-bg, var(--pnw-workbench-default-primary-bg, #2563eb));
+  background: var(--pnw-primary-bg, var(--pnw-workbench-default-primary-bg, #2563eb));
+  color: var(--pnw-primary-text, var(--pnw-workbench-default-primary-text, #fff));
+}
+
+.pnw-choice-btn.primary:hover:not(:disabled) {
+  border-color: var(
+    --pnw-primary-hover-bg,
+    var(--pnw-workbench-default-primary-hover-bg, #1d4ed8)
+  );
+  background: var(
+    --pnw-primary-hover-bg,
+    var(--pnw-workbench-default-primary-hover-bg, #1d4ed8)
+  );
 }
 </style>

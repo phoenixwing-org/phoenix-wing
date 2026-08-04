@@ -56,6 +56,8 @@ src/
 │   ├── PnwRibbonToolButton.vue         ← 工具按钮（双模式）
 │   ├── PnwRibbonUtilButton.vue         ← 通用工具按钮
 │   ├── PnwPageHeader.vue               ← 页面标题头
+│   ├── PnwPageLayout.vue               ← Header/body 零 inset 的页面结构
+│   ├── PnwPageMainBlock.vue            ← 默认 10px、无 CRUD provider 的工作内容层
 │   ├── PnwShellLogPanel.vue            ← 日志面板
 │   ├── PnwWorkbenchTabBar.vue          ← 页面标签栏
 │   └── PnwWelcomeShell.vue             ← 欢迎页骨架
@@ -86,7 +88,7 @@ src/
 | `pnwScheduleDebounced`  | 防抖调度           | `pnwScheduleDebounced`                                                                                                                                          |
 | `pnwColorScheme`        | 色彩方案解析         | `PnwColorScheme`, `pnwResolveColorScheme`, `pnwApplyColorScheme`                                                                                                |
 | `pnwPointerDrag`        | 指针拖拽交互         | `pnwBindPointerDrag`                                                                                                                                            |
-| `pnwFloatingPanel`      | 浮动面板边界修正     | `pnwClampFloatingPanelPosition`、`PnwFloatingPanelPosition`、`PnwFloatingPanelSize`                                                                            |
+| `pnwFloatingPanel`      | 浮动面板边界与 Host chrome 安全区修正 | `pnwClampFloatingPanelPosition`、`pnwNormalizeFloatingPanelInsets`、`PnwFloatingPanelPosition`、`PnwFloatingPanelSize`、`PnwFloatingPanelInsets`                                  |
 | `pnwBrowserStorage`     | 浏览器存储清理        | `pnwClearPhoenixBrowserStorage`                                                                                                                                 |
 | `pnwNavigationTree`     | 导航树受控投影        | `pnwVisibleNavigationNodes`, `pnwFlattenNavigationTree`, `pnwNavigationLeafIds`, `pnwProjectNavigationRibbon`                                                  |
 | `pnwWorkbenchWeb`       | Ribbon 外观与 Block 纯规则 | `pnwValidateRibbonAppearance`, `pnwNextRibbonFocusIndex`, `pnwResolveViewBlockVisibility`, `pnwToggleViewBlockVisibility`                              |
@@ -137,6 +139,8 @@ src/
 | `PnwRibbonToolButton` | Ribbon 工具按钮（大按钮 stacked / 小按钮 inline 双模式） | Vue 3 |
 | `PnwRibbonUtilButton` | Ribbon 通用工具按钮 | Vue 3 |
 | `PnwPageHeader` | 页面标题头（标题 + 操作区 + 帮助区） | Vue 3 |
+| `PnwPageLayout` | 组合页面 Header、零 inset body 与默认 MainBlock | Vue 3 |
+| `PnwPageMainBlock` | 无业务 provider 的 10px 工作内容层 | Vue 3 |
 | `PnwShellLogPanel` | 日志面板（自动滚动 + 清空/关闭） | PnwSidebarBlock |
 | `PnwWorkbenchTabBar` | 页面标签栏（支持 header、刷新当前、关闭其他与最大化/还原） | Vue 3 |
 | `PnwWelcomeShell` | 欢迎页骨架（品牌栏 + 操作 + 主内容区，slot 化） | Vue 3 |

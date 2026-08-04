@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
@@ -50,9 +50,12 @@
       "types": "./dist/stores/*.d.ts",
       "import": "./dist/stores/*.js"
     },
+    "./types/PnwRibbonConfig": {
+      "types": "./dist/types/PnwRibbonConfig.d.ts",
+      "import": "./dist/types/PnwRibbonConfig.js"
+    },
     "./types/*": {
-      "types": "./dist/types/*.d.ts",
-      "import": "./dist/types/*.js"
+      "types": "./dist/types/*.d.ts"
     },
     "./utils/*": {
       "types": "./dist/utils/*.d.ts",
@@ -86,8 +89,8 @@
     "dev": "vitest"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.6.1",
-    "@phoenix-wing/db-node": "workspace:0.6.1",
+    "@phoenix-wing/code-core": "workspace:0.6.2",
+    "@phoenix-wing/db-node": "workspace:0.6.2",
     "element-plus": "^2.0.0"
   },
   "optionalDependencies": {
@@ -126,8 +129,10 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vue/test-utils": "2.4.6",
     "@vitejs/plugin-vue": "^5.2.3",
     "element-plus": "^2.14.2",
+    "happy-dom": "15.11.7",
     "pinia": "^3.0.4",
     "typescript": "^5.7.0",
     "vite": "^6.3.0",
