@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, watch } from "vue";
+import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
+import PnwOverlayThemeProvider from "./PnwOverlayThemeProvider.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -7,6 +9,8 @@ const props = withDefaults(
     ariaLabel?: string;
     panelClass?: string;
     closeOnBackdrop?: boolean;
+    /** 显式覆盖全局 overlay scheme；缺省跟随 Host 的 pnwApplyColorScheme。 */
+    colorScheme?: PnwColorScheme;
   }>(),
   {
     ariaLabel: "对话框",
@@ -33,6 +37,7 @@ function onKeydown(e: KeyboardEvent) {
 watch(
   () => props.open,
   (isOpen) => {
+    if (typeof window === "undefined") return;
     if (isOpen) {
       window.addEventListener("keydown", onKeydown);
     } else {
@@ -43,16 +48,17 @@ watch(
 );
 
 onUnmounted(() => {
-  window.removeEventListener("keydown", onKeydown);
+  if (typeof window !== "undefined") window.removeEventListener("keydown", onKeydown);
 });
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="pnw-modal-fade">
-      <div
+      <PnwOverlayThemeProvider
         v-if="open"
         class="pnw-modal-overlay"
+        :color-scheme="colorScheme"
         @click.self="onBackdropClick"
       >
         <div
@@ -64,7 +70,7 @@ onUnmounted(() => {
         >
           <slot />
         </div>
-      </div>
+      </PnwOverlayThemeProvider>
     </Transition>
   </Teleport>
 </template>
@@ -73,11 +79,14 @@ onUnmounted(() => {
 .pnw-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9000;
+  z-index: var(--pnw-overlay-modal-z-index, var(--pnw-workbench-overlay-modal, 2000));
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.48);
+  background: var(
+    --pnw-overlay-backdrop,
+    var(--pnw-workbench-default-overlay-backdrop, rgba(15, 23, 42, 0.48))
+  );
   backdrop-filter: blur(2px);
 }
 
@@ -86,12 +95,13 @@ onUnmounted(() => {
   max-height: min(88vh, 920px);
   overflow: auto;
   border-radius: 12px;
-  background: var(--pnw-workbench-surface, var(--page-bg, #fff));
-  border: 1px solid var(--pnw-workbench-border, var(--border-strong, #cbd5e1));
-  color: var(--pnw-workbench-text, var(--text, inherit));
-  box-shadow:
-    0 24px 48px rgba(15, 23, 42, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  background: var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff));
+  border: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #cbd5e1));
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a));
+  box-shadow: var(
+    --pnw-overlay-shadow,
+    var(--pnw-workbench-default-overlay-shadow, 0 24px 48px rgba(15, 23, 42, 0.18))
+  );
 }
 
 .pnw-modal-fade-enter-active,

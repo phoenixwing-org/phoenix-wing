@@ -2,7 +2,10 @@
 import { computed } from "vue";
 import PnwFloatingPanel from "../components/PnwFloatingPanel.vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
-import type { PnwFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
+import type {
+  PnwFloatingPanelInsets,
+  PnwFloatingPanelPosition,
+} from "../utils/pnwFloatingPanel.js";
 import type {
   PnwActivityBarPresentation,
   PnwActivityTreeAppearance,
@@ -24,6 +27,7 @@ import { usePnwLocale } from "../composables/usePnwLocale.js";
 const props = withDefaults(defineProps<{
   open: boolean;
   position: PnwFloatingPanelPosition;
+  constrainInsets?: Partial<PnwFloatingPanelInsets>;
   presentation: PnwActivityBarPresentation;
   /** Shell 响应式覆盖后的实际呈现；窄屏缺省为 Ribbon。 */
   effectivePresentation?: PnwActivityBarPresentation;
@@ -130,8 +134,10 @@ function pnwUpdateFlag(
   <PnwFloatingPanel
     :open="open"
     :position="position"
+    :constrain-insets="constrainInsets"
     :aria-label="pnwT('workbench.settings.title')"
     :panel-class="pnwPanelClass"
+    :color-scheme="colorScheme"
     @update:position="emit('update:position', $event)"
     @close="emit('close')"
   >

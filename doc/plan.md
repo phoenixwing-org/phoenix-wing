@@ -6,12 +6,12 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.6.x
 
-`0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1` 已完成 12 个 npm
-发布单元的锁步公开发布和 Registry 干净消费验收。当前 `develop` 保留 0.6.1 发布
-归档，后续公共增量须先决定下一补丁版本；消费者仍以各自 manifest 中的已发布精确
-版本为准。
+`0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1` 与 `0.6.2` 均已完成
+12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。当前 `develop` 后续只
+实施经真实 consumer 证明的兼容增量；消费者仍以各自 manifest 中的已发布精确版本
+为准。
 
-最后核验：2026-08-02
+最后核验：2026-08-04
 
 ## 已完成基线
 
@@ -87,6 +87,14 @@ Owner：Phoenix Wing maintainers
    - [ ] W5 下一步提供可取消的布局编辑 overlay。Activity/标签移动先行，任意 Block 拖动须先证明 Vue 实例不重建。见[《动态布局与拖动可行性》](Pnw工作台Web动态布局与拖动可行性.md)。
    - [x] W5 已将 fixture 的文章式 Bottom 改为 VS Code 类紧凑 `PnwProblemsBlock / PnwLogBlock`，并提炼实例级有界诊断总线、owner 问题快照与过滤纯函数；`PnwShellLogPanel` 保持兼容。Log 已有三个 Web 证据，Problems 契约在 Admin 或第二真实消费者完成前继续标为实验性，不增加全局 singleton 或 Router 语义。见[《问题与日志 Block 方案》](Pnw工作台Web问题与日志Block方案.md)。
    - [x] W5 统一业务 View 内部 Header：fixture 删除重复的 `PwwFixtureViewHeader`，直接使用 Desk Tools 与 Open Issue 已消费的 `PnwPageHeader`；新增可选 eyebrow、summary、description 和窄容器 actions 排布，旧 `title / subtitle / actions / help` 入口保持兼容。
+   - [x] `0.6.2` 根据 Open Issue、BOM 与 Cool Admin 真实页面证据，由 `PnwWorkbenchLayout` 原生提供 Primary 展开/收起入口：仅在当前 View 的 contribution 与 slot 同时可用时显示，复用受控 `PnwWorkbenchLayoutState.visibility` 和既有 Block toggle 事件；按钮固定在 Editor Header 左侧，使用既有 `chevron-left / chevron-right` 原位切换。`PnwPageHeader` 只在 Primary 可用时自动保留前导位；旧式自定义 Header 由 Layout 自动获得 40px 兼容 rail；无 Primary 不留空槽。见[《Primary 展开与恢复开关》](Pnw工作台WebPrimary悬浮开关.md)。
+   - [x] `0.6.2` 增加 `PnwPageLayout / PnwPageMainBlock`：结构 wrapper、Header 外部 inset 与承担滚动的 `.pnw-page-layout-body` 均为 0；默认插槽由无业务 provider 的 MainBlock 承载 10px，普通 raw table/表单无需逐页写 padding，已有完整卡片或 Cool `.cl-crud` 则用 `bodyInset=false` 避免叠加。Primary 与 Editor 紧凑 Header 共用默认 `40px` 高度。根据 BOM 真实消费，将单行 `PnwPageHeader` 默认纵向 padding 收敛为 3px，使常见 32px Host 操作按钮不再把 Header 撑到 49px；富摘要 Header 仍按内容增高。text/muted/border fallback 补齐 canonical dark default token，修复 Host 未显式覆盖 alias token 时暗色标题落到浅色常量。见[《页面布局与 Header》](Pnw工作台Web页面布局与Header.md)。
+   - [ ] `0.6.2` 发布后继续支持 Function 真实项目与列表页使用 `PnwPageLayout / PnwPageMainBlock`：在正式 Registry 依赖下复核 Header/Body 为 0、默认 MainBlock 为 10px、Primary 开关不覆盖标题，并覆盖亮暗与 720/1440 宽度。该项属于消费者项目适配与发布后回归，不是 Wing 0.6.2 发布硬门禁；不得为 padding 引入 Cool CRUD provider 或产品级 Wing 定位覆盖。
+   - [x] `0.6.2` 以 BOM Primary 为金样本增加 `PnwPrimaryPanel` 与 `PnwPrimarySection`：Panel 关闭 Sidebar body inset 并保持满宽、零 gap、可滚动；Section 默认可折叠，支持受控/非受控状态、actions/suffix/body slots、原生键盘与 `aria-expanded`，冻结 28px 标题条、`4px 8px` padding 和 120ms caret 动画。Open Issue、Function 与 BOM 只保留业务字段、动作、排序和持久化；见[《Primary 面板与 Section》](Pnw工作台WebPrimary面板与Section.md)。
+   - [ ] 基于 BOM `/bom-studio/parts` 的可用样本评估可选紧凑 Editor CSS preset：只定义 inline/block inset、surface radius 与 surface tone 的 Pnw 语义 token/原语，不选择亮暗主题；Host 负责主题选择与持久化，产品逐页显式选择 preset。待 Issue、BOM、Function 三方宽窄屏及明暗证据一致后，再决定是否成为推荐默认；不得吸收产品 contribution、字段或动作模型。
+   - [x] `0.6.2` 增加统一 Teleport 浮层主题根：`pnwApplyColorScheme` 把 Host 的解析后 scheme 传播给 `PnwOverlayThemeProvider`，Choice Dialog、通用 Modal、Floating Panel、Tree flyout 与异步任务浮层共用 canonical light/dark token；Element Plus 的 `html.dark / --el-*` 继续由 Host adapter 持有。见[《浮层主题契约》](Pnw工作台Web浮层主题契约.md)。
+   - [x] `0.6.2` 为 `PnwFloatingPanel` 增加可归一化的 viewport 安全区域；完整/快捷显示设置自动测量同一 Workbench Header，受控旧坐标、拖动和 resize 均夹到 Header 下方，长内容按剩余高度滚动。浮层仍保持 `floatingPanel < hostTools` 层级，不遮挡 Host 用户与语言工具。
+   - [x] `0.6.2` 修正聚合包入口：Vite 只收集会 emit JavaScript 的 `.ts` 与 Vue 组件，九个纯类型模块只由 `vue-tsc` 生成 `.d.ts`，构建不再产生 `Generated an empty chunk`；`./types/*` wildcard 收紧为类型专用，唯一含运行时逻辑的 `PnwRibbonConfig` 保留精确 import 子路径，聚合 dist 与干净 tarball consumer 同时验证类型和运行时解析。
    - [x] `0.6.1` 恢复受控 Editor 最大化：Shell/Layout 使用瞬时 `editorMaximized`，TabBar 提供最大化/还原且 Escape 退出；Header placement 退化为只含同一 TabBar 的还原条，其他壳层区域隐藏，Router/Process/KeepAlive、显示偏好和面板尺寸不被改写。
    - [x] `0.6.1` 增加 Host 驱动 `zh-CN / en-US` 工作台文案、TabBar 的刷新当前/关闭其他通用动作，以及 `floatingPanel < hostTools < modal` 公共叠层契约；语言持久化、标签行为和产品链接继续由 Host 持有。详见[《Editor 最大化、标签动作与国际化》](Pnw工作台Web编辑器最大化与国际化.md)。
    - [x] `0.6.1` 增加规范 `PnwIconId`、保留 `pnw` namespace、Host 白名单注册、
@@ -99,8 +107,15 @@ Owner：Phoenix Wing maintainers
    - [ ] Open Issue / Admin 继续用真实导航树验证 `root-flyout` 菜单密度、权限剪枝、触屏和浏览器焦点；该项是消费者验收，不再扩展 Wing hover timer 或 Tree drawer API。
    - [x] 通过单元测试、typecheck、build、文档门禁，并在内置浏览器验证 light/dark/custom、桌面/窄屏和 `16/24/36/48/64px` SVG 清晰度。
    - [x] `0.6.1` 的代码、tarball 与真实 Host 候选验收通过，8 月 1 日的四条本地提交合并为一条；8 月 2 日更新 npm Token 后按依赖顺序发布 11 个 scoped packages 和根包。12 个 `latest` 均为 `0.6.1`，无相邻源码的 Registry 安装、精确内部依赖和公共入口 smoke 通过。详见[《0.6.1 发布验收》](0.6.1发布验收.md)。
+   - [x] `0.6.2` 于 2026-08-04 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 `0.6.2`，公开依赖无本地协议，全新 Registry cache 的隔离消费者通过 `PNW_VERSION`、Workbench/Output 与 SQLite smoke。本次未 push 或创建/推送 Git tag。详见[《0.6.2 发布验收》](0.6.2发布验收.md)。
 
 6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
+
+7. **[兼容冻结：CAD Rust source]** `@phoenix-wing/cad-rust-source` 在 0.6.2 继续作为
+   既有锁步发布单元，保持 tarball、协议和无安装期编译门禁；在维护所有者与真实消费
+   支持重新明确前不再增加功能，也不推荐新消费者接入。0.6.2 只修正 npm package、
+   source manifest、`fcstd-query` crate 与 Cargo lock 的发布身份一致性；删除包或 npm
+   deprecate 必须另行决策，不混入兼容发布准备。
 
 Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一优先级是 Desk Tools 的 Registry 0.4.3 升级与消费验收。Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 

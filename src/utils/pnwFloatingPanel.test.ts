@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { pnwClampFloatingPanelPosition } from "./pnwFloatingPanel.js";
+import {
+  pnwClampFloatingPanelPosition,
+  pnwNormalizeFloatingPanelInsets,
+} from "./pnwFloatingPanel.js";
 
 describe("pnwClampFloatingPanelPosition", () => {
   const panel = { width: 400, height: 300 };
@@ -23,5 +26,32 @@ describe("pnwClampFloatingPanelPosition", () => {
       { width: 900, height: 800 },
       { width: 640, height: 480 },
     )).toEqual({ x: 8, y: 8 });
+  });
+
+  it("避让 Host Header 与 Dock 安全区域", () => {
+    expect(pnwClampFloatingPanelPosition(
+      { x: 2, y: 8 },
+      panel,
+      viewport,
+      8,
+      { top: 94, right: 12, bottom: 24, left: 16 },
+    )).toEqual({ x: 24, y: 102 });
+
+    expect(pnwClampFloatingPanelPosition(
+      { x: 900, y: 600 },
+      panel,
+      viewport,
+      8,
+      { top: 94, right: 12, bottom: 24, left: 16 },
+    )).toEqual({ x: 580, y: 368 });
+  });
+
+  it("安全区域缺省、负数与非有限值统一归一化", () => {
+    expect(pnwNormalizeFloatingPanelInsets({
+      top: Number.NaN,
+      right: -12,
+      bottom: Number.POSITIVE_INFINITY,
+      left: 16,
+    })).toEqual({ top: 0, right: 0, bottom: 0, left: 16 });
   });
 });

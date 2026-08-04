@@ -10,6 +10,8 @@ const props = withDefaults(
     variant?: "strip" | "card";
     /** 内容区超出时在 block 内滚动 */
     bodyScroll?: boolean;
+    /** 是否保留默认内容内边距；Primary 等贴边容器可关闭 */
+    bodyInset?: boolean;
     /** 标题行可点击折叠 */
     collapsible?: boolean;
     ariaLabel?: string;
@@ -17,6 +19,7 @@ const props = withDefaults(
   {
     variant: "strip",
     bodyScroll: false,
+    bodyInset: true,
     collapsible: true,
   },
 );
@@ -39,6 +42,7 @@ function onHeadToggle() {
       `pnw-sidebar-block--${variant}`,
       {
         'pnw-sidebar-block--body-scroll': bodyScroll,
+        'pnw-sidebar-block--body-inset-none': !bodyInset,
         'pnw-sidebar-block--collapsed': collapsible && !expanded,
       },
     ]"
@@ -122,6 +126,12 @@ function onHeadToggle() {
   width: 100%;
   padding: 8px 10px;
   box-sizing: border-box;
+}
+
+.pnw-sidebar-block--body-inset-none:not(.pnw-sidebar-block--collapsed) .pnw-sidebar-block-body {
+  gap: 0;
+  width: 100%;
+  padding: 0;
 }
 
 .pnw-sidebar-block--body-scroll .pnw-sidebar-block-body {

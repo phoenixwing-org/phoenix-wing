@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/run-core",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Phoenix Run 跨宿主纯 TypeScript 目标、项目识别与平台计划",
   "type": "module",
   "sideEffects": false,

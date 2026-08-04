@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.6.1 候选（兼容 0.6.0）
+适用版本：Wing 0.6.2（已发布，兼容 0.6.1）
 
-最后核验：2026-08-01
+最后核验：2026-08-03
 
 本文同时给 Web 开发者与执行迁移的 AI 使用。目标是让消费者复用工作台结构，同时继续拥有 Router、权限、业务 API、页面状态和用户偏好。
 
@@ -168,12 +168,12 @@ tab，不改面板显隐和尺寸。
 `bottomTabs` 也保持兼容。新消费者优先使用 `defaultBottomBlock + viewBlocks.bottom`，
 避免在 `#bottom` 内重复编写组件优先级。
 
-### 3.2 业务 View 自己的内部 Header
+### 3.2 业务 View 自己的内部 Header 与正文
 
-`PnwWorkbenchHeader` 是整个壳层的品牌、一级导航、打开页签和用户区；每个业务页面自己的标题、当前对象和操作应放在 `PnwPageHeader`，不要继续堆入壳层 Header：
+`PnwWorkbenchHeader` 是整个壳层的品牌、一级导航、打开页签和用户区；每个业务页面自己的标题、当前对象和操作应放在 `PnwPageHeader`，不要继续堆入壳层 Header。新页面优先使用 `PnwPageLayout` 直接组合 Header 与正文：结构层和 `.pnw-page-layout-body` 的外边距/内边距均为 0，body 自行承担滚动；默认插槽自动由无业务 provider 的 `PnwPageMainBlock` 承载并提供 10px，普通消费者无需逐页写 padding。
 
 ```vue
-<PnwPageHeader
+<PnwPageLayout
   eyebrow="代码工具"
   title="参数代码"
   :subtitle="activeFileName"
@@ -185,10 +185,20 @@ tab，不改面板显隐和尺寸。
     <AppSaveButton />
   </template>
   <template #help><AppPageHelp /></template>
-</PnwPageHeader>
+  <AppCodegenTable />
+</PnwPageLayout>
 ```
 
-`eyebrow / summary / description` 都是可选的；既有消费者只传 `title / subtitle / actions / help` 时保持紧凑兼容。工具条过宽时由组件允许横向滚动，窄工作台把 actions 放到第二行。Router、文件名、保存和帮助内容仍由 View 持有。
+`PnwPageLayout` 内部复用 `PnwPageHeader`；`bodyInset` 默认 `true`，但 10px 不落在 body，而落在默认插入的 `PnwPageMainBlock`。已有完整卡片、画布或 `.cl-crud` 自己持有 padding 时设为 `false`，避免叠加；`bodyScroll=false` 可由页面自己的虚拟表格承担滚动。该层次与 Cool Admin 一致：Header/结构/content(body) 为 0，实际 `.cl-crud` 或 `PnwPageMainBlock` 为 10px。Wing 不依赖 `.cl-crud`，也不复制其 provider、mitt、权限与配置语义。
+
+普通单行 `PnwPageHeader` 使用 3px 纵向 padding，常见 32px Host 操作按钮不会把默认
+40px Header 撑高；只有 eyebrow、description 等多行内容允许自然增高。不要用产品 CSS
+固定操作按钮或 Header 的 top/height。
+
+旧 View 尚未使用 `PnwPageHeader` 时，Layout 会自动提供 40px Primary 开关兼容 rail，
+不要求消费者添加 wrapper 或 padding；迁移为公共 Header 后，兼容 rail 自动消失。
+
+`eyebrow / summary / description` 都是可选的；既有消费者只传 `title / subtitle / actions / help` 时保持紧凑兼容。工具条过宽时由组件允许横向滚动，窄工作台把 actions 放到第二行。Router、文件名、保存和帮助内容仍由 View 持有。当前 View 有 Primary 时，Layout 自动在 Page Header 左侧加入同高的展开/收起按钮和动态前导位；没有 Primary 时不渲染按钮，也不保留空槽。
 
 Desk Tools 与 Open Issue 已有多个真实页面使用 `PnwPageHeader`；fixture 也直接消费该公共组件，不再保留一份 `PwwFixtureViewHeader`。示例把摘要、目录、Codegen、检查和 Issue 五种 Editor View 分文件呈现，证明差异应留在业务 View 的 props、actions/help slot 与页内工具条，而不是复制五套 Header。新消费者只参考最接近自己的 View 组合，不要整目录复制或改名一个 Header 组件。
 
@@ -218,7 +228,9 @@ Host 不应为了最大化改写 `layoutState.visibility` 或尺寸。
 
 ## 4. Problems / Log 与实例级诊断
 
-`PnwLogBlock` 和 `PnwProblemsBlock` 只负责紧凑内容与过滤；`PnwBottomPanel` 继续负责页签、计数和容器。日志/问题真源由 consumer 持有，也可以为每个工作台显式创建一个有界内存 hub：
+默认“输出”使用 `PnwOutputBlock` 原样呈现 consumer 已格式化的自由文本，不添加频道或级别 UI。`PnwLogBlock` 和 `PnwProblemsBlock` 用于结构化诊断内容与过滤；`PnwBottomPanel` 继续负责页签、计数和容器。日志/问题真源由 consumer 持有，也可以为每个工作台显式创建一个有界内存 hub：
+
+`PnwOutputBlock` 只接收 `text` snapshot。Host 可为每个工作台创建一个 `pnwCreateOutputBuffer()`，并通过 `append / appendLine / replace / clear` 信号更新；View 不直接持有 Block，也不创建全局 singleton。该信号形状参考 VS Code `OutputChannel`，但 Phoenix 当前只提供一个 Host 受控的默认输出流，不暴露频道选择 UI。
 
 ```ts
 const diagnostics = pnwCreateDiagnosticsHub({ maxLogEntries: 1000 })

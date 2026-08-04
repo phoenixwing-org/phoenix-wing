@@ -15,13 +15,31 @@ const required = [
   "components/PnwEditorDrawerHost.vue.d.ts",
   "components/PnwIconRenderer.js",
   "components/PnwIconRenderer.vue.d.ts",
+  "components/PnwOverlayThemeProvider.js",
+  "components/PnwOverlayThemeProvider.vue.d.ts",
   "composables/pnwChoiceDialog.js",
   "composables/pnwChoiceDialog.d.ts",
+  "composables/usePnwOverlayTheme.js",
+  "composables/usePnwOverlayTheme.d.ts",
   "composables/pnwIconRegistry.js",
   "composables/pnwIconRegistry.d.ts",
   "layout/PnwPageHeader.js",
   "layout/PnwPageHeader.vue.d.ts",
+  "layout/PnwPrimaryPanel.js",
+  "layout/PnwPrimaryPanel.vue.d.ts",
+  "layout/PnwPrimarySection.js",
+  "layout/PnwPrimarySection.vue.d.ts",
+  "types/PnwDiagnostics.d.ts",
+  "types/PnwEditorDrawer.d.ts",
   "types/PnwIcon.d.ts",
+  "types/PnwLocale.d.ts",
+  "types/PnwRibbonConfig.js",
+  "types/PnwRibbonConfig.d.ts",
+  "types/PnwWorkbench.d.ts",
+  "types/PnwWorkbenchVue.d.ts",
+  "types/PnwWorkbenchWeb.d.ts",
+  "types/pnwComboTypes.d.ts",
+  "types/pnwPageProperties.d.ts",
   "utils/pnwIconId.js",
   "utils/pnwIconId.d.ts",
 ];
@@ -32,8 +50,30 @@ for (const relative of required) {
     throw new Error(`aggregate dist is missing ${relative}`);
   }
 }
+const forbiddenTypeOnlyRuntimeEntries = [
+  "types/PnwDiagnostics.js",
+  "types/PnwEditorDrawer.js",
+  "types/PnwIcon.js",
+  "types/PnwLocale.js",
+  "types/PnwWorkbench.js",
+  "types/PnwWorkbenchVue.js",
+  "types/PnwWorkbenchWeb.js",
+  "types/pnwComboTypes.js",
+  "types/pnwPageProperties.js",
+];
+for (const relative of forbiddenTypeOnlyRuntimeEntries) {
+  if (fs.existsSync(path.join(dist, relative))) {
+    throw new Error(`aggregate dist emitted type-only JavaScript entry ${relative}`);
+  }
+}
 if (manifest.main !== "./dist/index.js" || manifest.types !== "./dist/index.d.ts") {
   throw new Error("aggregate manifest must resolve root runtime/types from dist");
+}
+if (manifest.exports["./types/*"]?.import !== undefined) {
+  throw new Error("type-only ./types/* wildcard must not declare a runtime import target");
+}
+if (manifest.exports["./types/PnwRibbonConfig"]?.import !== "./dist/types/PnwRibbonConfig.js") {
+  throw new Error("runtime PnwRibbonConfig type subpath must retain its explicit import target");
 }
 for (const [subpath, target] of Object.entries(manifest.exports)) {
   if (subpath === "./style.css") continue;

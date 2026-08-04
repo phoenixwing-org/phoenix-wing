@@ -127,7 +127,7 @@
 - `PnwActivityBarPresentation`
 - `PnwRibbonDisplayMode`、`PnwRibbonIconSize`、`PnwRibbonMode`、`PnwRibbonModeAppearance`、`PnwRibbonAppearance`
 - `PnwIconName`、`PnwIconTestSize`
-- `PnwFloatingPanelPosition`、`PnwFloatingPanelSize`
+- `PnwFloatingPanelPosition`、`PnwFloatingPanelSize`、`PnwFloatingPanelInsets`
 - `PnwNavigationNode`、`PnwWorkbenchTabItem`
 - `PnwViewBlockId`、`PnwViewBlockContributions`、`PnwViewBlockVisibility`
 - `PnwViewBlockComponentContribution`、`PnwBottomViewBlockComponentContribution`、`PnwViewBlockComponentContributions`
@@ -143,7 +143,7 @@
 - `pnwNavigationLeaves`、`pnwNavigationNodeContains`
 - `pnwProjectNavigationRibbon`
 - `pnwNavigationFromRibbonTabs`
-- `pnwClampFloatingPanelPosition`
+- `pnwClampFloatingPanelPosition`、`pnwNormalizeFloatingPanelInsets`
 - `pnwRibbonIconSizesFor`、`pnwResolveRibbonNaturalHeight`、`pnwValidateRibbonAppearance`、`pnwNextRibbonFocusIndex`
 - `pnwAvailableViewBlockIds`、`pnwResolveViewBlockVisibility`、`pnwToggleViewBlockVisibility`
 - `pnwCreateViewContributionRegistry`、`pnwCreateViewContributionRegistration`
@@ -159,6 +159,7 @@
 ### Pnw Web 工作台 CSS token
 
 - 主题表面：`--pnw-workbench-bg`、`--pnw-workbench-surface`、`--pnw-workbench-text`、`--pnw-workbench-muted`、`--pnw-workbench-border`
+- 浮层语义：`--pnw-overlay-backdrop`、`--pnw-overlay-shadow`、`--pnw-control-bg`、`--pnw-primary-bg`、`--pnw-primary-text`、`--pnw-danger-bg`、`--pnw-danger-border`、`--pnw-danger-text`
 - 导航与状态：`--pnw-activity-tree-bg`、`--pnw-ribbon-bg`、`--pnw-ribbon-module-bg`、`--pnw-ribbon-module-handle`、`--pnw-control-hover-bg`、`--pnw-control-active-bg`、`--pnw-control-active-text`、`--pnw-focus-ring`
 - 尺寸：`--pnw-activity-tree-width`、`--pnw-activity-rail-width`、`--pnw-primary-block-width`、`--pnw-secondary-block-width`、`--pnw-bottom-panel-height`、`--pnw-floating-panel-width`、`--pnw-floating-panel-max-height`、`--pnw-workbench-header-modules-max-width`、`--pnw-ribbon-module-tab-gap`、`--pnw-ribbon-module-tab-padding-inline`、`--pnw-ribbon-module-tab-font-size`、`--pnw-ribbon-module-tab-indicator-inset`
 

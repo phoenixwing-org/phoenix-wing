@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.6.1'
+export const PNW_VERSION = '0.6.2'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -47,7 +47,13 @@ export { pnwScheduleDebounced } from './utils/pnwScheduleDebounced.js'
 // ---------------------------------------------------------------------------
 // 色彩方案
 // ---------------------------------------------------------------------------
-export { type PnwColorScheme, pnwResolveColorScheme, pnwApplyColorScheme } from './utils/pnwColorScheme.js'
+export {
+  type PnwColorScheme,
+  type PnwResolvedColorScheme,
+  pnwResolveColorScheme,
+  pnwGetAppliedColorScheme,
+  pnwApplyColorScheme,
+} from './utils/pnwColorScheme.js'
 
 // ---------------------------------------------------------------------------
 // 指针拖拽
@@ -55,6 +61,8 @@ export { type PnwColorScheme, pnwResolveColorScheme, pnwApplyColorScheme } from 
 export { pnwBindPointerDrag } from './utils/pnwPointerDrag.js'
 export {
   pnwClampFloatingPanelPosition,
+  pnwNormalizeFloatingPanelInsets,
+  type PnwFloatingPanelInsets,
   type PnwFloatingPanelPosition,
   type PnwFloatingPanelSize,
 } from './utils/pnwFloatingPanel.js'
@@ -253,6 +261,14 @@ export {
 } from './types/PnwDiagnostics.js'
 
 export {
+  type PnwOutputSnapshot,
+  type PnwOutputSignal,
+  type PnwOutputListener,
+  type PnwOutputBuffer,
+  type PnwOutputBufferOptions,
+} from './types/PnwOutput.js'
+
+export {
   PNW_DEFAULT_DIAGNOSTICS_MAX_LOG_ENTRIES,
   PNW_DIAGNOSTICS_MAX_LOG_ENTRIES_LIMIT,
   pnwCreateDiagnosticsHub,
@@ -260,6 +276,12 @@ export {
   pnwFilterProblemItems,
   pnwDiagnosticsLogChannels,
 } from './utils/pnwDiagnostics.js'
+
+export {
+  PNW_DEFAULT_OUTPUT_MAX_CHARACTERS,
+  PNW_OUTPUT_MAX_CHARACTERS_LIMIT,
+  pnwCreateOutputBuffer,
+} from './utils/pnwOutput.js'
 
 export {
   type PnwViewContributionRegistry,
@@ -386,6 +408,7 @@ export {
   pnwAlert,
   pnwPromptInput,
 } from './composables/pnwChoiceDialog.js'
+export { usePnwOverlayTheme } from './composables/usePnwOverlayTheme.js'
 
 // ---------------------------------------------------------------------------
 // Vue3 组件 — 根入口与兼容子路径均解析到同一 dist 模块图
@@ -400,15 +423,21 @@ export { default as PnwExpandCaret } from './components/PnwExpandCaret.vue'
 export { default as PnwFloatingPanel } from './components/PnwFloatingPanel.vue'
 export { default as PnwIcon } from './components/PnwIcon.vue'
 export { default as PnwIconRenderer } from './components/PnwIconRenderer.vue'
+export { default as PnwOverlayThemeProvider } from './components/PnwOverlayThemeProvider.vue'
 export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
 
 export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'
+export { default as PnwPageLayout } from './layout/PnwPageLayout.vue'
+export { default as PnwPageMainBlock } from './layout/PnwPageMainBlock.vue'
 export { default as PnwActivityBar } from './layout/PnwActivityBar.vue'
 export { default as PnwActivityTree } from './layout/PnwActivityTree.vue'
 export { default as PnwBottomPanel } from './layout/PnwBottomPanel.vue'
 export { default as PnwLogBlock } from './layout/PnwLogBlock.vue'
+export { default as PnwOutputBlock } from './layout/PnwOutputBlock.vue'
 export { default as PnwProblemsBlock } from './layout/PnwProblemsBlock.vue'
 export { default as PnwPrimaryBlock } from './layout/PnwPrimaryBlock.vue'
+export { default as PnwPrimaryPanel } from './layout/PnwPrimaryPanel.vue'
+export { default as PnwPrimarySection } from './layout/PnwPrimarySection.vue'
 export { default as PnwRibbon } from './layout/PnwRibbon.vue'
 export { default as PnwRibbonGroup } from './layout/PnwRibbonGroup.vue'
 export { default as PnwRibbonShell } from './layout/PnwRibbonShell.vue'
@@ -437,6 +466,8 @@ export { default as PnwWorkbenchLayout } from './layout/PnwWorkbenchLayout.vue'
 //   import PnwRibbonToolButton from 'phoenix-wing/layout/PnwRibbonToolButton.vue'
 //   import PnwRibbonUtilButton from 'phoenix-wing/layout/PnwRibbonUtilButton.vue'
 //   import PnwPageHeader from 'phoenix-wing/layout/PnwPageHeader.vue'
+//   import PnwPageLayout from 'phoenix-wing/layout/PnwPageLayout.vue'
+//   import PnwPageMainBlock from 'phoenix-wing/layout/PnwPageMainBlock.vue'
 //   import PnwShellLogPanel from 'phoenix-wing/layout/PnwShellLogPanel.vue'
 //   import PnwWorkbenchTabBar from 'phoenix-wing/layout/PnwWorkbenchTabBar.vue'
 //   import PnwWelcomeShell from 'phoenix-wing/layout/PnwWelcomeShell.vue'

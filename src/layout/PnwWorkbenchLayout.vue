@@ -26,6 +26,7 @@ import {
 } from "../utils/pnwWorkbenchWeb.js";
 import { pnwBindPointerDrag } from "../utils/pnwPointerDrag.js";
 import { pnwProvideLocale, usePnwLocale } from "../composables/usePnwLocale.js";
+import PnwIcon from "../components/PnwIcon.vue";
 import PnwBottomPanel from "./PnwBottomPanel.vue";
 import PnwPrimaryBlock from "./PnwPrimaryBlock.vue";
 import PnwSecondaryBlock from "./PnwSecondaryBlock.vue";
@@ -103,6 +104,11 @@ const pnwLayoutState = computed(() => pnwResolveWorkbenchLayoutState(
 const pnwVisibility = computed(() => pnwResolveViewBlockVisibility(
   pnwAvailableContributions.value,
   pnwLayoutState.value.visibility,
+));
+const pnwPrimaryToggleLabel = computed(() => pnwT(
+  pnwVisibility.value.primary
+    ? "workbench.layout.primaryCollapse"
+    : "workbench.layout.primaryExpand",
 ));
 const pnwResolvedBottomTabId = computed(() => props.bottomTabs.some(
   (tab) => tab.id === props.activeBottomTabId && !tab.disabled,
@@ -237,7 +243,7 @@ function pnwSelectBottomTab(tabId: string): void {
 <template>
   <section
     ref="pnwLayoutElement"
-    class="pnw-workbench-layout"
+    class="pnw-workbench-layout pnw-workbench-theme-root"
     :data-pnw-color-scheme="colorScheme"
     :data-pnw-narrow="pnwResponsiveState.narrow"
     :data-pnw-preferred-activity-presentation="activityBarPresentation"
@@ -304,7 +310,27 @@ function pnwSelectBottomTab(tabId: string): void {
             >
               <slot name="view-tabs" />
             </div>
-            <main class="pnw-workbench-editor">
+            <main
+              class="pnw-workbench-editor"
+              :data-pnw-primary-available="!editorMaximized && pnwAvailableContributions.primary
+                ? 'true'
+                : undefined"
+            >
+              <button
+                v-if="!editorMaximized
+                  && pnwAvailableContributions.primary"
+                type="button"
+                class="pnw-workbench-primary-toggle pnw-workbench-primary-toggle--editor-header"
+                data-pnw-workbench-primary-toggle
+                data-pnw-primary-toggle-placement="editor-header"
+                :data-pnw-primary-expanded="pnwVisibility.primary"
+                :title="pnwPrimaryToggleLabel"
+                :aria-label="pnwPrimaryToggleLabel"
+                :aria-expanded="pnwVisibility.primary"
+                @click="pnwToggleBlock('primary')"
+              >
+                <PnwIcon :name="pnwVisibility.primary ? 'chevron-left' : 'chevron-right'" :size="16" />
+              </button>
               <slot />
             </main>
             <Transition name="pnw-workbench-block">
@@ -412,43 +438,6 @@ function pnwSelectBottomTab(tabId: string): void {
   font-family: var(--pnw-workbench-font-family, Inter, ui-sans-serif, system-ui, sans-serif);
 }
 
-.pnw-workbench-layout[data-pnw-color-scheme="light"],
-.pnw-workbench-layout[data-pnw-color-scheme="system"] {
-  color-scheme: light;
-  --pnw-workbench-default-bg: #f8fafc;
-  --pnw-workbench-default-surface: #ffffff;
-  --pnw-workbench-default-text: #0f172a;
-  --pnw-workbench-default-muted: #64748b;
-  --pnw-workbench-default-border: #dbe3ed;
-  --pnw-workbench-default-tree-bg: #f8fafc;
-  --pnw-workbench-default-ribbon-bg: #ffffff;
-  --pnw-workbench-default-module-bg: #f1f5f9;
-  --pnw-workbench-default-footer-bg: #eef2f7;
-  --pnw-workbench-default-hover-bg: rgba(59, 130, 246, 0.09);
-  --pnw-workbench-default-active-bg: rgba(37, 99, 235, 0.13);
-  --pnw-workbench-default-active-text: #1d4ed8;
-  --pnw-workbench-default-focus: #3b82f6;
-  --pnw-workbench-default-overlay-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
-}
-
-.pnw-workbench-layout[data-pnw-color-scheme="dark"] {
-  color-scheme: dark;
-  --pnw-workbench-default-bg: #0b1220;
-  --pnw-workbench-default-surface: #111827;
-  --pnw-workbench-default-text: #e5edf7;
-  --pnw-workbench-default-muted: #94a3b8;
-  --pnw-workbench-default-border: #2a3a50;
-  --pnw-workbench-default-tree-bg: #0f172a;
-  --pnw-workbench-default-ribbon-bg: #111827;
-  --pnw-workbench-default-module-bg: #172033;
-  --pnw-workbench-default-footer-bg: #0f172a;
-  --pnw-workbench-default-hover-bg: rgba(96, 165, 250, 0.14);
-  --pnw-workbench-default-active-bg: rgba(59, 130, 246, 0.24);
-  --pnw-workbench-default-active-text: #bfdbfe;
-  --pnw-workbench-default-focus: #60a5fa;
-  --pnw-workbench-default-overlay-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
-}
-
 .pnw-workbench-body {
   flex: 1 1 auto;
   min-width: 0;
@@ -533,6 +522,7 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 .pnw-workbench-main {
+  position: relative;
   min-width: 0;
   min-height: 0;
   display: grid;
@@ -594,10 +584,66 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 .pnw-workbench-editor {
+  --pnw-workbench-view-header-leading-space: 0px;
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: auto;
+}
+
+.pnw-workbench-editor[data-pnw-primary-available="true"] {
+  --pnw-workbench-view-header-leading-space: 32px;
+}
+
+/*
+ * Compatibility rail for Views that have not migrated to PnwPageHeader yet.
+ * The framework owns the Primary toggle, so a legacy View must not have to
+ * add product-specific padding merely to avoid the Workbench chrome.
+ */
+.pnw-workbench-editor[data-pnw-primary-available="true"]:not(:has(.pnw-page-head)) {
+  box-sizing: border-box;
+  padding-inline-start: var(--pnw-workbench-view-header-legacy-leading-space, 40px);
+}
+
+.pnw-workbench-primary-toggle {
+  position: absolute;
+  z-index: 6;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+  border-radius: var(--pnw-control-radius, 6px);
+  background: var(
+    --pnw-workbench-view-header-control-bg,
+    color-mix(
+      in srgb,
+      var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b)) 10%,
+      transparent
+    )
+  );
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b));
+  cursor: pointer;
+}
+
+.pnw-workbench-primary-toggle--editor-header {
+  top: calc((var(--pnw-workbench-view-header-height, 40px) - 26px) / 2);
+  left: 10px;
+}
+
+.pnw-workbench-primary-toggle:hover {
+  background: var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(59, 130, 246, 0.09)));
+  color: var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #1d4ed8));
+}
+
+.pnw-workbench-primary-toggle:focus-visible {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: 1px;
+  background: var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgba(59, 130, 246, 0.09)));
+  color: var(--pnw-control-active-text, var(--pnw-workbench-default-active-text, #1d4ed8));
 }
 
 .pnw-workbench-bottom-region {
@@ -690,26 +736,6 @@ function pnwSelectBottomTab(tabId: string): void {
 .pnw-workbench-block-leave-to {
   opacity: 0;
   transform: translateY(4px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .pnw-workbench-layout[data-pnw-color-scheme="system"] {
-    color-scheme: dark;
-    --pnw-workbench-default-bg: #0b1220;
-    --pnw-workbench-default-surface: #111827;
-    --pnw-workbench-default-text: #e5edf7;
-    --pnw-workbench-default-muted: #94a3b8;
-    --pnw-workbench-default-border: #2a3a50;
-    --pnw-workbench-default-tree-bg: #0f172a;
-    --pnw-workbench-default-ribbon-bg: #111827;
-    --pnw-workbench-default-module-bg: #172033;
-    --pnw-workbench-default-footer-bg: #0f172a;
-    --pnw-workbench-default-hover-bg: rgba(96, 165, 250, 0.14);
-    --pnw-workbench-default-active-bg: rgba(59, 130, 246, 0.24);
-    --pnw-workbench-default-active-text: #bfdbfe;
-    --pnw-workbench-default-focus: #60a5fa;
-    --pnw-workbench-default-overlay-shadow: 0 14px 32px rgba(0, 0, 0, 0.48);
-  }
 }
 
 @container pnw-workbench (max-width: 840px) {

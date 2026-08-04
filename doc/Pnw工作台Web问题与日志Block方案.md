@@ -13,7 +13,8 @@ Owner：Phoenix Wing maintainers
 工作台 Bottom 应接近 VS Code Panel 的信息密度和交互，而不是页面式大标题、说明卡片或 fixture 文章：
 
 - `问题` 显示当前未解决的结构化诊断；
-- `运行日志` 显示按频道组织的流式日志；
+- `输出` 使用 `PnwOutputBlock` 原样显示 consumer 已格式化的自由文本，不添加频道、级别或过滤列；
+- 结构化诊断日志继续使用 `PnwLogBlock`，按需要放入“问题/诊断”页签，不作为默认输出；
 - 两者由 Wing 提供通用 Block 外观与最小数据接口；
 - 框架、公共组件和 consumer 都通过同一实例级总线发布信息；
 - Router、打开文件、业务定位、持久化与脱敏仍由 consumer 处理。
@@ -57,7 +58,16 @@ Admin 没有比 Wing 更通用的日志控件。它的壳层日志已经复用 `
 - owner/source 替换问题集合，已解决问题能从列表移除；
 - 空态只显示一行“未检测到问题”。
 
-### Log Block
+### Output Block
+
+- 使用单一等宽文本流，保留换行、缩进和发送方自己的前缀；
+- 不显示频道选择、级别按钮、搜索框或结构化列；
+- consumer 决定是否输出时间、来源、任务前缀或多行详情；
+- 自动跟随末尾；用户向上滚动后锁定当前位置，回到底部再恢复跟随；
+- 只读、自动换行、无行号/小地图/折叠/校验装饰；不持久化、不解释内容；
+- 实例级 `pnwCreateOutputBuffer` 接收 append、appendLine、replace、clear 信号，组件只读取 text snapshot。
+
+### Diagnostics Log Block
 
 - 等宽字体紧凑行，时间、级别、频道、来源和消息可分列或在窄屏合并；
 - 支持频道选择、级别过滤、文本过滤、清空和自动滚动；
@@ -129,7 +139,7 @@ type ExperimentalDiagnosticsCommand =
 
 - `PnwShellLogPanel` 继续保留，避免破坏 Admin、Open Issue 和旧消费者；
 - 可在内部把 `logText` 按行适配给新 `PnwLogBlock`，但不反向伪造级别和频道；
-- `PnwBottomPanel` 继续负责 tabs、summary 和容器；`PnwProblemsBlock` / `PnwLogBlock` 只负责内容；
+- `PnwBottomPanel` 继续负责 tabs、summary 和容器；`PnwOutputBlock`、`PnwProblemsBlock` / `PnwLogBlock` 只负责内容；
 - `PnwWorkbenchShell` 不自动创建全局 hub。简单 consumer 可显式传入 snapshot，复杂 consumer 可 provide 一个实例；
 - `PnwAsyncTaskState.logs` 暂时保持字符串数组，后续只通过 adapter 投影，不修改异步任务领域协议。
 

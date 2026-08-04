@@ -2,6 +2,11 @@
 
 Phoenix CAD 的 Rust 源码发布包。它只随 npm 分发源码、Cargo workspace、统一锁文件和协议定位信息；没有 `postinstall`，不会在安装或应用激活时编译。
 
+> 支持状态：**兼容冻结**。在出现明确的维护所有者和真实消费者支持决策前，本包只随
+> Wing 锁步发布保留既有安装、构建与协议兼容，不再主动增加功能，也不推荐新的产品
+> 依赖。0.6.2 对 package/source manifest/Cargo lock 的版本同步仅修正发布身份，不表示
+> 重启 Rust 能力演进。移除发布单元或在 npm 标记 deprecated 需要单独的破坏性变更决策。
+
 消费端通过 `@phoenix-wing/cad-rust-source/source-manifest.json` 定位 Cargo manifest，并在自身构建阶段执行：
 
 ```bash

@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/db-node",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Phoenix Node.js SQLite adapter for workspace databases",
   "type": "module",
   "sideEffects": false,
