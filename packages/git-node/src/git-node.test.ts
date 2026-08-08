@@ -2,6 +2,12 @@ import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import {
+  pnwApplyGitLazyHistoryPage,
+  pnwCreateGitLazyHistoryState,
+  pnwRequestGitLazyHistoryPage,
+  pnwSetGitLazyHistoryExpanded,
+} from "@phoenix-wing/git-core";
 import { pnwRunGitCommand } from "./git-runner.js";
 import { pnwAnalyzeGitSquash, pnwReadGitRepository } from "./repository.js";
 import { pnwReadGitCommitPage, pnwReadGitRepositorySummary } from "./repository-summary.js";
@@ -77,6 +83,36 @@ describe("Git Node adapter", () => {
     await git(root, ["commit", "-m", "G"]);
     await expect(pnwReadGitCommitPage(root, { expectedHeadOid: headOid, limit: 2 }))
       .rejects.toThrow("Git HEAD changed");
+  }, GIT_INTEGRATION_TIMEOUT_MS);
+
+  it("loads nothing while collapsed, one per re-expansion, then five without duplicates", async () => {
+    const root = await createRepository();
+    const summary = await pnwReadGitRepositorySummary(root, { maxCommits: 1 });
+    const initial = pnwCreateGitLazyHistoryState({
+      expectedHeadOid: summary.headOid,
+      latestCommit: summary.commits[0]!,
+    });
+    expect(initial.commits.map(({ subject }) => subject)).toEqual(["F"]);
+    expect(pnwRequestGitLazyHistoryPage(initial, 5).request).toBeUndefined();
+
+    const expanded = pnwSetGitLazyHistoryExpanded(initial, true);
+    const firstPage = await pnwReadGitCommitPage(root, expanded.request!);
+    const afterFirstPage = pnwApplyGitLazyHistoryPage(expanded.state, firstPage);
+    expect(afterFirstPage.commits.map(({ subject }) => subject)).toEqual(["F", "E"]);
+
+    const collapsed = pnwSetGitLazyHistoryExpanded(afterFirstPage, false);
+    expect(collapsed.request).toBeUndefined();
+    const reopened = pnwSetGitLazyHistoryExpanded(collapsed.state, true);
+    const secondPage = await pnwReadGitCommitPage(root, reopened.request!);
+    const afterSecondPage = pnwApplyGitLazyHistoryPage(reopened.state, secondPage);
+    expect(afterSecondPage.commits.map(({ subject }) => subject)).toEqual(["F", "E", "D"]);
+
+    const nextFive = pnwRequestGitLazyHistoryPage(afterSecondPage, 5);
+    const remainingPage = await pnwReadGitCommitPage(root, nextFive.request!);
+    const complete = pnwApplyGitLazyHistoryPage(nextFive.state, remainingPage);
+    expect(complete.commits.map(({ subject }) => subject)).toEqual(["F", "E", "D", "C", "B", "A"]);
+    expect(new Set(complete.commits.map(({ oid }) => oid)).size).toBe(6);
+    expect(complete.hasMore).toBe(false);
   }, GIT_INTEGRATION_TIMEOUT_MS);
 
   it("supports AbortSignal on lightweight and compatible full reads", async () => {

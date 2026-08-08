@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.6.2
+        specifier: workspace:0.6.3
         version: link:packages/code-core
       '@phoenix-wing/db-node':
-        specifier: workspace:0.6.2
+        specifier: workspace:0.6.3
         version: link:packages/db-node
       element-plus:
         specifier: ^2.0.0
@@ -56,7 +56,7 @@ importers:
   packages/cad-contracts:
     devDependencies:
       '@phoenix-wing/db-node':
-        specifier: workspace:0.6.2
+        specifier: workspace:0.6.3
         version: link:../db-node
       typescript:
         specifier: ^5.7.0
@@ -119,7 +119,7 @@ importers:
   packages/git-node:
     dependencies:
       '@phoenix-wing/git-core':
-        specifier: workspace:0.6.2
+        specifier: workspace:0.6.3
         version: link:../git-core
     devDependencies:
       '@types/node':
@@ -159,7 +159,7 @@ importers:
   packages/run-node:
     dependencies:
       '@phoenix-wing/run-core':
-        specifier: workspace:0.6.2
+        specifier: workspace:0.6.3
         version: link:../run-core
       jsonc-parser:
         specifier: 3.3.1

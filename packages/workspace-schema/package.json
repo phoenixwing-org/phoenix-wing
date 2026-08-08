@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/workspace-schema",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Phoenix .phoenix workspace database schema, compatibility and migration contract",
   "type": "module",
   "sideEffects": false,

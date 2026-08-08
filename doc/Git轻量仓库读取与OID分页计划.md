@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.6.0（已发布）
+适用版本：0.6.0（基础 API）与 0.6.3（受控懒加载状态）
 
-最后核验：2026-07-29
+最后核验：2026-08-08
 
 ## 1. 背景与目标
 
@@ -67,6 +67,38 @@ const page = await pnwReadGitCommitPage(repositoryPath, {
 - 仅在 `hasMore` 为真时返回 `nextBeforeOid`；
 - `limit` / `maxCommits` 接受 1..1000，防止无界输出。
 
+### 2.4 默认收缩的受控懒加载
+
+0.6.3 在 `@phoenix-wing/git-core` 增加纯 TypeScript 状态与 reducer，不引入 Vue、Node、
+文件系统或偏好持久化：
+
+```ts
+let history = pnwCreateGitLazyHistoryState({
+  expectedHeadOid: summary.headOid,
+  latestCommit: summary.commits[0],
+});
+
+const expanded = pnwSetGitLazyHistoryExpanded(history, true);
+history = expanded.state;
+if (expanded.request) {
+  const page = await pnwReadGitCommitPage(repositoryPath, expanded.request);
+  history = pnwApplyGitLazyHistoryPage(history, page);
+}
+
+const nextFive = pnwRequestGitLazyHistoryPage(history, 5);
+```
+
+- `PNW_GIT_LAZY_HISTORY_DEFAULT_EXPANDED` 固定为 `false`；创建状态和保持收缩都不返回
+  request，因此 Host 不应读取第二条及后续 commit；
+- 每次从收缩变为展开，都按当前 `nextBeforeOid` 返回 `limit=1` 的请求；同一次展开或重绘
+  不重复规划；
+- 展开后可用 `pnwRequestGitLazyHistoryPage(state, 1 | 5)` 请求下一条或下 5 条；
+- loading、收缩或 `hasMore=false` 时不会规划重复请求；
+- `pnwApplyGitLazyHistoryPage` 按 newest-first 追加，拒绝 stale HEAD、重复首条、重复页和
+  缺失的下一页游标；失败时用 `pnwFailGitLazyHistoryRequest` 保留原游标供显式重试；
+- `PnwGitLazyHistoryPage` 与 git-node 的 `PnwGitCommitPage` 结构兼容。Block 展开动画、
+  按钮、错误提示、AbortController 和状态持久化仍由 Host 控制。
+
 ## 3. 性能与解析约束
 
 每次 summary 或 page 的 commit 数据只由一次 `git log -z --format=...` 读取。字段以 NUL 分隔并按固定数量解析；author、committer、subject 或多行 body 中的空格和换行不会破坏记录边界。不得退回逐 commit `git show` / `cat-file` spawn。
@@ -81,9 +113,11 @@ const page = await pnwReadGitCommitPage(repositoryPath, {
 
 ## 5. Auto Code 接入顺序
 
-1. Git Block 首次展开时调用 summary，立即呈现仓库、分支和最新 commit；
-2. 保存 `summary.headOid` 作为本次历史浏览的 `expectedHeadOid`；
-3. 用户请求更多时用 `nextBeforeOid` 追加 page；
+1. Git Block 首屏调用 summary，`maxCommits=1`，立即呈现仓库、分支和最新 commit；
+2. “更多 commit”子 Block 默认收缩；收缩状态不调用 page API；
+3. 保存 `summary.headOid` 与最新 commit 创建懒加载状态；每次从收缩变为展开都按返回
+   request 读取下一条，保持展开时可使用 1/5 两种 limit 追加 page；这种“小界面、真按需”
+   行为不在收缩期预取历史；
 4. HEAD stale 错误触发整块刷新，不把新页拼接到旧列表；
 5. View dispose / refresh superseded 时 abort 上一次读取；
 6. 只有用户进入 combine/squash 流程时才调用完整 `pnwAnalyzeGitSquash`。
@@ -92,6 +126,8 @@ const page = await pnwReadGitCommitPage(repositoryPath, {
 
 - summary 字段边界、remote opt-in、newest-first 顺序；
 - OID exclusive 分页、`hasMore` / `nextBeforeOid`、stale HEAD；
+- 收缩态零 page request、每次重新展开 1 条、同次展开零重复、后续 1/5 条、无重复首条与
+  重复页；
 - 已取消信号覆盖轻量与兼容完整读取；
 - 原完整读取、warning、事务、undo 集成测试保持通过；
 - `git-core` / `git-node` test、typecheck、build 和仓库文档门禁通过。
