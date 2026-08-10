@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/code-core",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Phoenix Code 跨宿主纯 TypeScript 算法与契约",
   "type": "module",
   "sideEffects": false,

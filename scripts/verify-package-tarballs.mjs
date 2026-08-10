@@ -92,7 +92,15 @@ import {
   PNW_WORKSPACE_SCHEMA_V13_DDL,
 } from "@phoenix-wing/workspace-schema";
 import { pnwCreateDb } from "@phoenix-wing/db-node";
-import { pnwShortestUniqueGitOid } from "@phoenix-wing/git-core";
+import {
+  PNW_GIT_LAZY_HISTORY_DEFAULT_EXPANDED,
+  pnwApplyGitLazyHistoryPage,
+  pnwCreateGitLazyHistoryState,
+  pnwFormatGitGroupSummary,
+  pnwRequestGitLazyHistoryPage,
+  pnwSetGitLazyHistoryExpanded,
+  pnwShortestUniqueGitOid,
+} from "@phoenix-wing/git-core";
 import { pnwRunGitCommand } from "@phoenix-wing/git-node";
 import { pnwResolveRunCaaVersion } from "@phoenix-wing/run-core";
 import { pnwCreateBundledCaaLaunchPlan } from "@phoenix-wing/run-node";
@@ -135,6 +143,53 @@ if (PNW_WORKSPACE_SCHEMA_ID !== "phoenix-workspace" || PNW_WORKSPACE_SCHEMA_VERS
 }
 if (pnwShortestUniqueGitOid("4b4622df00") !== "4b4622d") {
   throw new Error("git-core export smoke failed");
+}
+const summaryHeadOid = "b245527fa4941655222c420df565cb59d70c5d83";
+const summaryBody = [
+  "- 统一根工作区、兼容包、manifest 与 descriptor 版本",
+  "- 固定 0.7.0 的包名和部署示例",
+].join("\\n");
+const latestCommit = {
+  oid: summaryHeadOid,
+  author: { name: "Phoenix Wing", email: "wing@example.com", date: "1785919551 +0800" },
+  committer: { name: "Phoenix Wing", email: "wing@example.com", date: "1785919551 +0800" },
+  subject: "版本：升级 Open Issue 插件至 0.7.0",
+  body: summaryBody,
+};
+const groupSummary = pnwFormatGitGroupSummary({
+  repositoryName: "phoenix-open-issue",
+  upstream: "origin/develop",
+  commit: latestCommit,
+  fallbackReviewer: "杨海华",
+});
+if (!groupSummary.text.includes(latestCommit.subject + " 审查：@杨海华\\n\\n" + summaryBody)
+  || groupSummary.text.split(summaryBody).length !== 2) {
+  throw new Error("git-core complete commit body smoke failed");
+}
+const lazyInitial = pnwCreateGitLazyHistoryState({
+  expectedHeadOid: summaryHeadOid,
+  latestCommit,
+});
+if (PNW_GIT_LAZY_HISTORY_DEFAULT_EXPANDED !== false
+  || pnwRequestGitLazyHistoryPage(lazyInitial, 5).request !== undefined) {
+  throw new Error("git-core collapsed lazy history performed work");
+}
+const lazyExpanded = pnwSetGitLazyHistoryExpanded(lazyInitial, true);
+if (lazyExpanded.request?.beforeOid !== summaryHeadOid || lazyExpanded.request.limit !== 1
+  || pnwSetGitLazyHistoryExpanded(lazyExpanded.state, true).request !== undefined) {
+  throw new Error("git-core first lazy history expansion smoke failed");
+}
+const secondOid = "a".repeat(40);
+const lazyAfterPage = pnwApplyGitLazyHistoryPage(lazyExpanded.state, {
+  headOid: summaryHeadOid,
+  commits: [{ ...latestCommit, oid: secondOid, subject: "上一条", body: "" }],
+  nextBeforeOid: secondOid,
+  hasMore: true,
+});
+const lazyCollapsed = pnwSetGitLazyHistoryExpanded(lazyAfterPage, false).state;
+const lazyReopened = pnwSetGitLazyHistoryExpanded(lazyCollapsed, true);
+if (lazyReopened.request?.beforeOid !== secondOid || lazyReopened.request.limit !== 1) {
+  throw new Error("git-core repeated lazy history expansion smoke failed");
 }
 const gitVersion = await pnwRunGitCommand(["--version"], { cwd: process.cwd() });
 if (!gitVersion.stdout.startsWith("git version")) throw new Error("git-node runtime smoke failed");

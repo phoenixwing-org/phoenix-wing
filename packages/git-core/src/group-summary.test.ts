@@ -104,4 +104,33 @@ describe("Git group summary", () => {
       "函数拼写错误 审查：@ymp",
     ].join("\n"));
   });
+
+  it("preserves the complete multiline commit body in a group summary", () => {
+    const body = [
+      "- 统一根工作区、兼容包、manifest 与 descriptor 版本",
+      "- 固定 0.7.0 的 .phoenix.cool 包名和部署示例",
+      "- 归档生产模拟环境安装、启停与卸载保留验证",
+      "- 更新当前路线、更新日志与版本回归测试",
+      "- 保留 0.6.x 迁移和数据库生命周期历史证据",
+    ].join("\n");
+    const result = pnwFormatGitGroupSummary({
+      repositoryName: "phoenix-open-issue",
+      upstream: "origin/develop",
+      commit: {
+        ...commit,
+        oid: "b245527fa4941655222c420df565cb59d70c5d83",
+        subject: "版本：升级 Open Issue 插件至 0.7.0",
+        body: `\n${body}\n`,
+        committer: { ...commit.committer, date: "1785919551 +0800" },
+      },
+      includeCommitTime: true,
+      fallbackReviewer: "杨海华",
+    });
+    expect(result.text).toBe([
+      "phoenix-open-issue origin/develop **Commit:** b245527 ++ · 2026-08-05 16:45",
+      "版本：升级 Open Issue 插件至 0.7.0 审查：@杨海华",
+      "",
+      body,
+    ].join("\n"));
+  });
 });

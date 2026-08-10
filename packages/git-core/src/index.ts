@@ -9,6 +9,22 @@ export {
 } from "./group-summary.js";
 
 export {
+  PNW_GIT_LAZY_HISTORY_DEFAULT_EXPANDED,
+  PNW_GIT_LAZY_HISTORY_LOAD_LIMITS,
+  type PnwGitLazyHistoryCreateInput,
+  type PnwGitLazyHistoryLoadLimit,
+  type PnwGitLazyHistoryPage,
+  type PnwGitLazyHistoryRequest,
+  type PnwGitLazyHistoryState,
+  type PnwGitLazyHistoryTransition,
+  pnwApplyGitLazyHistoryPage,
+  pnwCreateGitLazyHistoryState,
+  pnwFailGitLazyHistoryRequest,
+  pnwRequestGitLazyHistoryPage,
+  pnwSetGitLazyHistoryExpanded,
+} from "./lazy-history.js";
+
+export {
   type PnwGitSquashBlocker,
   type PnwGitSquashBlockerCode,
   type PnwGitSquashDraft,

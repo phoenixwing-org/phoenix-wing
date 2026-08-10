@@ -62,14 +62,20 @@ export function pnwFormatGitGroupSummary(input: PnwGitGroupSummaryInput): PnwGit
   const subject = inline
     ? `${input.commit.subject.slice(0, inline.start)}审查：${reviewerLabel}${input.commit.subject.slice(inline.end)}`
     : reviewerLabel ? `${input.commit.subject} 审查：${reviewerLabel}` : input.commit.subject;
+  const body = normalizeCommitBody(input.commit.body);
+  const message = body ? `${subject.trim()}\n\n${body}` : subject.trim();
   const repository = input.includeRepositoryContext === false ? "" : `${input.repositoryName.trim()} `;
   const time = input.includeCommitTime === true ? ` · ${formatCommitTime(input.commit.committer.date)}` : "";
   return {
-    text: `${repository}${referenceLabel} **Commit:** ${shortOid} ++${time}\n${subject.trim()}`,
+    text: `${repository}${referenceLabel} **Commit:** ${shortOid} ++${time}\n${message}`,
     shortOid,
     referenceLabel,
     ...(reviewer ? { reviewer } : {}),
   };
+}
+
+function normalizeCommitBody(value: string): string {
+  return value.replace(/\r\n?/gu, "\n").trim();
 }
 
 export function pnwFormatGitGroupSummaries(input: PnwGitGroupSummariesInput): PnwGitGroupSummaries {

@@ -6,12 +6,12 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.6.x
 
-`0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1` 与 `0.6.2` 均已完成
-12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。当前 `develop` 后续只
-实施经真实 consumer 证明的兼容增量；消费者仍以各自 manifest 中的已发布精确版本
-为准。
+`0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1`、`0.6.2` 与 `0.6.3`
+均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。后续 patch
+继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
+精确版本为准。
 
-最后核验：2026-08-04
+最后核验：2026-08-10
 
 ## 已完成基线
 
@@ -108,6 +108,9 @@ Owner：Phoenix Wing maintainers
    - [x] 通过单元测试、typecheck、build、文档门禁，并在内置浏览器验证 light/dark/custom、桌面/窄屏和 `16/24/36/48/64px` SVG 清晰度。
    - [x] `0.6.1` 的代码、tarball 与真实 Host 候选验收通过，8 月 1 日的四条本地提交合并为一条；8 月 2 日更新 npm Token 后按依赖顺序发布 11 个 scoped packages 和根包。12 个 `latest` 均为 `0.6.1`，无相邻源码的 Registry 安装、精确内部依赖和公共入口 smoke 通过。详见[《0.6.1 发布验收》](0.6.1发布验收.md)。
    - [x] `0.6.2` 于 2026-08-04 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 `0.6.2`，公开依赖无本地协议，全新 Registry cache 的隔离消费者通过 `PNW_VERSION`、Workbench/Output 与 SQLite smoke。本次未 push 或创建/推送 Git tag。详见[《0.6.2 发布验收》](0.6.2发布验收.md)。
+   - [x] `0.6.3` 修复 Git 群消息简报丢失 commit body：subject 与完整 body 之间固定一个空行，只归一化换行并裁剪正文首尾，保留正文内部空行、列表和顺序。权威测试覆盖 Open Issue `b245527` 的五条正文；用户已用 `phoenix-function-develop@2f32a48` 在 KT Auto Code Extension Host 完成真实剪贴板验收。见[《Git 群消息简报完整正文修复》](Git群消息简报完整正文修复.md)。
+   - [x] `0.6.3` 增加纯 Core 的 `PnwGitLazyHistoryState`：更多 commit 默认收缩且不产生 page request；每次从收缩变为展开都按当前游标规划下一条，同一次展开不重复，保持展开时只允许下一条/下 5 条；page 合并拒绝 stale HEAD 与重复 OID。Auto 只在收到 request 时调用现有 `pnwReadGitCommitPage`，UI、AbortController 和持久化仍归 Host。见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。
+   - [x] `0.6.3` 于 2026-08-09 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 0.6.3，公开内部依赖精确，隔离 Registry consumer 通过 Workbench、Git 正文/懒历史与 SQLite smoke。本次未执行 Git push 或 tag。详见[《0.6.3 发布验收》](0.6.3发布验收.md)。
 
 6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
 
