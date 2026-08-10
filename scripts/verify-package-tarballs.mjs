@@ -6,6 +6,10 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const releaseVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
+const releaseMatrix = JSON.parse(fs.readFileSync(path.join(root, "release-matrix.json"), "utf8"));
+const matrixVersionByPackage = new Map(
+  releaseMatrix.packages.map(({ name, version }) => [name, version]),
+);
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phoenix-wing-package-tarballs-"));
 const packRoot = path.join(tempRoot, "packs");
 const consumerRoot = path.join(tempRoot, "consumer");
@@ -229,6 +233,11 @@ process.stdout.write("[verify] clean npm consumer imports and SQLite smoke passe
 
 function packPackage(directoryName) {
   const packageRoot = path.join(root, "packages", directoryName);
+  const sourceManifest = JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"));
+  const expectedVersion = matrixVersionByPackage.get(sourceManifest.name);
+  if (!expectedVersion) {
+    throw new Error(`${sourceManifest.name} is missing a per-package release matrix version`);
+  }
   const result = run(
     pnpmCommand(),
     ["pack", "--json", "--pack-destination", packRoot],
@@ -243,8 +252,8 @@ function packPackage(directoryName) {
   return {
     directoryName,
     tarball: path.isAbsolute(info.filename) ? info.filename : path.join(packRoot, info.filename),
-    expectedName: JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")).name,
-    expectedVersion: releaseVersion,
+    expectedName: sourceManifest.name,
+    expectedVersion,
   };
 }
 
@@ -353,8 +362,9 @@ function verifyAggregateManifest(item) {
     throw new Error("phoenix-wing aggregate tarball still contains a local dependency specifier");
   }
   for (const dependency of ["@phoenix-wing/code-core", "@phoenix-wing/db-node"]) {
-    if (manifest.dependencies?.[dependency] !== manifest.version) {
-      throw new Error(`${dependency} must match aggregate version ${manifest.version}`);
+    const expectedVersion = matrixVersionByPackage.get(dependency);
+    if (manifest.dependencies?.[dependency] !== expectedVersion) {
+      throw new Error(`${dependency} must match matrix version ${expectedVersion}`);
     }
   }
   for (const required of [

@@ -55,13 +55,13 @@ function pnwToggleSection(): void {
         :aria-expanded="pnwExpanded"
         @click="pnwToggleSection"
       >
+        <PnwExpandCaret :expanded="pnwExpanded" inline />
         <span class="pnw-primary-section-title">
           <slot name="title">{{ title }}</slot>
         </span>
         <span v-if="$slots.suffix" class="pnw-primary-section-suffix">
           <slot name="suffix" />
         </span>
-        <PnwExpandCaret :expanded="pnwExpanded" inline />
       </button>
       <div v-else class="pnw-primary-section-static-title">
         <span class="pnw-primary-section-title">
@@ -140,6 +140,10 @@ function pnwToggleSection(): void {
 
 .pnw-primary-section-toggle {
   cursor: pointer;
+}
+
+.pnw-primary-section-toggle :deep(.pnw-expand-twistie-inline) {
+  margin: 0 4px 0 2px;
 }
 
 .pnw-primary-section-toggle:hover {

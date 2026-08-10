@@ -65,6 +65,7 @@ describe("PnwPrimarySection", () => {
 
     const toggle = wrapper.get("button.pnw-primary-section-toggle");
     expect(toggle.attributes("aria-expanded")).toBe("true");
+    expect(toggle.element.firstElementChild?.classList.contains("pnw-expand-twistie")).toBe(true);
     expect(wrapper.get(".pnw-primary-section-body").isVisible()).toBe(true);
 
     await toggle.trigger("click");

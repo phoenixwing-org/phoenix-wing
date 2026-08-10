@@ -71,7 +71,8 @@ npm install phoenix-wing vue pinia
 | [doc/plan.md](doc/plan.md) | 当前路线、已完成基线和后续治理顺序 |
 | [doc/命名规则.md](doc/命名规则.md) | 命名规则、前缀对照、违规示例 |
 | [doc/naming-checklist.md](doc/naming-checklist.md) | 命名点检清单 |
-| [doc/三库版本矩阵.md](doc/三库版本矩阵.md) | Wing 锁步版本、消费端允许依赖与发布门禁 |
+| [doc/三库版本矩阵.md](doc/三库版本矩阵.md) | Wing 各发布物精确版本、消费端允许依赖与发布门禁 |
+| [doc/独立版本发布规则.md](doc/独立版本发布规则.md) | 0.6.4 起按真实改动确定版本、依赖和发布集合 |
 | [doc/C++成员排序算法规范.md](doc/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 | [packages/kt-codegen/README.md](packages/kt-codegen/README.md) | `kt-codegen` 数据模型、17列兼容、32个生成块与类图 |
 
