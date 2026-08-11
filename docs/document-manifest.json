@@ -31,342 +31,342 @@
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/0.4.0发布验收.md",
+      "path": "docs/0.4.0发布验收.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/三库版本矩阵.md",
+      "sourceOfTruth": "docs/三库版本矩阵.md",
       "reason": "0.4.0/0.4.1 发布历史证据"
     },
     {
-      "path": "doc/0.4.2发布候选验收.md",
+      "path": "docs/0.4.2发布候选验收.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/0.4.3发布候选验收.md",
+      "sourceOfTruth": "docs/0.4.3发布候选验收.md",
       "reason": "0.4.2 候选与公开发布历史证据"
     },
     {
-      "path": "doc/0.4.3发布候选验收.md",
+      "path": "docs/0.4.3发布候选验收.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/0.5.0发布候选验收.md",
+      "sourceOfTruth": "docs/0.5.0发布候选验收.md",
       "reason": "0.4.3 公开发布历史证据"
     },
     {
-      "path": "doc/0.5.0发布候选验收.md",
+      "path": "docs/0.5.0发布候选验收.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/0.5.1本地发布候选验收.md",
+      "sourceOfTruth": "docs/0.5.1本地发布候选验收.md",
       "reason": "0.5.0 公开发布历史证据"
     },
     {
-      "path": "doc/0.5.1本地发布候选验收.md",
+      "path": "docs/0.5.1本地发布候选验收.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/0.6.0发布验收.md",
+      "sourceOfTruth": "docs/0.6.0发布验收.md",
       "reason": "0.5.1 公开发布历史证据"
     },
     {
-      "path": "doc/0.6.0发布验收.md",
+      "path": "docs/0.6.0发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/0.6.1发布验收.md",
+      "path": "docs/0.6.1发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/0.6.2发布验收.md",
+      "path": "docs/0.6.2发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/0.6.3发布验收.md",
+      "path": "docs/0.6.3发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/0.6.4发布候选.md",
+      "path": "docs/0.6.4发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/本地验证方法.md",
+      "path": "docs/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/独立版本发布规则.md",
+      "path": "docs/独立版本发布规则.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/发布配置步骤.md",
+      "path": "docs/发布配置步骤.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/共享能力目录.md",
+      "path": "docs/共享能力目录.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/架构图.md",
+      "path": "docs/架构图.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/跨语言多包架构与三库迁移计划.md",
+      "path": "docs/跨语言多包架构与三库迁移计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
     {
-      "path": "doc/快速使用.md",
+      "path": "docs/快速使用.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/框架迁移计划.md",
+      "path": "docs/框架迁移计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
     {
-      "path": "doc/命名规则.md",
+      "path": "docs/命名规则.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/三库版本矩阵.md",
+      "path": "docs/三库版本矩阵.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/三库共享核心整改计划.md",
+      "path": "docs/三库共享核心整改计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
     {
-      "path": "doc/文档索引.md",
+      "path": "docs/文档索引.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/组件改进计划.md",
+      "path": "docs/组件改进计划.md",
       "status": "archived",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "historical",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
     {
-      "path": "doc/C++ clang-format规则说明.md",
+      "path": "docs/C++ clang-format规则说明.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/C++成员排序算法规范.md",
+      "path": "docs/C++成员排序算法规范.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Git轻量仓库读取与OID分页计划.md",
+      "path": "docs/Git轻量仓库读取与OID分页计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Git群消息简报完整正文修复.md",
+      "path": "docs/Git群消息简报完整正文修复.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/naming-checklist.md",
+      "path": "docs/naming-checklist.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/overview.md",
+      "path": "docs/overview.md",
       "status": "superseded",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/文档索引.md",
+      "sourceOfTruth": "docs/文档索引.md",
       "reason": "v0.1 模块总览已由包 README 和文档索引替代"
     },
     {
-      "path": "doc/plan.md",
+      "path": "docs/plan.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw-SVG图标制作与选型规范.md",
+      "path": "docs/Pnw-SVG图标制作与选型规范.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web-OpenIssue应用分析.md",
+      "path": "docs/Pnw工作台Web-OpenIssue应用分析.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web编辑器最大化与国际化.md",
+      "path": "docs/Pnw工作台Web编辑器最大化与国际化.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web侧目录外观可行性.md",
+      "path": "docs/Pnw工作台Web侧目录外观可行性.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web动态布局与拖动可行性.md",
+      "path": "docs/Pnw工作台Web动态布局与拖动可行性.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web浮层主题契约.md",
+      "path": "docs/Pnw工作台Web浮层主题契约.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web架构与示例计划.md",
+      "path": "docs/Pnw工作台Web架构与示例计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web可扩展显示配置中心.md",
+      "path": "docs/Pnw工作台Web可扩展显示配置中心.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web扩展消费者接入审计.md",
+      "path": "docs/Pnw工作台Web扩展消费者接入审计.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web双消费者验证计划.md",
+      "path": "docs/Pnw工作台Web双消费者验证计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web图标契约.md",
+      "path": "docs/Pnw工作台Web图标契约.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web问题与日志Block方案.md",
+      "path": "docs/Pnw工作台Web问题与日志Block方案.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web消费者接入指南.md",
+      "path": "docs/Pnw工作台Web消费者接入指南.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台Web页面布局与Header.md",
+      "path": "docs/Pnw工作台Web页面布局与Header.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台WebPrimary面板与Section.md",
+      "path": "docs/Pnw工作台WebPrimary面板与Section.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08"
     },
     {
-      "path": "doc/Pnw工作台WebPrimary悬浮开关.md",
+      "path": "docs/Pnw工作台WebPrimary悬浮开关.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
@@ -619,7 +619,7 @@
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",
       "lastVerified": "2026-08-08",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "旧 Phase 清单仅保留兼容跳转"
     }
   ]

@@ -24,11 +24,11 @@ npm install phoenix-wing vue pinia
 
 标准开发目录要求 `phoenix-wing`、`kt-auto-code`、`phoenix-desk-tools` 三仓同级。Auto Code 使用 `pnpm dev`（AI 无 GUI 验证用 `pnpm ext:dev:prepare`），Desk Tools 使用 `pnpm dev`、`pnpm test:local-wing` 或 `pnpm build:local-wing`；找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。
 
-正式 npm 包行为必须另跑显式 Registry 对照命令。完整目录、命令、安全边界与消费者验收入口见 **[doc/本地验证方法.md](doc/本地验证方法.md)**。
+正式 npm 包行为必须另跑显式 Registry 对照命令。完整目录、命令、安全边界与消费者验收入口见 **[docs/本地验证方法.md](docs/本地验证方法.md)**。
 
 ## 快速使用
 
-详见 **[doc/快速使用.md](doc/快速使用.md)**
+详见 **[docs/快速使用.md](docs/快速使用.md)**
 
 ## 模块概览
 
@@ -41,7 +41,7 @@ npm install phoenix-wing vue pinia
 | 📦 类型系统 | 6 | 属性面板、Ribbon 配置、工作台等类型定义 |
 | 🗄 Store | 1 | 异步任务 Pinia store |
 
-当前模块与发布单元入口见 **[doc/文档索引.md](doc/文档索引.md)**。
+当前模块与发布单元入口见 **[docs/文档索引.md](docs/文档索引.md)**。
 
 ## 命名规则
 
@@ -58,22 +58,22 @@ npm install phoenix-wing vue pinia
 
 `KtCodegen` 是参数代码生成领域的显式命名例外；其余 Phoenix Wing 公共 API 继续遵守 `Pnw` 前缀。
 
-详见 **[doc/命名规则.md](doc/命名规则.md)**
+详见 **[docs/命名规则.md](docs/命名规则.md)**
 
 ## 文档
 
 | 文档 | 内容 |
 |------|------|
-| [doc/文档索引.md](doc/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
-| [doc/快速使用.md](doc/快速使用.md) | 各类 API 快速上手示例 |
-| [doc/本地验证方法.md](doc/本地验证方法.md) | 三仓并列目录、Auto/Desk 本地 Wing 命令与 Registry 对照边界 |
-| [doc/架构图.md](doc/架构图.md) | 壳层组件树和引擎清单 |
-| [doc/plan.md](doc/plan.md) | 当前路线、已完成基线和后续治理顺序 |
-| [doc/命名规则.md](doc/命名规则.md) | 命名规则、前缀对照、违规示例 |
-| [doc/naming-checklist.md](doc/naming-checklist.md) | 命名点检清单 |
-| [doc/三库版本矩阵.md](doc/三库版本矩阵.md) | Wing 各发布物精确版本、消费端允许依赖与发布门禁 |
-| [doc/独立版本发布规则.md](doc/独立版本发布规则.md) | 0.6.4 起按真实改动确定版本、依赖和发布集合 |
-| [doc/C++成员排序算法规范.md](doc/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
+| [docs/文档索引.md](docs/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
+| [docs/快速使用.md](docs/快速使用.md) | 各类 API 快速上手示例 |
+| [docs/本地验证方法.md](docs/本地验证方法.md) | 三仓并列目录、Auto/Desk 本地 Wing 命令与 Registry 对照边界 |
+| [docs/架构图.md](docs/架构图.md) | 壳层组件树和引擎清单 |
+| [docs/plan.md](docs/plan.md) | 当前路线、已完成基线和后续治理顺序 |
+| [docs/命名规则.md](docs/命名规则.md) | 命名规则、前缀对照、违规示例 |
+| [docs/naming-checklist.md](docs/naming-checklist.md) | 命名点检清单 |
+| [docs/三库版本矩阵.md](docs/三库版本矩阵.md) | Wing 各发布物精确版本、消费端允许依赖与发布门禁 |
+| [docs/独立版本发布规则.md](docs/独立版本发布规则.md) | 0.6.4 起按真实改动确定版本、依赖和发布集合 |
+| [docs/C++成员排序算法规范.md](docs/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 | [packages/kt-codegen/README.md](packages/kt-codegen/README.md) | `kt-codegen` 数据模型、17列兼容、32个生成块与类图 |
 
 ## Peer Dependencies

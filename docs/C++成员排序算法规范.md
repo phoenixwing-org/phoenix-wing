@@ -151,5 +151,5 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 ## 7. 文档归属
 
 - `phoenix-wing`（本文）：算法语义、公开接口、锁定规则、回归契约的唯一规范。
-- `phoenix-desk-tools/doc/code/`：Web/CLI 使用、工作集、Python 兼容入口与 DeskTools 页面行为；算法规则链接到本文。
-- `kt-auto-code/doc/`：VS Code 扫描、选择、Git 预览、会话还原与发布验收；算法规则链接到本文。
+- `phoenix-desk-tools/docs/code/`：Web/CLI 使用、工作集、Python 兼容入口与 DeskTools 页面行为；算法规则链接到本文。
+- `kt-auto-code/docs/`：VS Code 扫描、选择、Git 预览、会话还原与发布验收；算法规则链接到本文。

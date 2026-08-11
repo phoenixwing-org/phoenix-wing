@@ -7,49 +7,49 @@
     {
       "match": "^TODO\\.md$",
       "status": "superseded",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "旧 Phase 清单仅保留兼容跳转"
     },
     {
-      "match": "^doc/overview\\.md$",
+      "match": "^docs/overview\\.md$",
       "status": "superseded",
-      "sourceOfTruth": "doc/文档索引.md",
+      "sourceOfTruth": "docs/文档索引.md",
       "reason": "v0.1 模块总览已由包 README 和文档索引替代"
     },
     {
-      "match": "^doc/(框架迁移计划|组件改进计划|三库共享核心整改计划|跨语言多包架构与三库迁移计划)\\.md$",
+      "match": "^docs/(框架迁移计划|组件改进计划|三库共享核心整改计划|跨语言多包架构与三库迁移计划)\\.md$",
       "status": "archived",
-      "sourceOfTruth": "doc/plan.md",
+      "sourceOfTruth": "docs/plan.md",
       "reason": "完成态实施计划，保留为历史证据"
     },
     {
-      "match": "^doc/0\\.4\\.0发布验收\\.md$",
+      "match": "^docs/0\\.4\\.0发布验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "doc/三库版本矩阵.md",
+      "sourceOfTruth": "docs/三库版本矩阵.md",
       "reason": "0.4.0/0.4.1 发布历史证据"
     },
     {
-      "match": "^doc/0\\.4\\.2发布候选验收\\.md$",
+      "match": "^docs/0\\.4\\.2发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "doc/0.4.3发布候选验收.md",
+      "sourceOfTruth": "docs/0.4.3发布候选验收.md",
       "reason": "0.4.2 候选与公开发布历史证据"
     },
     {
-      "match": "^doc/0\\.4\\.3发布候选验收\\.md$",
+      "match": "^docs/0\\.4\\.3发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "doc/0.5.0发布候选验收.md",
+      "sourceOfTruth": "docs/0.5.0发布候选验收.md",
       "reason": "0.4.3 公开发布历史证据"
     },
     {
-      "match": "^doc/0\\.5\\.0发布候选验收\\.md$",
+      "match": "^docs/0\\.5\\.0发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "doc/0.5.1本地发布候选验收.md",
+      "sourceOfTruth": "docs/0.5.1本地发布候选验收.md",
       "reason": "0.5.0 公开发布历史证据"
     },
     {
-      "match": "^doc/0\\.5\\.1本地发布候选验收\\.md$",
+      "match": "^docs/0\\.5\\.1本地发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "doc/0.6.0发布验收.md",
+      "sourceOfTruth": "docs/0.6.0发布验收.md",
       "reason": "0.5.1 公开发布历史证据"
     },
     {

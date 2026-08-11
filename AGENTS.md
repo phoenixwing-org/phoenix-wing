@@ -24,11 +24,11 @@ phoenix-wing 是发布到 npm 的公共库，所有对外暴露的名称必须�
 `kt.codegen.*`。此例外只适用于该兼容领域；其他 Phoenix Wing 公共 API
 仍必须遵守上表的 `Pnw` 命名规则。
 
-详细规则见 `doc/命名规则.md`。
+详细规则见 `docs/命名规则.md`。
 
 ## 项目定位
 
-phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `doc/plan.md`，历史迁移决策由 `doc/document-manifest.json` 标记为 archived/superseded。
+phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `docs/plan.md`，历史迁移决策由 `docs/document-manifest.json` 标记为 archived/superseded。
 
 - 仓库根 `phoenix-wing` 在迁移期仍是兼容发布包，禁止直接改成 private 或一次性搬走 Vue SFC。
 - 新 npm 子包必须输出稳定 JavaScript 和 `.d.ts`；源码直出只允许作为旧聚合包兼容行为。
@@ -63,15 +63,15 @@ phoenix/
 - 禁止运行 `pnpm link`，禁止写入 `link:`、`file:`、`workspace:` 本地依赖或 `pnpm.overrides`，禁止临时修改消费者 `pnpm-workspace.yaml`、`package.json`、`pnpm-lock.yaml`，禁止替换或编辑 `node_modules`。
 - 本地联调成功只证明并列源码消费，不等于 npm tarball、Registry 或真实发布完成；不得因此修改 Wing 版本、标签或发布矩阵。
 
-详细责任、命令与消费者验收入口见 `doc/本地验证方法.md`。
+详细责任、命令与消费者验收入口见 `docs/本地验证方法.md`。
 
 ## 文档
 
-- `doc/文档索引.md` — 当前文档唯一导航
-- `doc/命名规则.md` — 命名规则详细说明
-- `doc/naming-checklist.md` — 命名点检清单
-- `doc/plan.md` — 当前路线和治理状态
-- `doc/document-manifest.json` — 全量文档分类清单（由脚本生成）
+- `docs/文档索引.md` — 当前文档唯一导航
+- `docs/命名规则.md` — 命名规则详细说明
+- `docs/naming-checklist.md` — 命名点检清单
+- `docs/plan.md` — 当前路线和治理状态
+- `docs/document-manifest.json` — 全量文档分类清单（由脚本生成）
 
 ## 技术栈
 
