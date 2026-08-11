@@ -93,4 +93,5 @@ npm install phoenix-wing vue pinia
 
 ## 许可
 
-Copyright © 2024–2026 上海锟钛。项目使用 [Apache License 2.0](LICENSE) 开源。
+Copyright © 2024–2026 凤凰之翼（PhoenixWing）贡献者。项目使用
+[Apache License 2.0](LICENSE) 开源。
