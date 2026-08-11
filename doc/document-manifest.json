@@ -104,7 +104,21 @@
       "lastVerified": "2026-08-08"
     },
     {
+      "path": "doc/0.6.4发布候选.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.6.x",
+      "lastVerified": "2026-08-08"
+    },
+    {
       "path": "doc/本地验证方法.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.6.x",
+      "lastVerified": "2026-08-08"
+    },
+    {
+      "path": "doc/独立版本发布规则.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.6.x",

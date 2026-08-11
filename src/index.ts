@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.6.3'
+export const PNW_VERSION = '0.6.4'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度

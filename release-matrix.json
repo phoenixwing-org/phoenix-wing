@@ -1,19 +1,18 @@
 {
-  "schema_version": 1,
-  "release_version": "0.6.3",
+  "schema_version": 2,
   "packages": [
-    { "name": "phoenix-wing", "manifest": "package.json", "kind": "compat-ui" },
-    { "name": "@phoenix-wing/code-core", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
-    { "name": "@phoenix-wing/git-core", "manifest": "packages/git-core/package.json", "kind": "typescript-core" },
-    { "name": "@phoenix-wing/git-node", "manifest": "packages/git-node/package.json", "kind": "node-adapter" },
-    { "name": "@phoenix-wing/run-core", "manifest": "packages/run-core/package.json", "kind": "typescript-core" },
-    { "name": "@phoenix-wing/run-node", "manifest": "packages/run-node/package.json", "kind": "node-adapter" },
-    { "name": "@phoenix-wing/kt-codegen", "manifest": "packages/kt-codegen/package.json", "kind": "typescript-core" },
-    { "name": "@phoenix-wing/cad-contracts", "manifest": "packages/cad-contracts/package.json", "kind": "typescript-contracts" },
-    { "name": "@phoenix-wing/cad-core", "manifest": "packages/cad-core/package.json", "kind": "typescript-core" },
-    { "name": "@phoenix-wing/workspace-schema", "manifest": "packages/workspace-schema/package.json", "kind": "schema" },
-    { "name": "@phoenix-wing/db-node", "manifest": "packages/db-node/package.json", "kind": "node-adapter" },
-    { "name": "@phoenix-wing/cad-rust-source", "manifest": "packages/cad-rust-source/package.json", "kind": "rust-source" }
+    { "name": "phoenix-wing", "version": "0.6.4", "manifest": "package.json", "kind": "compat-ui" },
+    { "name": "@phoenix-wing/code-core", "version": "0.6.3", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/git-core", "version": "0.6.3", "manifest": "packages/git-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/git-node", "version": "0.6.3", "manifest": "packages/git-node/package.json", "kind": "node-adapter" },
+    { "name": "@phoenix-wing/run-core", "version": "0.6.3", "manifest": "packages/run-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/run-node", "version": "0.6.3", "manifest": "packages/run-node/package.json", "kind": "node-adapter" },
+    { "name": "@phoenix-wing/kt-codegen", "version": "0.6.3", "manifest": "packages/kt-codegen/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/cad-contracts", "version": "0.6.3", "manifest": "packages/cad-contracts/package.json", "kind": "typescript-contracts" },
+    { "name": "@phoenix-wing/cad-core", "version": "0.6.3", "manifest": "packages/cad-core/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/workspace-schema", "version": "0.6.3", "manifest": "packages/workspace-schema/package.json", "kind": "schema" },
+    { "name": "@phoenix-wing/db-node", "version": "0.6.3", "manifest": "packages/db-node/package.json", "kind": "node-adapter" },
+    { "name": "@phoenix-wing/cad-rust-source", "version": "0.6.3", "manifest": "packages/cad-rust-source/package.json", "kind": "rust-source" }
   ],
   "protocols": {
     "cad_native": 1,

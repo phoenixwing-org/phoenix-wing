@@ -6,7 +6,13 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageRoot = path.join(root, "packages", "cad-rust-source");
-const releaseVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
+const releaseMatrix = JSON.parse(fs.readFileSync(path.join(root, "release-matrix.json"), "utf8"));
+const releaseVersion = releaseMatrix.packages.find(
+  ({ name }) => name === "@phoenix-wing/cad-rust-source",
+)?.version;
+if (typeof releaseVersion !== "string") {
+  throw new Error("release matrix is missing @phoenix-wing/cad-rust-source version");
+}
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "phoenix-cad-rust-tarball-"));
 const unpackRoot = path.join(tempRoot, "unpacked");
 const cargoTargetDir = path.join(tempRoot, "target");

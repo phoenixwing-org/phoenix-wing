@@ -7,7 +7,9 @@ Owner：Phoenix Wing maintainers
 适用版本：0.6.x
 
 `0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1`、`0.6.2` 与 `0.6.3`
-均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。后续 patch
+均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
+`0.6.4` 正在准备兼容候选，统一 Primary Section 的 VS Code 风格左侧折叠箭头；
+稳定 scoped 包保持 0.6.3。后续 patch
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
@@ -111,6 +113,7 @@ Owner：Phoenix Wing maintainers
    - [x] `0.6.3` 修复 Git 群消息简报丢失 commit body：subject 与完整 body 之间固定一个空行，只归一化换行并裁剪正文首尾，保留正文内部空行、列表和顺序。权威测试覆盖 Open Issue `b245527` 的五条正文；用户已用 `phoenix-function-develop@2f32a48` 在 KT Auto Code Extension Host 完成真实剪贴板验收。见[《Git 群消息简报完整正文修复》](Git群消息简报完整正文修复.md)。
    - [x] `0.6.3` 增加纯 Core 的 `PnwGitLazyHistoryState`：更多 commit 默认收缩且不产生 page request；每次从收缩变为展开都按当前游标规划下一条，同一次展开不重复，保持展开时只允许下一条/下 5 条；page 合并拒绝 stale HEAD 与重复 OID。Auto 只在收到 request 时调用现有 `pnwReadGitCommitPage`，UI、AbortController 和持久化仍归 Host。见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。
    - [x] `0.6.3` 于 2026-08-09 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 0.6.3，公开内部依赖精确，隔离 Registry consumer 通过 Workbench、Git 正文/懒历史与 SQLite smoke。本次未执行 Git push 或 tag。详见[《0.6.3 发布验收》](0.6.3发布验收.md)。
+   - [ ] 根 `phoenix-wing@0.6.4` 兼容候选将 `PnwPrimarySection` 折叠箭头统一到标题左侧，保持收起向右、展开向下、键盘与 aria 契约不变；本轮不升级 11 个未变化 scoped packages，发布前仍需完成全量门禁和 Registry 干净消费。详见[《0.6.4 发布候选》](0.6.4发布候选.md)。
 
 6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
 
@@ -129,6 +132,6 @@ Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一�
 ## 变更规则
 
 - 公共能力必须先有第二个真实消费者或明确的跨宿主契约。
-- 发布版本与协议由 `release-matrix.json` 维护；消费者当前精确版本由各消费仓库维护，不在 Wing 中复制。
+- 0.6.4 起默认按包独立版本；`release-matrix.json` 分别维护每个发布物的精确版本与协议。没有源码、公开 API、制品或依赖变化的包不得空升 patch；详见[《独立版本发布规则》](独立版本发布规则.md)。消费者当前精确版本由各消费仓库维护，不在 Wing 中复制。
 - 测试数量和 bundle 大小由 CI 产出；当前文档只描述门禁范围，不手写易漂移计数。
 - 完成态计划转为 archived；被新真源替代的文档标为 superseded，并保留跳转关系至少一个发布周期。
