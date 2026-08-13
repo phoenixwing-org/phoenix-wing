@@ -25,6 +25,7 @@ describe("Pnw 常用图标目录", () => {
       "close-others",
       "editor-maximize",
       "editor-restore",
+      "window-float",
       "unknown",
       "dashboard",
       "list",

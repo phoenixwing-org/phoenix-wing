@@ -375,18 +375,25 @@ function verifyAggregateManifest(item) {
     "dist/style.css",
     "dist/components/PnwChoiceDialogHost.js",
     "dist/components/PnwChoiceDialogHost.vue.d.ts",
+    "dist/components/PnwDockableToolWindow.js",
+    "dist/components/PnwDockableToolWindow.vue.d.ts",
     "dist/components/PnwOverlayThemeProvider.js",
     "dist/components/PnwOverlayThemeProvider.vue.d.ts",
     "dist/composables/pnwChoiceDialog.js",
     "dist/composables/usePnwOverlayTheme.js",
     "dist/layout/PnwPrimaryPanel.js",
     "dist/layout/PnwPrimaryPanel.vue.d.ts",
+    "dist/layout/PnwDockablePrimarySection.js",
+    "dist/layout/PnwDockablePrimarySection.vue.d.ts",
     "dist/layout/PnwPrimarySection.js",
     "dist/layout/PnwPrimarySection.vue.d.ts",
     "dist/types/PnwDiagnostics.d.ts",
+    "dist/types/PnwDockableTool.d.ts",
     "dist/types/PnwWorkbenchWeb.d.ts",
     "dist/types/PnwRibbonConfig.js",
     "dist/types/PnwRibbonConfig.d.ts",
+    "dist/utils/pnwDockableTool.js",
+    "dist/utils/pnwDockableTool.d.ts",
     "fixtures/ribbon-contribution-v1.json",
   ]) {
     const file = path.join(packageRoot, required);
@@ -396,6 +403,7 @@ function verifyAggregateManifest(item) {
   }
   for (const forbidden of [
     "dist/types/PnwDiagnostics.js",
+    "dist/types/PnwDockableTool.js",
     "dist/types/PnwEditorDrawer.js",
     "dist/types/PnwIcon.js",
     "dist/types/PnwLocale.js",
@@ -426,14 +434,32 @@ function verifyAggregateManifest(item) {
 function verifyAggregateUiConsumer() {
   fs.writeFileSync(path.join(consumerRoot, "types-smoke.ts"), `
 import type { PnwNavigationNode } from "phoenix-wing/types/PnwWorkbenchWeb";
+import type {
+  PnwDockableToolDefinition,
+  PnwDockableToolState,
+} from "phoenix-wing/types/PnwDockableTool";
 import {
   PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION,
   pnwCheckRibbonContributionCompatibility,
 } from "phoenix-wing/types/PnwRibbonConfig";
 
 const node: PnwNavigationNode = { id: "dashboard", label: "Dashboard" };
+const tool: PnwDockableToolDefinition = {
+  id: "smoke.tool",
+  title: "Smoke tool",
+  scope: "application",
+};
+const toolState: PnwDockableToolState = {
+  mode: "closed",
+  floatingPosition: { x: 24, y: 64 },
+  primaryPlacement: "last",
+  primaryExpanded: true,
+};
 if (node.id !== "dashboard" || PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION !== 1) {
   throw new Error("type subpath smoke failed");
+}
+if (tool.id !== "smoke.tool" || toolState.mode !== "closed") {
+  throw new Error("dockable tool type subpath smoke failed");
 }
 pnwCheckRibbonContributionCompatibility({ schemaVersion: 1, tabs: [] });
 `);
@@ -469,7 +495,9 @@ export async function load(url, context, nextLoad) {
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import CompatChoiceDialogHost from "phoenix-wing/components/PnwChoiceDialogHost.vue";
+import CompatDockableToolWindow from "phoenix-wing/components/PnwDockableToolWindow.vue";
 import CompatOverlayThemeProvider from "phoenix-wing/components/PnwOverlayThemeProvider.vue";
+import CompatDockablePrimarySection from "phoenix-wing/layout/PnwDockablePrimarySection.vue";
 import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
 import CompatPrimarySection from "phoenix-wing/layout/PnwPrimarySection.vue";
 import {
@@ -477,13 +505,18 @@ import {
 } from "phoenix-wing/types/PnwRibbonConfig";
 import {
   PNW_VERSION,
+  PNW_DEFAULT_DOCKABLE_TOOL_STATE,
   PnwChoiceDialogHost,
+  PnwDockablePrimarySection,
+  PnwDockableToolWindow,
   PnwOverlayThemeProvider,
   PnwPrimaryPanel,
   PnwPrimarySection,
   pnwApplyColorScheme,
   pnwCheckRibbonContributionCompatibility,
   pnwChoiceDialogOpen,
+  pnwIsDockableToolVisible,
+  pnwReduceDockableToolState,
   pnwGetAppliedColorScheme,
   pnwPromptChoice,
   pnwResolveChoice,
@@ -505,11 +538,23 @@ if (PNW_RIBBON_SUBPATH_SCHEMA_VERSION !== 1) {
 if (PnwChoiceDialogHost !== CompatChoiceDialogHost) {
   throw new Error("root and compatibility subpath resolved different component instances");
 }
+if (PnwDockableToolWindow !== CompatDockableToolWindow
+  || PnwDockablePrimarySection !== CompatDockablePrimarySection) {
+  throw new Error("root and compatibility subpath resolved different dockable tool components");
+}
 if (PnwOverlayThemeProvider !== CompatOverlayThemeProvider) {
   throw new Error("root and compatibility subpath resolved different overlay theme providers");
 }
 if (PnwPrimaryPanel !== CompatPrimaryPanel || PnwPrimarySection !== CompatPrimarySection) {
   throw new Error("root and compatibility subpath resolved different Primary components");
+}
+const dockableDefinition = { id: "smoke.tool", title: "Smoke tool", scope: "application" };
+const floatingToolState = pnwReduceDockableToolState(PNW_DEFAULT_DOCKABLE_TOOL_STATE, {
+  type: "open-floating",
+});
+if (floatingToolState.mode !== "floating"
+  || !pnwIsDockableToolVisible(dockableDefinition, floatingToolState, "dashboard")) {
+  throw new Error("aggregate dockable tool state contract smoke failed");
 }
 if (pnwApplyColorScheme("dark") !== "dark" || pnwGetAppliedColorScheme() !== "dark") {
   throw new Error("aggregate overlay color-scheme contract did not share applied state");

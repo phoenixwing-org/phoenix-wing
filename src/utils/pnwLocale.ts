@@ -5,6 +5,11 @@ export const PNW_DEFAULT_LOCALE = "zh-CN" as const satisfies PnwLocale;
 const PNW_ZH_CN_MESSAGES = {
   "floatingPanel.title": "浮动面板",
   "floatingPanel.close": "关闭浮动面板",
+  "dockableTool.dockPrimary": "停靠到 Primary",
+  "dockableTool.float": "浮出工具",
+  "dockableTool.close": "关闭工具",
+  "dockableTool.moveFirst": "移动到 Primary 首部",
+  "dockableTool.moveLast": "移动到 Primary 尾部",
   "workbench.header": "工作台页眉",
   "workbench.activity": "全局活动导航",
   "workbench.treeHeader": "导航工具",
@@ -93,6 +98,11 @@ export type PnwLocaleMessages = Readonly<Record<PnwLocaleMessageKey, string>>;
 const PNW_EN_US_MESSAGES: PnwLocaleMessages = {
   "floatingPanel.title": "Floating panel",
   "floatingPanel.close": "Close floating panel",
+  "dockableTool.dockPrimary": "Dock in Primary",
+  "dockableTool.float": "Float tool",
+  "dockableTool.close": "Close tool",
+  "dockableTool.moveFirst": "Move to start of Primary",
+  "dockableTool.moveLast": "Move to end of Primary",
   "workbench.header": "Workbench header",
   "workbench.activity": "Global activity navigation",
   "workbench.treeHeader": "Navigation tools",

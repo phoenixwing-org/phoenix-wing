@@ -11,6 +11,8 @@ const required = [
   "style.css",
   "components/PnwChoiceDialogHost.js",
   "components/PnwChoiceDialogHost.vue.d.ts",
+  "components/PnwDockableToolWindow.js",
+  "components/PnwDockableToolWindow.vue.d.ts",
   "components/PnwEditorDrawerHost.js",
   "components/PnwEditorDrawerHost.vue.d.ts",
   "components/PnwIconRenderer.js",
@@ -25,11 +27,14 @@ const required = [
   "composables/pnwIconRegistry.d.ts",
   "layout/PnwPageHeader.js",
   "layout/PnwPageHeader.vue.d.ts",
+  "layout/PnwDockablePrimarySection.js",
+  "layout/PnwDockablePrimarySection.vue.d.ts",
   "layout/PnwPrimaryPanel.js",
   "layout/PnwPrimaryPanel.vue.d.ts",
   "layout/PnwPrimarySection.js",
   "layout/PnwPrimarySection.vue.d.ts",
   "types/PnwDiagnostics.d.ts",
+  "types/PnwDockableTool.d.ts",
   "types/PnwEditorDrawer.d.ts",
   "types/PnwIcon.d.ts",
   "types/PnwLocale.d.ts",
@@ -42,6 +47,8 @@ const required = [
   "types/pnwPageProperties.d.ts",
   "utils/pnwIconId.js",
   "utils/pnwIconId.d.ts",
+  "utils/pnwDockableTool.js",
+  "utils/pnwDockableTool.d.ts",
 ];
 
 for (const relative of required) {
@@ -52,6 +59,7 @@ for (const relative of required) {
 }
 const forbiddenTypeOnlyRuntimeEntries = [
   "types/PnwDiagnostics.js",
+  "types/PnwDockableTool.js",
   "types/PnwEditorDrawer.js",
   "types/PnwIcon.js",
   "types/PnwLocale.js",

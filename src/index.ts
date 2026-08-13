@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.6.4'
+export const PNW_VERSION = '0.6.5'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -131,6 +131,22 @@ export {
   type PnwEditorDrawerCloseContext,
   type PnwEditorDrawerCloseGuard,
 } from './types/PnwEditorDrawer.js'
+
+export {
+  type PnwDockableToolMode,
+  type PnwDockableToolScope,
+  type PnwDockablePrimaryPlacement,
+  type PnwDockableToolDefinition,
+  type PnwDockableToolState,
+  type PnwDockableToolCommand,
+} from './types/PnwDockableTool.js'
+
+export {
+  PNW_DEFAULT_DOCKABLE_TOOL_STATE,
+  pnwNormalizeDockableToolState,
+  pnwReduceDockableToolState,
+  pnwIsDockableToolVisible,
+} from './utils/pnwDockableTool.js'
 
 export {
   type PnwPagePropertyScalar,
@@ -420,6 +436,7 @@ export { default as PnwComboTextInput } from './components/PnwComboTextInput.vue
 export { default as PnwDictSelect } from './components/PnwDictSelect.vue'
 export { default as PnwEditorDrawerHost } from './components/PnwEditorDrawerHost.vue'
 export { default as PnwExpandCaret } from './components/PnwExpandCaret.vue'
+export { default as PnwDockableToolWindow } from './components/PnwDockableToolWindow.vue'
 export { default as PnwFloatingPanel } from './components/PnwFloatingPanel.vue'
 export { default as PnwIcon } from './components/PnwIcon.vue'
 export { default as PnwIconRenderer } from './components/PnwIconRenderer.vue'
@@ -436,6 +453,7 @@ export { default as PnwLogBlock } from './layout/PnwLogBlock.vue'
 export { default as PnwOutputBlock } from './layout/PnwOutputBlock.vue'
 export { default as PnwProblemsBlock } from './layout/PnwProblemsBlock.vue'
 export { default as PnwPrimaryBlock } from './layout/PnwPrimaryBlock.vue'
+export { default as PnwDockablePrimarySection } from './layout/PnwDockablePrimarySection.vue'
 export { default as PnwPrimaryPanel } from './layout/PnwPrimaryPanel.vue'
 export { default as PnwPrimarySection } from './layout/PnwPrimarySection.vue'
 export { default as PnwRibbon } from './layout/PnwRibbon.vue'

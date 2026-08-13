@@ -23,6 +23,7 @@ export const PNW_ICON_NAMES = [
   "close-others",
   "editor-maximize",
   "editor-restore",
+  "window-float",
   "unknown",
   "dashboard",
   "list",

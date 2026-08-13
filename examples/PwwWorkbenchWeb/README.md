@@ -15,6 +15,11 @@
 `PwwFixtureViewPrimary.vue` 演示 `PnwPrimaryPanel` 与 `PnwPrimarySection`：Wing 负责无 inset
 Primary 结构和默认折叠交互，fixture 只保留表单、树与属性数据。
 
+`PwwFixtureDockableTool.vue` 演示同一份受控 tool definition/state 如何在浮窗与 Primary
+Section 间互斥切换；fixture 工具内容仍是 consumer 数据，不进入 Wing。完整作用域、
+持久化和应用级 Primary availability 说明见
+[`Pnw 工作台 Web · 可浮动与 Primary 停靠工具宿主`](../../docs/Pnw工作台Web可浮动与Primary停靠工具宿主.md)。
+
 ## 新 consumer 如何采用
 
 不要把 `src/fixture/` 整目录复制成产品代码。这里的 `PwwFixture*` 是为了运行和
@@ -60,6 +65,7 @@ examples/PwwWorkbenchWeb/
         ├── PwwFixtureWorkbenchController.ts
         ├── PwwFixtureWorkbenchPreferences.ts
         ├── PwwFixtureDisplaySettingsExtras.vue
+        ├── PwwFixtureDockableTool.vue
         ├── PwwFixtureWorkbenchStore.ts
         ├── PwwFixtureWorkbenchView.vue
         └── PwwFixtureWorkbench.css

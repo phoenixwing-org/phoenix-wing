@@ -142,6 +142,10 @@ withDefaults(defineProps<{
       <path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" />
       <path d="m9 9-5-5M15 9l5-5M9 15l-5 5M15 15l5 5" />
     </g>
+    <g v-else-if="name === 'window-float'">
+      <rect x="3" y="6" width="13" height="14" rx="2" />
+      <path d="M9 3h12v12M14 10l7-7" />
+    </g>
     <g v-else-if="name === 'dashboard'">
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />
