@@ -40,6 +40,8 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
       "src/fixture/PwwFixtureCodegenView.vue",
       "src/fixture/PwwFixtureInspectionView.vue",
       "src/fixture/PwwFixtureIssueView.vue",
+      "src/fixture/PwwFixtureHomeView.vue",
+      "src/fixture/PwwFixtureWorkspaceWelcome.vue",
       "src/fixture/PwwFixtureEditorView.ts",
       "src/fixture/PwwFixtureViewPrimary.vue",
       "src/fixture/PwwFixtureViewSecondary.vue",
@@ -48,6 +50,10 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
       "src/fixture/PwwFixtureWorkbench.css",
       "src/fixture/PwwFixtureNavigation.ts",
       "src/fixture/PwwFixtureViewDefinitions.ts",
+      "src/fixture/PwwFixturePresentationView.vue",
+      "src/fixture/PwwFixtureDockableToolView.vue",
+      "src/fixture/PwwFixtureDockableToolPrimary.vue",
+      "src/fixture/PwwFixtureResourceToolState.ts",
       "src/fixture/PwwFixtureNavigationLayout.ts",
       "src/fixture/PwwFixtureWorkbenchStore.ts",
       "src/fixture/PwwFixtureWorkbenchController.ts",
@@ -76,6 +82,10 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
       pwwReadFile("src/main.ts"),
       pwwReadFile("src/fixture/PwwFixtureNavigation.ts"),
       pwwReadFile("src/fixture/PwwFixtureViewDefinitions.ts"),
+      pwwReadFile("src/fixture/PwwFixturePresentationView.vue"),
+      pwwReadFile("src/fixture/PwwFixtureDockableToolView.vue"),
+      pwwReadFile("src/fixture/PwwFixtureHomeView.vue"),
+      pwwReadFile("src/fixture/PwwFixtureWorkspaceWelcome.vue"),
     ].join("\n");
 
     expect(sources).toContain('from "phoenix-wing"');
@@ -130,7 +140,27 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
       .toContain("不为简单属性额外占用右侧宽度");
     expect(pwwReadFile("src/fixture/PwwFixtureViewDefinitions.ts"))
       .toContain('kind: "codegen"');
+    expect(pwwReadFile("src/fixture/PwwFixtureViewDefinitions.ts"))
+      .toContain('"result-preview"');
+    expect(pwwReadFile("src/fixture/PwwFixturePresentationView.vue"))
+      .toContain("PnwViewPresentationPortal");
+    expect(pwwReadFile("src/fixture/PwwFixturePresentationView.vue"))
+      .toContain(":presentation-detachable=\"pwwContribution.detachable\"");
+    expect(pwwReadFile("src/fixture/PwwFixturePresentationView.vue"))
+      .toContain("fixture.open-result-floating");
     expect(pwwReadFile("src/App.vue")).toContain("handleViewAction");
+    expect(pwwReadFile("src/App.vue")).toContain("PwwFixtureWorkspaceWelcome");
+    expect(pwwReadFile("src/App.vue")).toContain('template #workbench="{ showWelcome }"');
+    expect(pwwReadFile("src/App.vue")).toContain('@click="showWelcome"');
+    const pwwHomeView = pwwReadFile("src/fixture/PwwFixtureHomeView.vue");
+    expect(pwwHomeView).toContain("PnwWorkbenchHome");
+    expect(pwwHomeView).toContain("pwwHomeFeatures");
+    expect(pwwHomeView).toContain("开始巡游");
+    expect(pwwHomeView).toContain("消费者完全自定义区");
+    expect(pwwReadFile("src/fixture/PwwFixtureViewDefinitions.ts"))
+      .toContain("pnwCreateWorkbenchHomeDefinition");
+    expect(pwwReadFile("src/fixture/PwwFixtureViewDefinitions.ts"))
+      .not.toContain('kind: "workspace-welcome"');
     expect(sources).not.toMatch(/(?:\.\.\/)+src\//u);
   });
 
@@ -183,6 +213,15 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
     expect(sources).toContain('shortLabel: "工作"');
     expect(sources).toContain("PnwWorkbenchShell");
     expect(sources).toContain("PnwWorkbenchDisplaySettingsSection");
+    expect(sources).toContain("PnwWorkspaceGate");
+    expect(sources).toContain("PnwColorSchemeToggle");
+    expect(sources).toContain("PnwInformationCardGroup");
+    expect(sources).toContain("PnwWorkspaceTypeSelect");
+    expect(sources).toContain("PnwWorkbenchHome");
+    expect(sources).toContain('pwwGateMode = ref<PnwWorkspaceGateMode>("welcome")');
+    expect(sources).toContain("关闭工作空间");
+    expect(sources).toContain("必须先打开工作空间");
+    expect(sources).toContain("允许无工作空间进入");
     expect(sources).toContain("default-open");
     expect(sources).toContain("Fixture 窄屏检查");
     expect(sources).toContain("公共 SVG 尺寸回归");

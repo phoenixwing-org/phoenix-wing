@@ -142,6 +142,19 @@ withDefaults(defineProps<{
       <path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" />
       <path d="m9 9-5-5M15 9l5-5M9 15l-5 5M15 15l5 5" />
     </g>
+    <g v-else-if="name === 'window-float'">
+      <rect x="3" y="6" width="13" height="14" rx="2" />
+      <path d="M9 3h12v12M14 10l7-7" />
+    </g>
+    <g v-else-if="name === 'window-reattach'">
+      <rect x="8" y="4" width="13" height="14" rx="2" />
+      <path d="M15 21H3V9M10 14l-7 7M3 15v6h6" />
+    </g>
+    <g v-else-if="name === 'sun'">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4" />
+    </g>
+    <path v-else-if="name === 'moon'" d="M19.5 15.25A8 8 0 0 1 8.75 4.5 8 8 0 1 0 19.5 15.25Z" />
     <g v-else-if="name === 'dashboard'">
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />

@@ -5,10 +5,22 @@ import { PWW_FIXTURE_NAVIGATION } from "./fixture/PwwFixtureNavigation.js";
 import { usePwwFixtureWorkbenchController } from "./fixture/PwwFixtureWorkbenchController.js";
 import PwwFixtureDisplaySettingsExtras from "./fixture/PwwFixtureDisplaySettingsExtras.vue";
 import PwwFixtureNavigationLayoutView from "./fixture/PwwFixtureNavigationLayoutView.vue";
+import PwwFixtureViewDialogHost from "./fixture/PwwFixtureViewDialogHost.vue";
 import PwwFixtureWorkbenchView from "./fixture/PwwFixtureWorkbenchView.vue";
+import PwwFixtureWorkspaceWelcome from "./fixture/PwwFixtureWorkspaceWelcome.vue";
 
 // App 只持有一个 fixture facade；真实 consumer 可换成自己的 Pinia/Router adapter。
 const pwwFixture = reactive(usePwwFixtureWorkbenchController());
+
+function pwwCloseTab(tabId: string, showWelcome: () => void): void {
+  pwwFixture.actions.closeTab(tabId);
+  if (pwwFixture.tabs.items.length === 0) showWelcome();
+}
+
+function pwwCloseAllTabs(showWelcome: () => void): void {
+  pwwFixture.actions.closeAllTabs();
+  showWelcome();
+}
 </script>
 
 <template>
@@ -23,7 +35,9 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
       class="pww-stage"
       :class="{ 'pww-stage--narrow': pwwFixture.settings.narrowPreview }"
     >
-      <PnwWorkbenchShell
+      <PwwFixtureWorkspaceWelcome>
+        <template #workbench="{ showWelcome }">
+          <PnwWorkbenchShell
         v-model:presentation="pwwFixture.appearance.presentation"
         v-model:expanded-node-ids="pwwFixture.navigation.expandedNodeIds"
         v-model:ribbon-appearance="pwwFixture.appearance.ribbon"
@@ -49,10 +63,15 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
         @activate="pwwFixture.actions.activateNode"
         @select-module="pwwFixture.actions.activateModule"
         @select-tab="pwwFixture.actions.selectTab"
-        @close-tab="pwwFixture.actions.closeTab"
-        @close-all-tabs="pwwFixture.actions.closeAllTabs"
+        @close-tab="pwwCloseTab($event, showWelcome)"
+        @close-all-tabs="pwwCloseAllTabs(showWelcome)"
         @display-settings-action="pwwFixture.actions.handleDisplaySettingsAction"
       >
+        <template #brand>
+          <button class="pww-brand-home" type="button" @click="showWelcome">
+            Pnw Workbench
+          </button>
+        </template>
         <template #display-settings-actions="{ emitAction }">
           <button
             type="button"
@@ -71,6 +90,7 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
         </template>
 
         <template #header-actions>
+          <PwwFixtureViewDialogHost />
           <button
             type="button"
             class="pww-consumer-action"
@@ -110,7 +130,9 @@ const pwwFixture = reactive(usePwwFixtureWorkbenchController());
           @action="pwwFixture.actions.handleViewAction"
         />
 
-      </PnwWorkbenchShell>
+          </PnwWorkbenchShell>
+        </template>
+      </PwwFixtureWorkspaceWelcome>
     </div>
   </div>
 </template>

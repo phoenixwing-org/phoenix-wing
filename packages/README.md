@@ -13,7 +13,7 @@
 
 本目录承载 Phoenix Wing 的按需 npm 子包。迁移期仓库根目录仍是可发布的 `phoenix-wing` 兼容包，不移动现有 `src/` 和 Vue SFC。
 
-计划中的子包及实施顺序以 [`doc/跨语言多包架构与三库迁移计划.md`](../doc/跨语言多包架构与三库迁移计划.md) 为准：
+计划中的子包及实施顺序以 [`docs/跨语言多包架构与三库迁移计划.md`](../docs/跨语言多包架构与三库迁移计划.md) 为准：
 
 1. 白名单提取 `core`、`code-core`，建立稳定 JS/`.d.ts` 构建；
 2. 增加 `cad-contracts`、`cad-core`；

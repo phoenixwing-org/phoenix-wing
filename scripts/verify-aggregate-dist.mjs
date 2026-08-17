@@ -11,12 +11,24 @@ const required = [
   "style.css",
   "components/PnwChoiceDialogHost.js",
   "components/PnwChoiceDialogHost.vue.d.ts",
+  "components/PnwDockableToolWindow.js",
+  "components/PnwDockableToolWindow.vue.d.ts",
   "components/PnwEditorDrawerHost.js",
   "components/PnwEditorDrawerHost.vue.d.ts",
   "components/PnwIconRenderer.js",
   "components/PnwIconRenderer.vue.d.ts",
   "components/PnwOverlayThemeProvider.js",
   "components/PnwOverlayThemeProvider.vue.d.ts",
+  "components/PnwRecentWorkspaceList.js",
+  "components/PnwRecentWorkspaceList.vue.d.ts",
+  "components/PnwSelect.js",
+  "components/PnwSelect.vue.d.ts",
+  "components/PnwWorkspaceTypeSelect.js",
+  "components/PnwWorkspaceTypeSelect.vue.d.ts",
+  "components/PnwFloatingWindowMenu.js",
+  "components/PnwFloatingWindowMenu.vue.d.ts",
+  "components/PnwViewPresentationPortal.js",
+  "components/PnwViewPresentationPortal.vue.d.ts",
   "composables/pnwChoiceDialog.js",
   "composables/pnwChoiceDialog.d.ts",
   "composables/usePnwOverlayTheme.js",
@@ -25,23 +37,55 @@ const required = [
   "composables/pnwIconRegistry.d.ts",
   "layout/PnwPageHeader.js",
   "layout/PnwPageHeader.vue.d.ts",
+  "layout/PnwDockablePrimarySection.js",
+  "layout/PnwDockablePrimarySection.vue.d.ts",
   "layout/PnwPrimaryPanel.js",
   "layout/PnwPrimaryPanel.vue.d.ts",
   "layout/PnwPrimarySection.js",
   "layout/PnwPrimarySection.vue.d.ts",
+  "layout/PnwWorkspaceWelcome.js",
+  "layout/PnwWorkspaceWelcome.vue.d.ts",
+  "layout/PnwWorkspaceGate.js",
+  "layout/PnwWorkspaceGate.vue.d.ts",
+  "layout/PnwWorkbenchHome.js",
+  "layout/PnwWorkbenchHome.vue.d.ts",
   "types/PnwDiagnostics.d.ts",
+  "types/PnwDockableTool.d.ts",
   "types/PnwEditorDrawer.d.ts",
   "types/PnwIcon.d.ts",
   "types/PnwLocale.d.ts",
+  "types/PnwSelect.d.ts",
+  "types/PnwPresentationFrame.d.ts",
+  "types/PnwViewPresentation.d.ts",
+  "types/PnwViewDialog.d.ts",
   "types/PnwRibbonConfig.js",
   "types/PnwRibbonConfig.d.ts",
   "types/PnwWorkbench.d.ts",
   "types/PnwWorkbenchVue.d.ts",
   "types/PnwWorkbenchWeb.d.ts",
+  "types/PnwWorkbenchHome.d.ts",
   "types/pnwComboTypes.d.ts",
   "types/pnwPageProperties.d.ts",
   "utils/pnwIconId.js",
   "utils/pnwIconId.d.ts",
+  "utils/pnwDockableTool.js",
+  "utils/pnwDockableTool.d.ts",
+  "utils/pnwViewDialog.js",
+  "utils/pnwViewDialog.d.ts",
+  "utils/pnwPresentationFrame.js",
+  "utils/pnwPresentationFrame.d.ts",
+  "utils/pnwFloatingWindowStack.js",
+  "utils/pnwFloatingWindowStack.d.ts",
+  "utils/pnwViewPresentation.js",
+  "utils/pnwViewPresentation.d.ts",
+  "utils/pnwViewPresentationLease.js",
+  "utils/pnwViewPresentationLease.d.ts",
+  "utils/pnwWorkspaceGate.js",
+  "utils/pnwWorkspaceGate.d.ts",
+  "utils/pnwWorkspaceTypes.js",
+  "utils/pnwWorkspaceTypes.d.ts",
+  "utils/pnwWorkbenchHome.js",
+  "utils/pnwWorkbenchHome.d.ts",
 ];
 
 for (const relative of required) {
@@ -52,12 +96,18 @@ for (const relative of required) {
 }
 const forbiddenTypeOnlyRuntimeEntries = [
   "types/PnwDiagnostics.js",
+  "types/PnwDockableTool.js",
   "types/PnwEditorDrawer.js",
   "types/PnwIcon.js",
   "types/PnwLocale.js",
+  "types/PnwSelect.js",
+  "types/PnwPresentationFrame.js",
+  "types/PnwViewPresentation.js",
+  "types/PnwViewDialog.js",
   "types/PnwWorkbench.js",
   "types/PnwWorkbenchVue.js",
   "types/PnwWorkbenchWeb.js",
+  "types/PnwWorkbenchHome.js",
   "types/pnwComboTypes.js",
   "types/pnwPageProperties.js",
 ];
@@ -77,6 +127,12 @@ if (manifest.exports["./types/PnwRibbonConfig"]?.import !== "./dist/types/PnwRib
 }
 for (const [subpath, target] of Object.entries(manifest.exports)) {
   if (subpath === "./style.css") continue;
+  if (subpath === "./assets/phoenix-wing-mark.svg") {
+    if (target !== "./assets/phoenix-wing-mark.svg") {
+      throw new Error("Phoenix Wing mark asset must resolve from ./assets/phoenix-wing-mark.svg");
+    }
+    continue;
+  }
   if (subpath === "./fixtures/*") {
     if (target !== "./fixtures/*") throw new Error("aggregate fixtures must resolve from ./fixtures/*");
     continue;

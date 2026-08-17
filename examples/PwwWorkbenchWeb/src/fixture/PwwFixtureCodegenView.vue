@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { PnwPageHeader } from "phoenix-wing";
+import { ref } from "vue";
+import { PnwPageHeader, PnwSelect, type PnwSelectOption } from "phoenix-wing";
 import type { PwwFixtureEditorViewProps } from "./PwwFixtureEditorView.js";
 
 defineProps<PwwFixtureEditorViewProps>();
 const emit = defineEmits<{ action: [actionId: string] }>();
 
 const pwwCodegenTools = ["自适应", "排序", "复制", "粘贴", "＋ 插入", "▣ 副本", "↑", "↓", "－ 删除"] as const;
+const pwwCodegenMode = ref("safe");
+const pwwCodegenModes: readonly PnwSelectOption[] = [
+  { value: "safe", label: "安全模式" },
+  { value: "fast", label: "快速模式" },
+  { value: "locked", label: "受策略锁定", disabled: true },
+];
 </script>
 
 <template>
@@ -17,6 +24,13 @@ const pwwCodegenTools = ["自适应", "排序", "复制", "粘贴", "＋ 插入"
       :toolbar="false"
     >
       <template #actions>
+        <PnwSelect
+          v-model="pwwCodegenMode"
+          class="pww-codegen-mode"
+          :options="pwwCodegenModes"
+          size="compact"
+          aria-label="代码生成模式"
+        />
         <button type="button" @click="emit('action', 'codegen.preview')">预检</button>
         <button type="button" @click="emit('action', 'codegen.apply-source')">Apply 源码</button>
         <button type="button" disabled>还原</button>
@@ -53,6 +67,7 @@ const pwwCodegenTools = ["自适应", "排序", "复制", "粘贴", "＋ 插入"
 .pww-codegen-view { min-width: 0; padding: 10px 14px 20px; }
 .pww-codegen-view :deep(.pnw-page-head) { min-height: 64px; padding-inline: 14px; background: var(--pnw-workbench-surface); }
 .pww-codegen-view :deep(.pnw-head-actions) { gap: 8px; }
+.pww-codegen-mode { --pnw-select-width: 104px; }
 .pww-codegen-view button { min-height: 30px; padding: 0 12px; border: 1px solid var(--pnw-workbench-border); border-radius: 6px; background: var(--pnw-workbench-surface); color: var(--pnw-workbench-text); font: inherit; cursor: pointer; white-space: nowrap; }
 .pww-codegen-view button:disabled { color: var(--pnw-workbench-muted); cursor: not-allowed; }
 .pww-codegen-view .pww-codegen-primary { border-color: #2563eb; background: #2563eb; color: #fff; }

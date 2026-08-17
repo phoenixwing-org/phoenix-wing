@@ -83,6 +83,16 @@
   --pnw-workbench-border: var(--pnw-workbench-default-border);
 }
 
+.pww-brand-home {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .pww-workbench--custom {
   --pnw-workbench-bg: #fff7ed;
   --pnw-workbench-surface: #fffbeb;

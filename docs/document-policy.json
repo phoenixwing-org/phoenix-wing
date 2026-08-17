@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "owner": "Phoenix Wing maintainers",
+  "lastVerified": "2026-08-17",
+  "appliesTo": "0.7.x",
+  "rules": [
+    {
+      "match": "^TODO\\.md$",
+      "status": "superseded",
+      "sourceOfTruth": "docs/plan.md",
+      "reason": "旧 Phase 清单仅保留兼容跳转"
+    },
+    {
+      "match": "^docs/overview\\.md$",
+      "status": "superseded",
+      "sourceOfTruth": "docs/文档索引.md",
+      "reason": "v0.1 模块总览已由包 README 和文档索引替代"
+    },
+    {
+      "match": "^docs/(框架迁移计划|组件改进计划|三库共享核心整改计划|跨语言多包架构与三库迁移计划)\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "docs/plan.md",
+      "reason": "完成态实施计划，保留为历史证据"
+    },
+    {
+      "match": "^docs/0\\.4\\.0发布验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "docs/三库版本矩阵.md",
+      "reason": "0.4.0/0.4.1 发布历史证据"
+    },
+    {
+      "match": "^docs/0\\.4\\.2发布候选验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "docs/0.4.3发布候选验收.md",
+      "reason": "0.4.2 候选与公开发布历史证据"
+    },
+    {
+      "match": "^docs/0\\.4\\.3发布候选验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "docs/0.5.0发布候选验收.md",
+      "reason": "0.4.3 公开发布历史证据"
+    },
+    {
+      "match": "^docs/0\\.5\\.0发布候选验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "docs/0.5.1本地发布候选验收.md",
+      "reason": "0.5.0 公开发布历史证据"
+    },
+    {
+      "match": "^docs/0\\.5\\.1本地发布候选验收\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "docs/0.6.0发布验收.md",
+      "reason": "0.5.1 公开发布历史证据"
+    },
+    {
+      "match": "^packages/kt-codegen/doc/(两小时迁移计划与验收|KtCodegen命名迁移说明|普通C\\+\\+参数块迁移|CAA.*块迁移|Command.*块迁移|Dialog.*块迁移)\\.md$",
+      "status": "archived",
+      "sourceOfTruth": "packages/kt-codegen/README.md",
+      "owner": "@phoenix-wing/kt-codegen maintainers",
+      "reason": "单批次迁移与兼容证据"
+    },
+    {
+      "match": "^packages/kt-codegen/",
+      "status": "current",
+      "owner": "@phoenix-wing/kt-codegen maintainers"
+    },
+    {
+      "match": "^docs/Pnw本地工程工作空间能力提炼计划\\.md$",
+      "status": "current",
+      "reason": "0.7.0 本地 Workspace 契约与后续 Host 实施真源"
+    },
+    {
+      "match": "^docs/Pnw本地与服务器Host产品线边界\\.md$",
+      "status": "current",
+      "reason": "Phoenix Admin 正式名称与本地/服务器 Host 产品线边界真源"
+    },
+    {
+      "match": "^.*\\.md$",
+      "status": "current"
+    }
+  ]
+}

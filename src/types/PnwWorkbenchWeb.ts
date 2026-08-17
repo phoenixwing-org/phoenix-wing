@@ -4,6 +4,7 @@
  * W0-W3 只验证 Vue Web 呈现；在 W4 的两个真实消费者验收完成前，
  * 这些类型不承诺冻结为版本化协议。
  */
+import type { PnwViewPresentationContribution } from "./PnwViewPresentation.js";
 
 export type PnwActivityBarPresentation = "ribbon" | "tree";
 
@@ -109,6 +110,11 @@ export interface PnwViewBlockContributions {
   readonly primary?: boolean;
   readonly bottom?: boolean;
   readonly secondary?: boolean;
+}
+
+/** View 对工作台的完整纯数据 contribution；presentation 不是 Block。 */
+export interface PnwViewContributions extends PnwViewBlockContributions {
+  readonly presentation?: PnwViewPresentationContribution;
 }
 
 /** Block 显隐由宿主受控；Wing 不持久化该状态。 */

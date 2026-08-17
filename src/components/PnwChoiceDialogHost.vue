@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { ElCheckbox, ElCheckboxGroup } from "element-plus";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import {
@@ -7,7 +7,7 @@ import {
   pnwChoiceDialogRequest,
   pnwResolveChoice,
   type PnwChoiceDialogOption,
-} from "../composables/pnwChoiceDialog";
+} from "../composables/pnwChoiceDialog.js";
 import PnwAppModalOverlay from "./PnwAppModalOverlay.vue";
 
 defineProps<{
@@ -19,6 +19,8 @@ const open = pnwChoiceDialogOpen;
 const request = pnwChoiceDialogRequest;
 
 const checkedIds = ref<string[]>([]);
+let pnwReturnFocusElement: HTMLElement | null = null;
+let pnwFocusRevision = 0;
 
 const choices = computed(() => request.value?.choices ?? []);
 
@@ -94,24 +96,99 @@ function onCancel() {
   pnwResolveChoice(null, [...checkedIds.value]);
 }
 
+function pnwFocusableElements(): HTMLElement[] {
+  if (typeof document === "undefined") return [];
+  const panel = document.querySelector<HTMLElement>(".pnw-modal-panel.pnw-choice-dialog");
+  if (!panel) return [];
+  return [...panel.querySelectorAll<HTMLElement>([
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "[href]",
+    "[tabindex]:not([tabindex='-1'])",
+  ].join(","))].filter((element) => !element.hasAttribute("hidden"));
+}
+
+function pnwResolveInitialFocusElement(): HTMLElement | undefined {
+  const focusable = pnwFocusableElements();
+  const enabledChoices = choices.value.filter((choice) => !isChoiceDisabled(choice));
+  const preferredChoice = enabledChoices.find((choice) => choice.id === defaultChoiceId.value)
+    ?? enabledChoices.find((choice) => choice.id === "cancel")
+    ?? enabledChoices.find((choice) => choice.variant === "default")
+    ?? enabledChoices[0];
+  return focusable.find((element) => (
+    element.dataset.pnwChoiceId === preferredChoice?.id
+  )) ?? focusable[0];
+}
+
+async function pnwFocusCurrentRequest(expectedRequest = request.value): Promise<void> {
+  const revision = ++pnwFocusRevision;
+  await nextTick();
+  if (
+    revision !== pnwFocusRevision
+    || !open.value
+    || request.value !== expectedRequest
+  ) return;
+  pnwResolveInitialFocusElement()?.focus({ preventScroll: true });
+}
+
+async function pnwRestoreTriggerFocus(): Promise<void> {
+  const revision = ++pnwFocusRevision;
+  await nextTick();
+  if (revision !== pnwFocusRevision || open.value) return;
+  const target = pnwReturnFocusElement;
+  pnwReturnFocusElement = null;
+  if (target?.isConnected) target.focus({ preventScroll: true });
+}
+
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") {
     e.preventDefault();
+    e.stopImmediatePropagation();
     onCancel();
+    return;
+  }
+  if (e.key !== "Tab") return;
+  const focusable = pnwFocusableElements();
+  if (focusable.length === 0) {
+    e.preventDefault();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  const active = typeof document === "undefined" ? null : document.activeElement;
+  if (e.shiftKey && (active === first || !focusable.includes(active as HTMLElement))) {
+    e.preventDefault();
+    last?.focus({ preventScroll: true });
+  } else if (!e.shiftKey && (active === last || !focusable.includes(active as HTMLElement))) {
+    e.preventDefault();
+    first?.focus({ preventScroll: true });
   }
 }
 
-watch(open, (isOpen) => {
+watch([open, request], ([isOpen, currentRequest], [wasOpen]) => {
+  if (typeof window === "undefined") return;
   if (isOpen) {
+    if (!wasOpen && typeof document !== "undefined") {
+      pnwReturnFocusElement = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    }
     initCheckedIds();
     window.addEventListener("keydown", onKeydown);
+    void pnwFocusCurrentRequest(currentRequest);
   } else {
     window.removeEventListener("keydown", onKeydown);
+    if (wasOpen) void pnwRestoreTriggerFocus();
   }
-});
+}, { immediate: true, flush: "post" });
 
 onUnmounted(() => {
-  window.removeEventListener("keydown", onKeydown);
+  pnwFocusRevision += 1;
+  if (typeof window !== "undefined") window.removeEventListener("keydown", onKeydown);
+  if (pnwReturnFocusElement?.isConnected) pnwReturnFocusElement.focus({ preventScroll: true });
+  pnwReturnFocusElement = null;
 });
 </script>
 
@@ -172,6 +249,7 @@ onUnmounted(() => {
             }"
             :disabled="isChoiceDisabled(opt)"
             :autofocus="opt.id === defaultChoiceId"
+            :data-pnw-choice-id="opt.id"
             @click="onChoose(opt)"
           >
             {{ opt.label }}

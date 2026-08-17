@@ -75,6 +75,10 @@ const PNW_ICON_RENDERER_SOURCE = readFileSync(
   new URL("../components/PnwIconRenderer.vue", import.meta.url),
   "utf8",
 );
+const PNW_PHOENIX_WING_MARK_ASSET_SOURCE = readFileSync(
+  new URL("../../assets/phoenix-wing-mark.svg", import.meta.url),
+  "utf8",
+);
 
 async function pnwRenderComponent(
   component: Component,
@@ -96,6 +100,10 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(accessibleHtml).toContain('role="img"');
     expect(accessibleHtml).toContain('aria-label="Phoenix 工作台"');
     expect(accessibleHtml).toContain("pnw-phoenix-wing-mark-left-wing");
+    for (const [, pathData] of PNW_PHOENIX_WING_MARK_ASSET_SOURCE.matchAll(/\sd="([^"]+)"/gu)) {
+      expect(accessibleHtml).toContain(`d="${pathData}"`);
+    }
+    expect(PNW_PHOENIX_WING_MARK_ASSET_SOURCE).toContain("凤凰之翼组织简化标志");
 
     const decorativeHtml = await pnwRenderComponent(PnwPhoenixWingMark, {
       decorative: true,
@@ -692,6 +700,38 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(PNW_PAGE_HEADER_SOURCE).toMatch(
       /\.pnw-page-head\s*\{[\s\S]*?padding:\s*var\(--pnw-page-header-padding, 3px 12px\);[\s\S]*?min-height:\s*var\(--pnw-workbench-view-header-height, 40px\);/u,
     );
+  });
+
+  it("可浮出 View Header 自动把统一动作固定到最右 trailing 区", async () => {
+    const html = await pnwRenderComponent(
+      PnwPageHeader,
+      {
+        title: "工程分析",
+        presentationDetachable: true,
+        presentationMode: "embedded",
+      },
+      {
+        actions: () => [h("select", { "aria-label": "资源文件" }, [h("option", "sample.dat")])],
+        help: () => [h("button", { type: "button" }, "帮助")],
+      },
+    );
+    expect(html).toContain("pnw-head-row--presentation");
+    expect(html).toContain('aria-label="浮出完整 View"');
+    expect(html.indexOf("sample.dat")).toBeLessThan(html.indexOf("帮助"));
+    expect(html.indexOf("帮助")).toBeLessThan(html.indexOf("pnw-head-presentation-action"));
+
+    const floating = await pnwRenderComponent(PnwPageHeader, {
+      title: "工程分析",
+      presentationDetachable: true,
+      presentationMode: "floating",
+    });
+    expect(floating).toContain('aria-label="收回到 Editor"');
+
+    const home = await pnwRenderComponent(PnwPageHeader, {
+      title: "Home",
+      presentationDetachable: false,
+    });
+    expect(home).not.toContain("pnw-head-presentation-action");
   });
 
   it("无打开 View 时移除空页签区，Header 操作区仍保留", async () => {

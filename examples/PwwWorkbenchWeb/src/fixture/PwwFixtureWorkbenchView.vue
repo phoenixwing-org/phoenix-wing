@@ -5,13 +5,17 @@ import {
   type PnwActivityBarPresentation,
   type PnwDiagnosticsSnapshot,
   type PnwProblemItem,
-  type PnwViewBlockComponentContributions,
+  type PnwViewComponentContributions,
 } from "phoenix-wing";
 import type { PwwFixtureViewDefinition } from "./PwwFixtureViewDefinitions.js";
 import PwwFixtureCatalogView from "./PwwFixtureCatalogView.vue";
 import PwwFixtureCodegenView from "./PwwFixtureCodegenView.vue";
+import PwwFixtureDockableToolPrimary from "./PwwFixtureDockableToolPrimary.vue";
+import PwwFixtureDockableToolView from "./PwwFixtureDockableToolView.vue";
 import PwwFixtureInspectionView from "./PwwFixtureInspectionView.vue";
+import PwwFixtureHomeView from "./PwwFixtureHomeView.vue";
 import PwwFixtureIssueView from "./PwwFixtureIssueView.vue";
+import PwwFixturePresentationView from "./PwwFixturePresentationView.vue";
 import PwwFixtureSummaryView from "./PwwFixtureSummaryView.vue";
 import PwwFixtureViewBottom from "./PwwFixtureViewBottom.vue";
 import PwwFixtureViewPrimary from "./PwwFixtureViewPrimary.vue";
@@ -36,10 +40,13 @@ const emit = defineEmits<{
 }>();
 
 const pwwEditorComponents: Readonly<Record<PwwFixtureViewDefinition["kind"], Component>> = {
+  home: PwwFixtureHomeView,
   summary: PwwFixtureSummaryView,
   catalog: PwwFixtureCatalogView,
   codegen: PwwFixtureCodegenView,
   inspection: PwwFixtureInspectionView,
+  presentation: PwwFixturePresentationView,
+  "dockable-tool": PwwFixtureDockableToolView,
   issue: PwwFixtureIssueView,
 };
 const pwwEditorComponent = computed(() => pwwEditorComponents[props.view.kind]);
@@ -76,9 +83,12 @@ const pwwBottomTabs = computed(() => [
   { id: "output", label: "运行日志", count: props.diagnostics.logs.length },
 ]);
 
-const pwwViewBlocks: PnwViewBlockComponentContributions = {
+const pwwViewBlocks: PnwViewComponentContributions = {
+  ...(props.view.presentation ? { presentation: props.view.presentation } : {}),
   ...(props.view.primaryTitle ? {
-    primary: { component: PwwFixtureViewPrimary, props: pwwPrimaryProps },
+    primary: props.view.kind === "dockable-tool"
+      ? { component: PwwFixtureDockableToolPrimary, props: { activeNodeId: props.activeNodeId } }
+      : { component: PwwFixtureViewPrimary, props: pwwPrimaryProps },
   } : {}),
   ...(props.view.secondaryTitle ? {
     secondary: { component: PwwFixtureViewSecondary, props: pwwSecondaryProps },

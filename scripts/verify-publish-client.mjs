@@ -4,7 +4,7 @@ if (!userAgent.startsWith("pnpm/")) {
   process.stderr.write(
     "[publish] blocked: Phoenix Wing workspace packages must be published with pnpm so workspace: dependencies are converted.\n",
   );
-  process.stderr.write("[publish] use the ordered pnpm publish commands in doc/发布配置步骤.md\n");
+  process.stderr.write("[publish] use the ordered pnpm publish commands in docs/发布配置步骤.md\n");
   process.exit(1);
 }
 
