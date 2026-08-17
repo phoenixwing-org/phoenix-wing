@@ -370,6 +370,7 @@ function verifyAggregateManifest(item) {
   for (const required of [
     "README.md",
     "LICENSE",
+    "assets/phoenix-wing-mark.svg",
     "dist/index.js",
     "dist/index.d.ts",
     "dist/style.css",
@@ -379,6 +380,16 @@ function verifyAggregateManifest(item) {
     "dist/components/PnwDockableToolWindow.vue.d.ts",
     "dist/components/PnwOverlayThemeProvider.js",
     "dist/components/PnwOverlayThemeProvider.vue.d.ts",
+    "dist/components/PnwRecentWorkspaceList.js",
+    "dist/components/PnwRecentWorkspaceList.vue.d.ts",
+    "dist/components/PnwSelect.js",
+    "dist/components/PnwSelect.vue.d.ts",
+    "dist/components/PnwWorkspaceTypeSelect.js",
+    "dist/components/PnwWorkspaceTypeSelect.vue.d.ts",
+    "dist/components/PnwFloatingWindowMenu.js",
+    "dist/components/PnwFloatingWindowMenu.vue.d.ts",
+    "dist/components/PnwViewPresentationPortal.js",
+    "dist/components/PnwViewPresentationPortal.vue.d.ts",
     "dist/composables/pnwChoiceDialog.js",
     "dist/composables/usePnwOverlayTheme.js",
     "dist/layout/PnwPrimaryPanel.js",
@@ -387,14 +398,47 @@ function verifyAggregateManifest(item) {
     "dist/layout/PnwDockablePrimarySection.vue.d.ts",
     "dist/layout/PnwPrimarySection.js",
     "dist/layout/PnwPrimarySection.vue.d.ts",
+    "dist/layout/PnwWorkspaceWelcome.js",
+    "dist/layout/PnwWorkspaceWelcome.vue.d.ts",
+    "dist/layout/PnwWorkspaceGate.js",
+    "dist/layout/PnwWorkspaceGate.vue.d.ts",
+    "dist/layout/PnwWorkbenchHome.js",
+    "dist/layout/PnwWorkbenchHome.vue.d.ts",
     "dist/types/PnwDiagnostics.d.ts",
     "dist/types/PnwDockableTool.d.ts",
+    "dist/types/PnwSelect.d.ts",
+    "dist/types/PnwPresentationFrame.d.ts",
+    "dist/types/PnwViewPresentation.d.ts",
+    "dist/types/PnwViewDialog.d.ts",
+    "dist/types/PnwWorkspace.d.ts",
     "dist/types/PnwWorkbenchWeb.d.ts",
+    "dist/types/PnwWorkbenchHome.d.ts",
     "dist/types/PnwRibbonConfig.js",
     "dist/types/PnwRibbonConfig.d.ts",
     "dist/utils/pnwDockableTool.js",
     "dist/utils/pnwDockableTool.d.ts",
+    "dist/utils/pnwViewDialog.js",
+    "dist/utils/pnwViewDialog.d.ts",
+    "dist/utils/pnwPresentationFrame.js",
+    "dist/utils/pnwPresentationFrame.d.ts",
+    "dist/utils/pnwFloatingWindowStack.js",
+    "dist/utils/pnwFloatingWindowStack.d.ts",
+    "dist/utils/pnwViewPresentation.js",
+    "dist/utils/pnwViewPresentation.d.ts",
+    "dist/utils/pnwViewPresentationLease.js",
+    "dist/utils/pnwViewPresentationLease.d.ts",
+    "dist/utils/pnwWorkspace.js",
+    "dist/utils/pnwWorkspace.d.ts",
+    "dist/utils/pnwWorkspaceGate.js",
+    "dist/utils/pnwWorkspaceGate.d.ts",
+    "dist/utils/pnwWorkspaceTypes.js",
+    "dist/utils/pnwWorkspaceTypes.d.ts",
+    "dist/utils/pnwWorkbenchHome.js",
+    "dist/utils/pnwWorkbenchHome.d.ts",
+    "dist/utils/pnwTauriWorkspace.js",
+    "dist/utils/pnwTauriWorkspace.d.ts",
     "fixtures/ribbon-contribution-v1.json",
+    "fixtures/pnw-workspace-v1.json",
   ]) {
     const file = path.join(packageRoot, required);
     if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
@@ -407,6 +451,10 @@ function verifyAggregateManifest(item) {
     "dist/types/PnwEditorDrawer.js",
     "dist/types/PnwIcon.js",
     "dist/types/PnwLocale.js",
+    "dist/types/PnwSelect.js",
+    "dist/types/PnwPresentationFrame.js",
+    "dist/types/PnwViewPresentation.js",
+    "dist/types/PnwViewDialog.js",
     "dist/types/PnwWorkbench.js",
     "dist/types/PnwWorkbenchVue.js",
     "dist/types/PnwWorkbenchWeb.js",
@@ -423,6 +471,17 @@ function verifyAggregateManifest(item) {
   if (manifest.exports?.["./types/PnwRibbonConfig"]?.import !== "./dist/types/PnwRibbonConfig.js") {
     throw new Error("phoenix-wing runtime PnwRibbonConfig subpath export changed");
   }
+  if (manifest.exports?.["./assets/phoenix-wing-mark.svg"] !== "./assets/phoenix-wing-mark.svg") {
+    throw new Error("phoenix-wing brand mark asset export changed");
+  }
+  const pnwPhoenixWingMarkAsset = fs.readFileSync(
+    path.join(packageRoot, "assets/phoenix-wing-mark.svg"),
+    "utf8",
+  );
+  if (!pnwPhoenixWingMarkAsset.includes('viewBox="0 0 128 128"')
+    || !pnwPhoenixWingMarkAsset.includes("pnw-phoenix-wing-mark-left-wing")) {
+    throw new Error("phoenix-wing brand mark asset geometry changed or is unreadable");
+  }
   for (const file of walk(packageRoot)) {
     const relative = path.relative(packageRoot, file).split(path.sep).join("/");
     if (relative.startsWith("src/") || /(?<!\.d)\.(?:ts|vue)$/u.test(relative)) {
@@ -438,28 +497,101 @@ import type {
   PnwDockableToolDefinition,
   PnwDockableToolState,
 } from "phoenix-wing/types/PnwDockableTool";
+import type { PnwSelectOption, PnwSelectSize } from "phoenix-wing/types/PnwSelect";
+import type { PnwPresentationFrameDefinition } from "phoenix-wing/types/PnwPresentationFrame";
+import type {
+  PnwViewPresentationManagerState,
+  PnwViewPresentationIdentity,
+  PnwViewPresentationRecord,
+} from "phoenix-wing/types/PnwViewPresentation";
+import type {
+  PnwViewDialogCapabilities,
+  PnwViewDialogRequest,
+} from "phoenix-wing/types/PnwViewDialog";
+import type {
+  PnwWorkspaceDescriptor,
+  PnwWorkspaceLifecycleParticipant,
+} from "phoenix-wing/types/PnwWorkspace";
 import {
   PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION,
   pnwCheckRibbonContributionCompatibility,
 } from "phoenix-wing/types/PnwRibbonConfig";
 
 const node: PnwNavigationNode = { id: "dashboard", label: "Dashboard" };
+const dialogRequest: PnwViewDialogRequest<{ id: string }> = {
+  requestId: "smoke.dialog",
+  viewId: "smoke.view",
+  title: "Smoke dialog",
+  props: { id: "record-1" },
+};
+const dialogCapabilities: PnwViewDialogCapabilities = {
+  presentation: "web-floating",
+  supportsParentRelationship: false,
+  keepsParentInteractive: true,
+  supportsOutsideParentBounds: false,
+  maxOpenDialogs: 1,
+};
 const tool: PnwDockableToolDefinition = {
   id: "smoke.tool",
   title: "Smoke tool",
   scope: "application",
 };
+const frame: PnwPresentationFrameDefinition = {
+  ownerKind: "view",
+  movable: true,
+  resizable: "both",
+  recommendedSize: { width: 960, height: 640 },
+  rememberBounds: true,
+  closeBehavior: "reattach",
+};
+const presentationIdentity: PnwViewPresentationIdentity = {
+  rendererId: "smoke.view",
+  viewInstanceId: "smoke.view:1",
+  ownerTabId: "tab:smoke.view:1",
+  instanceKey: "smoke-view-1",
+};
+const presentationRecord = null as PnwViewPresentationRecord | null;
+const presentationManager = null as PnwViewPresentationManagerState | null;
 const toolState: PnwDockableToolState = {
   mode: "closed",
   floatingPosition: { x: 24, y: 64 },
+  floatingSize: { width: 640, height: 480 },
   primaryPlacement: "last",
   primaryExpanded: true,
 };
+const selectSize: PnwSelectSize = "compact";
+const selectOptions: readonly PnwSelectOption[] = [
+  { value: "safe", label: "Safe" },
+  { value: "locked", label: "Locked", disabled: true },
+];
+const workspaceDescriptor: PnwWorkspaceDescriptor = {
+  workspaceId: "workspace-smoke",
+  name: "Workspace Smoke",
+  rootPath: "/workspaces/smoke",
+  readonly: false,
+  capabilities: ["read", "write"],
+};
+const workspaceParticipant: PnwWorkspaceLifecycleParticipant = { id: "smoke.session" };
 if (node.id !== "dashboard" || PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION !== 1) {
   throw new Error("type subpath smoke failed");
 }
 if (tool.id !== "smoke.tool" || toolState.mode !== "closed") {
   throw new Error("dockable tool type subpath smoke failed");
+}
+if (frame.ownerKind !== "view" || presentationIdentity.ownerTabId !== "tab:smoke.view:1"
+  || presentationRecord !== null || presentationManager !== null) {
+  throw new Error("presentation frame type subpath smoke failed");
+}
+if (selectSize !== "compact" || selectOptions[1]?.disabled !== true) {
+  throw new Error("select type subpath smoke failed");
+}
+if (dialogRequest.viewId !== "smoke.view"
+  || dialogCapabilities.presentation !== "web-floating") {
+  throw new Error("View dialog type subpath smoke failed");
+}
+if (workspaceDescriptor.workspaceId !== "workspace-smoke"
+  || workspaceParticipant.id !== "smoke.session") {
+  throw new Error("Workspace type subpath smoke failed");
 }
 pnwCheckRibbonContributionCompatibility({ schemaVersion: 1, tabs: [] });
 `);
@@ -497,9 +629,17 @@ import { fileURLToPath } from "node:url";
 import CompatChoiceDialogHost from "phoenix-wing/components/PnwChoiceDialogHost.vue";
 import CompatDockableToolWindow from "phoenix-wing/components/PnwDockableToolWindow.vue";
 import CompatOverlayThemeProvider from "phoenix-wing/components/PnwOverlayThemeProvider.vue";
+import CompatRecentWorkspaceList from "phoenix-wing/components/PnwRecentWorkspaceList.vue";
+import CompatSelect from "phoenix-wing/components/PnwSelect.vue";
+import CompatWorkspaceTypeSelect from "phoenix-wing/components/PnwWorkspaceTypeSelect.vue";
+import CompatFloatingWindowMenu from "phoenix-wing/components/PnwFloatingWindowMenu.vue";
+import CompatViewPresentationPortal from "phoenix-wing/components/PnwViewPresentationPortal.vue";
 import CompatDockablePrimarySection from "phoenix-wing/layout/PnwDockablePrimarySection.vue";
 import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
 import CompatPrimarySection from "phoenix-wing/layout/PnwPrimarySection.vue";
+import CompatWorkspaceWelcome from "phoenix-wing/layout/PnwWorkspaceWelcome.vue";
+import CompatWorkspaceGate from "phoenix-wing/layout/PnwWorkspaceGate.vue";
+import CompatWorkbenchHome from "phoenix-wing/layout/PnwWorkbenchHome.vue";
 import {
   PNW_RIBBON_CONTRIBUTION_SCHEMA_VERSION as PNW_RIBBON_SUBPATH_SCHEMA_VERSION,
 } from "phoenix-wing/types/PnwRibbonConfig";
@@ -510,20 +650,44 @@ import {
   PnwDockablePrimarySection,
   PnwDockableToolWindow,
   PnwOverlayThemeProvider,
+  PnwRecentWorkspaceList,
+  PnwSelect,
+  PnwWorkspaceTypeSelect,
+  PnwFloatingWindowMenu,
+  PnwViewPresentationPortal,
   PnwPrimaryPanel,
   PnwPrimarySection,
+  PnwWorkspaceWelcome,
+  PnwWorkspaceGate,
+  PnwWorkbenchHome,
   pnwApplyColorScheme,
+  pnwCreateFloatingWindowStack,
+  pnwCreateViewPresentationLeaseRegistry,
+  pnwCreateViewPresentationManagerState,
+  pnwCreateViewPresentationRecord,
   pnwCheckRibbonContributionCompatibility,
   pnwChoiceDialogOpen,
   pnwIsDockableToolVisible,
   pnwReduceDockableToolState,
   pnwGetAppliedColorScheme,
   pnwPromptChoice,
+  pnwResolveViewDialogPresentation,
+  pnwSelectMostRecentEmbeddedEditorView,
   pnwResolveChoice,
+  pnwCreateWorkspaceController,
+  pnwCreateWorkspaceResourceRef,
+  pnwNormalizeWorkspaceRelativePath,
+  pnwNormalizeWorkspaceTypes,
+  pnwResolveWorkspaceGate,
+  pnwCreateWorkbenchHomeDefinition,
+  PNW_DEFAULT_TAURI_WORKSPACE_COMMANDS,
 } from "phoenix-wing";
 
 if (PNW_VERSION !== "${releaseVersion}") {
   throw new Error("aggregate runtime version changed to " + PNW_VERSION);
+}
+if (pnwResolveViewDialogPresentation(undefined, "main") !== "web-floating") {
+  throw new Error("aggregate View dialog fallback contract smoke failed");
 }
 
 const ribbonFixture = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(
@@ -531,6 +695,25 @@ const ribbonFixture = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(
 )), "utf8"));
 if (!pnwCheckRibbonContributionCompatibility(ribbonFixture).compatible) {
   throw new Error("aggregate ribbon contribution fixture smoke failed");
+}
+const workspaceFixture = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(
+  "phoenix-wing/fixtures/pnw-workspace-v1.json",
+)), "utf8"));
+const workspaceController = pnwCreateWorkspaceController({
+  host: { async open() { return workspaceFixture.current; } },
+});
+const workspaceResult = await workspaceController.requestOpen({
+  rootPath: workspaceFixture.current.rootPath,
+});
+const workspaceRef = pnwCreateWorkspaceResourceRef(
+  workspaceFixture.current,
+  workspaceFixture.resourceExamples[0],
+);
+if (workspaceResult.status !== "opened"
+  || workspaceController.getSnapshot().current?.workspaceId !== workspaceFixture.current.workspaceId
+  || workspaceRef.relativePath !== pnwNormalizeWorkspaceRelativePath(workspaceFixture.resourceExamples[0])
+  || PNW_DEFAULT_TAURI_WORKSPACE_COMMANDS.open !== "pnw_workspace_open") {
+  throw new Error("aggregate Workspace controller/fixture smoke failed");
 }
 if (PNW_RIBBON_SUBPATH_SCHEMA_VERSION !== 1) {
   throw new Error("runtime PnwRibbonConfig subpath smoke failed");
@@ -545,6 +728,39 @@ if (PnwDockableToolWindow !== CompatDockableToolWindow
 if (PnwOverlayThemeProvider !== CompatOverlayThemeProvider) {
   throw new Error("root and compatibility subpath resolved different overlay theme providers");
 }
+if (PnwRecentWorkspaceList !== CompatRecentWorkspaceList
+  || PnwWorkspaceWelcome !== CompatWorkspaceWelcome) {
+  throw new Error("root and compatibility subpath resolved different Workspace welcome components");
+}
+if (PnwWorkspaceGate !== CompatWorkspaceGate
+  || PnwWorkspaceTypeSelect !== CompatWorkspaceTypeSelect) {
+  throw new Error("root and compatibility subpath resolved different Workspace entry components");
+}
+if (PnwWorkbenchHome !== CompatWorkbenchHome
+  || pnwCreateWorkbenchHomeDefinition().isHome !== true) {
+  throw new Error("aggregate Workbench Home contract smoke failed");
+}
+if (PnwSelect !== CompatSelect) {
+  throw new Error("root and compatibility subpath resolved different Select components");
+}
+const workspaceGate = pnwResolveWorkspaceGate({
+  state: { current: undefined },
+  policy: "required",
+  requestedMode: "workbench",
+});
+const workspaceTypes = pnwNormalizeWorkspaceTypes([
+  { typeId: "simulation", label: "Simulation", order: 15 },
+]);
+if (workspaceGate.mode !== "welcome"
+  || workspaceTypes.map((item) => item.typeId).join(",") !== "mixed,simulation,code,cad,lighting") {
+  throw new Error("aggregate Workspace gate/type contract smoke failed");
+}
+if (PnwFloatingWindowMenu !== CompatFloatingWindowMenu) {
+  throw new Error("root and compatibility subpath resolved different floating window menus");
+}
+if (PnwViewPresentationPortal !== CompatViewPresentationPortal) {
+  throw new Error("root and compatibility subpath resolved different View presentation portals");
+}
 if (PnwPrimaryPanel !== CompatPrimaryPanel || PnwPrimarySection !== CompatPrimarySection) {
   throw new Error("root and compatibility subpath resolved different Primary components");
 }
@@ -556,6 +772,37 @@ if (floatingToolState.mode !== "floating"
   || !pnwIsDockableToolVisible(dockableDefinition, floatingToolState, "dashboard")) {
   throw new Error("aggregate dockable tool state contract smoke failed");
 }
+const viewRecord = pnwCreateViewPresentationRecord({
+  rendererId: "smoke.view",
+  viewInstanceId: "smoke.view:1",
+  ownerTabId: "tab:smoke.view:1",
+  instanceKey: "smoke-view-1",
+}, { frame: { ownerKind: "view", recommendedSize: { width: 960, height: 640 } } });
+if (viewRecord.dialogSize.width !== 960 || viewRecord.mode !== "embedded") {
+  throw new Error("aggregate View presentation record smoke failed");
+}
+const viewManager = pnwCreateViewPresentationManagerState("smoke.view:1");
+if (viewManager.editorActivationHistory[0] !== "smoke.view:1"
+  || pnwSelectMostRecentEmbeddedEditorView(viewManager.editorActivationHistory, [{
+    viewInstanceId: "smoke.view:1",
+    open: true,
+    presentationMode: "embedded",
+  }]) !== "smoke.view:1") {
+  throw new Error("aggregate View presentation MRU smoke failed");
+}
+const leaseRegistry = pnwCreateViewPresentationLeaseRegistry();
+if (leaseRegistry.snapshot().length !== 0) {
+  throw new Error("aggregate View presentation lease smoke failed");
+}
+const floatingStack = pnwCreateFloatingWindowStack();
+const unregisterTool = floatingStack.register({ presentationId: "tool:resource", baseZIndex: 1400, focus() {} });
+const unregisterView = floatingStack.register({ presentationId: "view:analysis", baseZIndex: 1400, focus() {} });
+floatingStack.activate("tool:resource");
+if (!floatingStack.isActive("tool:resource") || floatingStack.resolveZIndex("tool:resource") !== 1401) {
+  throw new Error("aggregate floating window stack smoke failed");
+}
+unregisterTool();
+unregisterView();
 if (pnwApplyColorScheme("dark") !== "dark" || pnwGetAppliedColorScheme() !== "dark") {
   throw new Error("aggregate overlay color-scheme contract did not share applied state");
 }

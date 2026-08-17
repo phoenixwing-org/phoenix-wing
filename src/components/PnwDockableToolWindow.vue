@@ -6,8 +6,10 @@ import type {
   PnwDockableToolState,
 } from "../types/PnwDockableTool.js";
 import type {
+  PnwFloatingPanelBounds,
   PnwFloatingPanelInsets,
   PnwFloatingPanelPosition,
+  PnwFloatingPanelSize,
 } from "../utils/pnwFloatingPanel.js";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type { PnwWorkbenchOverlayLayer } from "../utils/pnwOverlayStacking.js";
@@ -15,6 +17,7 @@ import {
   pnwIsDockableToolVisible,
   pnwReduceDockableToolState,
 } from "../utils/pnwDockableTool.js";
+import { pnwResolvePresentationFrameDefinition } from "../utils/pnwPresentationFrame.js";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
 import PnwFloatingPanel from "./PnwFloatingPanel.vue";
 import PnwIcon from "./PnwIcon.vue";
@@ -36,7 +39,7 @@ const props = withDefaults(defineProps<{
   constrainMargin: 8,
   constrainInsets: () => ({}),
   closeOnEscape: true,
-  layer: "floatingPanel",
+  layer: "presentation",
 });
 
 const emit = defineEmits<{
@@ -44,12 +47,18 @@ const emit = defineEmits<{
   dockPrimary: [];
   close: [];
   "update:position": [position: PnwFloatingPanelPosition];
+  "update:size": [size: PnwFloatingPanelSize];
+  "update:bounds": [bounds: PnwFloatingPanelBounds];
 }>();
 
 const { t: pnwT } = usePnwLocale();
 const pnwVisible = computed(() => (
   props.state.mode === "floating"
   && pnwIsDockableToolVisible(props.definition, props.state, props.activeViewId)
+));
+const pnwFrame = computed(() => pnwResolvePresentationFrameDefinition(
+  props.definition.frame,
+  "tool",
 ));
 
 function pnwApply(command: PnwDockableToolCommand): void {
@@ -67,8 +76,24 @@ function pnwClose(): void {
 }
 
 function pnwUpdatePosition(position: PnwFloatingPanelPosition): void {
+  if (pnwFrame.value.resizable !== false) return;
   pnwApply({ type: "set-floating-position", position });
   emit("update:position", position);
+}
+
+function pnwUpdateBounds(bounds: PnwFloatingPanelBounds): void {
+  const positioned = pnwReduceDockableToolState(props.state, {
+    type: "set-floating-position",
+    position: bounds.position,
+  });
+  const sized = pnwReduceDockableToolState(positioned, {
+    type: "set-floating-size",
+    size: bounds.size,
+  });
+  emit("update:state", sized);
+  emit("update:position", bounds.position);
+  emit("update:size", bounds.size);
+  emit("update:bounds", bounds);
 }
 </script>
 
@@ -77,6 +102,15 @@ function pnwUpdatePosition(position: PnwFloatingPanelPosition): void {
     v-if="pnwVisible"
     :open="true"
     :position="state.floatingPosition"
+    :size="state.floatingSize || pnwFrame.recommendedSize"
+    :movable="pnwFrame.movable"
+    :resizable="pnwFrame.resizable"
+    :recommended-size="pnwFrame.recommendedSize"
+    :remember-bounds="pnwFrame.rememberBounds"
+    :min-size="pnwFrame.minSize"
+    :max-size="pnwFrame.maxSize"
+    :presentation-id="definition.id"
+    owner-kind="tool"
     :title="definition.title"
     :aria-label="definition.ariaLabel || definition.title"
     :panel-class="['pnw-dockable-tool-window', panelClass].filter(Boolean).join(' ')"
@@ -88,6 +122,7 @@ function pnwUpdatePosition(position: PnwFloatingPanelPosition): void {
     :color-scheme="colorScheme"
     @close="pnwClose"
     @update:position="pnwUpdatePosition"
+    @update:bounds="pnwUpdateBounds"
   >
     <template #header>
       <div class="pnw-dockable-tool-window__header-content">

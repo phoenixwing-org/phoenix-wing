@@ -7,6 +7,7 @@ import type {
 export const PNW_DEFAULT_DOCKABLE_TOOL_STATE: PnwDockableToolState = Object.freeze({
   mode: "closed",
   floatingPosition: Object.freeze({ x: 24, y: 64 }),
+  floatingSize: Object.freeze({ width: 640, height: 480 }),
   primaryPlacement: "last",
   primaryExpanded: true,
 });
@@ -20,11 +21,21 @@ export function pnwNormalizeDockableToolState(
     : "closed";
   const x = state?.floatingPosition?.x;
   const y = state?.floatingPosition?.y;
+  const width = state?.floatingSize?.width;
+  const height = state?.floatingSize?.height;
   return {
     mode,
     floatingPosition: {
       x: Number.isFinite(x) ? x as number : PNW_DEFAULT_DOCKABLE_TOOL_STATE.floatingPosition.x,
       y: Number.isFinite(y) ? y as number : PNW_DEFAULT_DOCKABLE_TOOL_STATE.floatingPosition.y,
+    },
+    floatingSize: {
+      width: typeof width === "number" && Number.isFinite(width) && width > 0
+        ? width
+        : PNW_DEFAULT_DOCKABLE_TOOL_STATE.floatingSize!.width,
+      height: typeof height === "number" && Number.isFinite(height) && height > 0
+        ? height
+        : PNW_DEFAULT_DOCKABLE_TOOL_STATE.floatingSize!.height,
     },
     primaryPlacement: state?.primaryPlacement === "first" ? "first" : "last",
     primaryExpanded: typeof state?.primaryExpanded === "boolean"
@@ -53,6 +64,11 @@ export function pnwReduceDockableToolState(
       return pnwNormalizeDockableToolState({
         ...current,
         floatingPosition: command.position,
+      });
+    case "set-floating-size":
+      return pnwNormalizeDockableToolState({
+        ...current,
+        floatingSize: command.size,
       });
     case "set-primary-placement":
       return { ...current, primaryPlacement: command.placement };

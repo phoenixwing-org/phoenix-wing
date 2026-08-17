@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "owner": "Phoenix Wing maintainers",
-  "lastVerified": "2026-08-08",
-  "appliesTo": "0.6.x",
+  "lastVerified": "2026-08-17",
+  "appliesTo": "0.7.x",
   "rules": [
     {
       "match": "^TODO\\.md$",
@@ -63,6 +63,16 @@
       "match": "^packages/kt-codegen/",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers"
+    },
+    {
+      "match": "^docs/Pnw本地工程工作空间能力提炼计划\\.md$",
+      "status": "current",
+      "reason": "0.7.0 本地 Workspace 契约与后续 Host 实施真源"
+    },
+    {
+      "match": "^docs/Pnw本地与服务器Host产品线边界\\.md$",
+      "status": "current",
+      "reason": "Phoenix Admin 正式名称与本地/服务器 Host 产品线边界真源"
     },
     {
       "match": "^.*\\.md$",

@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.6.5",
+  "version": "0.7.0",
   "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
@@ -13,6 +13,7 @@
       "default": "./dist/index.js"
     },
     "./style.css": "./dist/style.css",
+    "./assets/phoenix-wing-mark.svg": "./assets/phoenix-wing-mark.svg",
     "./fixtures/*": "./fixtures/*",
     "./code-core": {
       "types": "./dist/code-core/index.d.ts",
@@ -63,6 +64,7 @@
     }
   },
   "files": [
+    "assets",
     "dist",
     "fixtures"
   ],
@@ -121,7 +123,7 @@
     "typescript",
     "components"
   ],
-  "author": "上海锟钛",
+  "author": "PhoenixWing contributors",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

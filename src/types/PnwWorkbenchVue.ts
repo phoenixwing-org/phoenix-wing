@@ -1,6 +1,7 @@
 import type { Component, MaybeRefOrGetter } from "vue";
 import type { PnwBottomPanelTab } from "./PnwWorkbenchWeb.js";
 import type { PnwWorkbenchResponsiveState } from "./PnwWorkbenchWeb.js";
+import type { PnwViewPresentationContribution } from "./PnwViewPresentation.js";
 
 /** Vue Web View 提供给工作台 Block 的动态组件；业务状态仍由 View 持有。 */
 export interface PnwViewBlockComponentContribution {
@@ -24,6 +25,11 @@ export interface PnwViewBlockComponentContributions {
   readonly primary?: PnwViewBlockComponentContribution;
   readonly bottom?: PnwBottomViewBlockComponentContribution;
   readonly secondary?: PnwViewBlockComponentContribution;
+}
+
+/** Vue View 的完整 contribution；业务组件 Block 与 presentation 能力共用一次注册。 */
+export interface PnwViewComponentContributions extends PnwViewBlockComponentContributions {
+  readonly presentation?: PnwViewPresentationContribution;
 }
 
 /**

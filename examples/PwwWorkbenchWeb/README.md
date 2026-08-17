@@ -20,6 +20,13 @@ Section 间互斥切换；fixture 工具内容仍是 consumer 数据，不进入
 持久化和应用级 Primary availability 说明见
 [`Pnw 工作台 Web · 可浮动与 Primary 停靠工具宿主`](../../docs/Pnw工作台Web可浮动与Primary停靠工具宿主.md)。
 
+`PwwFixtureViewDialogHost.vue` 演示消费者如何用 `pnwCreateViewDialogController` 和
+`PnwFloatingPanel` 实现 `web-floating` adapter：浮窗无蒙层，打开时工作台仍可交互；
+Tauri consumer 可在同一 controller 上增加 parent Webview 的 `desktop-dialog` adapter。
+
+`PwwFixtureCodegenView.vue` 的 Header 使用 `PnwSelect size="compact"` 演示 24px 纯枚举
+选择；它与可搜索字典 `PnwDictSelect`、可自由输入建议框 `PnwComboTextInput` 分工明确。
+
 ## 新 consumer 如何采用
 
 不要把 `src/fixture/` 整目录复制成产品代码。这里的 `PwwFixture*` 是为了运行和
@@ -66,6 +73,7 @@ examples/PwwWorkbenchWeb/
         ├── PwwFixtureWorkbenchPreferences.ts
         ├── PwwFixtureDisplaySettingsExtras.vue
         ├── PwwFixtureDockableTool.vue
+        ├── PwwFixtureViewDialogHost.vue
         ├── PwwFixtureWorkbenchStore.ts
         ├── PwwFixtureWorkbenchView.vue
         └── PwwFixtureWorkbench.css
@@ -92,6 +100,7 @@ pnpm example:workbench:dev
 5. Ribbon 先选择“大 Ribbon / 紧凑工具条”，两边使用同一个 `PnwRibbonModeAppearance` 数据形状并分别保留尺寸与 Title；大 Ribbon 可选 `24/36px` 与分组标签，紧凑工具条可选 `16/24px` 且不显示分组标签；紧凑高度分别约为 `28/34px`，同尺寸打开或关闭 Title 高度不变；
 6. Header 一级大分组只显示当前分组的 Ribbon 内容；紧凑位置优先显示同一节点的 `shortLabel`（工作 / 研发 / 协同 / 系统），完整标签仍用于提示和无障碍名称；模块区约容纳 8 个两字短标签，超过 `min(36vw, 360px)` 后横向滚动，不挤走页面标签；下方不重复竖排模块名，当前分组内模块仅以 `3px` 竖向句柄分隔；
 7. 从“系统 / 工作台配置 / 导航布局”打开仓内第一方 fixture consumer 的布局管理 View：按当前大分组树折叠浏览小模块，用下拉整体移动；例如把包含 Open Issue 的“问题跟踪”移入“工作空间”，确认空的“协同管理”从 Ribbon/Tree 隐藏但仍是下拉目标。验证内置/自定义分组、全名/简称/顺序编辑、新建空组、删除空自定义组、内置分组恢复定义、恢复本模块和全部恢复默认；
+8. 初始全屏 Welcome 由 `PnwWorkspaceGate` 控制：验证 required/optional、返回工作空间、关闭工作空间、隐藏左 Rail、四种默认工作空间类型，以及 `PnwColorSchemeToggle` 的受控明暗切换；进入工作台后打开“工作空间 / 空间概览 / 主页”，验证 `PnwWorkbenchHome` 的卡片、巡游和提示只是 fixture 内容，消费者可完整替换 Home body slot；
 8. 激活 Open Issue，确认无 Primary/Secondary/Bottom，Footer 三个固定入口仍显示但全部禁用；
 9. 激活综合看板，确认默认只显示 Primary 与可调 Bottom：节点、模式、主题和状态摘要位于 Primary 下半部，不再为简单属性占用右侧宽度；Bottom 只与 Editor 对齐并只能拖动顶边横向句柄；
 10. 激活模型目录，确认它使用目录型 View：紧凑页眉带路径摘要和刷新/展开动作，Editor 内部树与详情仍是页面业务内容；它声明了复杂 Secondary 检查器但默认隐藏，可用 Footer 图标按需打开；

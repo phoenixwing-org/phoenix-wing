@@ -4,17 +4,17 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.6.x
+适用版本：0.7.x
 
 `0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1`、`0.6.2` 与 `0.6.3`
 均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
-`0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.6.5` 候选
+`0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 候选
 正在验证可浮动 / Primary 停靠工具宿主；
-稳定 scoped 包保持 0.6.3。后续 patch
+稳定 scoped 包保持 0.6.3。后续版本
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-08-10
+最后核验：2026-08-17
 
 ## 已完成基线
 
@@ -115,13 +115,73 @@ Owner：Phoenix Wing maintainers
    - [x] `0.6.3` 增加纯 Core 的 `PnwGitLazyHistoryState`：更多 commit 默认收缩且不产生 page request；每次从收缩变为展开都按当前游标规划下一条，同一次展开不重复，保持展开时只允许下一条/下 5 条；page 合并拒绝 stale HEAD 与重复 OID。Auto 只在收到 request 时调用现有 `pnwReadGitCommitPage`，UI、AbortController 和持久化仍归 Host。见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。
    - [x] `0.6.3` 于 2026-08-09 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 0.6.3，公开内部依赖精确，隔离 Registry consumer 通过 Workbench、Git 正文/懒历史与 SQLite smoke。本次未执行 Git push 或 tag。详见[《0.6.3 发布验收》](0.6.3发布验收.md)。
    - [x] 根 `phoenix-wing@0.6.4` 将 `PnwPrimarySection` 折叠箭头统一到标题左侧，保持收起向右、展开向下、键盘与 aria 契约不变；本轮未升级 11 个未变化 scoped packages，并完成 Registry 干净消费。详见[《0.6.4 发布候选》](0.6.4发布候选.md)。
-   - [x] `0.6.5` 候选增加受控可浮动 / Primary 停靠工具宿主：纯状态机保持
+   - [x] `0.7.0` 候选增加受控可浮动 / Primary 停靠工具宿主：纯状态机保持
      `closed / floating / primary` 互斥，保存浮窗坐标、Primary 首尾与折叠状态；
      `application / view` scope 只派生可见性，离开 owner View 不改写状态。浮窗复用
      `PnwFloatingPanel` 的拖动、边界和 Teleport 主题，Primary 标题栏统一提供首尾、
-     浮出和 X。Host 继续持有业务状态、布局 availability 与持久化；OpticalTool 已在
-     `codex/view-prototype` 通过并列源码 resolver 完成本地接入与联合验收。见
+     浮出和 X。Host 继续持有业务状态、布局 availability 与持久化；Desk Tools 与第二个
+     本地工作台消费者已完成候选复验。见
      [《可浮动与 Primary 停靠工具宿主》](Pnw工作台Web可浮动与Primary停靠工具宿主.md)。
+   - [x] `0.7.0` 候选增加 `PnwSelect` 简单枚举选择：string v-model、disabled option、
+     24px compact / 32px default；自绘 listbox 解决原生 option 跨平台主题不可控问题，
+     Teleport 菜单复用 Wing light/dark/system token、键盘与 ARIA 契约。见
+     [《Pnw 简单枚举 Select》](Pnw简单枚举Select.md)。
+   - [x] `0.7.0` 候选增加非模态 View 对话框宿主的纯 TypeScript 契约与仲裁器：Tauri
+     Host 以带 parent 的 Webview 窗口呈现且不禁用主窗口，Web 自动降级为无蒙层
+     `PnwFloatingPanel`；两者共享可序列化 props/result、实例上限和关闭/失败结果。
+     Wing 不依赖 Tauri、不移动 Vue DOM、不共享跨 Webview Pinia；Host adapter 与
+     macOS/Windows 实测属于下一消费阶段。见
+     [《非模态 View 对话框宿主》](Pnw工作台Web非模态View对话框宿主.md)。
+   - [x] 第二消费者原型证明“参数检查器 dialog”与“完整 View 浮出”必须分层；
+     后者冻结为整个 View frame 在 Editor 与 detached host 间转换，原 Tab 保持唯一 owner。
+     Web 采用单 renderer Teleport，Tauri 采用主端唯一真源的 presentation lease 与
+     command/event bridge。每个 View 自有一个稳定 handle：可持久化 record 只保存
+     mode、dialog bounds、revision 等纯数据，Header/Main 两个 target 只进入非持久化
+     runtime registry，并在同一 revision 原子迁移；Main 业务组件不感知宿主变化。
+     Web 候选已提供 `PnwPresentationFrameDefinition`、`PnwViewPresentationPortal`、八向/
+     轴向 resize、推荐尺寸恢复与同 renderer 窗口栈；Tool/View 共享 chrome，但各自保留
+     close/reattach 与 owner 状态机。Editor MRU、Tab 投影、直接 floating open command、
+     最右 View Header 动作、统一浮动窗口入口及 generation lease/orphan recovery 已成为
+     Wing 公共能力；浮出后 Editor 回到 MRU embedded View/Home，不生成占位页。普通稳定
+     owner View 默认可浮出，Home/无 owner/显式 false 自动禁用；仓内以两个不同 View 和
+     资源库类 Tool fixture 验证。第二消费者证明产品可以删除 presentation Store、DOM
+     reparent、MRU/resize/stack helper；其发现的层级缺口由统一 `presentation` overlay
+     layer 与跨 base 全局 live order 收口，消费者不再自选 z-index。Tauri adapter 继续
+     等待 Desk Tools 或另一个真实桌面 Host 证据，且不复用
+     `PnwViewDialogRequest`。见
+     [《完整 View 浮出与收回方案》](Pnw工作台Web完整View浮出与收回方案.md)。
+   - [x] `0.7.0` 候选增加单根本地工程 Workspace 契约：
+     `pnwCreateWorkspaceController` 统一 open/switch/close、only-latest、AbortSignal、失败回滚
+     与 recent MRU；资源端口只接受 workspace descriptor + 相对路径。最小 Tauri adapter
+     采用注入 command bridge，不引入 Tauri 包；真实 Host 必须继续执行 canonical/realpath
+     与 symlink 越界检查。SQLite repository、Node adapter 和公共 Switcher 等真实消费后再
+     批准。见[《Pnw 本地工程工作空间能力提炼计划》](Pnw本地工程工作空间能力提炼计划.md)。
+   - [x] `0.7.0` 候选增加 Workbench 外层的 Workspace Welcome Gate 与独立 Home 壳体：
+     required 模式在没有 Workspace 时不渲染 Ribbon、Tab、Primary、Bottom 或 Editor；
+     `actionPlacement=auto` 统一返回/关闭位置，所有入口只发出同一受控关闭意图；受控
+     `colorScheme` 为 Welcome 建立 canonical 主题根。Desk Tools 与第二个本地工作台消费者
+     已验证最近列表、类型选择、关闭/重开、light/dark/system、窄屏和刷新恢复，产品无需复制
+     状态机或主题 CSS。见[《Pnw 工作空间欢迎页与最近列表》](Pnw工作空间欢迎页与最近列表.md)。
+     最近区域新增默认兼容的可选折叠；`after-recent` 继续承接产品扩展。两个真实消费者证明
+     共同呈现需求后增加中立 `PnwInformationBlock`，但 JSON 读取、字段业务语义与动作仍归
+     Host，不把消费侧字段或产品 DTO 扩进 Workspace 协议。
+     两个消费者进一步证明多卡片排列的重复实现后，增加 `PnwInformationCardGroup`：Host
+     只传中立 JSON/DTO，Wing 统一 auto-fit、gap、主题、ARIA 和默认不可折叠卡片；业务字段、
+     JSON 读取与动作仍留在 Host。见[《Pnw 信息卡片组》](Pnw信息卡片组.md)。
+     Welcome Rail 同步增加 `PnwWorkspaceRailAction / #secondary-actions`：统一中性按钮、
+     图标、间距和“打开—次级—生命周期”分组；具体命令名称、流程和信息 Block 文案仍由
+     Host 决定。Desk Tools 与第二个本地工作台消费者已在 clean 候选上完成明暗/system、
+     主题刷新恢复、动作顺序、信息 DTO 和对话框焦点复验，均未保留产品 Rail/主题外壳补丁。
+     最近区域进一步与信息 Block 统一壳层 token 和标题高度，内部记录改为分隔行；两个消费者
+     的最终去重审计确认 Gate、Recent、Rail、主题、折叠和确认对话框均无产品重复实现。
+     `PnwChoiceDialogHost` 同步补齐动态请求的默认安全动作焦点、Tab trap 和关闭后触发点恢复，
+     Host 不再为 Workspace 确认对话框编写 querySelector/nextTick 补丁。
+   - [x] `0.7.0` 冻结两条 Host 产品线边界：Phoenix Admin 是已经投入使用的服务器应用平台，
+     Midway 只在技术栈说明中作为其服务端内核；本地 Vue/Wing 应用继续由 Node/Hono、Tauri
+     与受控文件系统 Host 承载。两条产品线共享 Wing 的 Workspace、View presentation、MRU、
+     Ribbon 等状态机，但分别持有权限、数据和 Host adapter；未来跨产品集成必须另立 ADR、
+     数据契约和权限模型。见
+     [《Pnw 本地与服务器 Host 产品线边界》](Pnw本地与服务器Host产品线边界.md)。
 
 6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
 

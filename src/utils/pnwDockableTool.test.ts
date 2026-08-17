@@ -32,6 +32,7 @@ describe("Pnw 可停靠工具状态机", () => {
     expect(state).toEqual({
       mode: "primary",
       floatingPosition: { x: 108, y: 72 },
+      floatingSize: { width: 640, height: 480 },
       primaryPlacement: "first",
       primaryExpanded: false,
     });
@@ -92,6 +93,7 @@ describe("Pnw 可停靠工具状态机", () => {
     expect(state).toEqual({
       mode: "primary",
       floatingPosition: { x: 51, y: 73 },
+      floatingSize: { width: 640, height: 480 },
       primaryPlacement: "first",
       primaryExpanded: false,
     });

@@ -11,6 +11,7 @@ import type {
   PnwRibbonIconSize,
   PnwRibbonMode,
   PnwViewBlockContributions,
+  PnwViewContributions,
   PnwViewBlockVisibility,
   PnwWorkbenchTabBarPlacement,
 } from "./PnwWorkbenchWeb.js";
@@ -71,6 +72,13 @@ describe("Pnw Web 工作台实验契约", () => {
       collapsed: "root-flyout",
     } as const satisfies PnwActivityTreeAppearance;
     const contributions: PnwViewBlockContributions = { primary: true, bottom: true };
+    const viewContributions: PnwViewContributions = {
+      primary: true,
+      presentation: {
+        detachable: true,
+        tabPresentation: "hide-when-floating",
+      },
+    };
     const visibility = {
       primary: true,
       bottom: false,
@@ -80,6 +88,7 @@ describe("Pnw Web 工作台实验契约", () => {
     expect(appearance).toMatchObject({ mode: "compact", compact: { iconSize: 24 } });
     expect(treeAppearance).toEqual({ expanded: "admin-menu", collapsed: "root-flyout" });
     expect(contributions.secondary).toBeUndefined();
+    expect(viewContributions.presentation?.detachable).toBe(true);
     expect(visibility.bottom).toBe(false);
     expect(iconId).toBe("pnw:dashboard");
   });

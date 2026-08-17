@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "current": {
+    "workspaceId": "workspace-engineering-demo",
+    "name": "Engineering Demo",
+    "rootPath": "/workspaces/engineering-demo",
+    "readonly": false,
+    "capabilities": ["read", "write", "watch", "database", "native-directory-picker"]
+  },
+  "recent": [
+    {
+      "workspaceId": "workspace-engineering-demo",
+      "name": "Engineering Demo",
+      "rootPath": "/workspaces/engineering-demo",
+      "availability": "available",
+      "lastOpenedAt": "2026-08-16T00:00:00.000Z"
+    },
+    {
+      "workspaceId": "workspace-reference-data",
+      "name": "Reference Data",
+      "rootPath": "/workspaces/reference-data",
+      "availability": "unknown"
+    }
+  ],
+  "resourceExamples": [
+    "inputs/example.dat",
+    "reports/summary.json"
+  ]
+}

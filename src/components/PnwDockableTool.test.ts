@@ -58,6 +58,8 @@ describe("PnwDockableToolWindow", () => {
     expect(floatingHtml).toContain('data-pnw-color-scheme="dark"');
     expect(floatingHtml).toContain("停靠到 Primary");
     expect(floatingHtml).toContain("Tool content");
+    expect(floatingHtml).toContain("data-pnw-resize-direction");
+    expect(floatingHtml).toContain("--pnw-floating-panel-layer-z-index:1600");
   });
 
   it("浮窗停靠、关闭与拖动都只发出受控新状态", async () => {
@@ -77,15 +79,16 @@ describe("PnwDockableToolWindow", () => {
     expect(wrapper.emitted("update:state")?.[0]?.[0]).toMatchObject({ mode: "primary" });
     expect(wrapper.props("state").mode).toBe("floating");
 
-    wrapper.findComponent(PnwFloatingPanel).vm.$emit(
-      "update:position",
-      { x: 208, y: 144 },
-    );
+    wrapper.findComponent(PnwFloatingPanel).vm.$emit("update:bounds", {
+      position: { x: 208, y: 144 },
+      size: { width: 720, height: 520 },
+    });
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted("update:state")?.[1]?.[0]).toMatchObject({
       floatingPosition: { x: 208, y: 144 },
     });
     expect(wrapper.emitted("update:position")).toEqual([[{ x: 208, y: 144 }]]);
+    expect(wrapper.emitted("update:size")).toEqual([[{ width: 720, height: 520 }]]);
 
     await document.body.querySelector<HTMLButtonElement>(
       '.pnw-floating-panel__close',

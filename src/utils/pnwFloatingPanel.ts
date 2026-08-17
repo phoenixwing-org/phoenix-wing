@@ -8,6 +8,28 @@ export interface PnwFloatingPanelSize {
   readonly height: number;
 }
 
+export interface PnwFloatingPanelBounds {
+  readonly position: PnwFloatingPanelPosition;
+  readonly size: PnwFloatingPanelSize;
+}
+
+export interface PnwFloatingPanelSizeConstraints {
+  readonly minWidth?: number;
+  readonly minHeight?: number;
+  readonly maxWidth?: number;
+  readonly maxHeight?: number;
+}
+
+export type PnwFloatingPanelResizeDirection =
+  | "north"
+  | "north-east"
+  | "east"
+  | "south-east"
+  | "south"
+  | "south-west"
+  | "west"
+  | "north-west";
+
 /** 浮动面板在 viewport 内需要避让的 Host chrome 安全区域。 */
 export interface PnwFloatingPanelInsets {
   readonly top: number;
@@ -72,5 +94,137 @@ export function pnwClampFloatingPanelPosition(
   return {
     x: Math.min(Math.max(x, minX), Math.max(minX, maxX)),
     y: Math.min(Math.max(y, minY), Math.max(minY, maxY)),
+  };
+}
+
+function pnwPositiveOr(value: number | undefined, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/** 将受控尺寸和位置一并限制在可见 viewport 内。 */
+export function pnwClampFloatingPanelBounds(
+  bounds: PnwFloatingPanelBounds,
+  viewportSize: PnwFloatingPanelSize,
+  constraints: PnwFloatingPanelSizeConstraints = {},
+  margin = 8,
+  insets: Partial<PnwFloatingPanelInsets> = {},
+): PnwFloatingPanelBounds {
+  const normalizedInsets = pnwNormalizeFloatingPanelInsets(insets);
+  const safeMargin = pnwFiniteNonNegative(margin);
+  const viewportWidth = pnwFiniteNonNegative(viewportSize.width);
+  const viewportHeight = pnwFiniteNonNegative(viewportSize.height);
+  const availableWidth = Math.max(
+    1,
+    viewportWidth - normalizedInsets.left - normalizedInsets.right - safeMargin * 2,
+  );
+  const availableHeight = Math.max(
+    1,
+    viewportHeight - normalizedInsets.top - normalizedInsets.bottom - safeMargin * 2,
+  );
+  const minWidth = Math.min(
+    availableWidth,
+    pnwPositiveOr(constraints.minWidth, Math.min(320, availableWidth)),
+  );
+  const minHeight = Math.min(
+    availableHeight,
+    pnwPositiveOr(constraints.minHeight, Math.min(180, availableHeight)),
+  );
+  const maxWidth = Math.max(
+    minWidth,
+    Math.min(availableWidth, pnwPositiveOr(constraints.maxWidth, availableWidth)),
+  );
+  const maxHeight = Math.max(
+    minHeight,
+    Math.min(availableHeight, pnwPositiveOr(constraints.maxHeight, availableHeight)),
+  );
+  const width = Math.min(
+    maxWidth,
+    Math.max(minWidth, pnwPositiveOr(bounds.size.width, minWidth)),
+  );
+  const height = Math.min(
+    maxHeight,
+    Math.max(minHeight, pnwPositiveOr(bounds.size.height, minHeight)),
+  );
+  const size = { width, height };
+  return {
+    size,
+    position: pnwClampFloatingPanelPosition(
+      bounds.position,
+      size,
+      viewportSize,
+      safeMargin,
+      normalizedInsets,
+    ),
+  };
+}
+
+/**
+ * 从指定边/角按 pointer 或键盘增量调整 bounds；左/上边缩放会同步移动位置。
+ */
+export function pnwResizeFloatingPanelBounds(
+  start: PnwFloatingPanelBounds,
+  delta: PnwFloatingPanelPosition,
+  direction: PnwFloatingPanelResizeDirection,
+  viewportSize: PnwFloatingPanelSize,
+  constraints: PnwFloatingPanelSizeConstraints = {},
+  margin = 8,
+  insets: Partial<PnwFloatingPanelInsets> = {},
+): PnwFloatingPanelBounds {
+  const normalized = pnwClampFloatingPanelBounds(
+    start,
+    viewportSize,
+    constraints,
+    margin,
+    insets,
+  );
+  const normalizedInsets = pnwNormalizeFloatingPanelInsets(insets);
+  const safeMargin = pnwFiniteNonNegative(margin);
+  const minLeft = normalizedInsets.left + safeMargin;
+  const minTop = normalizedInsets.top + safeMargin;
+  const maxRight = Math.max(minLeft + 1, viewportSize.width - normalizedInsets.right - safeMargin);
+  const maxBottom = Math.max(minTop + 1, viewportSize.height - normalizedInsets.bottom - safeMargin);
+  const availableWidth = maxRight - minLeft;
+  const availableHeight = maxBottom - minTop;
+  const minWidth = Math.min(
+    availableWidth,
+    pnwPositiveOr(constraints.minWidth, Math.min(320, availableWidth)),
+  );
+  const minHeight = Math.min(
+    availableHeight,
+    pnwPositiveOr(constraints.minHeight, Math.min(180, availableHeight)),
+  );
+  const maxWidth = Math.max(
+    minWidth,
+    Math.min(availableWidth, pnwPositiveOr(constraints.maxWidth, availableWidth)),
+  );
+  const maxHeight = Math.max(
+    minHeight,
+    Math.min(availableHeight, pnwPositiveOr(constraints.maxHeight, availableHeight)),
+  );
+  const dx = Number.isFinite(delta.x) ? delta.x : 0;
+  const dy = Number.isFinite(delta.y) ? delta.y : 0;
+  let left = normalized.position.x;
+  let top = normalized.position.y;
+  let right = left + normalized.size.width;
+  let bottom = top + normalized.size.height;
+
+  if (direction.includes("west")) {
+    left = Math.min(right - minWidth, Math.max(right - maxWidth, left + dx));
+    left = Math.max(minLeft, left);
+  } else if (direction.includes("east")) {
+    right = Math.max(left + minWidth, Math.min(left + maxWidth, right + dx));
+    right = Math.min(maxRight, right);
+  }
+  if (direction.includes("north")) {
+    top = Math.min(bottom - minHeight, Math.max(bottom - maxHeight, top + dy));
+    top = Math.max(minTop, top);
+  } else if (direction.includes("south")) {
+    bottom = Math.max(top + minHeight, Math.min(top + maxHeight, bottom + dy));
+    bottom = Math.min(maxBottom, bottom);
+  }
+
+  return {
+    position: { x: left, y: top },
+    size: { width: right - left, height: bottom - top },
   };
 }

@@ -6,7 +6,7 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.6.x
 
-最后核验：2026-08-01
+最后核验：2026-08-17
 
 本文给设计者、开发者和 AI 一套可直接执行的图标选型与交付规则。稳定 ID、namespace
 与运行时解析见[《Pnw 工作台 Web 图标契约》](Pnw工作台Web图标契约.md)。
@@ -21,8 +21,45 @@ Owner：Phoenix Wing maintainers
 | 4 | 确有新语义且没有可复用资源 | 才自绘；产品/领域图标进入 Host namespace |
 
 只有至少两个真实 Web 消费者共有、且属于通用壳层/导航语义的图标，才考虑进入
-`pnw` catalog。产品 Logo、文件类型和领域动作继续由 Host 持有。不要为了“看起来不
-一样”重复制作同义图标，也不要复制来源或许可不清晰的资源。
+`pnw` catalog。凤凰之翼组织简化标志属于 Wing 公共品牌资产；其他产品 Logo、文件类型
+和领域动作继续由 Host 持有。不要为了“看起来不一样”重复制作同义图标，也不要复制
+来源或许可不清晰的资源。
+
+### 1.1 公共图标与静态资产分流
+
+- 按钮、菜单和导航图标使用 `PnwIcon` / `PnwIconRenderer` 与稳定 `pnw:*` ID；
+- favicon、品牌标志和确需 URL 的插画使用包内 `assets/` 静态资产；
+- Vue 页面中的凤凰之翼组织标志使用 `PnwPhoenixWingMark`；该组件与
+  `phoenix-wing/assets/phoenix-wing-mark.svg` 使用同一份几何真源；
+- 高清宣传母版不进入 UI 包；不因某个消费者已有一批 SVG 就整批反向纳入 Wing。公共
+  资产必须身份稳定、来源清楚，并至少有两个消费者的 URL/静态文件需求。
+
+浏览器 favicon 必须是可直接请求的静态文件。推荐消费者增加一个同步脚本，在 `dev`、
+`build` 前将权威资产复制到 `public/favicon.svg`，并在 CI 中比较字节防止副本漂移：
+
+```js
+import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const pnwSource = fileURLToPath(import.meta.resolve("phoenix-wing/assets/phoenix-wing-mark.svg"));
+const pnwPublicDirectory = new URL("../public/", import.meta.url);
+const pnwTarget = new URL("favicon.svg", pnwPublicDirectory);
+mkdirSync(pnwPublicDirectory, { recursive: true });
+copyFileSync(pnwSource, pnwTarget);
+
+if (!readFileSync(pnwSource).equals(readFileSync(pnwTarget))) {
+  throw new Error("Phoenix Wing favicon 与权威资产不一致");
+}
+```
+
+HTML 使用标准静态引用：
+
+```html
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+```
+
+消费者可以在同步脚本中增加 `--check` 分支，只比较而不写入；不要把 SVG 转成 data URL，
+也不要复制一份后失去校验。
 
 ## 2. Pnw 内置几何基线
 

@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.6.5'
+export const PNW_VERSION = '0.7.0'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -50,9 +50,14 @@ export { pnwScheduleDebounced } from './utils/pnwScheduleDebounced.js'
 export {
   type PnwColorScheme,
   type PnwResolvedColorScheme,
+  type PnwColorSchemeTransitionOptions,
+  type PnwColorSchemeTransitionOrigin,
+  type PnwColorSchemeTransitionResult,
+  PNW_DEFAULT_COLOR_SCHEME_TRANSITION_DURATION,
   pnwResolveColorScheme,
   pnwGetAppliedColorScheme,
   pnwApplyColorScheme,
+  pnwToggleColorSchemeWithTransition,
 } from './utils/pnwColorScheme.js'
 
 // ---------------------------------------------------------------------------
@@ -60,12 +65,112 @@ export {
 // ---------------------------------------------------------------------------
 export { pnwBindPointerDrag } from './utils/pnwPointerDrag.js'
 export {
+  type PnwFloatingPanelBounds,
   pnwClampFloatingPanelPosition,
+  pnwClampFloatingPanelBounds,
   pnwNormalizeFloatingPanelInsets,
+  pnwResizeFloatingPanelBounds,
   type PnwFloatingPanelInsets,
   type PnwFloatingPanelPosition,
+  type PnwFloatingPanelResizeDirection,
   type PnwFloatingPanelSize,
+  type PnwFloatingPanelSizeConstraints,
 } from './utils/pnwFloatingPanel.js'
+export {
+  type PnwPresentationCloseBehavior,
+  type PnwPresentationFrameDefinition,
+  type PnwPresentationOwnerKind,
+  type PnwPresentationResizeMode,
+  type PnwResolvedPresentationFrameDefinition,
+} from './types/PnwPresentationFrame.js'
+export {
+  pnwCreatePresentationBoundsSnapshot,
+  pnwResolvePresentationFrameDefinition,
+} from './utils/pnwPresentationFrame.js'
+export {
+  pnwCreateFloatingWindowStack,
+  pnwGetDocumentFloatingWindowStack,
+  type PnwFloatingWindowStackController,
+  type PnwFloatingWindowStackEntry,
+  type PnwFloatingWindowStackSnapshot,
+} from './utils/pnwFloatingWindowStack.js'
+
+// ---------------------------------------------------------------------------
+// 非模态 View 对话框宿主
+// ---------------------------------------------------------------------------
+export {
+  type PnwResolvedViewDialogRequest,
+  type PnwViewDialogCapabilities,
+  type PnwViewDialogCloseReason,
+  type PnwViewDialogController,
+  type PnwViewDialogControllerOptions,
+  type PnwViewDialogFailureCode,
+  type PnwViewDialogHostAdapter,
+  type PnwViewDialogInstancePolicy,
+  type PnwViewDialogOutcome,
+  type PnwViewDialogPresentation,
+  type PnwViewDialogRequest,
+  type PnwViewDialogSize,
+} from './types/PnwViewDialog.js'
+export {
+  PNW_DEFAULT_VIEW_DIALOG_SIZE,
+  pnwCreateViewDialogController,
+  pnwNormalizeViewDialogRequest,
+  pnwResolveViewDialogPresentation,
+  pnwValidateViewDialogRequest,
+} from './utils/pnwViewDialog.js'
+
+// ---------------------------------------------------------------------------
+// 完整 View Web 浮出与收回
+// ---------------------------------------------------------------------------
+export {
+  type PnwEditorViewAvailability,
+  type PnwOpenViewPresentationAction,
+  type PnwOpenViewPresentationInstance,
+  type PnwOpenViewPresentationRequest,
+  type PnwPreferredViewPresentation,
+  type PnwResolvedViewPresentationContribution,
+  type PnwViewPresentationCommand,
+  type PnwViewPresentationContribution,
+  type PnwViewPresentationContributionContext,
+  type PnwViewPresentationIdentity,
+  type PnwViewPresentationInitialState,
+  type PnwViewPresentationLeaseEvent,
+  type PnwViewPresentationLeaseHandle,
+  type PnwViewPresentationLeaseRecovery,
+  type PnwViewPresentationLeaseRegistry,
+  type PnwViewPresentationLeaseSnapshot,
+  type PnwViewPresentationManagerCommand,
+  type PnwViewPresentationManagerState,
+  type PnwViewPresentationMode,
+  type PnwViewPresentationOwnerTabAction,
+  type PnwViewPresentationPortalHandle,
+  type PnwViewPresentationRecord,
+  type PnwViewPresentationRuntimeTargets,
+  type PnwViewPresentationTabPresentation,
+} from './types/PnwViewPresentation.js'
+export {
+  PNW_DEFAULT_VIEW_PRESENTATION_DIALOG_POSITION,
+  PNW_DEFAULT_VIEW_PRESENTATION_DIALOG_SIZE,
+  pnwCreateViewPresentationManagerState,
+  pnwCreateViewPresentationRecord,
+  pnwIsViewPresentationDetached,
+  pnwIsViewPresentationOwnerTabEditorActive,
+  pnwReduceViewPresentationManagerState,
+  pnwReduceViewPresentationRecord,
+  pnwResolveNextEmbeddedViewId,
+  pnwResolveOpenViewPresentationAction,
+  pnwResolveViewPresentationContribution,
+  pnwResolveViewPresentationOwnerTabAction,
+  pnwSelectMostRecentEmbeddedEditorView,
+  pnwShouldProjectViewPresentationOwnerTab,
+  pnwValidateViewPresentationIdentity,
+} from './utils/pnwViewPresentation.js'
+export {
+  pnwCreateViewPresentationLeaseRegistry,
+  pnwGetDocumentViewPresentationLeaseRegistry,
+  type PnwViewPresentationLeaseRegistryOptions,
+} from './utils/pnwViewPresentationLease.js'
 
 // ---------------------------------------------------------------------------
 // 常用 SVG 图标资源
@@ -95,6 +200,83 @@ export {
 export { pnwClearPhoenixBrowserStorage } from './utils/pnwBrowserStorage.js'
 
 // ---------------------------------------------------------------------------
+// 本地工程 Workspace
+// ---------------------------------------------------------------------------
+export {
+  type PnwBuiltinWorkspaceTypeId,
+  type PnwRecentWorkspaceEntry,
+  type PnwRecentWorkspaceStore,
+  type PnwWorkspaceAvailability,
+  type PnwWorkspaceCapability,
+  type PnwWorkspaceCloseRequest,
+  type PnwWorkspaceController,
+  type PnwWorkspaceControllerOptions,
+  type PnwWorkspaceDescriptor,
+  type PnwWorkspaceErrorCode,
+  type PnwWorkspaceEntryPolicy,
+  type PnwWorkspaceFailure,
+  type PnwWorkspaceGateActionPlacement,
+  type PnwWorkspaceGateMode,
+  type PnwWorkspaceGateResolution,
+  type PnwWorkspaceHostAdapter,
+  type PnwWorkspaceHostOpenRequest,
+  type PnwWorkspaceLifecycleParticipant,
+  type PnwWorkspaceOpenRequest,
+  type PnwWorkspacePhase,
+  type PnwWorkspacePickRequest,
+  type PnwWorkspacePickResult,
+  type PnwWorkspaceResourcePort,
+  type PnwWorkspaceResourceReadRequest,
+  type PnwWorkspaceResourceReadResult,
+  type PnwWorkspaceResourceRef,
+  type PnwWorkspaceResourceWriteRequest,
+  type PnwWorkspaceSaveTargetRequest,
+  type PnwWorkspaceState,
+  type PnwWorkspaceStorage,
+  type PnwWorkspaceTransitionContext,
+  type PnwWorkspaceTransitionKind,
+  type PnwWorkspaceTransitionResult,
+  type PnwWorkspaceTransitionStatus,
+  type PnwWorkspaceTransitionVote,
+  type PnwWorkspaceTypeDefinition,
+  type PnwWorkspaceValidation,
+} from './types/PnwWorkspace.js'
+export {
+  type PnwInformationBlockDefinition,
+  type PnwInformationBlockItem,
+} from './types/PnwInformationBlock.js'
+export {
+  type PnwInformationCardDefinition,
+  type PnwInformationCardGroupDefinition,
+} from './types/PnwInformationCardGroup.js'
+export {
+  PnwWorkspaceError,
+  pnwCreateWorkspaceController,
+  pnwCreateWorkspaceResourceRef,
+  pnwNormalizeRecentWorkspaces,
+  pnwNormalizeWorkspaceDescriptor,
+  pnwNormalizeWorkspaceRelativePath,
+} from './utils/pnwWorkspace.js'
+export {
+  pnwResolveWorkspaceGate,
+  type PnwResolveWorkspaceGateOptions,
+} from './utils/pnwWorkspaceGate.js'
+export {
+  pnwCreateDefaultWorkspaceTypes,
+  pnwNormalizeWorkspaceTypeId,
+  pnwNormalizeWorkspaceTypes,
+  type PnwNormalizeWorkspaceTypesOptions,
+} from './utils/pnwWorkspaceTypes.js'
+export {
+  PNW_DEFAULT_TAURI_WORKSPACE_COMMANDS,
+  pnwCreateTauriWorkspaceAdapter,
+  type PnwTauriWorkspaceAdapter,
+  type PnwTauriWorkspaceAdapterOptions,
+  type PnwTauriWorkspaceCommandNames,
+  type PnwTauriWorkspaceInvoke,
+} from './utils/pnwTauriWorkspace.js'
+
+// ---------------------------------------------------------------------------
 // 编辑抽屉宿主
 // ---------------------------------------------------------------------------
 export { pnwCanCloseEditorDrawer } from './utils/pnwEditorDrawer.js'
@@ -108,6 +290,14 @@ export {
   type PnwLocale,
   type PnwLocaleMessageValues,
 } from './types/PnwLocale.js'
+export {
+  type PnwCreateWorkbenchHomeDefinitionOptions,
+  type PnwWorkbenchHomeDefinition,
+} from './types/PnwWorkbenchHome.js'
+export {
+  PNW_DEFAULT_WORKBENCH_HOME_VIEW_ID,
+  pnwCreateWorkbenchHomeDefinition,
+} from './utils/pnwWorkbenchHome.js'
 
 export {
   PNW_DEFAULT_LOCALE,
@@ -140,6 +330,11 @@ export {
   type PnwDockableToolState,
   type PnwDockableToolCommand,
 } from './types/PnwDockableTool.js'
+
+export {
+  type PnwSelectOption,
+  type PnwSelectSize,
+} from './types/PnwSelect.js'
 
 export {
   PNW_DEFAULT_DOCKABLE_TOOL_STATE,
@@ -245,6 +440,7 @@ export {
   type PnwBottomPanelTab,
   type PnwViewBlockId,
   type PnwViewBlockContributions,
+  type PnwViewContributions,
   type PnwViewBlockVisibility,
   type PnwWorkbenchPanelSizes,
   type PnwWorkbenchLayoutState,
@@ -257,6 +453,7 @@ export {
   type PnwViewBlockComponentContribution,
   type PnwBottomViewBlockComponentContribution,
   type PnwViewBlockComponentContributions,
+  type PnwViewComponentContributions,
   type PnwWorkbenchDisplaySettingsActionSlotProps,
   type PnwWorkbenchLayoutSlotProps,
 } from './types/PnwWorkbenchVue.js'
@@ -432,6 +629,7 @@ export { usePnwOverlayTheme } from './composables/usePnwOverlayTheme.js'
 export { default as PnwAppModalOverlay } from './components/PnwAppModalOverlay.vue'
 export { default as PnwAsyncProgressOverlay } from './components/PnwAsyncProgressOverlay.vue'
 export { default as PnwChoiceDialogHost } from './components/PnwChoiceDialogHost.vue'
+export { default as PnwColorSchemeToggle } from './components/PnwColorSchemeToggle.vue'
 export { default as PnwComboTextInput } from './components/PnwComboTextInput.vue'
 export { default as PnwDictSelect } from './components/PnwDictSelect.vue'
 export { default as PnwEditorDrawerHost } from './components/PnwEditorDrawerHost.vue'
@@ -440,8 +638,14 @@ export { default as PnwDockableToolWindow } from './components/PnwDockableToolWi
 export { default as PnwFloatingPanel } from './components/PnwFloatingPanel.vue'
 export { default as PnwIcon } from './components/PnwIcon.vue'
 export { default as PnwIconRenderer } from './components/PnwIconRenderer.vue'
+export { default as PnwInformationBlock } from './components/PnwInformationBlock.vue'
+export { default as PnwInformationCardGroup } from './components/PnwInformationCardGroup.vue'
 export { default as PnwOverlayThemeProvider } from './components/PnwOverlayThemeProvider.vue'
 export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
+export { default as PnwRecentWorkspaceList } from './components/PnwRecentWorkspaceList.vue'
+export { default as PnwSelect } from './components/PnwSelect.vue'
+export { default as PnwViewPresentationPortal } from './components/PnwViewPresentationPortal.vue'
+export { default as PnwFloatingWindowMenu } from './components/PnwFloatingWindowMenu.vue'
 
 export { default as PnwPageHeader } from './layout/PnwPageHeader.vue'
 export { default as PnwPageLayout } from './layout/PnwPageLayout.vue'
@@ -467,6 +671,11 @@ export { default as PnwShellLogPanel } from './layout/PnwShellLogPanel.vue'
 export { default as PnwSidebarBlock } from './layout/PnwSidebarBlock.vue'
 export { default as PnwSidebarBlockHead } from './layout/PnwSidebarBlockHead.vue'
 export { default as PnwWelcomeShell } from './layout/PnwWelcomeShell.vue'
+export { default as PnwWorkspaceWelcome } from './layout/PnwWorkspaceWelcome.vue'
+export { default as PnwWorkspaceGate } from './layout/PnwWorkspaceGate.vue'
+export { default as PnwWorkspaceTypeSelect } from './components/PnwWorkspaceTypeSelect.vue'
+export { default as PnwWorkspaceRailAction } from './components/PnwWorkspaceRailAction.vue'
+export { default as PnwWorkbenchHome } from './layout/PnwWorkbenchHome.vue'
 export { default as PnwWorkbenchTabBar } from './layout/PnwWorkbenchTabBar.vue'
 export { default as PnwWorkbenchFooter } from './layout/PnwWorkbenchFooter.vue'
 export { default as PnwWorkbenchHeader } from './layout/PnwWorkbenchHeader.vue'

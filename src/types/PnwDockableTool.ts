@@ -1,4 +1,8 @@
-import type { PnwFloatingPanelPosition } from "../utils/pnwFloatingPanel.js";
+import type {
+  PnwFloatingPanelPosition,
+  PnwFloatingPanelSize,
+} from "../utils/pnwFloatingPanel.js";
+import type { PnwPresentationFrameDefinition } from "./PnwPresentationFrame.js";
 
 /** 可停靠工具的呈现位置；同一状态在任一时刻最多只有一种呈现。 */
 export type PnwDockableToolMode = "closed" | "floating" | "primary";
@@ -16,6 +20,8 @@ interface PnwDockableToolDefinitionBase {
   readonly id: string;
   readonly title: string;
   readonly ariaLabel?: string;
+  /** Tool 与完整 View 复用的浮动 chrome 能力，不改变 tool 的停靠/关闭状态机。 */
+  readonly frame?: PnwPresentationFrameDefinition;
 }
 
 export type PnwDockableToolDefinition =
@@ -32,6 +38,7 @@ export type PnwDockableToolDefinition =
 export interface PnwDockableToolState {
   readonly mode: PnwDockableToolMode;
   readonly floatingPosition: PnwFloatingPanelPosition;
+  readonly floatingSize?: PnwFloatingPanelSize;
   readonly primaryPlacement: PnwDockablePrimaryPlacement;
   readonly primaryExpanded: boolean;
 }
@@ -43,6 +50,10 @@ export type PnwDockableToolCommand =
   | {
       readonly type: "set-floating-position";
       readonly position: PnwFloatingPanelPosition;
+    }
+  | {
+      readonly type: "set-floating-size";
+      readonly size: PnwFloatingPanelSize;
     }
   | {
       readonly type: "set-primary-placement";

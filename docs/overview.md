@@ -5,6 +5,8 @@
 ## 目录结构
 
 ```
+assets/
+└── phoenix-wing-mark.svg              ← 凤凰之翼组织简化标志权威静态资产
 src/
 ├── index.ts                            ← 统一导出入口
 ├── utils/
@@ -60,7 +62,9 @@ src/
 │   ├── PnwPageMainBlock.vue            ← 默认 10px、无 CRUD provider 的工作内容层
 │   ├── PnwShellLogPanel.vue            ← 日志面板
 │   ├── PnwWorkbenchTabBar.vue          ← 页面标签栏
-│   └── PnwWelcomeShell.vue             ← 欢迎页骨架
+│   ├── PnwWelcomeShell.vue             ← 欢迎页骨架
+│   ├── PnwWorkspaceGate.vue            ← 全屏 Welcome / Workbench 入口
+│   └── PnwWorkbenchHome.vue            ← 普通 Home View 壳体
 ├── composables/
 │   ├── pnwChoiceDialog.ts              ← 选择对话框逻辑
 │   ├── pnwCreateWorkbench.ts           ← Tab 管理引擎
@@ -86,7 +90,7 @@ src/
 | `pnwAsyncProgress`      | 异步任务进度状态机      | `pnwCreateScanTaskState`, `pnwCreateTestTaskState`, `pnwUpdateTaskFromPoll`, `pnwUpdateTaskFromStreamEvent`, `pnwComputeProgressPercent`, `pnwFormatDuration` 等 |
 | `pnwAsyncProgressTypes` | 进度相关类型定义       | `PnwAsyncTaskState`, `PnwAsyncProgressStep`, `PnwTaskStatus`, `PnwStepStatus`, `PNW_SCAN_STEP_LABELS`, `PNW_TEST_STEP_LABEL` 等                                  |
 | `pnwScheduleDebounced`  | 防抖调度           | `pnwScheduleDebounced`                                                                                                                                          |
-| `pnwColorScheme`        | 色彩方案解析         | `PnwColorScheme`, `pnwResolveColorScheme`, `pnwApplyColorScheme`                                                                                                |
+| `pnwColorScheme`        | 色彩方案解析与受控切换 | `PnwColorScheme`, `pnwResolveColorScheme`, `pnwApplyColorScheme`, `pnwToggleColorSchemeWithTransition`, `PnwColorSchemeToggle`                                  |
 | `pnwPointerDrag`        | 指针拖拽交互         | `pnwBindPointerDrag`                                                                                                                                            |
 | `pnwFloatingPanel`      | 浮动面板边界与 Host chrome 安全区修正 | `pnwClampFloatingPanelPosition`、`pnwNormalizeFloatingPanelInsets`、`PnwFloatingPanelPosition`、`PnwFloatingPanelSize`、`PnwFloatingPanelInsets`                                  |
 | `pnwBrowserStorage`     | 浏览器存储清理        | `pnwClearPhoenixBrowserStorage`                                                                                                                                 |
@@ -111,6 +115,7 @@ src/
 | `PnwAppModalOverlay` | 全屏模态框，Teleport 到 body，Escape 关闭 | Vue 3 |
 | `PnwChoiceDialogHost` | 多按钮选择对话框，支持复选框 | Vue 3 + Element Plus |
 | `PnwComboTextInput` | 带下拉选项的文本输入框 | Vue 3 |
+| `PnwInformationCardGroup` | JSON/DTO 驱动的 auto-fit 中立信息卡片组，默认卡片不可折叠 | PnwInformationBlock |
 | `PnwExpandCaret` | 展开/折叠三角图标 | 无 |
 | `PnwFloatingPanel` | 无背景遮罩、受控位置、可拖动且自动修正到可见范围的浮动面板 | Vue 3 |
 | `PnwIcon` | 公共壳层与导航 currentColor SVG catalog，回归 16/24/36/48/64px | Vue 3 |
@@ -122,7 +127,7 @@ src/
 | 组件 | 说明 | 依赖 |
 |------|------|------|
 | `PnwSidebarBlock` | 可折叠侧栏块，支持 strip/card 两种变体 | Vue 3 |
-| `PnwPhoenixWingMark` | Phoenix Wing 红橙/青蓝羽翼与中央火焰品牌标志，支持装饰/可访问语义 | Vue 3 |
+| `PnwPhoenixWingMark` | 凤凰之翼组织红橙/青蓝羽翼与中央火焰简化标志；与公开 SVG 资产同源，支持装饰/可访问语义 | Vue 3 |
 | `PnwSidebarBlockHead` | 侧栏块标题行 | PnwExpandCaret |
 | `PnwActivityBar` | 同一导航树的 Ribbon / Tree 受控入口 | PnwRibbon、PnwActivityTree |
 | `PnwActivityTree` | 可展开、键盘可操作的侧面目录树；可受控收起为末级节点 Activity Rail | Vue 3 |
@@ -144,6 +149,11 @@ src/
 | `PnwShellLogPanel` | 日志面板（自动滚动 + 清空/关闭） | PnwSidebarBlock |
 | `PnwWorkbenchTabBar` | 页面标签栏（支持 header、刷新当前、关闭其他与最大化/还原） | Vue 3 |
 | `PnwWelcomeShell` | 欢迎页骨架（品牌栏 + 操作 + 主内容区，slot 化） | Vue 3 |
+| `PnwRecentWorkspaceList` | 受控最近工作空间列表（状态、打开/移除与条目扩展 slot） | Vue 3 |
+| `PnwWorkspaceWelcome` | 直接组合 `PnwWorkspaceState` 的完整欢迎页 | PnwWelcomeShell、PnwRecentWorkspaceList |
+| `PnwWorkspaceGate` | required/optional 的全屏 Workspace 入口；关闭后返回 Welcome | PnwWorkspaceWelcome、PnwWorkspaceState |
+| `PnwWorkspaceTypeSelect` | mixed/code/cad/lighting 与 Host 扩展类型的稳定选择 | PnwSelect |
+| `PnwWorkbenchHome` | 普通 Home View 的中立标题、动作、正文与页脚壳体 | Vue 3 |
 
 ### 组合式函数 / 引擎
 

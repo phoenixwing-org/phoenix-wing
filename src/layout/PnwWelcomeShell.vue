@@ -1,14 +1,19 @@
 <script setup lang="ts">
-defineProps<{
+withDefaults(defineProps<{
   /** 应用标题 */
   appTitle?: string;
-}>();
+  /** 隐藏左侧 Rail 后，右侧内容自动占满 Welcome 外壳。 */
+  showRail?: boolean;
+}>(), {
+  appTitle: "",
+  showRail: true,
+});
 </script>
 
 <template>
-  <div class="pnw-welcome">
+  <div class="pnw-welcome" :class="{ 'pnw-welcome--without-rail': !showRail }">
     <!-- 左侧品牌栏 -->
-    <aside class="pnw-welcome-rail">
+    <aside v-if="showRail" class="pnw-welcome-rail">
       <div class="pnw-welcome-brand">
         <slot name="brand">
           <span class="pnw-welcome-brand-text">{{ appTitle ?? '' }}</span>
@@ -44,19 +49,31 @@ defineProps<{
 
 <style scoped>
 .pnw-welcome {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--pnw-welcome-rail-width, minmax(240px, 360px)) minmax(0, 1fr);
   height: 100%;
   min-height: 0;
+  color: var(--pnw-workbench-text, var(--pnw-workbench-default-text, var(--text, #0f172a)));
+  background: var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, var(--page-bg, #fff)));
+}
+
+.pnw-welcome--without-rail {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .pnw-welcome-rail {
-  flex-shrink: 0;
-  width: 240px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 32px 24px;
-  background: var(--phoenix-bg-welcome-rail, #f0f4f8);
-  border-right: 1px solid var(--border, #e2e8f0);
+  padding: var(--pnw-welcome-rail-padding, 36px 28px);
+  background: var(
+    --pnw-welcome-rail-bg,
+    var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, var(--phoenix-bg-welcome-rail, #f1f5f9)))
+  );
+  border-right: 1px solid var(
+    --pnw-workbench-border,
+    var(--pnw-workbench-default-border, var(--border, #dbe3ed))
+  );
 }
 
 .pnw-welcome-brand {
@@ -67,7 +84,7 @@ defineProps<{
 .pnw-welcome-brand-text {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text, #0f172a);
+  color: inherit;
 }
 
 .pnw-welcome-actions {
@@ -81,7 +98,7 @@ defineProps<{
   flex-shrink: 0;
   margin-top: 16px;
   font-size: 0.75rem;
-  color: var(--muted, #64748b);
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, var(--muted, #64748b)));
 }
 
 .pnw-welcome-main {
@@ -89,9 +106,9 @@ defineProps<{
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 24px 32px;
+  padding: var(--pnw-welcome-main-padding, 40px 48px);
   overflow: auto;
-  background: var(--page-bg, #fff);
+  background: var(--pnw-welcome-main-bg, transparent);
 }
 
 .pnw-welcome-head {
@@ -105,12 +122,14 @@ defineProps<{
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text, #0f172a);
+  color: inherit;
 }
 
 .pnw-welcome-head-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -120,7 +139,43 @@ defineProps<{
 }
 
 .pnw-welcome-empty {
-  color: var(--muted, #64748b);
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, var(--muted, #64748b)));
   font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .pnw-welcome {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: 100%;
+  }
+
+  .pnw-welcome-rail {
+    padding: var(--pnw-welcome-rail-padding-narrow, 20px);
+    border-right: 0;
+    border-bottom: 1px solid var(
+      --pnw-workbench-border,
+      var(--pnw-workbench-default-border, var(--border, #dbe3ed))
+    );
+  }
+
+  .pnw-welcome-brand {
+    margin-bottom: 16px;
+  }
+
+  .pnw-welcome-actions {
+    flex: none;
+  }
+
+  .pnw-welcome-main {
+    padding: var(--pnw-welcome-main-padding-narrow, 24px 20px);
+    overflow: visible;
+  }
+
+  .pnw-welcome-head {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 }
 </style>

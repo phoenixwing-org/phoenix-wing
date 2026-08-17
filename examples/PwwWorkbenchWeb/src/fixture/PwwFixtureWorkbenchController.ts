@@ -280,6 +280,15 @@ export function usePwwFixtureWorkbenchController() {
   }
 
   function pwwHandleViewAction(actionId: string): void {
+    if (actionId === "fixture.open-result-floating") {
+      pwwActivateNode("result-preview");
+      pwwAppendEvent(
+        "openView：结果预览首次请求 floating；重复请求应聚焦既有实例。",
+        "info",
+        "presentation",
+      );
+      return;
+    }
     pwwAppendEvent(`Consumer 处理 fixture View 动作：${actionId}。`);
   }
 

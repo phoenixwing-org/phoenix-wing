@@ -1,8 +1,17 @@
+import type {
+  PnwPreferredViewPresentation,
+  PnwViewPresentationContribution,
+} from "phoenix-wing";
+import { pnwCreateWorkbenchHomeDefinition } from "phoenix-wing";
+
 export type PwwFixtureViewKind =
+  | "home"
   | "summary"
   | "catalog"
   | "codegen"
   | "inspection"
+  | "presentation"
+  | "dockable-tool"
   | "issue";
 
 export interface PwwFixtureViewDefinition {
@@ -14,9 +23,17 @@ export interface PwwFixtureViewDefinition {
   readonly primaryTitle?: string;
   readonly secondaryTitle?: string;
   readonly bottomTitle?: string;
+  readonly presentation?: PnwViewPresentationContribution;
+  readonly preferredPresentation?: PnwPreferredViewPresentation;
 }
 
 export const PWW_FIXTURE_VIEWS: Readonly<Record<string, PwwFixtureViewDefinition>> = {
+  home: {
+    kind: "home",
+    title: pnwCreateWorkbenchHomeDefinition({ viewId: "home", title: "主页" }).title,
+    eyebrow: "WORKBENCH HOME FIXTURE",
+    description: "普通 Home View；Wing 提供壳体，功能卡片、巡游和使用提示由消费者自定义。",
+  },
   dashboard: {
     kind: "summary",
     title: "综合看板",
@@ -56,6 +73,28 @@ export const PWW_FIXTURE_VIEWS: Readonly<Record<string, PwwFixtureViewDefinition
     eyebrow: "验证 View",
     description: "只贡献 Bottom Panel，左右两侧保持完整 Editor 宽度。",
     bottomTitle: "问题列表",
+  },
+  "detached-view": {
+    kind: "presentation",
+    title: "完整 View 浮出",
+    eyebrow: "VIEW PRESENTATION FIXTURE",
+    description: "同一 Header/Main frame 在 Editor 与可缩放非模态浮窗间原子迁移。",
+    presentation: { detachable: true, tabPresentation: "hide-when-floating" },
+  },
+  "result-preview": {
+    kind: "presentation",
+    title: "结果预览",
+    eyebrow: "SECOND DETACHABLE VIEW FIXTURE",
+    description: "第二种完整 View；openView 可请求首次直接 floating，重复请求只聚焦。",
+    presentation: { detachable: true, tabPresentation: "hide-when-floating" },
+    preferredPresentation: "floating",
+  },
+  "dockable-tool": {
+    kind: "dockable-tool",
+    title: "可停靠资源工具",
+    eyebrow: "TOOL PRESENTATION FIXTURE",
+    description: "同一 Tool 状态在非模态浮窗与 Primary Section 间互斥切换。",
+    primaryTitle: "可停靠工具",
   },
   "workbench-layout": {
     kind: "summary",

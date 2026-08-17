@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.6.5 候选
+适用版本：0.7.0 候选
 
-最后核验：2026-08-14
+最后核验：2026-08-15
 
 ## 目标与边界
 
@@ -15,9 +15,9 @@ definition 和 state 在任一时刻最多只有一个呈现；业务数据、Ro
 持久化介质仍由 Host 持有。浮动和停靠切换可以重建呈现组件，因此工具的业务状态必须
 位于组件上层的 store/composable，不能依赖浮窗内部的临时局部状态。
 
-本能力复用现有 `PnwFloatingPanel`、`PnwPrimarySection` 和 overlay theme，不修改两者的
-兼容默认值，也不引入 IES、OpticalTool 或其他产品字段。消费者研究文档只链接本页，
-不复制公共状态机。
+本能力复用现有 `PnwFloatingPanel`、`PnwPrimarySection` 和 overlay theme，不引入消费者
+名称、私有文件格式或其他产品字段。Tool 与完整 View 共用 `PnwPresentationFrameDefinition` 的
+拖动、缩放、推荐尺寸、记忆 bounds 与窗口栈，但不合并 owner/销毁状态机。
 
 ## 为什么使用 application / view
 
@@ -48,15 +48,19 @@ import {
 ```
 
 `PnwDockableToolDefinition` 只包含稳定 ID、标题、可选无障碍名称和作用域。
+可选 `frame` 使用 `ownerKind: "tool"`、`closeBehavior: "close"`，并声明 `movable`、
+`resizable`、`recommendedSize / minSize / maxSize` 与 `rememberBounds`。
 `PnwDockableToolState` 包含：
 
 - `mode`：`closed | floating | primary`；
 - `floatingPosition`：受控 `x/y`，`PnwFloatingPanel` 拖动及边界修正后回传；
+- `floatingSize`：受控 `width/height`；resize、恢复推荐尺寸与 viewport clamp 后回传；
 - `primaryPlacement`：`first | last`；当前只提供确定的最小排序，不承诺任意拖拽；
 - `primaryExpanded`：Primary Section 的受控折叠状态。
 
 `pnwReduceDockableToolState` 接受以下命令：`open-floating`、`dock-primary`、`close`、
-`set-floating-position`、`set-primary-placement`、`set-primary-expanded`。切换 mode 不清除
+`set-floating-position`、`set-floating-size`、`set-primary-placement`、
+`set-primary-expanded`。切换 mode 不清除
 其他字段。`pnwNormalizeDockableToolState` 用于读取 Host 持久化数据时补默认值和修正
 非法值；Wing 不选择 Pinia、localStorage 或后端。
 
@@ -64,16 +68,19 @@ import {
 
 | 当前状态 | 动作 | 下一状态 | 保留数据 |
 |---|---|---|---|
-| closed | 打开浮窗 | floating | 上次坐标、Primary 位置/折叠 |
-| floating | 停靠到 Primary | primary | 当前坐标、Primary 位置/折叠 |
-| primary | 浮出 | floating | 当前坐标、Primary 位置/折叠 |
-| floating / primary | X 或 Escape（浮窗） | closed | 坐标、位置、折叠仍保留供下次打开 |
+| closed | 打开浮窗 | floating | 上次 bounds、Primary 位置/折叠 |
+| floating | 停靠到 Primary | primary | 当前 bounds、Primary 位置/折叠 |
+| primary | 浮出 | floating | 当前 bounds、Primary 位置/折叠 |
+| floating / primary | X 或 Escape（浮窗） | closed | bounds、位置、折叠仍保留供下次打开 |
 | primary | 移到首部/尾部 | primary | 仅更新 `primaryPlacement` |
 | primary | 展开/折叠 | primary | 仅更新 `primaryExpanded` |
 
 Primary 标题栏始终提供浮出和 X；可选首/尾动作默认开启。浮窗标题栏提供停靠动作，
-原 `PnwFloatingPanel` 的 X、Escape、拖动、viewport 约束和 Teleport light/dark 主题继续
-生效。两边的 X 都发出同一个 `close` 状态转换。
+`PnwFloatingPanel` 的 X、活动窗 Escape、拖动、八向/轴向 resize、恢复推荐尺寸、viewport
+约束和 Teleport light/dark 主题继续生效。多个 Tool/View 浮窗默认进入同一 Document
+窗口栈和 `presentation` overlay layer；它高于 Workbench Header、低于 modal。
+pointer/focus 会跨 Tool/View 置顶，关闭活动窗后焦点返回前一窗；消费者无需为两类窗口
+分别指定 z-index。两边的 X 都发出同一个 `close` 状态转换。
 
 ## Host 装配
 
@@ -93,6 +100,9 @@ const tool = {
   id: "product.inspector",
   title: "检查器",
   scope: "application",
+  frame: { ownerKind: "tool", movable: true, resizable: "both",
+    recommendedSize: { width: 640, height: 480 },
+    rememberBounds: true, closeBehavior: "close" },
 } as const satisfies PnwDockableToolDefinition;
 const toolState = ref({ ...PNW_DEFAULT_DOCKABLE_TOOL_STATE });
 const toolInPrimary = computed(() =>
@@ -134,8 +144,11 @@ function showPrimary(): void {
 Primary 组合必须在没有 View Primary 时也提供 Primary availability。停靠事件还应使用
 既有 `PnwWorkbenchLayoutState.visibility.primary` 请求显示 Primary。
 
-仓内 fixture 代码见
-[`PwwFixtureDockableTool.vue`](../examples/PwwWorkbenchWeb/src/fixture/PwwFixtureDockableTool.vue)。
+仓内可运行 fixture 由
+[`PwwFixtureDockableToolView.vue`](../examples/PwwWorkbenchWeb/src/fixture/PwwFixtureDockableToolView.vue)
+与
+[`PwwFixtureDockableToolPrimary.vue`](../examples/PwwWorkbenchWeb/src/fixture/PwwFixtureDockableToolPrimary.vue)
+共同演示资源库类 Tool 的 floating/Primary 互斥呈现。
 
 ## 样式、主题与可访问性
 
@@ -144,6 +157,10 @@ Primary 组合必须在没有 View Primary 时也提供 Primary availability。�
 - 浮窗复用 `PnwOverlayThemeProvider`，Teleport 到 `body` 后仍携带解析后的 light/dark
   scheme；Host 的第三方 overlay 继续遵循单独的 overlay root 契约。
 - 所有动作是原生 button，含 localized title/aria-label、hover 和 `focus-visible`。
+- resize 句柄可聚焦并使用方向键；Shift 为大步长。`resizable` 可限定 horizontal、
+  vertical 或 both，固定检查器可设为 false。
+- `pnwCreatePresentationBoundsSnapshot` 仅在 `rememberBounds` 开启时返回纯数据；临时
+  active/z-index 不进入 Pinia/localStorage/后端。
 - Primary 折叠复用 `PnwPrimarySection` 的整行点击、`aria-expanded` 和键盘行为；关闭后
   正文不残留占位。
 
@@ -151,7 +168,7 @@ Primary 组合必须在没有 View Primary 时也提供 Primary availability。�
 
 - 不提供任意 Primary 拖拽排序，只提供 first/last；
 - 不持有工具业务数据、权限、Router、I/O 或用户偏好；
-- 不增加跨浏览器窗口、跨应用或“全局 singleton”语义；
+- 不增加跨浏览器窗口、跨应用或“全局 singleton”语义；Document 栈只管理当前 renderer；
 - 不强制 Workbench Shell 注册工具。Host 继续组合自己的 View Primary 与应用级工具，
   并使用现有受控 layout state；取得两个真实消费者的装配证据后再评估 registry。
 
