@@ -431,6 +431,13 @@
       "lastVerified": "2026-08-17"
     },
     {
+      "path": "docs/Pnw通用WebComponent分层与命名规则.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
       "path": "docs/Pnw信息卡片组.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",

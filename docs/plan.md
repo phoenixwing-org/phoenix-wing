@@ -8,13 +8,13 @@ Owner：Phoenix Wing maintainers
 
 `0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1`、`0.6.2` 与 `0.6.3`
 均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
-`0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 候选
-正在验证可浮动 / Primary 停靠工具宿主；
-稳定 scoped 包保持 0.6.3。后续版本
+`0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 已发布并完成
+可浮动 / Primary 停靠工具宿主、完整 View 呈现、Workspace Welcome 等 Registry 消费验收；
+根聚合包当前本地开发版本为 `0.7.1`，稳定 scoped 包保持 0.6.3。后续版本
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-08-17
+最后核验：2026-08-20
 
 ## 已完成基线
 
@@ -190,6 +190,16 @@ Owner：Phoenix Wing maintainers
    支持重新明确前不再增加功能，也不推荐新消费者接入。0.6.2 只修正 npm package、
    source manifest、`fcstd-query` crate 与 Cargo lock 的发布身份一致性；删除包或 npm
    deprecate 必须另行决策，不混入兼容发布准备。
+
+8. **[规则已冻结：通用 Web Component 分层与命名]** 根 `src/layout/**/*.vue` 继续作为
+   Vue 工作台专用层；`@phoenix-wing/code-core/ui` 保持 Host-neutral Web Component 门面，
+   `@phoenix-wing/code-core/ui/model` 保持零 DOM 状态与投影门面。后续新增组件的内部真源建议
+   分别进入 `packages/code-core/src/ui/elements/` 与 `packages/code-core/src/ui/model/`，但不得
+   把物理目录新增为消费 subpath。导航树候选名称冻结为 `PnwNavigationTreeView`、
+   `<pnw-navigation-tree>`、`PnwNavigationTreeModel`、`PnwNavigationTreeNode`；本阶段不实现、
+   不导出也不登记 capability。现有三个 Web Component 的目录整理若开展，必须另立无功能
+   搬迁任务并保持两个公开入口不变。详见
+   [《Pnw 通用 Web Component 分层与命名规则》](Pnw通用WebComponent分层与命名规则.md)。
 
 Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一优先级是 Desk Tools 的 Registry 0.4.3 升级与消费验收。Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 
