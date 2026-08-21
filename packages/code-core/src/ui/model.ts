@@ -3,3 +3,4 @@
 export * from "./PnwCodeReorderMembersPanelState.js";
 export * from "./PnwCodeUuidResultsState.js";
 export * from "./PnwCodeRenameResultsState.js";
+export * from "./model/PnwNavigationTreeModel.js";

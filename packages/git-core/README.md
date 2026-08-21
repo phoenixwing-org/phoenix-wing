@@ -14,3 +14,8 @@ commit 创建 `pnwCreateGitLazyHistoryState`。状态默认收缩且不产生分
 和持久化仍由 Host 持有。
 
 本包不启动 Git、不读写文件，也不依赖 Node、VS Code、Vue 或 DOM。Git CLI 与临时 worktree 由 `@phoenix-wing/git-node` 负责。
+
+Git Graph 类视图可用 `pnwProjectGitCommitGraphRows` 将 newest-first 拓扑 commit
+投影为纯数据 lane：每行包含 `lanesBefore / lanesAfter`、当前 lane 和第一父级/
+合并父级 edge。分页 Host 将上页 `nextLaneOids` 传入下页即可保持连线连续；
+颜色、SVG 和行交互不进入 Core。

@@ -8,13 +8,13 @@ Owner：Phoenix Wing maintainers
 
 `0.6.0` 已完成锁步发布、归档、主分支合并与标签封存；`0.6.1`、`0.6.2` 与 `0.6.3`
 均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
-`0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 候选
-正在验证可浮动 / Primary 停靠工具宿主；
-稳定 scoped 包保持 0.6.3。后续版本
+`0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 已发布并完成
+可浮动 / Primary 停靠工具宿主、完整 View 呈现、Workspace Welcome 等 Registry 消费验收；
+根聚合包当前本地开发版本为 `0.7.1`，稳定 scoped 包保持 0.6.3。后续版本
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-08-17
+最后核验：2026-08-21
 
 ## 已完成基线
 
@@ -185,11 +185,52 @@ Owner：Phoenix Wing maintainers
 
 6. **[已发布：Git 轻量仓库读取与 OID 分页]** `0.6.0` 已公开提供 `pnwReadGitRepositorySummary`、`pnwReadGitCommitPage` 和 read-only `AbortSignal`。commit 数据每页只执行一次 NUL 分隔 `git log`，summary 不读取 status、operation、remote reachability 或全部 refs；完整 `pnwReadGitRepository` / `pnwAnalyzeGitSquash` 继续承担 squash 安全预检。详见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。具体消费者是否升级由其仓库独立决定。
 
+   - [x] `git-core@0.6.4 / git-node@0.6.4` 本地候选增加
+     `pnwReadGitCommitGraphPage`：默认首 5 条，以不透明 cursor 读下 1/下 5；
+     首页固定 HEAD/本地分支/tag scope 的 tip，续页保持 lane continuation。每页
+     仅一次有界 `git log --topo-order`，不读全历史、不 checkout。纯 Core 同步
+     返回 merge parent edge 与 lanesBefore/After，不绑定 SVG/颜色。见
+     [《Git 提交图轻量分页与拓扑车道》](Git提交图轻量分页与拓扑车道.md)。
+   - [ ] 真实消费者以 sibling Wing 验证首 5、下 1、下 5、多分支/合并显示与 stale
+     HEAD 恢复；此项通过后才进入发布判定，Registry 消费不在本地候选前假升级。
+
 7. **[兼容冻结：CAD Rust source]** `@phoenix-wing/cad-rust-source` 在 0.6.2 继续作为
    既有锁步发布单元，保持 tarball、协议和无安装期编译门禁；在维护所有者与真实消费
    支持重新明确前不再增加功能，也不推荐新消费者接入。0.6.2 只修正 npm package、
    source manifest、`fcstd-query` crate 与 Cargo lock 的发布身份一致性；删除包或 npm
    deprecate 必须另行决策，不混入兼容发布准备。
+
+8. **[0.7.1 候选：通用 Web Component 导航树]** 根 `src/layout/**/*.vue` 继续作为
+   Vue 工作台专用层；`@phoenix-wing/code-core/ui` 保持 Host-neutral Web Component 门面，
+   `@phoenix-wing/code-core/ui/model` 保持零 DOM 状态与投影门面。后续新增组件的内部真源建议
+   分别进入 `packages/code-core/src/ui/elements/` 与 `packages/code-core/src/ui/model/`，但不得
+   把物理目录新增为消费 subpath。已按该分层增加 `PnwNavigationTreeView`、
+   `<pnw-navigation-tree>`、`PnwNavigationTreeModel` 与 `PnwNavigationTreeNode`：
+   数据模型递归支持任意层级，UI 仅投影当前展开行，不把 VS Code 的两层视觉样本
+   写成结构上限。默认 hover、selected 与 focus/current 三类状态分开，亮色/暗色/
+   system 均使用可覆盖 token；ARIA tree、漫游焦点、键盘展开/折叠与受控事件
+   已进入测试和隔离 tarball 消费门禁。含子节点的整行单击会报告一次受控 toggle，
+   是稳定的默认折叠手势；同一行实例会 best-effort 忽略双击的第二个 click，但 Host
+   同步重建 DOM 后不承诺跨实例去重。展开集合仍只由 Host 持有和回写。
+   真实扩展宿主已用 sibling Wing 完成数据映射、受控 toggle 回写、临时补丁删除和自动
+   门禁回归；正式 Registry 发布前仍标记为候选，不提前登记稳定 capability。现有三个
+   Web Component 的目录整理若开展，必须另立
+   无功能搬迁任务并保持两个公开入口不变。详见
+   [《Pnw 通用 Navigation Tree Web Component》](Pnw通用NavigationTreeWebComponent.md)与
+   [《Pnw 通用 Web Component 分层与命名规则》](Pnw通用WebComponent分层与命名规则.md)。
+
+9. **[0.7.1 候选：Codegen Primary 连续 Section]** `@phoenix-wing/kt-codegen/ui` 的
+   Primary 顶层 Section 改为横向满宽连续排列：Host `gap: 0`，Section 无圆角、无左右卡片
+   边框，只保留上下分隔线；行内控件继续使用紧凑 padding。真实扩展宿主已在深色侧栏人工
+   点检，与 Git/Run 连续 Section 接边一致；浅色与窄屏人工点检仍需在发布回执中如实记录。
+   产品不得通过 Shadow DOM 穿透补丁修正。该变化只提升 `kt-codegen` 到 0.6.4，不空升其他
+   scoped packages。
+
+10. **[0.7.1 发布准备]** 本轮实际发布集合为根 `phoenix-wing@0.7.1`、
+    `code-core/git-core/git-node/kt-codegen@0.6.4`；其余七个 scoped packages 保持 0.6.3。
+    Registry exact 版本在 2026-08-21 尚未占用。完整门禁、发布顺序、消费者证据和待办见
+    [《0.7.1 发布候选与验收》](0.7.1发布候选.md)。未取得用户明确授权前不 publish，push/tag
+    始终由开发者手工完成。
 
 Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一优先级是 Desk Tools 的 Registry 0.4.3 升级与消费验收。Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 

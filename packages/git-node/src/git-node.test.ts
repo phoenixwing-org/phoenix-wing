@@ -9,6 +9,7 @@ import {
   pnwSetGitLazyHistoryExpanded,
 } from "@phoenix-wing/git-core";
 import { pnwRunGitCommand } from "./git-runner.js";
+import { pnwReadGitCommitGraphPage } from "./commit-graph.js";
 import { pnwAnalyzeGitSquash, pnwReadGitRepository } from "./repository.js";
 import { pnwReadGitCommitPage, pnwReadGitRepositorySummary } from "./repository-summary.js";
 import { pnwExecuteGitSquash, pnwUndoGitSquash } from "./squash-transaction.js";
@@ -83,6 +84,77 @@ describe("Git Node adapter", () => {
     await git(root, ["commit", "-m", "G"]);
     await expect(pnwReadGitCommitPage(root, { expectedHeadOid: headOid, limit: 2 }))
       .rejects.toThrow("Git HEAD changed");
+  }, GIT_INTEGRATION_TIMEOUT_MS);
+
+  it("pages a topological multi-branch graph with merge lanes and local decorations", async () => {
+    const root = await createGraphRepository();
+    const pages = [];
+    let beforeCursor: string | undefined;
+    let expectedHeadOid: string | undefined;
+    do {
+      const page = await pnwReadGitCommitGraphPage(root, {
+        ...(expectedHeadOid ? { expectedHeadOid } : {}),
+        ...(beforeCursor ? { beforeCursor } : {}),
+        ...(!beforeCursor ? { refsScope: "local-branches-and-tags" as const } : {}),
+        limit: 2,
+      });
+      expectedHeadOid = page.headOid;
+      pages.push(page);
+      beforeCursor = page.nextBeforeCursor;
+    } while (beforeCursor);
+
+    const commits = pages.flatMap(({ commits }) => commits);
+    const rows = pages.flatMap(({ graphRows }) => graphRows);
+    expect(commits.map(({ subject }) => subject).sort()).toEqual([
+      "A", "B", "Experiment", "Feature", "Main", "Merge feature",
+    ]);
+    expect(new Set(commits.map(({ oid }) => oid))).toHaveProperty("size", commits.length);
+    expect(rows.map(({ commitOid }) => commitOid)).toEqual(commits.map(({ oid }) => oid));
+
+    const indexByOid = new Map(commits.map(({ oid }, index) => [oid, index]));
+    for (const commit of commits) {
+      for (const parentOid of commit.parentOids) {
+        const parentIndex = indexByOid.get(parentOid);
+        if (parentIndex !== undefined) expect(indexByOid.get(commit.oid)).toBeLessThan(parentIndex);
+      }
+    }
+
+    const merge = commits.find(({ subject }) => subject === "Merge feature")!;
+    expect(merge.parentOids).toHaveLength(2);
+    expect(merge.decorations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "HEAD", kind: "head" }),
+      expect.objectContaining({ name: "refs/heads/main", kind: "local-branch" }),
+      expect.objectContaining({ name: "refs/tags/v1", kind: "tag" }),
+    ]));
+    expect(commits.find(({ subject }) => subject === "Feature")?.decorations)
+      .toContainEqual(expect.objectContaining({ name: "refs/heads/feature" }));
+    expect(commits.find(({ subject }) => subject === "Experiment")?.decorations)
+      .toContainEqual(expect.objectContaining({ name: "refs/heads/experiment" }));
+    expect(pages.at(-1)?.hasMore).toBe(false);
+  }, GIT_INTEGRATION_TIMEOUT_MS);
+
+  it("guards graph cursors against stale HEAD, scope changes and abort", async () => {
+    const root = await createGraphRepository();
+    const first = await pnwReadGitCommitGraphPage(root, { limit: 1 });
+    expect(first.nextBeforeCursor).toBeTruthy();
+    await expect(pnwReadGitCommitGraphPage(root, {
+      beforeCursor: first.nextBeforeCursor,
+      refsScope: "head",
+    })).rejects.toThrow("does not match refsScope");
+
+    await writeFile(path.join(root, "after.txt"), "after\n", "utf8");
+    await git(root, ["add", "after.txt"]);
+    await git(root, ["commit", "-m", "After graph read"]);
+    await expect(pnwReadGitCommitGraphPage(root, {
+      expectedHeadOid: first.headOid,
+      beforeCursor: first.nextBeforeCursor,
+      limit: 5,
+    })).rejects.toThrow("Git HEAD changed");
+
+    const controller = new AbortController();
+    controller.abort();
+    await expect(pnwReadGitCommitGraphPage(root, { signal: controller.signal }))
+      .rejects.toMatchObject({ name: "AbortError" });
   }, GIT_INTEGRATION_TIMEOUT_MS);
 
   it("loads nothing while collapsed, one per re-expansion, then five without duplicates", async () => {
@@ -241,6 +313,32 @@ async function createRepository(): Promise<string> {
     await git(root, ["add", "state.txt"]);
     await git(root, ["commit", "-m", subject]);
   }
+  return root;
+}
+
+async function createGraphRepository(): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pnw-git-graph-test-"));
+  roots.push(root);
+  await git(root, ["init", "-b", "main"]);
+  await git(root, ["config", "user.name", "Phoenix Wing"]);
+  await git(root, ["config", "user.email", "wing@example.com"]);
+  const commitFile = async (file: string, subject: string) => {
+    await writeFile(path.join(root, file), `${subject}\n`, "utf8");
+    await git(root, ["add", file]);
+    await git(root, ["commit", "-m", subject]);
+  };
+  await commitFile("base.txt", "A");
+  await commitFile("base.txt", "B");
+  const branchPoint = (await pnwRunGitCommand(["rev-parse", "HEAD"], { cwd: root })).stdout.trim();
+  await git(root, ["switch", "-c", "feature"]);
+  await commitFile("feature.txt", "Feature");
+  await git(root, ["switch", "main"]);
+  await commitFile("main.txt", "Main");
+  await git(root, ["merge", "--no-ff", "feature", "-m", "Merge feature"]);
+  await git(root, ["tag", "-a", "v1", "-m", "Version 1"]);
+  await git(root, ["switch", "-c", "experiment", branchPoint]);
+  await commitFile("experiment.txt", "Experiment");
+  await git(root, ["switch", "main"]);
   return root;
 }
 

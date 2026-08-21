@@ -4,7 +4,7 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.7.0 候选
+适用版本：0.7.0+
 
 最后核验：2026-08-15
 

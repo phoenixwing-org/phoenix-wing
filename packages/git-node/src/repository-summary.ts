@@ -1,7 +1,12 @@
-import { realpath } from "node:fs/promises";
-import type { PnwGitCommitSummary, PnwGitIdentity } from "@phoenix-wing/git-core";
+import type { PnwGitCommitSummary } from "@phoenix-wing/git-core";
 import { pnwRunGitCommand, type PnwGitCommandOptions } from "./git-runner.js";
-import { pnwFindGitRepositoryRoot } from "./repository.js";
+import {
+  pnwCanonicalGitRoot,
+  pnwGitReadCommandOptions,
+  pnwNormalizeFullGitOid,
+  pnwParseGitLogIdentity,
+  pnwValidateGitReadLimit,
+} from "./read-utils.js";
 
 export interface PnwGitRepositorySummaryReadOptions {
   /** Number of newest first-parent commits to include. Defaults to 1. */
@@ -138,15 +143,6 @@ export async function pnwReadGitCommitPage(
   };
 }
 
-async function pnwCanonicalGitRoot(
-  startPath: string,
-  gitExecutable: string | undefined,
-  signal: AbortSignal | undefined,
-): Promise<string> {
-  const root = await pnwFindGitRepositoryRoot(startPath, gitExecutable, signal);
-  return await realpath(root);
-}
-
 async function pnwReadGitCommitSummaries(
   options: PnwGitCommandOptions,
   revision: string,
@@ -188,38 +184,4 @@ function pnwParseGitCommitSummaries(output: string): PnwGitCommitSummary[] {
     });
   }
   return commits;
-}
-
-function pnwParseGitLogIdentity(name: string, email: string, epoch: string, date: string): PnwGitIdentity {
-  if (!/^\d+$/u.test(epoch)) throw new Error(`Unsupported Git identity timestamp: ${epoch}`);
-  const timezone = /([+-]\d{4})$/u.exec(date)?.[1];
-  if (!timezone) throw new Error(`Unsupported Git identity date: ${date}`);
-  return { name, email, date: `${epoch} ${timezone}` };
-}
-
-function pnwNormalizeFullGitOid(value: string, field: string): string {
-  const normalized = value.trim().toLowerCase();
-  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u.test(normalized)) {
-    throw new Error(`Invalid ${field}: ${value}`);
-  }
-  return normalized;
-}
-
-function pnwValidateGitReadLimit(value: number, field: string): number {
-  if (!Number.isSafeInteger(value) || value < 1 || value > 1_000) {
-    throw new Error(`${field} must be an integer between 1 and 1000`);
-  }
-  return value;
-}
-
-function pnwGitReadCommandOptions(
-  cwd: string,
-  gitExecutable: string | undefined,
-  signal: AbortSignal | undefined,
-): PnwGitCommandOptions {
-  return {
-    cwd,
-    ...(gitExecutable ? { gitExecutable } : {}),
-    ...(signal ? { signal } : {}),
-  };
 }

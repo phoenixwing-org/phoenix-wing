@@ -79,12 +79,15 @@ try {
   const smokeFile = path.join(consumerRoot, "smoke.mjs");
   fs.writeFileSync(smokeFile, `
 import path from "node:path";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   pnwMatchesWorkspacePath,
   pnwNormalizeUuid,
 } from "@phoenix-wing/code-core";
+import {
+  pnwProjectNavigationTreeRows,
+} from "@phoenix-wing/code-core/ui/model";
 import { KtCodegenParam, ktCodegenCheckPlanCompatibility } from "@phoenix-wing/kt-codegen";
 import { KT_CODEGEN_LEGACY_17_COLUMN_CSV_HEADERS } from "@phoenix-wing/kt-codegen/legacy";
 import { ktCodegenValidateParam } from "@phoenix-wing/kt-codegen/model";
@@ -101,11 +104,12 @@ import {
   pnwApplyGitLazyHistoryPage,
   pnwCreateGitLazyHistoryState,
   pnwFormatGitGroupSummary,
+  pnwProjectGitCommitGraphRows,
   pnwRequestGitLazyHistoryPage,
   pnwSetGitLazyHistoryExpanded,
   pnwShortestUniqueGitOid,
 } from "@phoenix-wing/git-core";
-import { pnwRunGitCommand } from "@phoenix-wing/git-node";
+import { pnwReadGitCommitGraphPage, pnwRunGitCommand } from "@phoenix-wing/git-node";
 import { pnwResolveRunCaaVersion } from "@phoenix-wing/run-core";
 import { pnwCreateBundledCaaLaunchPlan } from "@phoenix-wing/run-node";
 
@@ -120,6 +124,12 @@ if (
   || !pnwMatchesWorkspacePath("src/module/main.cpp", [{ path: "src/module", type: "dir" }])
 ) {
   throw new Error("code-core pure-capabilities fixture/path smoke failed");
+}
+if (pnwProjectNavigationTreeRows({
+  expandedNodeIds: ["root"],
+  nodes: [{ id: "root", label: "Root", children: [{ id: "child", label: "Child" }] }],
+}).map((row) => row.node.id).join(",") !== "root,child") {
+  throw new Error("code-core navigation-tree model export smoke failed");
 }
 if (new KtCodegenParam().kind !== "kt.codegen") {
   throw new Error("kt-codegen export smoke failed");
@@ -197,6 +207,19 @@ if (lazyReopened.request?.beforeOid !== secondOid || lazyReopened.request.limit 
 }
 const gitVersion = await pnwRunGitCommand(["--version"], { cwd: process.cwd() });
 if (!gitVersion.stdout.startsWith("git version")) throw new Error("git-node runtime smoke failed");
+const graphRepository = path.join(process.cwd(), "graph-smoke");
+mkdirSync(graphRepository);
+await pnwRunGitCommand(["init", "-b", "main"], { cwd: graphRepository });
+await pnwRunGitCommand(["config", "user.name", "Phoenix Wing"], { cwd: graphRepository });
+await pnwRunGitCommand(["config", "user.email", "wing@example.com"], { cwd: graphRepository });
+writeFileSync(path.join(graphRepository, "README.md"), "graph smoke\\n", "utf8");
+await pnwRunGitCommand(["add", "README.md"], { cwd: graphRepository });
+await pnwRunGitCommand(["commit", "-m", "Graph smoke"], { cwd: graphRepository });
+const graphPage = await pnwReadGitCommitGraphPage(graphRepository, { limit: 5 });
+if (graphPage.commits.length !== 1 || graphPage.graphRows[0]?.commitOid !== graphPage.commits[0]?.oid
+  || typeof pnwProjectGitCommitGraphRows !== "function") {
+  throw new Error("git commit graph exports/read smoke failed");
+}
 if (pnwResolveRunCaaVersion({ explicit: "B20" }).value !== "20") {
   throw new Error("run-core export smoke failed");
 }
@@ -830,6 +853,10 @@ import {
   PnwPrimarySection,
   pnwPromptChoice,
 } from "phoenix-wing";
+import {
+  PnwNavigationTreeView,
+  pnwCodeDefineNavigationTree,
+} from "@phoenix-wing/code-core/ui";
 import CompatChoiceDialogHost from "phoenix-wing/components/PnwChoiceDialogHost.vue";
 import CompatOverlayThemeProvider from "phoenix-wing/components/PnwOverlayThemeProvider.vue";
 import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
@@ -840,6 +867,9 @@ if (PnwChoiceDialogHost !== CompatChoiceDialogHost
   || PnwPrimarySection !== CompatPrimarySection
   || typeof pnwPromptChoice !== "function") {
   throw new Error("aggregate UI exports are inconsistent");
+}
+if (typeof PnwNavigationTreeView !== "function" || typeof pnwCodeDefineNavigationTree !== "function") {
+  throw new Error("code-core navigation-tree element export is inconsistent");
 }
 `);
   const viteCli = path.join(root, "node_modules", "vite", "bin", "vite.js");
