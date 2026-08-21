@@ -23,6 +23,15 @@
 - `PnwPrimaryBlock`、`PnwSecondaryBlock`、`PnwBottomPanel`
 - `PnwWorkbenchLayout`、`PnwWorkbenchShell`、`PnwWorkbenchFooter`
 
+### Pnw Web Component
+
+- `PnwNavigationTreeView` / `<pnw-navigation-tree>`
+- `PnwNavigationTreeModel`、`PnwNavigationTreeNode`、`PnwNavigationTreeRow`
+- `pnwCodeDefineNavigationTree`、`pnwProjectNavigationTreeRows`
+- `PNW_NAVIGATION_TREE_TAG`、`PNW_NAVIGATION_TREE_ACTION`、`PNW_NAVIGATION_TREE_ICON_KEYS`
+- `PnwGitCommitGraph*`、`pnwReadGitCommitGraphPage`、`pnwProjectGitCommitGraphRows`
+- `PNW_GIT_COMMIT_GRAPH_CURSOR_VERSION`
+
 ---
 
 ## CSS 类名（~60 个）— 必须加 `pnw-`

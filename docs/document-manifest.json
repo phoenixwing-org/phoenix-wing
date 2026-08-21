@@ -118,6 +118,13 @@
       "lastVerified": "2026-08-17"
     },
     {
+      "path": "docs/0.7.1发布候选.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
       "path": "docs/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
@@ -239,6 +246,13 @@
     },
     {
       "path": "docs/Git群消息简报完整正文修复.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
+      "path": "docs/Git提交图轻量分页与拓扑车道.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.7.x",
@@ -425,6 +439,13 @@
     },
     {
       "path": "docs/Pnw简单枚举Select.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
+      "path": "docs/Pnw通用NavigationTreeWebComponent.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.7.x",

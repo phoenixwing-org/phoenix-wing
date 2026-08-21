@@ -1,10 +1,10 @@
 # Pnw 工作台 Web · 完整 View 浮出与收回方案
 
-状态：current（Web 公共候选已实现；Tauri adapter 等待真实桌面实证）
+状态：current（Web 公共能力已随 0.7.0 发布；Tauri adapter 等待真实桌面实证）
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.7.0 candidate / 后续兼容演进
+适用版本：0.7.0+ / 后续兼容演进
 
 最后核验：2026-08-15
 

@@ -4,7 +4,7 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.7.0 candidate
+适用版本：0.7.0+（Web 契约已发布；Tauri Host 实证后置）
 
 最后核验：2026-08-15
 

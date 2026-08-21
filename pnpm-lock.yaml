@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.6.3
+        specifier: workspace:0.6.4
         version: link:packages/code-core
       '@phoenix-wing/db-node':
         specifier: workspace:0.6.3
@@ -119,7 +119,7 @@ importers:
   packages/git-node:
     dependencies:
       '@phoenix-wing/git-core':
-        specifier: workspace:0.6.3
+        specifier: workspace:0.6.4
         version: link:../git-core
     devDependencies:
       '@types/node':

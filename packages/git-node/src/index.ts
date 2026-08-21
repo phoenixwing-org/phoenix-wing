@@ -1,4 +1,12 @@
 export {
+  PNW_GIT_COMMIT_GRAPH_CURSOR_VERSION,
+  type PnwGitCommitGraphPage,
+  type PnwGitCommitGraphPageReadOptions,
+  type PnwGitCommitGraphRefsScope,
+  pnwReadGitCommitGraphPage,
+} from "./commit-graph.js";
+
+export {
   PnwGitCommandError,
   type PnwGitCommandOptions,
   type PnwGitCommandResult,

@@ -52,7 +52,11 @@ describe("@phoenix-wing/kt-codegen/ui host boundary", () => {
     expect(primary).toContain("ktCodegenPrimaryActionDisabled");
     expect(primary).toContain("ktCodegenPrimaryControlsLocked");
     expect(primary).toContain('document.createElement("kt-codegen-control-catalog")');
-    expect(primary).toContain("grid-auto-rows: max-content");
+    expect(primary).toContain("grid-auto-rows: max-content; align-content: start; gap: 0;");
+    expect(primary).toContain(".pnw-codegen-mini { min-width: 0; margin: 0; overflow: hidden; border: 0; border-block-end: 1px solid var(--pnw-codegen-border); border-radius: 0;");
+    expect(primary).not.toContain(".pnw-codegen-mini { min-width: 0; margin: 0 4px;");
+    expect(primary).not.toContain(".pnw-codegen-mini { min-width: 0; margin: 0; overflow: hidden; border: 1px solid");
+    expect(primary).toContain(".pnw-codegen-report-directory { width: 100%; min-height: 25px; margin: 5px 0 0; padding: 2px 7px;");
     expect(catalog).toContain('"kt-codegen-control-selection-change"');
     expect(catalog).toContain('"kt-codegen-control-output"');
     expect(catalog).toContain("KT_CODEGEN_CONTROL_CATALOG_GROUPS");

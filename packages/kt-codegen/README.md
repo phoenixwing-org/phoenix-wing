@@ -4,6 +4,10 @@
 
 本包提供共享数据、旧格式兼容、只读源码标记扫描、32个生成块的 Core/Renderer、宿主无关的 Apply 投影/回滚事务，以及17列 Table Web Component。它不直接打开真实文件，也不依赖 VS Code、DeskTools 或其他产品壳；宿主通过只读快照和文件读写 Port 接入。
 
+`@phoenix-wing/kt-codegen/ui` 的 Primary 面板顶层 Section 默认横向满宽；Section
+之间 `gap: 0`，无横向边框与圆角卡片，只用下边框形成连续分隔。标题、列表、
+表单与按钮各自在内部保留紧凑 padding，Host 不需要穿透 Shadow DOM 补外边距。
+
 ## 文件与命名规则
 
 主要职责类直接平铺在 `src/`，不再为了 MVC-C 建立多层目录：

@@ -1,4 +1,15 @@
 export {
+  type PnwGitCommitGraphCommit,
+  type PnwGitCommitGraphDecoration,
+  type PnwGitCommitGraphDecorationKind,
+  type PnwGitCommitGraphParentEdge,
+  type PnwGitCommitGraphParentEdgeKind,
+  type PnwGitCommitGraphProjection,
+  type PnwGitCommitGraphRow,
+  pnwProjectGitCommitGraphRows,
+} from "./commit-graph.js";
+
+export {
   type PnwGitGroupSummary,
   type PnwGitGroupSummaryInput,
   type PnwGitGroupSummaries,

@@ -91,7 +91,7 @@
     "dev": "vitest"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.6.3",
+    "@phoenix-wing/code-core": "workspace:0.6.4",
     "@phoenix-wing/db-node": "workspace:0.6.3",
     "element-plus": "^2.0.0"
   },

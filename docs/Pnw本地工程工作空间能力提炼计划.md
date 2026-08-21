@@ -1,10 +1,10 @@
 # Pnw 本地工程工作空间能力提炼计划
 
-状态：0.7.0 本地候选（WS1 与最小 Tauri command bridge 已实现，未发布）
+状态：current（WS1 与最小 Tauri command bridge 已随 0.7.0 发布）
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.7.0 本地候选
+适用版本：0.7.0+
 
 最后核验：2026-08-16
 
@@ -438,7 +438,7 @@ Workspace V1。
 
 ### WS0：计划与候选分支脱敏（已完成）
 
-- 本计划已经评审并进入 0.7.0 本地候选；
+- 本计划已经评审，WS1 与最小 Tauri command bridge 已进入 0.7.0；
 - 对独立候选分支相对 `develop` 建立 archive ref；
 - Desk Tools 可点名作为开源实证；其他特定消费者统一写成“第二个本地工程 Web UI”或
   “第三方消费者”；
@@ -473,7 +473,7 @@ Workspace V1。
 
 ### WS4：可选公共 UI（Gate、欢迎页与最近列表候选已完成）
 
-Desk Tools 与仓内 fixture 已形成相同的欢迎页/最近目录交互证据，0.7.0 候选新增：
+Desk Tools 与仓内 fixture 已形成相同的欢迎页/最近目录交互证据，0.7.0 新增：
 
 - `PnwWelcomeShell`：兼容保留并升级为语义主题 token 和窄屏单列；
 - `PnwRecentWorkspaceList`：当前、missing、unauthorized、打开、移除与条目扩展 slot；

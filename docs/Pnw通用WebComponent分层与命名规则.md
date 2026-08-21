@@ -6,22 +6,16 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.7.x
 
-最后核验：2026-08-20
+最后核验：2026-08-21
 
 ## 目的与本次边界
 
 本文冻结 Phoenix Wing 中通用 Web Component 的代码分层、公开入口、命名和输入安全边界，
 避免把 Vue 工作台组件、浏览器 DOM renderer 与纯状态模型混在同一层。
 
-本次只形成规则和后续计划：
-
-- 不实现导航树组件；
-- 不移动现有文件；
-- 不新增、删除或修改 npm export；
-- 不改变现有三个 Web Component 的行为；
-- 不登记尚未实现的 capability。
-
-文中的导航树名称是后续实现必须遵守的预留名称，不代表当前版本已经导出这些 API。
+本文最初只冻结规则；`0.7.1` 本地候选已按这些规则新增导航树 model 与 element，但不移动
+现有三个组件，也不新增 npm subpath。导航树完整 API、主题与键盘行为见
+[Pnw 通用 Navigation Tree Web Component](Pnw通用NavigationTreeWebComponent.md)。
 
 ## 已确认的三层边界
 
@@ -49,7 +43,8 @@ Web Component 公共入口。element 层可以依赖标准 DOM 和 Custom Elemen
 
 - `PnwCodeReorderMembersPanel`；
 - `PnwCodeUuidResultsPanel`；
-- `PnwCodeRenameResultsPanel`。
+- `PnwCodeRenameResultsPanel`；
+- `PnwNavigationTreeView` / `<pnw-navigation-tree>`。
 
 ### 3. model / projection 层
 
@@ -97,9 +92,9 @@ import type { PnwCodeUuidResultsPanelModel } from "@phoenix-wing/code-core/ui/mo
 | tag / event 常量 | `PNW_` + UPPER_SNAKE | `PNW_CODE_UUID_RESULTS_PANEL_TAG` |
 | Shadow DOM 内部 class / CSS token | `pnw-` / `--pnw-` | `.pnw-tree-row`、`--pnw-tree-indent` |
 
-### 导航树预留名称
+### 导航树公开名称
 
-未来通用导航树若满足真实消费者和实现门禁，统一使用：
+通用导航树统一使用：
 
 - Web Component class：`PnwNavigationTreeView`；
 - Custom Element tag：`<pnw-navigation-tree>`；
@@ -153,19 +148,25 @@ Vue 组件、Custom Element class 和数据模型。根 Vue 工作台已有的�
 
 ### WC2：导航树候选
 
-- [ ] 取得真实消费者的数据、键盘、图标和大数据量约束；
-- [ ] 先实现 `PnwNavigationTreeModel` / `PnwNavigationTreeNode` 及纯投影；
-- [ ] 再实现 `PnwNavigationTreeView` 与 `<pnw-navigation-tree>`；
-- [ ] 验证受控 icon key、ARIA tree pattern、焦点、折叠和安全文本；
-- [ ] 在实现、导出、测试和制品同时存在前，不登记为已提供能力。
+- [x] 取得真实消费者的数据、键盘、图标和多层数据约束；
+- [x] 先实现 `PnwNavigationTreeModel` / `PnwNavigationTreeNode` 及纯投影；
+- [x] 再实现 `PnwNavigationTreeView` 与 `<pnw-navigation-tree>`；
+- [x] 验证受控 icon key、ARIA tree pattern、焦点、折叠、安全文本和明暗主题；
+- [x] 完成真实扩展宿主的本地 sibling 源码接入、临时补丁删除与自动门禁回归；
+- [x] 实现、导出、测试和 tarball 制品同时存在，纳入 `code-core@0.6.4` 发布候选；
+- [ ] 正式 Registry 发布后再登记到只收录已发布能力的共享能力目录。
 
-## 点检清单
+## 后续维护者点检模板
 
-- [ ] 新 element 是否只从 `@phoenix-wing/code-core/ui` 暴露？
-- [ ] 新 model 是否只从 `@phoenix-wing/code-core/ui/model` 暴露？
-- [ ] model 是否完全不依赖 DOM、Vue、Node 和产品 Host？
-- [ ] Web Component 是否未接收任意 HTML/SVG/组件？
-- [ ] class、tag、类型、函数、常量和 CSS token 是否遵循 Pnw 前缀？
-- [ ] 是否避免把未来目录路径误当公开 subpath？
-- [ ] 是否保持现有导入和 tarball 兼容？
-- [ ] 候选能力是否在真实实现前没有写入共享能力目录？
+本节供开发者和 AI 在**以后新增或修改 Web Component 时**复用，不是要求产品用户逐项确认，
+也不表示当前 0.7.1 候选尚未完成。当前发布状态只以
+[《0.7.1 发布候选与验收》](0.7.1发布候选.md)的发布硬门禁为准。
+
+- 新 element 只从 `@phoenix-wing/code-core/ui` 暴露；
+- 新 model 只从 `@phoenix-wing/code-core/ui/model` 暴露；
+- model 完全不依赖 DOM、Vue、Node 和产品 Host；
+- Web Component 不接收任意 HTML/SVG/组件；
+- class、tag、类型、函数、常量和 CSS token 遵循 Pnw 前缀；
+- 不把内部物理目录误当公开 subpath；
+- 保持现有导入和 tarball 兼容；
+- 候选能力在正式发布前不写入只登记已发布能力的共享能力目录。
