@@ -10,11 +10,13 @@ Owner：Phoenix Wing maintainers
 均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
 `0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 已发布并完成
 可浮动 / Primary 停靠工具宿主、完整 View 呈现、Workspace Welcome 等 Registry 消费验收；
-根聚合包当前本地开发版本为 `0.7.1`，稳定 scoped 包保持 0.6.3。后续版本
+`0.7.1` 已发布并增加通用 Navigation Tree、Git 提交图分页与 Codegen 连续 Section。
+根聚合包当前本地开发版本为 `0.7.2`，scoped 包继续保持 release matrix 中各自的
+`0.6.3 / 0.6.4` 独立版本。后续版本
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-08-21
+最后核验：2026-08-27
 
 ## 已完成基线
 
@@ -132,7 +134,7 @@ Owner：Phoenix Wing maintainers
      Wing 不依赖 Tauri、不移动 Vue DOM、不共享跨 Webview Pinia；Host adapter 与
      macOS/Windows 实测属于下一消费阶段。见
      [《非模态 View 对话框宿主》](Pnw工作台Web非模态View对话框宿主.md)。
-   - [x] `0.7.1` 发布后的下一候选补齐全局 Vue `PnwViewDialogHost`：应用父级显式
+   - [x] `0.7.2` 候选补齐全局 Vue `PnwViewDialogHost`：应用父级显式
      `pnwCreateViewDialogHost + pnwProvideViewDialogHost`，业务 View 通过
      `usePnwViewDialogHost` 调用；Host 白名单登记 renderer，插件不再复制 FloatingPanel、
      Promise resolver 或 overlay stack。`viewId / rendererId / instanceKey / requestId`
