@@ -119,6 +119,23 @@ export {
   pnwResolveViewDialogPresentation,
   pnwValidateViewDialogRequest,
 } from './utils/pnwViewDialog.js'
+export {
+  type PnwResolvedViewDialogHostRequest,
+  type PnwViewDialogHostController,
+  type PnwViewDialogHostControllerOptions,
+  type PnwViewDialogHostEntry,
+  type PnwViewDialogHostListener,
+  type PnwViewDialogHostRequest,
+  type PnwViewDialogRendererContext,
+  type PnwViewDialogRendererDefinition,
+} from './types/PnwViewDialogHost.js'
+export {
+  pnwCreateViewDialogHostIdentity,
+  pnwCreateViewDialogHost,
+  pnwIsSerializableViewDialogValue,
+  pnwProvideViewDialogHost,
+  usePnwViewDialogHost,
+} from './composables/usePnwViewDialogHost.js'
 
 // ---------------------------------------------------------------------------
 // 完整 View Web 浮出与收回
@@ -644,6 +661,7 @@ export { default as PnwOverlayThemeProvider } from './components/PnwOverlayTheme
 export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
 export { default as PnwRecentWorkspaceList } from './components/PnwRecentWorkspaceList.vue'
 export { default as PnwSelect } from './components/PnwSelect.vue'
+export { default as PnwViewDialogHost } from './components/PnwViewDialogHost.vue'
 export { default as PnwViewPresentationPortal } from './components/PnwViewPresentationPortal.vue'
 export { default as PnwFloatingWindowMenu } from './components/PnwFloatingWindowMenu.vue'
 

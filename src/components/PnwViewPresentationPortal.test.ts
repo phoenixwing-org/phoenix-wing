@@ -117,7 +117,9 @@ describe("PnwViewPresentationPortal", () => {
     }
     await nextTick();
 
-    document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__close")?.click();
+    document.body.querySelector<HTMLButtonElement>(
+      ".pnw-view-presentation-dialog__reattach",
+    )?.click();
     await pnwFlushPresentation();
 
     expect(wrapper.get(".pnw-view-presentation-portal").attributes(
@@ -137,7 +139,7 @@ describe("PnwViewPresentationPortal", () => {
     expect(lifecycle.mainUnmounted).toBe(1);
   });
 
-  it("X 关闭走 reattaching，Editor 不生成浮出占位页", async () => {
+  it("默认只显示明确收回动作，不显示有歧义的 X", async () => {
     const Harness = defineComponent({
       setup() {
         const record = ref(pnwCreateViewPresentationRecord(PNW_IDENTITY));
@@ -162,12 +164,52 @@ describe("PnwViewPresentationPortal", () => {
 
     expect(wrapper.find("[role='status']").exists()).toBe(false);
 
-    await document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__close")?.click();
+    expect(document.body.querySelector(".pnw-floating-panel__close")).toBeNull();
+    const reattach = document.body.querySelector<HTMLButtonElement>(
+      ".pnw-view-presentation-dialog__reattach",
+    );
+    expect(reattach?.getAttribute("aria-label")).toBe("收回到 Editor");
+    await reattach?.click();
     await pnwFlushPresentation();
     expect(wrapper.get(".pnw-view-presentation-portal").attributes(
       "data-pnw-view-presentation-mode",
     )).toBe("embedded");
     expect(document.body.querySelector(".pnw-floating-panel")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("显式启用 X 时只发出 requestClose，交由 Host 保存守卫决定关闭", async () => {
+    const record = ref(pnwCreateViewPresentationRecord(PNW_IDENTITY));
+    const Harness = defineComponent({
+      setup() {
+        return () => h(PnwViewPresentationPortal, {
+          record: record.value,
+          title: "可关闭完整 View",
+          showCloseAction: true,
+          "onUpdate:record": (next: PnwViewPresentationRecord) => {
+            record.value = next;
+          },
+        }, {
+          header: ({ detach }: { detach: () => void }) => h("button", {
+            class: "fixture-detach",
+            onClick: detach,
+          }, "浮出"),
+          main: () => h("div", "Main"),
+        });
+      },
+    });
+    const wrapper = mount(Harness, { attachTo: document.body });
+    await wrapper.get(".fixture-detach").trigger("click");
+    await pnwFlushPresentation();
+
+    const close = document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__close");
+    expect(close?.getAttribute("aria-label")).toBe("关闭 View");
+    close?.click();
+    await nextTick();
+    expect(wrapper.findComponent(PnwViewPresentationPortal).emitted("requestClose")?.[0])
+      .toEqual([PNW_IDENTITY.viewInstanceId]);
+    expect(record.value.mode).toBe("floating");
+    expect(document.body.querySelector(".pnw-view-presentation-dialog")).not.toBeNull();
     wrapper.unmount();
   });
 

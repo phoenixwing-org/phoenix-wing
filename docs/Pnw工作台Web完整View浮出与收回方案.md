@@ -6,7 +6,7 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.7.0+ / 后续兼容演进
 
-最后核验：2026-08-15
+最后核验：2026-08-27
 
 ## 1. 决策
 
@@ -21,7 +21,9 @@ Owner：Phoenix Wing maintainers
 - Web 在同一个 Vue renderer 实例上切换 inline / Teleport；
 - Tauri 无法跨 Webview 移动同一 DOM，必须由主窗口持有唯一业务真源和 lease，子
   Webview 使用同一个 `rendererId` 呈现完整 frame，并通过受控 bridge 收发命令与事件；
-- 关闭浮出窗口默认收回到 Editor；关闭 owner Tab 才销毁 View 与浮出呈现。
+- 浮出窗口默认提供明确的“收回到 Editor”动作，不显示有歧义的 X；关闭 owner Tab 才销毁
+  View 与浮出呈现。Host 若显式启用 X，X 只发出关闭请求，必须先经过 dirty/save/discard/
+  cancel 守卫，再由 Host 决定是否关闭 owner View；Wing 不直接销毁业务状态。
 - Editor 激活历史与浮窗 z-order 是两套状态：前者用于 MRU 回退，后者只决定非模态窗口
   前后层级；不得继续用单一 `activeViewId` 混合表达。
 
@@ -41,7 +43,8 @@ Owner：Phoenix Wing maintainers
    正在 floating/opening/reattaching/closing 的 View 一律跳过，找不到则显示 Home/空工作台；
 5. 切换其他 Tab 不隐藏已浮出的 View；点击保留的 floating owner Tab 只聚焦/置顶浮窗，
    不替换当前 Editor 背景 View；
-6. 点击浮窗关闭按钮或按约定的 Escape，默认执行 reattach；
+6. 点击明确的“收回到 Editor”动作或按约定的 Escape，默认执行 reattach；可选 X 表示
+   请求关闭 owner View，不得复用为收回；
 7. reattach 恢复 owner Tab 投影（尽量保持原顺序）、迁回完整 frame，并激活该 Editor
    View；关闭 owner Tab 才先关闭浮出呈现再销毁 View owner；
 8. 收回完成后销毁空的 dialog host，不留下第二个 renderer 或 pending Promise。
@@ -58,7 +61,7 @@ Header 融入宿主标题栏的可选双插槽模式。
 | --- | --- | --- | --- |
 | `PnwViewDialog` | 独立检查器/编辑草稿 | 返回 result 或取消 | 不适用 |
 | `PnwDockableTool` | 应用级或 View 级小工具 | `closed` | 不要求拥有 Tab |
-| 完整 View presentation | owner Tab 的整个 View frame | 默认收回；关 Tab 才销毁 | 是 |
+| 完整 View presentation | owner Tab 的整个 View frame | 明确按钮收回；可选 X 请求关闭 owner View | 是 |
 
 不得把 View 的一组参数做成 snapshot 表单后宣称“完整 View 已浮出”。snapshot 在 Tauri
 模式只允许承担首次 hydration；用户看到的必须是完整业务 renderer。
@@ -263,8 +266,9 @@ Dialog 是否有效由 presentation lease 决定，不由 DOM 子节点数量推
 - `PnwFloatingPanel` 是 tool/view 共用 chrome，负责拖动、缩放、主题、viewport clamp、
   推荐尺寸恢复、活动视觉态与窗口栈；
 - `PnwDockableToolWindow` 是 `ownerKind: "tool"` 适配器，X 为 `close`，可停靠 Primary；
-- `PnwViewPresentationPortal` 是 `ownerKind: "view"` 适配器，X 为 `reattach`，owner Tab
-  关闭才销毁；
+- `PnwViewPresentationPortal` 是 `ownerKind: "view"` 适配器，默认只显示
+  `editor-restore` 收回动作；`showCloseAction` 可另加 X，但 X 只发 `requestClose`，owner
+  Host 完成保存守卫后才能关闭；
 - 不新增同义的 `PnwPresentationFrame.vue`，避免再包一层却没有生命周期所有权。
 
 `PnwPresentationFrameDefinition` 的稳定字段为 `ownerKind`、`movable`、`resizable`、
@@ -356,9 +360,10 @@ Tauri `WebviewWindow` 以唯一 label 标识并支持事件收发；`parent` 在
 
 - `role="dialog"`，但不得设置 `aria-modal="true"`；
 - 打开后可聚焦宿主拖动栏，但不强制夺走正在输入的焦点；
-- Escape 默认收回；输入法组合或产品已消费 Escape 时不得抢占；
+- Escape 默认收回；输入法组合或产品已消费 Escape 时不得抢占。显式 X 不改变 Escape 的
+  收回语义；
 - 收回后焦点返回恢复的 owner Tab 或 View Header 对应按钮；
-- resize/drag 后至少保留标题栏与关闭按钮可见。
+- resize/drag 后至少保留标题栏与收回动作可见；开启 X 时 X 也必须可见。
 
 ### 9.3 主题
 
@@ -496,7 +501,8 @@ pnwResolveOpenViewPresentationAction(
 | 原 Tab | 浮出不新增或删除 Tab；keep 时点击只聚焦且不高亮 Editor；hide 时只隐藏投影，收回恢复原顺序 |
 | 切 Tab | detached View 保持可见且可操作，presentation lease 不变 |
 | 直接打开 | `preferredPresentation:floating` 首次创建浮窗；重复单实例请求只 focus；能力不足降级 embedded |
-| 关闭浮窗 | 默认收回 Editor，不关闭 owner Tab |
+| 浮窗收回 | 默认只有明确收回动作；收回 Editor，不关闭 owner Tab |
+| 可选 X 关闭 | 只发关闭请求；Host 可保存、放弃或取消，Wing 不直接销毁 owner View |
 | 关闭 Tab | 浮窗销毁、bridge 清理、无 pending/幽灵 renderer |
 | 重复操作 | detaching/reattaching 期间不会创建重复窗口或双 renderer |
 | 空宿主/HMR | opening 外壳提交前不可见；floating record 重建可恢复；stale release 不回收新 generation |

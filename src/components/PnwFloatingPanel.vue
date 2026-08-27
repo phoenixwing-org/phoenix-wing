@@ -18,6 +18,7 @@ import type {
 import type { PnwPresentationResizeMode } from "../types/PnwPresentationFrame.js";
 import type { PnwPresentationOwnerKind } from "../types/PnwPresentationFrame.js";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
+import type { PnwIconName } from "../icons/pnwIconCatalog.js";
 import {
   pnwClampFloatingPanelPosition,
   pnwClampFloatingPanelBounds,
@@ -64,6 +65,12 @@ const props = withDefaults(defineProps<{
   /** 在 viewport 内额外避让的 Host Header、Dock 等安全区域。 */
   constrainInsets?: Partial<PnwFloatingPanelInsets>;
   closeOnEscape?: boolean;
+  /** 是否显示内置关闭动作；需要自定义生命周期的 owner 可通过 actions slot 分离动作。 */
+  showCloseAction?: boolean;
+  /** 关闭语义图标；完整 View 可改用 editor-restore 明确表示收回。 */
+  closeIcon?: PnwIconName;
+  /** 覆盖关闭按钮的 title/aria-label；空值使用通用“关闭浮动面板”。 */
+  closeLabel?: string;
   /** 叠层语义；Host 工具浮层应使用公开的 hostTools 层。 */
   layer?: PnwWorkbenchOverlayLayer;
   /** 仅在确有第三方叠层集成时覆盖 layer 的数值。 */
@@ -77,6 +84,9 @@ const props = withDefaults(defineProps<{
   constrainMargin: 8,
   constrainInsets: () => ({}),
   closeOnEscape: true,
+  showCloseAction: true,
+  closeIcon: "close",
+  closeLabel: "",
   resizable: false,
   movable: true,
   rememberBounds: true,
@@ -103,6 +113,7 @@ let pnwUnregisterStack: (() => void) | undefined;
 let pnwUnsubscribeStack: (() => void) | undefined;
 const { t: pnwT } = usePnwLocale();
 const pnwResolvedTitle = computed(() => props.title || pnwT("floatingPanel.title"));
+const pnwResolvedCloseLabel = computed(() => props.closeLabel || pnwT("floatingPanel.close"));
 const pnwResolvedPresentationId = computed(() => props.presentationId.trim() || pnwInternalPresentationId);
 const pnwResizeMode = computed<PnwPresentationResizeMode>(() => (
   props.resizable === true ? "both" : props.resizable || false
@@ -476,14 +487,17 @@ onBeforeUnmount(() => {
           >
             <PnwIcon name="editor-restore" :size="16" />
           </button>
+          <slot name="actions" />
           <button
+            v-if="showCloseAction"
             type="button"
             class="pnw-floating-panel__close"
-            :aria-label="pnwT('floatingPanel.close')"
+            :aria-label="pnwResolvedCloseLabel"
+            :title="pnwResolvedCloseLabel"
             @pointerdown.stop
             @click="emit('close')"
           >
-            <PnwIcon name="close" :size="16" />
+            <PnwIcon :name="closeIcon" :size="16" />
           </button>
         </header>
         <div class="pnw-floating-panel__content">

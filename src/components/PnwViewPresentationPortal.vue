@@ -23,7 +23,9 @@ import type { PnwFloatingWindowStackController } from "../utils/pnwFloatingWindo
 import { pnwReduceViewPresentationRecord } from "../utils/pnwViewPresentation.js";
 import { pnwResolvePresentationFrameDefinition } from "../utils/pnwPresentationFrame.js";
 import { pnwGetDocumentViewPresentationLeaseRegistry } from "../utils/pnwViewPresentationLease.js";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
 import PnwFloatingPanel from "./PnwFloatingPanel.vue";
+import PnwIcon from "./PnwIcon.vue";
 
 const props = withDefaults(defineProps<{
   record: PnwViewPresentationRecord;
@@ -31,6 +33,8 @@ const props = withDefaults(defineProps<{
   ariaLabel?: string;
   panelClass?: string;
   closeOnEscape?: boolean;
+  /** 显示真正的关闭 View 动作；Host 必须处理 requestClose 与保存守卫。 */
+  showCloseAction?: boolean;
   layer?: PnwWorkbenchOverlayLayer;
   zIndex?: number;
   colorScheme?: PnwColorScheme;
@@ -42,6 +46,7 @@ const props = withDefaults(defineProps<{
   ariaLabel: "",
   panelClass: "",
   closeOnEscape: true,
+  showCloseAction: false,
   layer: "presentation",
 });
 
@@ -56,9 +61,11 @@ const emit = defineEmits<{
   focus: [viewInstanceId: string];
   activate: [presentationId: string];
   resetToRecommendedSize: [size: PnwFloatingPanelSize];
+  requestClose: [viewInstanceId: string];
 }>();
 
 const pnwFloatingPanel = ref<InstanceType<typeof PnwFloatingPanel>>();
+const { t: pnwT } = usePnwLocale();
 const pnwHeaderAnchor = ref<HTMLElement>();
 const pnwMainAnchor = ref<HTMLElement>();
 const pnwHeaderTarget = ref<HTMLElement>();
@@ -122,6 +129,14 @@ function pnwFocus(): void {
 
 function pnwReattach(): void {
   pnwUpdate(pnwReduceViewPresentationRecord(props.record, { type: "reattach" }));
+}
+
+function pnwHandlePanelClose(): void {
+  if (props.showCloseAction) {
+    emit("requestClose", props.record.identity.viewInstanceId);
+    return;
+  }
+  pnwReattach();
 }
 
 function pnwResetToRecommendedSize(): void {
@@ -310,13 +325,15 @@ defineExpose<PnwViewPresentationPortalHandle>({
     :aria-label="ariaLabel || title"
     :panel-class="pnwPanelClass"
     :close-on-escape="closeOnEscape"
+    :show-close-action="showCloseAction"
+    :close-label="pnwT('viewPresentation.close')"
     :layer="layer"
     :z-index="zIndex"
     :color-scheme="colorScheme"
     @update:bounds="pnwUpdateBounds"
     @activate="emit('activate', $event)"
     @reset-to-recommended-size="emit('resetToRecommendedSize', $event)"
-    @close="pnwReattach"
+    @close="pnwHandlePanelClose"
   >
     <template #header>
       <div
@@ -324,6 +341,18 @@ defineExpose<PnwViewPresentationPortalHandle>({
         class="pnw-view-presentation-dialog__header-target"
         data-pnw-view-presentation-header-target
       />
+    </template>
+    <template #actions>
+      <button
+        type="button"
+        class="pnw-view-presentation-dialog__reattach"
+        :title="pnwT('viewPresentation.reattach')"
+        :aria-label="pnwT('viewPresentation.reattach')"
+        @pointerdown.stop
+        @click="pnwReattach"
+      >
+        <PnwIcon name="editor-restore" :size="16" />
+      </button>
     </template>
     <div
       ref="pnwMainTarget"
@@ -348,6 +377,30 @@ defineExpose<PnwViewPresentationPortalHandle>({
   min-height: 0;
   gap: 0;
   padding: 0 8px 0 0;
+}
+
+.pnw-view-presentation-dialog__reattach {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pnw-view-presentation-dialog__reattach:hover {
+  background: var(--pnw-control-hover-bg, rgba(148, 163, 184, 0.16));
+}
+
+.pnw-view-presentation-dialog__reattach:focus-visible {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: -2px;
 }
 
 :global(.pnw-view-presentation-dialog--preparing) {

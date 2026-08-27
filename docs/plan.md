@@ -132,6 +132,13 @@ Owner：Phoenix Wing maintainers
      Wing 不依赖 Tauri、不移动 Vue DOM、不共享跨 Webview Pinia；Host adapter 与
      macOS/Windows 实测属于下一消费阶段。见
      [《非模态 View 对话框宿主》](Pnw工作台Web非模态View对话框宿主.md)。
+   - [x] `0.7.1` 发布后的下一候选补齐全局 Vue `PnwViewDialogHost`：应用父级显式
+     `pnwCreateViewDialogHost + pnwProvideViewDialogHost`，业务 View 通过
+     `usePnwViewDialogHost` 调用；Host 白名单登记 renderer，插件不再复制 FloatingPanel、
+     Promise resolver 或 overlay stack。`viewId / rendererId / instanceKey / requestId`
+     分离 owner、renderer、并行实例与请求；owner 关闭可批量 settle，重复身份 open 聚焦
+     既有窗口。完整浮出 View 默认改用明确收回图标，可选 X 只发 Host 保存守卫钩子；
+     Dockable Tool 的停靠按钮与关闭 X 继续分离。低层 adapter API 保持兼容。
    - [x] 第二消费者原型证明“参数检查器 dialog”与“完整 View 浮出”必须分层；
      后者冻结为整个 View frame 在 Editor 与 detached host 间转换，原 Tab 保持唯一 owner。
      Web 采用单 renderer Teleport，Tauri 采用主端唯一真源的 presentation lease 与

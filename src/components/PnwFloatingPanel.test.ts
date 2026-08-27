@@ -137,4 +137,22 @@ describe("PnwFloatingPanel resize", () => {
     expect(document.body.querySelectorAll("[data-pnw-resize-direction]")).toHaveLength(0);
     wrapper.unmount();
   });
+
+  it("允许 owner 用明确图标和名称替代有歧义的 X", () => {
+    const wrapper = mount(PnwFloatingPanel, {
+      attachTo: document.body,
+      props: {
+        open: true,
+        position: { x: 20, y: 20 },
+        title: "Detached View",
+        closeIcon: "editor-restore",
+        closeLabel: "收回到 Editor",
+      },
+    });
+    const action = document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__close");
+    expect(action?.getAttribute("aria-label")).toBe("收回到 Editor");
+    expect(action?.getAttribute("title")).toBe("收回到 Editor");
+    expect(action?.querySelector("svg")).not.toBeNull();
+    wrapper.unmount();
+  });
 });

@@ -4,9 +4,9 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：0.7.0+（Web 契约已发布；Tauri Host 实证后置）
+适用版本：0.7.1+（低层契约已发布；全局 Vue Host 为下一候选）
 
-最后核验：2026-08-15
+最后核验：2026-08-27
 
 ## 1. 结论
 
@@ -18,10 +18,15 @@ Wing 统一使用 **非模态 View 对话框** 这个概念：
 
 - Tauri 桌面 Host：优先打开带父窗口关系的非模态 Webview 窗口；允许移到主窗口边界
   之外，但不禁用父窗口；
-- 普通 Web Host：降级为应用内部无蒙层浮窗，复用 `PnwFloatingPanel`；
+- 普通 Web Host：全局挂载一次 `PnwViewDialogHost`，在应用内部使用无蒙层
+  `PnwFloatingPanel`；
 - 两种呈现使用同一个 `requestId / viewId / props / result` 契约；
 - Wing 提供纯 TypeScript 仲裁与状态边界，Host 提供 Tauri/Web adapter；Wing 不依赖
   `@tauri-apps/api`，也不接管 Router、Pinia、业务状态或窗口权限。
+
+同一 renderer 可以同时存在多个 View Dialog，也可以与多个完整浮出 View、Dockable Tool
+并存。三者共享 Document presentation stack 的点击置前和活动窗 Escape，但不混用 owner
+生命周期。
 
 工程资源库类原型证明了应用内非模态浮窗的交互价值：用户可边查看主 View，边操作辅助
 资料库；本能力学习的是这种“主界面持续可用”的效果，不吸收产品文件格式、领域算法或
@@ -77,6 +82,12 @@ interface PnwViewDialogRequest<TProps> {
   colorScheme?: "light" | "dark" | "system";
 }
 
+interface PnwViewDialogHostRequest<TProps> extends PnwViewDialogRequest<TProps> {
+  rendererId: string;
+  instanceKey?: string;
+  position?: { x: number; y: number };
+}
+
 type PnwViewDialogOutcome<TResult> =
   | { status: "submitted"; value: TResult }
   | { status: "closed"; reason: PnwViewDialogCloseReason }
@@ -98,6 +109,19 @@ type PnwViewDialogOutcome<TResult> =
 实例；明确使用 `parallel` 时，仍同时受请求 `maxInstances` 和 adapter
 `maxOpenDialogs` 限制。
 
+高层 Vue Host 把身份拆开：
+
+- `viewId`：owner View / owner Tab 的稳定 ID；关闭 owner 时调用 `closeByView(viewId)`；
+- `rendererId`：Host 白名单中的 renderer ID，不是组件、URL 或路由；
+- `instanceKey`：同一 owner + renderer 确有多个实例时显式提供；
+- `requestId`：本次打开请求的稳定 ID。
+
+`viewId + rendererId + instanceKey` 形成高层单例身份。高层 Host 不暴露 low-level
+`instancePolicy / maxInstances`；多个业务实例用明确的 `instanceKey`，总数由
+`maxOpenDialogs` 限制。重复 `open()` 不新建浮窗，而是聚焦
+既有实例并复用它的 outcome Promise；同一 owner 的不同 renderer 或不同 instanceKey 可
+并存。这避免把 low-level `single` 误解成“一个 View 只能打开一种对话框”。
+
 ## 4. Host adapter 责任
 
 ### 4.1 Tauri 桌面 adapter
@@ -116,14 +140,41 @@ Host 负责：
 
 Tauri adapter 是应用壳层代码，不进入 Wing，也不意味着每个 Webview 共享 Pinia 内存。
 
-### 4.2 Web floating adapter
+### 4.2 Web 全局 Host
 
-Web Host 使用同一个 `viewId` registry，把 renderer 放入 `PnwFloatingPanel`：
+Vue Host 在应用父级创建 controller、显式 provide，并把渲染组件挂一次。业务 View 与 Host
+组件即使是兄弟节点，也能从共同父级注入同一个 controller；不得依赖模块级 singleton：
+
+```ts
+const pnwViewDialogs = pnwCreateViewDialogHost({ maxOpenDialogs: 6 });
+pnwProvideViewDialogHost(pnwViewDialogs);
+
+const unregisterPartEditor = pnwViewDialogs.registerRenderer({
+  rendererId: "part-editor",
+  component: PartEditorDialog,
+});
+```
+
+```vue
+<PnwViewDialogHost :controller="pnwViewDialogs" />
+```
+
+renderer 只接收一个 `dialog` prop：`dialog.request`、`dialog.props`、
+`dialog.submit(result)` 和 `dialog.cancel()`。登记 cleanup 会关闭该 renderer 的仍存活请求，
+应用卸载则 `PnwViewDialogHost` 以 `parent-close` settle 全部请求。`usePnwViewDialogHost()` 在
+缺少 provider 时立即抛错，不允许 Promise 静默 pending。
+
+公共 Host 统一把 renderer 放入 `PnwFloatingPanel`：
 
 - 无背景遮罩、无 `aria-modal`，Primary 和 Editor 继续可交互；
 - 使用 Wing overlay theme root，跟随 light/dark/system；
 - 浮窗位置只属于当前 Host 会话；是否持久化由 Host 决定；
 - 关闭、提交和异常返回与桌面 adapter 相同的 outcome。
+
+业务插件不得再自建 `PnwFloatingPanel`、Promise resolver、overlay stack 或第二套全局
+dialog service。需要底层 Tauri Webview 的 Host 仍使用已发布的
+`pnwCreateViewDialogController()` 与 desktop adapter；本轮 Vue Host 是 Web renderer 的
+高层实现，不假装实现跨 Webview renderer registry。
 
 Web fallback 不能越过浏览器 viewport，这是可探测的能力差异，不伪装成桌面窗口。
 
@@ -144,16 +195,13 @@ Web fallback 不能越过浏览器 viewport，这是可探测的能力差异，�
 ## 6. 最小使用示例
 
 ```ts
-const pnwViewDialogs = pnwCreateViewDialogController({
-  webFloating: pwwWebFloatingAdapter,
-  desktopDialog: pwwTauriViewDialogAdapter,
-});
+const pnwViewDialogs = usePnwViewDialogHost();
 
 const result = await pnwViewDialogs.open<PartEditorProps, PartEditorResult>({
-  requestId: crypto.randomUUID(),
-  viewId: "part-editor",
+  requestId: `part-editor:${ownerTabId}`,
+  viewId: ownerTabId,
+  rendererId: "part-editor",
   title: "编辑零件",
-  parentId: "main",
   props: { partId, revision },
   size: { width: 760, height: 560 },
 });
@@ -163,9 +211,21 @@ if (result.status === "submitted") {
 }
 ```
 
-示例中的 `pww*` adapter 和业务类型属于消费者；Wing 公开名称继续只使用 `Pnw / pnw / PNW_`。
+示例中的业务类型属于消费者；Wing 公开名称继续只使用 `Pnw / pnw / PNW_`。
 
-## 7. 分阶段计划
+## 7. 关闭、收回与停靠不能混用
+
+| 外壳 | 右上动作 | 默认语义 | 扩展点 |
+| --- | --- | --- | --- |
+| `PnwViewDialogHost` | X | 关闭对话框，返回 `window-close`；不嵌入 | renderer 用 `submit/cancel` |
+| `PnwViewPresentationPortal` | `editor-restore` | 收回完整 View 到 Editor | `showCloseAction` 可另加 X；X 只发 `requestClose` |
+| `PnwDockableToolWindow` | 停靠按钮 + X | 停靠按钮进入 Primary；X 进入 `closed` | Tool reducer/Host 持久化 |
+
+完整浮出 View 默认不显示有歧义的 X。Host 确实允许在浮窗直接关闭 owner View 时，显式设置
+`showCloseAction` 并处理 `requestClose(viewInstanceId)`：dirty/save/discard/cancel 等守卫由
+Host 执行，Wing 不擅自销毁业务状态。收回按钮永远只 reattach，不触发关闭守卫。
+
+## 8. 分阶段计划
 
 ### VDH0：公共契约与仲裁（本轮）
 
@@ -180,16 +240,18 @@ if (result.status === "submitted") {
 
 - [ ] Desk Tools 或第二个本地 Host 在独立消费分支实现 Tauri adapter；
 - [x] Web fixture 使用 `PnwFloatingPanel` 实现无蒙层 adapter；
+- [x] 增加全局 `PnwViewDialogHost`、renderer registry、create/provide/use 与缺失 Host 快速失败；
+- [x] owner View 批量关闭、重复 open 聚焦、多个 renderer/instance 并存、焦点恢复与统一栈；
 - [ ] 确认同一 renderer 的 props/result、主题和 locale；
 - [ ] 取得 macOS 与 Windows 的父子关系、跨主窗口边界、父窗口最小化/关闭证据。
 
 ### VDH2：第二消费者后再决定的提炼
 
-- [ ] 若两个 Host 重复同一套 Web adapter，再增加 `PnwViewDialogFloatingHost`；
+- [x] 两个 Host 不再重复 Web adapter，由 `PnwViewDialogHost` 收口；
 - [ ] 若两个 Tauri Host 重复同一套桥接，再增加独立 adapter 包；
 - [ ] 在真实需求出现前不增加任意窗口迁移、跨窗口工作空间恢复和共享 Store 协议。
 
-## 8. 验收矩阵
+## 9. 验收矩阵
 
 | 场景 | 自动测试 | 消费者人工/集成测试 |
 | --- | --- | --- |
@@ -199,9 +261,12 @@ if (result.status === "submitted") {
 | 父窗口关闭/应用退出 | close reason 类型 | Promise 必须 settle，不留幽灵窗口 |
 | light/dark/system | colorScheme 透传 | 窗口创建首帧不闪白，正文/控件可读 |
 | 单实例/少量并行 | View/adapter 上限 | 重复打开有明确反馈，不静默挂起 |
+| 多窗口并存 | owner/renderer/instance 身份、统一 stack | Dialog / 完整 View / Tool 点击置前，Escape 只作用活动窗 |
+| owner 销毁 | `closeByView`、renderer cleanup、Host unmount | 全部 Promise 恰好 settle，不残留空壳 |
+| 完整 View 关闭 | 默认收回图标、可选 X 事件 | X 走 Host 保存守卫，收回不触发关闭 |
 | Windows/macOS | 平台无关契约 | owned/child 行为、最小化、关闭与多显示器 |
 
-## 9. 明确不做
+## 10. 明确不做
 
 - 不创建独立进程；
 - 不提供第二套 Workbench、Router、标签栏或 Primary；
