@@ -5,8 +5,11 @@ import PnwPageMainBlock from "./PnwPageMainBlock.vue";
 withDefaults(defineProps<{
   title: string;
   subtitle?: string;
+  /** @deprecated View Header 固定单行；分类信息请移入 main。 */
   eyebrow?: string;
+  /** @deprecated View Header 固定单行；状态摘要请移入 main。 */
   summary?: string;
+  /** @deprecated View Header 固定单行；说明文字请移入 main。 */
   description?: string;
   toolbar?: boolean;
   /** 默认 true：结构 body 保持 0，并用 PnwPageMainBlock 为默认插槽提供 10px inset。 */
@@ -37,6 +40,9 @@ withDefaults(defineProps<{
         :description="description"
         :toolbar="toolbar"
       >
+        <template v-if="$slots.leading" #leading>
+          <slot name="leading" />
+        </template>
         <template v-if="$slots.actions" #actions>
           <slot name="actions" />
         </template>

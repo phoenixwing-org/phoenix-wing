@@ -218,12 +218,52 @@ if (result.status === "submitted") {
 | 外壳 | 右上动作 | 默认语义 | 扩展点 |
 | --- | --- | --- | --- |
 | `PnwViewDialogHost` | X | 关闭对话框，返回 `window-close`；不嵌入 | renderer 用 `submit/cancel` |
-| `PnwViewPresentationPortal` | `editor-restore` | 收回完整 View 到 Editor | `showCloseAction` 可另加 X；X 只发 `requestClose` |
+| `PnwViewPresentationPortal` | `window-reattach` | 收回完整 View 到 Editor | `showCloseAction` 可另加 X；X 只发 `requestClose` |
 | `PnwDockableToolWindow` | 停靠按钮 + X | 停靠按钮进入 Primary；X 进入 `closed` | Tool reducer/Host 持久化 |
 
 完整浮出 View 默认不显示有歧义的 X。Host 确实允许在浮窗直接关闭 owner View 时，显式设置
 `showCloseAction` 并处理 `requestClose(viewInstanceId)`：dirty/save/discard/cancel 等守卫由
 Host 执行，Wing 不擅自销毁业务状态。收回按钮永远只 reattach，不触发关闭守卫。
+恢复推荐尺寸继续使用 `editor-restore`，并在窗口已经是推荐尺寸时以原生 `disabled` 灰态
+呈现；用户调整尺寸后才重新启用。两种动作不得复用同一图标或 tooltip。
+
+### 7.1 标题栏文本布局示意
+
+```text
+普通 View Dialog
+┌────────────────────────────────────────────────────────────┐
+│ 标题 / renderer header      [恢复推荐尺寸 ↘↙]       [关闭 ×] │
+└────────────────────────────────────────────────────────────┘
+                               └─ 默认尺寸时灰态禁用
+
+完整浮出 View（默认）
+┌─────────────────────────────────────────────────────────────────────────┐
+│ [返回] 标题       [业务 actions…] [恢复推荐尺寸 ↘↙] [收回到 Editor ⇲▣] │
+└─────────────────────────────────────────────────────────────────────────┘
+                                      │                 └─ window-reattach，始终可用
+                                      └─ editor-restore，仅尺寸改变后可用
+
+完整浮出 View（Host 显式允许关闭 owner）
+┌─────────────────────────────────────────────────────────────────────────┐
+│ [返回] 标题  [业务 actions…] [恢复推荐尺寸 ↘↙] [收回 ⇲▣] [请求关闭 ×] │
+└─────────────────────────────────────────────────────────────────────────┘
+                                                                  └─ 先走保存守卫
+
+Dockable Tool
+┌────────────────────────────────────────────────────────────┐
+│ Tool Header                   [停靠 Primary]       [关闭 ×] │
+└────────────────────────────────────────────────────────────┘
+```
+
+`恢复推荐尺寸` 只改变 bounds；`收回到 Editor` 只改变 presentation；`请求关闭` 才进入
+owner 生命周期守卫。按钮顺序固定为“恢复 → 收回 → 可选关闭”：没有关闭按钮时收回位于
+最右侧；开启关闭按钮时，关闭位于最右侧。禁用恢复按钮也不会引起标题栏动作跳位。
+
+`PnwPageHeader` 的 `leading/title/actions/help` 通过运行时
+`PnwViewPresentationHeaderChannel` 单实例迁入上述左、右区域；Portal 只在没有登记公共
+Header 时显示 `title/#header` fallback。浮窗 chrome 固定单行，不渲染 eyebrow、summary
+或 description；这些内容应放在 main。默认最小高度、gap 与横向 padding 是
+`40px / 8px / 8px`，由公开的 `--pnw-view-presentation-header-*` token 统一调整。
 
 ## 8. 分阶段计划
 

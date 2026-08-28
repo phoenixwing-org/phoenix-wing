@@ -140,7 +140,16 @@ Owner：Phoenix Wing maintainers
      Promise resolver 或 overlay stack。`viewId / rendererId / instanceKey / requestId`
      分离 owner、renderer、并行实例与请求；owner 关闭可批量 settle，重复身份 open 聚焦
      既有窗口。完整浮出 View 默认改用明确收回图标，可选 X 只发 Host 保存守卫钩子；
-     Dockable Tool 的停靠按钮与关闭 X 继续分离。低层 adapter API 保持兼容。
+     Dockable Tool 的停靠按钮与关闭 X 继续分离。浮窗“恢复推荐尺寸”保留
+     `editor-restore`，当前已是推荐尺寸时禁用；完整 View“收回到 Editor”改用
+     `window-reattach`，两者不再共享图标、tooltip 或 ARIA 语义。低层 adapter API 保持兼容。
+   - [x] `0.7.2` 多消费者浮出实证收口单行 View Header：
+     `pnwProvideViewPresentationContext()` 自动创建隔离的
+     `PnwViewPresentationHeaderChannel`，`PnwPageHeader` 在嵌入态原位渲染，浮出态把同一
+     `leading/title/actions/help` renderer Teleport 到 Portal chrome；Portal 自动隐藏旧
+     fallback title，旧 View 无公共 Header 时继续回退。Header 固定单行，不再渲染
+     eyebrow/summary/description；浮窗 min-height/gap/padding 由三个公开 token 统一，业务
+     View 不复制标题/actions 或穿透覆盖 FloatingPanel。
    - [x] 第二消费者原型证明“参数检查器 dialog”与“完整 View 浮出”必须分层；
      后者冻结为整个 View frame 在 Editor 与 detached host 间转换，原 Tab 保持唯一 owner。
      Web 采用单 renderer Teleport，Tauri 采用主端唯一真源的 presentation lease 与

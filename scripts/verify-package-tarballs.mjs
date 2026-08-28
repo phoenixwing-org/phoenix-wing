@@ -411,10 +411,16 @@ function verifyAggregateManifest(item) {
     "dist/components/PnwWorkspaceTypeSelect.vue.d.ts",
     "dist/components/PnwFloatingWindowMenu.js",
     "dist/components/PnwFloatingWindowMenu.vue.d.ts",
+    "dist/components/PnwViewDialogHost.js",
+    "dist/components/PnwViewDialogHost.vue.d.ts",
     "dist/components/PnwViewPresentationPortal.js",
     "dist/components/PnwViewPresentationPortal.vue.d.ts",
     "dist/composables/pnwChoiceDialog.js",
     "dist/composables/usePnwOverlayTheme.js",
+    "dist/composables/usePnwViewDialogHost.js",
+    "dist/composables/usePnwViewDialogHost.d.ts",
+    "dist/composables/usePnwViewPresentationContext.js",
+    "dist/composables/usePnwViewPresentationContext.d.ts",
     "dist/layout/PnwPrimaryPanel.js",
     "dist/layout/PnwPrimaryPanel.vue.d.ts",
     "dist/layout/PnwDockablePrimarySection.js",
@@ -433,6 +439,7 @@ function verifyAggregateManifest(item) {
     "dist/types/PnwPresentationFrame.d.ts",
     "dist/types/PnwViewPresentation.d.ts",
     "dist/types/PnwViewDialog.d.ts",
+    "dist/types/PnwViewDialogHost.d.ts",
     "dist/types/PnwWorkspace.d.ts",
     "dist/types/PnwWorkbenchWeb.d.ts",
     "dist/types/PnwWorkbenchHome.d.ts",
@@ -478,6 +485,7 @@ function verifyAggregateManifest(item) {
     "dist/types/PnwPresentationFrame.js",
     "dist/types/PnwViewPresentation.js",
     "dist/types/PnwViewDialog.js",
+    "dist/types/PnwViewDialogHost.js",
     "dist/types/PnwWorkbench.js",
     "dist/types/PnwWorkbenchVue.js",
     "dist/types/PnwWorkbenchWeb.js",
@@ -532,6 +540,10 @@ import type {
   PnwViewDialogRequest,
 } from "phoenix-wing/types/PnwViewDialog";
 import type {
+  PnwViewDialogHostController,
+  PnwViewDialogHostRequest,
+} from "phoenix-wing/types/PnwViewDialogHost";
+import type {
   PnwWorkspaceDescriptor,
   PnwWorkspaceLifecycleParticipant,
 } from "phoenix-wing/types/PnwWorkspace";
@@ -554,6 +566,14 @@ const dialogCapabilities: PnwViewDialogCapabilities = {
   supportsOutsideParentBounds: false,
   maxOpenDialogs: 1,
 };
+const dialogHostRequest: PnwViewDialogHostRequest<{ id: string }> = {
+  requestId: "smoke.host-dialog",
+  viewId: "smoke.view",
+  rendererId: "smoke.renderer",
+  title: "Host dialog",
+  props: { id: "record-1" },
+};
+const dialogHostController = null as PnwViewDialogHostController | null;
 const tool: PnwDockableToolDefinition = {
   id: "smoke.tool",
   title: "Smoke tool",
@@ -612,6 +632,9 @@ if (dialogRequest.viewId !== "smoke.view"
   || dialogCapabilities.presentation !== "web-floating") {
   throw new Error("View dialog type subpath smoke failed");
 }
+if (dialogHostRequest.rendererId !== "smoke.renderer" || dialogHostController !== null) {
+  throw new Error("View dialog Host type subpath smoke failed");
+}
 if (workspaceDescriptor.workspaceId !== "workspace-smoke"
   || workspaceParticipant.id !== "smoke.session") {
   throw new Error("Workspace type subpath smoke failed");
@@ -656,7 +679,15 @@ import CompatRecentWorkspaceList from "phoenix-wing/components/PnwRecentWorkspac
 import CompatSelect from "phoenix-wing/components/PnwSelect.vue";
 import CompatWorkspaceTypeSelect from "phoenix-wing/components/PnwWorkspaceTypeSelect.vue";
 import CompatFloatingWindowMenu from "phoenix-wing/components/PnwFloatingWindowMenu.vue";
+import CompatViewDialogHost from "phoenix-wing/components/PnwViewDialogHost.vue";
 import CompatViewPresentationPortal from "phoenix-wing/components/PnwViewPresentationPortal.vue";
+import {
+  pnwCreateViewDialogHost as compatCreateViewDialogHost,
+  pnwCreateViewDialogHostIdentity as compatCreateViewDialogHostIdentity,
+} from "phoenix-wing/composables/usePnwViewDialogHost";
+import {
+  pnwProvideViewPresentationContext as compatProvideViewPresentationContext,
+} from "phoenix-wing/composables/usePnwViewPresentationContext";
 import CompatDockablePrimarySection from "phoenix-wing/layout/PnwDockablePrimarySection.vue";
 import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
 import CompatPrimarySection from "phoenix-wing/layout/PnwPrimarySection.vue";
@@ -677,6 +708,7 @@ import {
   PnwSelect,
   PnwWorkspaceTypeSelect,
   PnwFloatingWindowMenu,
+  PnwViewDialogHost,
   PnwViewPresentationPortal,
   PnwPrimaryPanel,
   PnwPrimarySection,
@@ -685,6 +717,11 @@ import {
   PnwWorkbenchHome,
   pnwApplyColorScheme,
   pnwCreateFloatingWindowStack,
+  pnwCreateViewDialogHost,
+  pnwCreateViewDialogHostIdentity,
+  pnwIsSerializableViewDialogValue,
+  pnwProvideViewPresentationContext,
+  usePnwViewPresentationContext,
   pnwCreateViewPresentationLeaseRegistry,
   pnwCreateViewPresentationManagerState,
   pnwCreateViewPresentationRecord,
@@ -781,6 +818,25 @@ if (workspaceGate.mode !== "welcome"
 if (PnwFloatingWindowMenu !== CompatFloatingWindowMenu) {
   throw new Error("root and compatibility subpath resolved different floating window menus");
 }
+if (PnwViewDialogHost !== CompatViewDialogHost
+  || pnwCreateViewDialogHost !== compatCreateViewDialogHost
+  || pnwCreateViewDialogHostIdentity !== compatCreateViewDialogHostIdentity) {
+  throw new Error("root and compatibility subpath resolved different View Dialog Host exports");
+}
+if (pnwProvideViewPresentationContext !== compatProvideViewPresentationContext
+  || typeof usePnwViewPresentationContext !== "function") {
+  throw new Error("root and compatibility subpath resolved different View presentation context");
+}
+const viewDialogHost = pnwCreateViewDialogHost();
+if (viewDialogHost.activeDialogs().length !== 0
+  || !pnwIsSerializableViewDialogValue({ id: "smoke" })
+  || pnwCreateViewDialogHostIdentity({
+    viewId: "smoke.view",
+    rendererId: "smoke.renderer",
+    instanceKey: "default",
+  }) !== "smoke.view\u0000smoke.renderer\u0000default") {
+  throw new Error("aggregate View Dialog Host runtime smoke failed");
+}
 if (PnwViewPresentationPortal !== CompatViewPresentationPortal) {
   throw new Error("root and compatibility subpath resolved different View presentation portals");
 }
@@ -851,6 +907,9 @@ import {
   PnwOverlayThemeProvider,
   PnwPrimaryPanel,
   PnwPrimarySection,
+  PnwViewDialogHost,
+  pnwCreateViewDialogHost,
+  pnwProvideViewPresentationContext,
   pnwPromptChoice,
 } from "phoenix-wing";
 import {
@@ -861,10 +920,14 @@ import CompatChoiceDialogHost from "phoenix-wing/components/PnwChoiceDialogHost.
 import CompatOverlayThemeProvider from "phoenix-wing/components/PnwOverlayThemeProvider.vue";
 import CompatPrimaryPanel from "phoenix-wing/layout/PnwPrimaryPanel.vue";
 import CompatPrimarySection from "phoenix-wing/layout/PnwPrimarySection.vue";
+import CompatViewDialogHost from "phoenix-wing/components/PnwViewDialogHost.vue";
 if (PnwChoiceDialogHost !== CompatChoiceDialogHost
   || PnwOverlayThemeProvider !== CompatOverlayThemeProvider
   || PnwPrimaryPanel !== CompatPrimaryPanel
   || PnwPrimarySection !== CompatPrimarySection
+  || PnwViewDialogHost !== CompatViewDialogHost
+  || typeof pnwCreateViewDialogHost !== "function"
+  || typeof pnwProvideViewPresentationContext !== "function"
   || typeof pnwPromptChoice !== "function") {
   throw new Error("aggregate UI exports are inconsistent");
 }

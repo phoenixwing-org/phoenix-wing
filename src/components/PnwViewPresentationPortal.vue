@@ -24,6 +24,7 @@ import { pnwReduceViewPresentationRecord } from "../utils/pnwViewPresentation.js
 import { pnwResolvePresentationFrameDefinition } from "../utils/pnwPresentationFrame.js";
 import { pnwGetDocumentViewPresentationLeaseRegistry } from "../utils/pnwViewPresentationLease.js";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
+import { usePnwViewPresentationContext } from "../composables/usePnwViewPresentationContext.js";
 import PnwFloatingPanel from "./PnwFloatingPanel.vue";
 import PnwIcon from "./PnwIcon.vue";
 
@@ -66,6 +67,7 @@ const emit = defineEmits<{
 
 const pnwFloatingPanel = ref<InstanceType<typeof PnwFloatingPanel>>();
 const { t: pnwT } = usePnwLocale();
+const pnwPresentationContext = usePnwViewPresentationContext();
 const pnwHeaderAnchor = ref<HTMLElement>();
 const pnwMainAnchor = ref<HTMLElement>();
 const pnwHeaderTarget = ref<HTMLElement>();
@@ -79,6 +81,9 @@ const pnwCommittedRevision = ref(-1);
 let pnwLease: PnwViewPresentationLeaseHandle | undefined;
 
 const pnwPanelOpen = computed(() => props.record.mode !== "embedded");
+const pnwHasContributedHeader = computed(() => (
+  (pnwPresentationContext?.headerChannel.registeredCount.value ?? 0) > 0
+));
 const pnwTargetsReady = computed(() => Boolean(pnwHeaderTarget.value && pnwMainTarget.value));
 const pnwTeleportEnabled = computed(() => (
   props.record.mode === "floating" && pnwTargetsReady.value
@@ -182,6 +187,12 @@ watchPostEffect(() => {
   }));
 });
 
+watch(
+  pnwHeaderTarget,
+  (target) => pnwPresentationContext?.headerChannel.attachTarget(target),
+  { flush: "post", immediate: true },
+);
+
 async function pnwCommitTransferredFrames(): Promise<void> {
   await nextTick();
   const headerTarget = pnwHeaderTarget.value;
@@ -255,7 +266,13 @@ watchPostEffect(() => {
   if (props.record.mode === "embedded") pnwReleaseLease();
 });
 
-onBeforeUnmount(pnwReleaseLease);
+onBeforeUnmount(() => {
+  pnwReleaseLease();
+  const context = pnwPresentationContext;
+  if (context && context.headerChannel.target.value === pnwHeaderTarget.value) {
+    context.headerChannel.attachTarget(undefined);
+  }
+});
 
 defineExpose<PnwViewPresentationPortalHandle>({
   detach: pnwDetach,
@@ -277,14 +294,26 @@ defineExpose<PnwViewPresentationPortalHandle>({
       tabindex="-1"
     >
       <Teleport :to="pnwHeaderDestination" :disabled="!pnwTeleportEnabled">
-        <div ref="pnwHeaderFrame" class="pnw-view-presentation-portal__header-frame">
+        <div
+          ref="pnwHeaderFrame"
+          class="pnw-view-presentation-portal__header-frame"
+          :class="{
+            'pnw-view-presentation-portal__header-frame--empty': pnwHasContributedHeader,
+          }"
+        >
           <slot
+            v-if="!pnwHasContributedHeader"
             name="header"
             :mode="record.mode"
             :detach="pnwDetach"
             :focus="pnwFocus"
             :reattach="pnwReattach"
-          />
+          >
+            <strong
+              v-if="pnwPanelOpen"
+              class="pnw-view-presentation-dialog__title"
+            >{{ title }}</strong>
+          </slot>
         </div>
       </Teleport>
     </div>
@@ -351,7 +380,7 @@ defineExpose<PnwViewPresentationPortalHandle>({
         @pointerdown.stop
         @click="pnwReattach"
       >
-        <PnwIcon name="editor-restore" :size="16" />
+        <PnwIcon name="window-reattach" :size="16" />
       </button>
     </template>
     <div
@@ -374,9 +403,9 @@ defineExpose<PnwViewPresentationPortalHandle>({
 }
 
 :global(.pnw-view-presentation-dialog .pnw-floating-panel__header) {
-  min-height: 0;
-  gap: 0;
-  padding: 0 8px 0 0;
+  min-height: var(--pnw-view-presentation-header-min-height, 40px);
+  gap: var(--pnw-view-presentation-header-gap, 8px);
+  padding: 0 var(--pnw-view-presentation-header-padding-inline, 8px);
 }
 
 .pnw-view-presentation-dialog__reattach {
@@ -409,7 +438,27 @@ defineExpose<PnwViewPresentationPortalHandle>({
 }
 
 .pnw-view-presentation-dialog__header-target {
+  flex: 1 1 0;
+  width: 0;
+  max-width: 100%;
   min-width: 0;
+  min-height: var(--pnw-view-presentation-header-min-height, 40px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.pnw-view-presentation-dialog__title,
+.pnw-view-presentation-portal__header-frame {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pnw-view-presentation-portal__header-frame--empty {
+  display: none;
 }
 
 .pnw-view-presentation-dialog__main-target {

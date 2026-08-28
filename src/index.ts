@@ -639,6 +639,14 @@ export {
   pnwPromptInput,
 } from './composables/pnwChoiceDialog.js'
 export { usePnwOverlayTheme } from './composables/usePnwOverlayTheme.js'
+export {
+  pnwCreateViewPresentationHeaderChannel,
+  pnwProvideViewPresentationContext,
+  usePnwViewPresentationContext,
+  type PnwResolvedViewPresentationContext,
+  type PnwViewPresentationContext,
+  type PnwViewPresentationHeaderChannel,
+} from './composables/usePnwViewPresentationContext.js'
 
 // ---------------------------------------------------------------------------
 // Vue3 组件 — 根入口与兼容子路径均解析到同一 dist 模块图

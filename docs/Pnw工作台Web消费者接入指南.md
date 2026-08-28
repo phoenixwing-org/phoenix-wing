@@ -174,33 +174,39 @@ tab，不改面板显隐和尺寸。
 
 ```vue
 <PnwPageLayout
-  eyebrow="代码工具"
   title="参数代码"
   :subtitle="activeFileName"
-  summary="READY"
-  description="修改参数并生成当前工程源码。"
 >
+  <template #leading><AppBackButton /></template>
   <template #actions>
     <AppPreflightButton />
     <AppSaveButton />
   </template>
   <template #help><AppPageHelp /></template>
+  <p class="app-view-description">修改参数并生成当前工程源码。</p>
   <AppCodegenTable />
 </PnwPageLayout>
 ```
 
 `PnwPageLayout` 内部复用 `PnwPageHeader`；`bodyInset` 默认 `true`，但 10px 不落在 body，而落在默认插入的 `PnwPageMainBlock`。已有完整卡片、画布或 `.cl-crud` 自己持有 padding 时设为 `false`，避免叠加；`bodyScroll=false` 可由页面自己的虚拟表格承担滚动。该层次与 Cool Admin 一致：Header/结构/content(body) 为 0，实际 `.cl-crud` 或 `PnwPageMainBlock` 为 10px。Wing 不依赖 `.cl-crud`，也不复制其 provider、mitt、权限与配置语义。
 
-普通单行 `PnwPageHeader` 使用 3px 纵向 padding，常见 32px Host 操作按钮不会把默认
-40px Header 撑高；只有 eyebrow、description 等多行内容允许自然增高。不要用产品 CSS
-固定操作按钮或 Header 的 top/height。
+`PnwPageHeader` 固定为单行，使用 3px 纵向 padding，常见 32px Host 操作按钮不会把默认
+40px Header 撑高。`leading` 放返回/导航动作，标题位于左侧，业务 `actions/help` 位于右侧；
+过宽操作区横向滚动而不换成第二行。`eyebrow / summary / description` 仅保留类型兼容，
+不再进入 Header；分类、状态和长说明应放进 main。不要用产品 CSS 固定操作按钮或 Header
+的 top/height。
 
 旧 View 尚未使用 `PnwPageHeader` 时，Layout 会自动提供 40px Primary 开关兼容 rail，
 不要求消费者添加 wrapper 或 padding；迁移为公共 Header 后，兼容 rail 自动消失。
 
-`eyebrow / summary / description` 都是可选的；既有消费者只传 `title / subtitle / actions / help` 时保持紧凑兼容。工具条过宽时由组件允许横向滚动，窄工作台把 actions 放到第二行。Router、文件名、保存和帮助内容仍由 View 持有。当前 View 有 Primary 时，Layout 自动在 Page Header 左侧加入同高的展开/收起按钮和动态前导位；没有 Primary 时不渲染按钮，也不保留空槽。
+Router、文件名、保存和帮助内容仍由 View 持有。当前 View 有 Primary 时，Layout 自动在
+Page Header 左侧加入同高的展开/收起按钮和动态前导位；没有 Primary 时不渲染按钮，也
+不保留空槽。
 
-Desk Tools 与 Open Issue 已有多个真实页面使用 `PnwPageHeader`；fixture 也直接消费该公共组件，不再保留一份 `PwwFixtureViewHeader`。示例把摘要、目录、Codegen、检查和 Issue 五种 Editor View 分文件呈现，证明差异应留在业务 View 的 props、actions/help slot 与页内工具条，而不是复制五套 Header。新消费者只参考最接近自己的 View 组合，不要整目录复制或改名一个 Header 组件。
+多个真实消费者已有页面使用 `PnwPageHeader`；fixture 也直接消费该公共组件，不再保留一份
+`PwwFixtureViewHeader`。示例把多类 Editor View 分文件呈现，证明差异应留在业务 View 的
+props、actions/help slot 与页内工具条，而不是复制多套 Header。新消费者只参考最接近
+自己的 View 组合，不要整目录复制或改名一个 Header 组件。
 
 ### 3.3 Editor 最大化、标签动作与语言
 

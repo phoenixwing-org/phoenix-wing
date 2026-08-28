@@ -18,7 +18,9 @@ npm install phoenix-wing vue pinia
 
 跨宿主兼容性不依靠 npm 版本猜测：KtCodegen Plan、Ribbon contribution、workspace schema、CAD native/provider/query 都有独立的 schema/protocol 版本与运行时拒绝门禁。Canonical fixtures 随对应 npm 包发布，产品仓直接导入同一 Registry fixture，只保留宿主 adapter，不再维护消费副本。
 
-单仓 CI 使用 `pnpm verify:ci`，只依赖 Wing checkout；四仓同目录联调时再运行 `pnpm verify:consumers`，核对 Auto Code、Desk Tools 与 Open Issue 的 Registry 精确版本和依赖边界。
+单仓 CI 使用 `pnpm verify:ci`，只依赖 Wing checkout；多消费者联调按
+[消费者本地联调与验证](docs/本地验证方法.md)分别运行各产品的受控 local/Registry 命令。
+仓库没有一个会静默修改消费者依赖图的通用 `verify:consumers` 命令。
 
 ## 消费者本地联调
 
