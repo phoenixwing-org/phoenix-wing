@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted } from "vue";
+import type { PnwPageHeaderActionsAlign } from "../types/PnwPageHeader.js";
 import type { PnwViewPresentationMode } from "../types/PnwViewPresentation.js";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
 import { usePnwViewPresentationContext } from "../composables/usePnwViewPresentationContext.js";
@@ -14,8 +15,10 @@ const props = defineProps<{
   summary?: string;
   /** @deprecated View Header 固定单行；说明文字请移入 main。 */
   description?: string;
-  /** 默认 true：三栏网格（标题 · 居中工具条 · 帮助区） */
+  /** 默认 true：三段式 Header（标题 · 业务操作 · 框架操作）。 */
   toolbar?: boolean;
+  /** 中间业务操作区的对齐方式；默认居中，end 靠近右侧框架操作。 */
+  actionsAlign?: PnwPageHeaderActionsAlign;
   /** Workbench 解析 contribution 后传入；true 时自动在最右侧提供统一浮出/收回动作。 */
   presentationDetachable?: boolean;
   presentationMode?: PnwViewPresentationMode;
@@ -70,6 +73,9 @@ const pnwPresentationLabel = computed(() => (
     ? pnwT("viewPresentation.detach")
     : pnwT("viewPresentation.reattach")
 ));
+const pnwActionsAlign = computed<PnwPageHeaderActionsAlign>(() => (
+  props.actionsAlign === "end" ? "end" : "center"
+));
 
 function pnwRunPresentationAction(): void {
   if (pnwPresentationTransitioning.value) return;
@@ -109,6 +115,7 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
           'pnw-head-row-toolbar': toolbar !== false,
           'pnw-head-row--presentation': pnwPresentationDetachable,
         }"
+        :data-pnw-actions-align="pnwActionsAlign"
       >
         <div class="pnw-head-left">
           <div v-if="$slots.leading" class="pnw-head-leading">
@@ -119,11 +126,17 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
             <span v-if="subtitle" class="pnw-head-subtitle">{{ subtitle }}</span>
           </div>
         </div>
-        <div v-if="$slots.actions" class="pnw-head-actions">
-          <slot name="actions" />
-        </div>
-        <div v-if="$slots.help" class="pnw-head-help">
-          <slot name="help" />
+        <div
+          v-if="$slots.actions || $slots.help"
+          class="pnw-head-middle"
+          :class="`pnw-head-middle--${pnwActionsAlign}`"
+        >
+          <div v-if="$slots.actions" class="pnw-head-actions">
+            <slot name="actions" />
+          </div>
+          <div v-if="$slots.help" class="pnw-head-help">
+            <slot name="help" />
+          </div>
         </div>
         <button
           v-if="pnwPresentationDetachable"
@@ -182,8 +195,8 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 .pnw-head-row {
   display: grid;
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 112px), 1fr)
-    minmax(0, auto)
+    minmax(var(--pnw-page-header-title-min-width, 112px), max-content)
+    minmax(0, 1fr)
     auto;
   align-items: center;
   gap: var(--pnw-page-header-gap, 8px);
@@ -193,20 +206,20 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 
 .pnw-head-row-toolbar {
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 112px), 1fr)
-    minmax(0, auto)
+    minmax(var(--pnw-page-header-title-min-width, 112px), max-content)
+    minmax(0, 1fr)
     auto;
 }
 
 .pnw-head-row.pnw-head-row--presentation {
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 112px), 1fr)
-    minmax(0, auto)
-    auto
+    minmax(var(--pnw-page-header-title-min-width, 112px), max-content)
+    minmax(0, 1fr)
     auto;
 }
 
 .pnw-head-left {
+  grid-column: 1;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -257,20 +270,13 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
   );
 }
 
-.pnw-head-actions {
+.pnw-head-middle {
+  grid-column: 2;
   min-width: 0;
-  width: max-content;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 6px;
-  justify-self: end;
-  max-width: min(
-    calc(
-      100% - var(--pnw-page-header-title-min-width, 112px)
-      - var(--pnw-page-header-gap, 8px)
-    ),
-    720px
-  );
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-inline: contain;
@@ -278,12 +284,35 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
   white-space: nowrap;
 }
 
+.pnw-head-middle--center {
+  justify-content: safe center;
+}
+
+.pnw-head-middle--end {
+  justify-content: safe flex-end;
+}
+
+.pnw-head-actions {
+  min-width: max-content;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.pnw-head-actions > *,
+.pnw-head-help > * {
+  flex: 0 0 auto;
+}
+
 .pnw-head-help {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
 }
 
 .pnw-head-presentation-action {
+  grid-column: 3;
   width: 28px;
   height: 28px;
   display: inline-grid;

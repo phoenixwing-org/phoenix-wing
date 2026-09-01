@@ -238,7 +238,7 @@ Host 执行，Wing 不擅自销毁业务状态。收回按钮永远只 reattach�
 
 完整浮出 View（默认）
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ [返回] 标题       [业务 actions…] [恢复推荐尺寸 ↘↙] [收回到 Editor ⇲▣] │
+│ [返回] 标题       [业务 actions 中区…] [恢复推荐尺寸 ↘↙] [收回 ⇲▣] │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │                 └─ window-reattach，始终可用
                                       └─ editor-restore，仅尺寸改变后可用
@@ -260,10 +260,15 @@ owner 生命周期守卫。按钮顺序固定为“恢复 → 收回 → 可选�
 最右侧；开启关闭按钮时，关闭位于最右侧。禁用恢复按钮也不会引起标题栏动作跳位。
 
 `PnwPageHeader` 的 `leading/title/actions/help` 通过运行时
-`PnwViewPresentationHeaderChannel` 单实例迁入上述左、右区域；Portal 只在没有登记公共
+`PnwViewPresentationHeaderChannel` 单实例迁入上述左、中区域；Portal 只在没有登记公共
 Header 时显示 `title/#header` fallback。浮窗 chrome 固定单行，不渲染 eyebrow、summary
 或 description；这些内容应放在 main。默认最小高度、gap 与横向 padding 是
 `40px / 8px / 8px`，由公开的 `--pnw-view-presentation-header-*` token 统一调整。
+
+Header 实际采用三段式：左侧标题保底并省略，中间业务 actions 默认居中（可用
+`actionsAlign="end"` 靠右），右侧 Host 的恢复、收回和可选关闭固定。中区的按钮、选择器
+和输入框不允许 flex-shrink；760px、480px 或更窄时只滚动中区，不能显示半个按钮或挤掉
+Host 动作。
 
 ## 8. 分阶段计划
 

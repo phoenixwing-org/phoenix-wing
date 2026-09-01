@@ -700,11 +700,31 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-default-text");
     expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-default-muted");
     expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-view-header-leading-space");
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("pnw-head-middle");
     expect(PNW_PAGE_HEADER_SOURCE).toContain("overflow-x: auto");
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("flex: 0 0 auto");
     expect(PNW_PAGE_HEADER_SOURCE).not.toContain("grid-template-areas");
     expect(PNW_PAGE_HEADER_SOURCE).toMatch(
       /\.pnw-page-head\s*\{[\s\S]*?padding:\s*var\(--pnw-page-header-padding, 3px 12px\);[\s\S]*?min-height:\s*var\(--pnw-workbench-view-header-height, 40px\);/u,
     );
+  });
+
+  it("业务 Header actions 默认居中并可用公开语义切换为靠右", async () => {
+    const centered = await pnwRenderComponent(
+      PnwPageHeader,
+      { title: "品牌管理" },
+      { actions: () => [h("button", "运行时点检"), h("button", "刷新")] },
+    );
+    expect(centered).toContain('data-pnw-actions-align="center"');
+    expect(centered).toContain("pnw-head-middle--center");
+
+    const endAligned = await pnwRenderComponent(
+      PnwPageHeader,
+      { title: "品牌管理", actionsAlign: "end" },
+      { actions: () => [h("button", "刷新")] },
+    );
+    expect(endAligned).toContain('data-pnw-actions-align="end"');
+    expect(endAligned).toContain("pnw-head-middle--end");
   });
 
   it("可浮出 View Header 自动把统一动作固定到最右 trailing 区", async () => {

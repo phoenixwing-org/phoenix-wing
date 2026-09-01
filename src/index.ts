@@ -647,6 +647,7 @@ export {
   type PnwViewPresentationContext,
   type PnwViewPresentationHeaderChannel,
 } from './composables/usePnwViewPresentationContext.js'
+export type { PnwPageHeaderActionsAlign } from './types/PnwPageHeader.js'
 
 // ---------------------------------------------------------------------------
 // Vue3 组件 — 根入口与兼容子路径均解析到同一 dist 模块图

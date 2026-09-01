@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { PnwPageHeaderActionsAlign } from "../types/PnwPageHeader.js";
 import PnwPageHeader from "./PnwPageHeader.vue";
 import PnwPageMainBlock from "./PnwPageMainBlock.vue";
 
@@ -12,6 +13,8 @@ withDefaults(defineProps<{
   /** @deprecated View Header 固定单行；说明文字请移入 main。 */
   description?: string;
   toolbar?: boolean;
+  /** Header 中间业务操作区默认居中；end 时靠近右侧框架操作。 */
+  actionsAlign?: PnwPageHeaderActionsAlign;
   /** 默认 true：结构 body 保持 0，并用 PnwPageMainBlock 为默认插槽提供 10px inset。 */
   bodyInset?: boolean;
   /** 默认 true：正文而非整个 Workbench Editor 承担滚动。 */
@@ -39,6 +42,7 @@ withDefaults(defineProps<{
         :summary="summary"
         :description="description"
         :toolbar="toolbar"
+        :actions-align="actionsAlign"
       >
         <template v-if="$slots.leading" #leading>
           <slot name="leading" />

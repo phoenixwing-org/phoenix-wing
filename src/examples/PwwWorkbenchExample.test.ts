@@ -144,8 +144,11 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
       .toContain('"result-preview"');
     expect(pwwReadFile("src/fixture/PwwFixturePresentationView.vue"))
       .toContain("PnwViewPresentationPortal");
-    expect(pwwReadFile("src/fixture/PwwFixturePresentationView.vue"))
-      .toContain(":presentation-detachable=\"pwwContribution.detachable\"");
+    const pwwPresentationView = pwwReadFile("src/fixture/PwwFixturePresentationView.vue");
+    expect(pwwPresentationView).toContain("pnwProvideViewPresentationContext");
+    expect(pwwPresentationView).toContain("运行时点检");
+    expect(pwwPresentationView).toContain("刷新全部品牌资源");
+    expect(pwwPresentationView).not.toContain(":presentation-detachable=");
     expect(pwwReadFile("src/fixture/PwwFixturePresentationView.vue"))
       .toContain("fixture.open-result-floating");
     expect(pwwReadFile("src/App.vue")).toContain("handleViewAction");

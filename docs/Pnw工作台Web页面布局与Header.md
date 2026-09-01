@@ -53,7 +53,10 @@ Editor 内容从 rail 之后开始，避免开关覆盖自定义标题。迁移�
 状态和事件属于 Layout；Header 只负责视觉对齐。`PnwPrimaryPanel` 与
 `PnwPageHeader` 共用 `--pnw-workbench-view-header-height`，默认 `40px`。公共 Header 的默认
 纵向 padding 是 `3px`，可容纳常见 32px Host 按钮而不把单行 Header 撑到 49px；业务
-actions 过宽时在同一行横向滚动。消费者不应为普通按钮覆盖 Header 高度或定位。
+Header 采用公共三段式：左侧 `leading/title` 保底并省略，中间 `actions/help` 使用剩余宽度，
+右侧框架浮出/恢复/收回/关闭动作保持固定宽度。业务 actions 的直接子项禁止 flex-shrink；
+空间不足时只在中区完整收纳并横向滚动，不能裁掉半个按钮，也不能挤掉右侧框架动作。
+消费者不应为普通按钮覆盖 Header 高度或定位。
 
 ## 3. 主题
 
@@ -81,6 +84,20 @@ token，但不应对 `.pnw-page-title` 写产品级 dark CSS。
 </PnwPageLayout>
 ```
 
+中间业务操作区默认居中。需要更接近右侧框架动作时使用公开语义配置，不写产品 CSS：
+
+```vue
+<PnwPageLayout title="品牌管理" actions-align="end">
+  <template #actions>
+    <AppRuntimeCheckButton />
+    <AppRefreshButton />
+  </template>
+</PnwPageLayout>
+```
+
+`actionsAlign` 的稳定取值为 `"center" | "end"`，默认 `center`。两种模式只改变空间充足时
+的中区对齐；窄宽发生溢出时均安全回退到中区起点，所有动作保持完整并可通过键盘聚焦。
+
 这只是页面结构原语。`PnwPageMainBlock` 不注册 CRUD provider、mitt、权限或路由；它只把
 Cool `.cl-crud` 的视觉层级提炼为 Wing 通用能力。若 `<AppCrud />` 已经提供自己的 10px，
 在 `PnwPageLayout` 上显式传 `:body-inset="false"`。查询、表格、权限、Router、Primary
@@ -94,8 +111,10 @@ Wing 会为该 View 自动创建隔离的 `PnwViewPresentationHeaderChannel`：
 - 嵌入态，`PnwPageHeader` 在 Editor 原位渲染；
 - 浮出态，同一个 Header DOM 通过 Teleport 进入 `PnwViewPresentationPortal` 的单行 chrome；
 - `leading / title / actions / help` 保持原 Vue renderer 与事件，不复制按钮或业务状态；
-- `leading / title` 保留最小可见宽度；超宽业务 actions 只在剩余区域内横向滚动，不能
-  覆盖右侧 Host 的恢复、收回和关闭动作；
+- 三段结构固定为“标题区 → 业务 actions 中区 → Host 动作区”；`leading / title` 保留
+  最小可见宽度并省略，Host 动作保持固定最小宽度；
+- 业务 actions 中区默认居中，可通过 `actionsAlign="end"` 靠右；超宽时只在中区横向
+  收纳，动作子项不收缩、不被裁成半截，也不能覆盖 Host 的恢复、收回和关闭动作；
 - Portal 发现已登记的公共 Header 后隐藏 Host fallback title，避免两行或重复标题；
 - 无公共 Header 的旧 View 继续使用 Portal 的 `title/#header` fallback。
 
