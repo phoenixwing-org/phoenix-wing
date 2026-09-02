@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.7.1'
+export const PNW_VERSION = '0.7.2'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -119,6 +119,23 @@ export {
   pnwResolveViewDialogPresentation,
   pnwValidateViewDialogRequest,
 } from './utils/pnwViewDialog.js'
+export {
+  type PnwResolvedViewDialogHostRequest,
+  type PnwViewDialogHostController,
+  type PnwViewDialogHostControllerOptions,
+  type PnwViewDialogHostEntry,
+  type PnwViewDialogHostListener,
+  type PnwViewDialogHostRequest,
+  type PnwViewDialogRendererContext,
+  type PnwViewDialogRendererDefinition,
+} from './types/PnwViewDialogHost.js'
+export {
+  pnwCreateViewDialogHostIdentity,
+  pnwCreateViewDialogHost,
+  pnwIsSerializableViewDialogValue,
+  pnwProvideViewDialogHost,
+  usePnwViewDialogHost,
+} from './composables/usePnwViewDialogHost.js'
 
 // ---------------------------------------------------------------------------
 // 完整 View Web 浮出与收回
@@ -622,6 +639,14 @@ export {
   pnwPromptInput,
 } from './composables/pnwChoiceDialog.js'
 export { usePnwOverlayTheme } from './composables/usePnwOverlayTheme.js'
+export {
+  pnwCreateViewPresentationHeaderChannel,
+  pnwProvideViewPresentationContext,
+  usePnwViewPresentationContext,
+  type PnwResolvedViewPresentationContext,
+  type PnwViewPresentationContext,
+  type PnwViewPresentationHeaderChannel,
+} from './composables/usePnwViewPresentationContext.js'
 
 // ---------------------------------------------------------------------------
 // Vue3 组件 — 根入口与兼容子路径均解析到同一 dist 模块图
@@ -644,6 +669,7 @@ export { default as PnwOverlayThemeProvider } from './components/PnwOverlayTheme
 export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
 export { default as PnwRecentWorkspaceList } from './components/PnwRecentWorkspaceList.vue'
 export { default as PnwSelect } from './components/PnwSelect.vue'
+export { default as PnwViewDialogHost } from './components/PnwViewDialogHost.vue'
 export { default as PnwViewPresentationPortal } from './components/PnwViewPresentationPortal.vue'
 export { default as PnwFloatingWindowMenu } from './components/PnwFloatingWindowMenu.vue'
 

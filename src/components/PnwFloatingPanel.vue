@@ -18,6 +18,7 @@ import type {
 import type { PnwPresentationResizeMode } from "../types/PnwPresentationFrame.js";
 import type { PnwPresentationOwnerKind } from "../types/PnwPresentationFrame.js";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
+import type { PnwIconName } from "../icons/pnwIconCatalog.js";
 import {
   pnwClampFloatingPanelPosition,
   pnwClampFloatingPanelBounds,
@@ -64,6 +65,12 @@ const props = withDefaults(defineProps<{
   /** 在 viewport 内额外避让的 Host Header、Dock 等安全区域。 */
   constrainInsets?: Partial<PnwFloatingPanelInsets>;
   closeOnEscape?: boolean;
+  /** 是否显示内置关闭动作；需要自定义生命周期的 owner 可通过 actions slot 分离动作。 */
+  showCloseAction?: boolean;
+  /** 关闭语义图标；完整 View 可改用 editor-restore 明确表示收回。 */
+  closeIcon?: PnwIconName;
+  /** 覆盖关闭按钮的 title/aria-label；空值使用通用“关闭浮动面板”。 */
+  closeLabel?: string;
   /** 叠层语义；Host 工具浮层应使用公开的 hostTools 层。 */
   layer?: PnwWorkbenchOverlayLayer;
   /** 仅在确有第三方叠层集成时覆盖 layer 的数值。 */
@@ -77,6 +84,9 @@ const props = withDefaults(defineProps<{
   constrainMargin: 8,
   constrainInsets: () => ({}),
   closeOnEscape: true,
+  showCloseAction: true,
+  closeIcon: "close",
+  closeLabel: "",
   resizable: false,
   movable: true,
   rememberBounds: true,
@@ -98,11 +108,13 @@ const pnwInternalPresentationId = `pnw-floating-panel-${++PNW_FLOATING_PANEL_INS
 const pnwStackZIndex = ref<number>();
 const pnwStackActive = ref(false);
 const pnwOptimisticBounds = ref<PnwFloatingPanelBounds>();
+const pnwCanResetRecommendedSize = ref(pnwHasExplicitRecommendedSizeDifference());
 let pnwResizeObserver: ResizeObserver | undefined;
 let pnwUnregisterStack: (() => void) | undefined;
 let pnwUnsubscribeStack: (() => void) | undefined;
 const { t: pnwT } = usePnwLocale();
 const pnwResolvedTitle = computed(() => props.title || pnwT("floatingPanel.title"));
+const pnwResolvedCloseLabel = computed(() => props.closeLabel || pnwT("floatingPanel.close"));
 const pnwResolvedPresentationId = computed(() => props.presentationId.trim() || pnwInternalPresentationId);
 const pnwResizeMode = computed<PnwPresentationResizeMode>(() => (
   props.resizable === true ? "both" : props.resizable || false
@@ -161,6 +173,7 @@ function pnwConstrainPosition(): void {
   if (!props.open || !pnwPanel.value || typeof window === "undefined") return;
   if (props.resizable) {
     const nextBounds = pnwCurrentBounds();
+    pnwRefreshResetSizeAvailability(nextBounds);
     if (nextBounds && (
       nextBounds.position.x !== props.position.x
       || nextBounds.position.y !== props.position.y
@@ -214,8 +227,22 @@ function pnwPositiveSize(value: number | undefined, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+function pnwHasExplicitRecommendedSizeDifference(): boolean {
+  if (props.resizable === false || !props.recommendedSize) return false;
+  return (
+    typeof props.recommendedSize.width === "number"
+    && typeof props.size?.width === "number"
+    && Math.abs(props.recommendedSize.width - props.size.width) >= 0.5
+  ) || (
+    typeof props.recommendedSize.height === "number"
+    && typeof props.size?.height === "number"
+    && Math.abs(props.recommendedSize.height - props.size.height) >= 0.5
+  );
+}
+
 function pnwEmitBounds(bounds: PnwFloatingPanelBounds): void {
   pnwOptimisticBounds.value = bounds;
+  pnwRefreshResetSizeAvailability(bounds);
   emit("update:bounds", bounds);
   if (bounds.position.x !== props.position.x || bounds.position.y !== props.position.y) {
     emit("update:position", bounds.position);
@@ -223,6 +250,28 @@ function pnwEmitBounds(bounds: PnwFloatingPanelBounds): void {
   if (bounds.size.width !== props.size?.width || bounds.size.height !== props.size?.height) {
     emit("update:size", bounds.size);
   }
+}
+
+function pnwRecommendedBounds(current: PnwFloatingPanelBounds): PnwFloatingPanelBounds {
+  return pnwClampFloatingPanelBounds({
+    position: current.position,
+    size: {
+      width: pnwPositiveSize(props.recommendedSize?.width, current.size.width),
+      height: pnwPositiveSize(props.recommendedSize?.height, current.size.height),
+    },
+  }, { width: window.innerWidth, height: window.innerHeight }, pnwSizeConstraints(), props.constrainMargin, props.constrainInsets);
+}
+
+function pnwRefreshResetSizeAvailability(
+  current: PnwFloatingPanelBounds | undefined = pnwCurrentBounds(),
+): void {
+  if (pnwResizeMode.value === false || !props.recommendedSize || !current || typeof window === "undefined") {
+    pnwCanResetRecommendedSize.value = false;
+    return;
+  }
+  const recommended = pnwRecommendedBounds(current);
+  pnwCanResetRecommendedSize.value = Math.abs(recommended.size.width - current.size.width) >= 0.5
+    || Math.abs(recommended.size.height - current.size.height) >= 0.5;
 }
 
 function pnwStartDrag(event: PointerEvent): void {
@@ -332,16 +381,10 @@ function pnwActivate(): void {
 }
 
 function pnwResetToRecommendedSize(): void {
-  if (!pnwPanel.value || typeof window === "undefined") return;
+  if (!pnwCanResetRecommendedSize.value || !pnwPanel.value || typeof window === "undefined") return;
   const current = pnwCurrentBounds();
   if (!current) return;
-  const next = pnwClampFloatingPanelBounds({
-    position: current.position,
-    size: {
-      width: pnwPositiveSize(props.recommendedSize?.width, current.size.width),
-      height: pnwPositiveSize(props.recommendedSize?.height, current.size.height),
-    },
-  }, { width: window.innerWidth, height: window.innerHeight }, pnwSizeConstraints(), props.constrainMargin, props.constrainInsets);
+  const next = pnwRecommendedBounds(current);
   pnwEmitBounds(next);
   emit("resetToRecommendedSize", next.size);
 }
@@ -385,6 +428,12 @@ watch(
     props.position.y,
     props.size?.width,
     props.size?.height,
+    props.recommendedSize?.width,
+    props.recommendedSize?.height,
+    props.minSize?.width,
+    props.minSize?.height,
+    props.maxSize?.width,
+    props.maxSize?.height,
     props.constrainInsets.top,
     props.constrainInsets.right,
     props.constrainInsets.bottom,
@@ -392,10 +441,12 @@ watch(
   ],
   async () => {
     pnwOptimisticBounds.value = undefined;
+    pnwCanResetRecommendedSize.value = pnwHasExplicitRecommendedSizeDifference();
     await nextTick();
     pnwResizeObserver?.disconnect();
     if (props.open && pnwPanel.value) pnwResizeObserver?.observe(pnwPanel.value);
     pnwConstrainPosition();
+    pnwRefreshResetSizeAvailability();
   },
 );
 
@@ -469,6 +520,7 @@ onBeforeUnmount(() => {
             v-if="pnwResizeMode !== false && recommendedSize"
             type="button"
             class="pnw-floating-panel__reset-size"
+            :disabled="!pnwCanResetRecommendedSize"
             :aria-label="pnwT('floatingPanel.resetSize')"
             :title="pnwT('floatingPanel.resetSize')"
             @pointerdown.stop
@@ -476,14 +528,17 @@ onBeforeUnmount(() => {
           >
             <PnwIcon name="editor-restore" :size="16" />
           </button>
+          <slot name="actions" />
           <button
+            v-if="showCloseAction"
             type="button"
             class="pnw-floating-panel__close"
-            :aria-label="pnwT('floatingPanel.close')"
+            :aria-label="pnwResolvedCloseLabel"
+            :title="pnwResolvedCloseLabel"
             @pointerdown.stop
             @click="emit('close')"
           >
-            <PnwIcon name="close" :size="16" />
+            <PnwIcon :name="closeIcon" :size="16" />
           </button>
         </header>
         <div class="pnw-floating-panel__content">
@@ -575,10 +630,15 @@ onBeforeUnmount(() => {
 
 .pnw-floating-panel__close:hover,
 .pnw-floating-panel__close:focus-visible,
-.pnw-floating-panel__reset-size:hover,
-.pnw-floating-panel__reset-size:focus-visible {
+.pnw-floating-panel__reset-size:not(:disabled):hover,
+.pnw-floating-panel__reset-size:not(:disabled):focus-visible {
   outline: none;
   background: var(--pnw-control-hover-bg, rgba(148, 163, 184, 0.16));
+}
+
+.pnw-floating-panel__reset-size:disabled {
+  opacity: 0.42;
+  cursor: default;
 }
 
 .pnw-floating-panel__content {

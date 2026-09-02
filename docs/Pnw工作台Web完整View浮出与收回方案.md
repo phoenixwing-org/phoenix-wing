@@ -6,7 +6,7 @@ Owner：Phoenix Wing maintainers
 
 适用版本：0.7.0+ / 后续兼容演进
 
-最后核验：2026-08-15
+最后核验：2026-08-28
 
 ## 1. 决策
 
@@ -15,13 +15,16 @@ Owner：Phoenix Wing maintainers
 - `PnwViewDialog` 继续服务参数编辑器、检查器、选择器等独立内容；
 - 完整 View 浮出使用单独的 **View presentation lease**；
 - 一个打开的 Tab 始终是 View 的稳定 owner，浮出不新增 Tab、不改变 Router 身份；
-- 第一版迁移整个 View frame，包括 View Header、工具条、Canvas、矩阵与统计 Block；
+- 迁移同一个 View frame；`PnwPageHeader` 通过运行时 Header channel 在 Editor 与浮窗
+  单行 chrome 间 Teleport，Main 的工具条、Canvas、矩阵与统计 Block 整体迁移；
 - 每个业务 View 自有一个稳定的 presentation handle；handle 以同一个 mode 原子切换
   `headerTarget` 与 `mainTarget`，不要求 Main 业务组件修改实现；
 - Web 在同一个 Vue renderer 实例上切换 inline / Teleport；
 - Tauri 无法跨 Webview 移动同一 DOM，必须由主窗口持有唯一业务真源和 lease，子
   Webview 使用同一个 `rendererId` 呈现完整 frame，并通过受控 bridge 收发命令与事件；
-- 关闭浮出窗口默认收回到 Editor；关闭 owner Tab 才销毁 View 与浮出呈现。
+- 浮出窗口默认提供明确的“收回到 Editor”动作，不显示有歧义的 X；关闭 owner Tab 才销毁
+  View 与浮出呈现。Host 若显式启用 X，X 只发出关闭请求，必须先经过 dirty/save/discard/
+  cancel 守卫，再由 Host 决定是否关闭 owner View；Wing 不直接销毁业务状态。
 - Editor 激活历史与浮窗 z-order 是两套状态：前者用于 MRU 回退，后者只决定非模态窗口
   前后层级；不得继续用单一 `activeViewId` 混合表达。
 
@@ -41,16 +44,18 @@ Owner：Phoenix Wing maintainers
    正在 floating/opening/reattaching/closing 的 View 一律跳过，找不到则显示 Home/空工作台；
 5. 切换其他 Tab 不隐藏已浮出的 View；点击保留的 floating owner Tab 只聚焦/置顶浮窗，
    不替换当前 Editor 背景 View；
-6. 点击浮窗关闭按钮或按约定的 Escape，默认执行 reattach；
+6. 点击明确的“收回到 Editor”动作或按约定的 Escape，默认执行 reattach；可选 X 表示
+   请求关闭 owner View，不得复用为收回；
 7. reattach 恢复 owner Tab 投影（尽量保持原顺序）、迁回完整 frame，并激活该 Editor
    View；关闭 owner Tab 才先关闭浮出呈现再销毁 View owner；
 8. 收回完成后销毁空的 dialog host，不留下第二个 renderer 或 pending Promise。
 
-第一版虽然为 Header 与 Main 记录两个挂载目标，但不把它们设计成两个可独立迁移的
-frame：两者共享一个 handle、一个 mode、一个 lease 和一次原子迁移。Web 浮窗会有一条
-最小宿主拖动栏，下面仍保留完整 View Header；Tauri 可能同时有系统标题栏和 View Header。
-这是有意的 V1 边界。只有在两个真实消费者都证明重复标题影响使用后，才研究让 View
-Header 融入宿主标题栏的可选双插槽模式。
+Header 与 Main 仍共享一个 handle、一个 mode、一个 lease 和一次原子迁移，不是两个独立
+frame。多消费者实证已经证明“宿主标题 + 完整 PageHeader”会形成双行重复标题，因此
+0.7.2 候选把公共 `PnwPageHeader` 融入浮窗单行 chrome：左侧只放 `leading + title`，右侧
+依次放业务 actions/help 与 Host 的恢复、收回、可选关闭；eyebrow、summary、description
+不进入 Header，长说明移到 Main。旧 View 未登记公共 Header 时仍使用 Portal title/header
+fallback，不要求产品 CSS 隐藏第二行。
 
 ## 3. 三类能力不得混用
 
@@ -58,7 +63,7 @@ Header 融入宿主标题栏的可选双插槽模式。
 | --- | --- | --- | --- |
 | `PnwViewDialog` | 独立检查器/编辑草稿 | 返回 result 或取消 | 不适用 |
 | `PnwDockableTool` | 应用级或 View 级小工具 | `closed` | 不要求拥有 Tab |
-| 完整 View presentation | owner Tab 的整个 View frame | 默认收回；关 Tab 才销毁 | 是 |
+| 完整 View presentation | owner Tab 的整个 View frame | 明确按钮收回；可选 X 请求关闭 owner View | 是 |
 
 不得把 View 的一组参数做成 snapshot 表单后宣称“完整 View 已浮出”。snapshot 在 Tauri
 模式只允许承担首次 hydration；用户看到的必须是完整业务 renderer。
@@ -132,8 +137,8 @@ interface PnwViewPresentationManagerState {
   查找 DOM；
 - handle 负责 `embedded/dialog` 模式、可见性、父宿主选择与迁移事务；业务 Main 继续只
   接收原 props/store，不感知自己位于 Editor 还是 dialog；
-- Header 可以根据 mode 显示“浮出 / 聚焦 / 收回”按钮和少量状态提示，但不复制业务
-  Header，也不能脱离 Main 独立切换宿主；
+- `PnwPageHeader` 通过 `PnwViewPresentationHeaderChannel` 登记并保持单实例：嵌入态在
+  Editor 原位，浮出态 Teleport 到 Host chrome；业务 actions 的 Vue 状态与事件不复制；
 - Header/Main 两个 target 必须在同一 revision 内同时就绪后再提交模式变化。任一目标
   缺失时保持旧宿主并报告失败，避免出现 Header 已浮出但 Main 仍在 Editor 的半迁移态。
 - `PnwViewPresentationLeaseRegistry` 以 `viewInstanceId + revision` 管理宿主 lease；不读取
@@ -165,9 +170,9 @@ Wing 不接管 Router、KeepAlive、Pinia 持久化或业务 renderer registry�
 ```text
 embedded ── detach ──> opening ── targets-ready(revision) ──> floating
     ▲                                                            │
-    └── frames-returned(revision) <── reattaching <── reattach / X
+    └── frames-returned(revision) <── reattaching <──── reattach ─┘
 
-任意稳定/过渡状态 ── closeByView(ownerTabId) ──> destroyed
+可选 X ── requestClose ── Host dirty/save/discard/cancel 守卫 ── closeByView ──> destroyed
 ```
 
 Web 候选已经使用 `opening / reattaching` 与递增 revision，避免快速重复点击创建两份
@@ -263,8 +268,9 @@ Dialog 是否有效由 presentation lease 决定，不由 DOM 子节点数量推
 - `PnwFloatingPanel` 是 tool/view 共用 chrome，负责拖动、缩放、主题、viewport clamp、
   推荐尺寸恢复、活动视觉态与窗口栈；
 - `PnwDockableToolWindow` 是 `ownerKind: "tool"` 适配器，X 为 `close`，可停靠 Primary；
-- `PnwViewPresentationPortal` 是 `ownerKind: "view"` 适配器，X 为 `reattach`，owner Tab
-  关闭才销毁；
+- `PnwViewPresentationPortal` 是 `ownerKind: "view"` 适配器，默认只显示
+  `window-reattach` 收回动作；`showCloseAction` 可另加 X，但 X 只发 `requestClose`，owner
+  Host 完成保存守卫后才能关闭；
 - 不新增同义的 `PnwPresentationFrame.vue`，避免再包一层却没有生命周期所有权。
 
 `PnwPresentationFrameDefinition` 的稳定字段为 `ownerKind`、`movable`、`resizable`、
@@ -273,6 +279,15 @@ Dialog 是否有效由 presentation lease 决定，不由 DOM 子节点数量推
 方向键调整，Shift 使用大步长。完整 View 默认 `760×560`、Tool 默认 `640×480`，避免
 一打开就占满工作台；最终 bounds 始终按 viewport 与 min/max 修正，标题栏和关闭/收回
 动作保持可见。恢复推荐尺寸动作由公共 chrome 提供。
+恢复推荐尺寸使用 `editor-restore`，当前尺寸已经等于 viewport 钳制后的推荐尺寸时保持灰态
+禁用；完整 View 的收回使用 `window-reattach`。两者的图标、tooltip 与 ARIA 名称必须不同。
+标题栏动作的顺序与文本图见[《非模态 View 对话框宿主 · 标题栏文本布局示意》](Pnw工作台Web非模态View对话框宿主.md#71-标题栏文本布局示意)。
+
+完整 View 浮窗 chrome 固定单行，默认 `40px` 最小高度、`8px` Host/业务动作间距和
+`8px` 横向 padding；分别可用 `--pnw-view-presentation-header-min-height`、
+`--pnw-view-presentation-header-gap`、`--pnw-view-presentation-header-padding-inline` 统一
+覆盖。业务 View 不应穿透修改 `PnwFloatingPanel` 标题栏，也不应在浮出态隐藏
+`PnwPageHeader` 后另造一份 actions。
 
 同一 renderer 的所有 `PnwFloatingPanel` 默认进入 Document 级共享窗口栈；Host 也可用
 `pnwCreateFloatingWindowStack()` 显式隔离。pointerdown/focusin 会 bring-to-front；只有
@@ -356,9 +371,10 @@ Tauri `WebviewWindow` 以唯一 label 标识并支持事件收发；`parent` 在
 
 - `role="dialog"`，但不得设置 `aria-modal="true"`；
 - 打开后可聚焦宿主拖动栏，但不强制夺走正在输入的焦点；
-- Escape 默认收回；输入法组合或产品已消费 Escape 时不得抢占；
+- Escape 默认收回；输入法组合或产品已消费 Escape 时不得抢占。显式 X 不改变 Escape 的
+  收回语义；
 - 收回后焦点返回恢复的 owner Tab 或 View Header 对应按钮；
-- resize/drag 后至少保留标题栏与关闭按钮可见。
+- resize/drag 后至少保留标题栏与收回动作可见；开启 X 时 X 也必须可见。
 
 ### 9.3 主题
 
@@ -368,7 +384,7 @@ Tauri `WebviewWindow` 以唯一 label 标识并支持事件收发；`parent` 在
 
 ## 10. 公共 API 与低接入成本
 
-当前 0.7.0 Web 候选导出：
+0.7.2 在既有 0.7.0 Web API 上补充 Host presentation context 与 Dialog Host：
 
 ```ts
 PnwPresentationFrameDefinition
@@ -383,12 +399,40 @@ pnwCreateViewPresentationLeaseRegistry
 PnwFloatingPanelBounds / pnwClampFloatingPanelBounds
 pnwCreateFloatingWindowStack / pnwGetDocumentFloatingWindowStack
 pnwCreatePresentationBoundsSnapshot
+pnwProvideViewPresentationContext / usePnwViewPresentationContext
+pnwCreateViewPresentationHeaderChannel / PnwViewPresentationHeaderChannel
+pnwCreateViewDialogHost / PnwViewDialogHost
 ```
 
 普通稳定 owner View 缺省 `detachable=true`，Home、无稳定 owner、平台不支持或显式
 `detachable:false` 自动禁用。`PnwPageHeader` 接收解析后的 mode/availability 后，在最右侧
 自动提供统一浮出/收回图标、Tooltip 与 ARIA；Primary 开关继续位于最左 Workbench rail，
 业务 action 位于中间，应用不再逐 View 手写浮出按钮。
+
+对于 Router 已经持有完整 View owner 的 Host，推荐只在统一 route wrapper 中创建
+`PnwViewPresentationPortal` 和 record，并在业务 View 挂载前调用
+`pnwProvideViewPresentationContext()`。业务页面中的 `PnwPageHeader` 通过
+`usePnwViewPresentationContext()` 消费 `mode/detach/reattach/headerChannel`，不再拥有第二份
+Portal、record、Teleport 或浮窗栈。`pnwProvideViewPresentationContext()` 缺省自动建立
+隔离 channel；`PnwViewPresentationPortal` 绑定浮窗 target，`PnwPageHeader` 登记后把同一
+`leading/title/actions/help` renderer 迁到单行 chrome。这样多个插件只提交 Header 与业务
+内容，Host 统一处理 Tab、KeepAlive、MRU、窗口动作和关闭守卫。
+
+统一 route wrapper 不需要接收或复制业务 action DTO：
+
+```ts
+const presentation = pnwProvideViewPresentationContext({
+  mode: computed(() => record.value.mode),
+  detach: () => updatePresentation("detach"),
+  reattach: () => updatePresentation("reattach"),
+});
+
+// 仅用于旧 View 的 fallback 浮出入口；新 PageHeader 会自动登记。
+const hasPageHeader = computed(() => presentation.headerChannel.registeredCount.value > 0);
+```
+
+下面的单页 Portal 示例保留给没有统一 Router wrapper 的独立 Host；Phoenix Admin 一类
+集中式 Host 应采用上述 context 模式，不把示例复制到每个插件页面。
 
 完整 View 的单页接入保持在约 18 行，业务 Main 不感知宿主变化：
 
@@ -496,7 +540,8 @@ pnwResolveOpenViewPresentationAction(
 | 原 Tab | 浮出不新增或删除 Tab；keep 时点击只聚焦且不高亮 Editor；hide 时只隐藏投影，收回恢复原顺序 |
 | 切 Tab | detached View 保持可见且可操作，presentation lease 不变 |
 | 直接打开 | `preferredPresentation:floating` 首次创建浮窗；重复单实例请求只 focus；能力不足降级 embedded |
-| 关闭浮窗 | 默认收回 Editor，不关闭 owner Tab |
+| 浮窗收回 | 默认只有明确收回动作；收回 Editor，不关闭 owner Tab |
+| 可选 X 关闭 | 只发关闭请求；Host 可保存、放弃或取消，Wing 不直接销毁 owner View |
 | 关闭 Tab | 浮窗销毁、bridge 清理、无 pending/幽灵 renderer |
 | 重复操作 | detaching/reattaching 期间不会创建重复窗口或双 renderer |
 | 空宿主/HMR | opening 外壳提交前不可见；floating record 重建可恢复；stale release 不回收新 generation |

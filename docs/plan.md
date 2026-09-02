@@ -10,11 +10,13 @@ Owner：Phoenix Wing maintainers
 均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
 `0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 已发布并完成
 可浮动 / Primary 停靠工具宿主、完整 View 呈现、Workspace Welcome 等 Registry 消费验收；
-根聚合包当前本地开发版本为 `0.7.1`，稳定 scoped 包保持 0.6.3。后续版本
+`0.7.1` 已发布并增加通用 Navigation Tree、Git 提交图分页与 Codegen 连续 Section。
+根聚合包当前本地开发版本为 `0.7.2`，scoped 包继续保持 release matrix 中各自的
+`0.6.3 / 0.6.4` 独立版本。后续版本
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-08-21
+最后核验：2026-08-27
 
 ## 已完成基线
 
@@ -132,6 +134,22 @@ Owner：Phoenix Wing maintainers
      Wing 不依赖 Tauri、不移动 Vue DOM、不共享跨 Webview Pinia；Host adapter 与
      macOS/Windows 实测属于下一消费阶段。见
      [《非模态 View 对话框宿主》](Pnw工作台Web非模态View对话框宿主.md)。
+   - [x] `0.7.2` 候选补齐全局 Vue `PnwViewDialogHost`：应用父级显式
+     `pnwCreateViewDialogHost + pnwProvideViewDialogHost`，业务 View 通过
+     `usePnwViewDialogHost` 调用；Host 白名单登记 renderer，插件不再复制 FloatingPanel、
+     Promise resolver 或 overlay stack。`viewId / rendererId / instanceKey / requestId`
+     分离 owner、renderer、并行实例与请求；owner 关闭可批量 settle，重复身份 open 聚焦
+     既有窗口。完整浮出 View 默认改用明确收回图标，可选 X 只发 Host 保存守卫钩子；
+     Dockable Tool 的停靠按钮与关闭 X 继续分离。浮窗“恢复推荐尺寸”保留
+     `editor-restore`，当前已是推荐尺寸时禁用；完整 View“收回到 Editor”改用
+     `window-reattach`，两者不再共享图标、tooltip 或 ARIA 语义。低层 adapter API 保持兼容。
+   - [x] `0.7.2` 多消费者浮出实证收口单行 View Header：
+     `pnwProvideViewPresentationContext()` 自动创建隔离的
+     `PnwViewPresentationHeaderChannel`，`PnwPageHeader` 在嵌入态原位渲染，浮出态把同一
+     `leading/title/actions/help` renderer Teleport 到 Portal chrome；Portal 自动隐藏旧
+     fallback title，旧 View 无公共 Header 时继续回退。Header 固定单行，不再渲染
+     eyebrow/summary/description；浮窗 min-height/gap/padding 由三个公开 token 统一，业务
+     View 不复制标题/actions 或穿透覆盖 FloatingPanel。
    - [x] 第二消费者原型证明“参数检查器 dialog”与“完整 View 浮出”必须分层；
      后者冻结为整个 View frame 在 Editor 与 detached host 间转换，原 Tab 保持唯一 owner。
      Web 采用单 renderer Teleport，Tauri 采用主端唯一真源的 presentation lease 与

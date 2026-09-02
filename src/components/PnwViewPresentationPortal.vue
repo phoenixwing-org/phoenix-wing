@@ -23,7 +23,10 @@ import type { PnwFloatingWindowStackController } from "../utils/pnwFloatingWindo
 import { pnwReduceViewPresentationRecord } from "../utils/pnwViewPresentation.js";
 import { pnwResolvePresentationFrameDefinition } from "../utils/pnwPresentationFrame.js";
 import { pnwGetDocumentViewPresentationLeaseRegistry } from "../utils/pnwViewPresentationLease.js";
+import { usePnwLocale } from "../composables/usePnwLocale.js";
+import { usePnwViewPresentationContext } from "../composables/usePnwViewPresentationContext.js";
 import PnwFloatingPanel from "./PnwFloatingPanel.vue";
+import PnwIcon from "./PnwIcon.vue";
 
 const props = withDefaults(defineProps<{
   record: PnwViewPresentationRecord;
@@ -31,6 +34,8 @@ const props = withDefaults(defineProps<{
   ariaLabel?: string;
   panelClass?: string;
   closeOnEscape?: boolean;
+  /** 显示真正的关闭 View 动作；Host 必须处理 requestClose 与保存守卫。 */
+  showCloseAction?: boolean;
   layer?: PnwWorkbenchOverlayLayer;
   zIndex?: number;
   colorScheme?: PnwColorScheme;
@@ -42,6 +47,7 @@ const props = withDefaults(defineProps<{
   ariaLabel: "",
   panelClass: "",
   closeOnEscape: true,
+  showCloseAction: false,
   layer: "presentation",
 });
 
@@ -56,9 +62,12 @@ const emit = defineEmits<{
   focus: [viewInstanceId: string];
   activate: [presentationId: string];
   resetToRecommendedSize: [size: PnwFloatingPanelSize];
+  requestClose: [viewInstanceId: string];
 }>();
 
 const pnwFloatingPanel = ref<InstanceType<typeof PnwFloatingPanel>>();
+const { t: pnwT } = usePnwLocale();
+const pnwPresentationContext = usePnwViewPresentationContext();
 const pnwHeaderAnchor = ref<HTMLElement>();
 const pnwMainAnchor = ref<HTMLElement>();
 const pnwHeaderTarget = ref<HTMLElement>();
@@ -72,6 +81,9 @@ const pnwCommittedRevision = ref(-1);
 let pnwLease: PnwViewPresentationLeaseHandle | undefined;
 
 const pnwPanelOpen = computed(() => props.record.mode !== "embedded");
+const pnwHasContributedHeader = computed(() => (
+  (pnwPresentationContext?.headerChannel.registeredCount.value ?? 0) > 0
+));
 const pnwTargetsReady = computed(() => Boolean(pnwHeaderTarget.value && pnwMainTarget.value));
 const pnwTeleportEnabled = computed(() => (
   props.record.mode === "floating" && pnwTargetsReady.value
@@ -124,6 +136,14 @@ function pnwReattach(): void {
   pnwUpdate(pnwReduceViewPresentationRecord(props.record, { type: "reattach" }));
 }
 
+function pnwHandlePanelClose(): void {
+  if (props.showCloseAction) {
+    emit("requestClose", props.record.identity.viewInstanceId);
+    return;
+  }
+  pnwReattach();
+}
+
 function pnwResetToRecommendedSize(): void {
   pnwFloatingPanel.value?.resetToRecommendedSize();
 }
@@ -166,6 +186,12 @@ watchPostEffect(() => {
     revision: props.record.revision,
   }));
 });
+
+watch(
+  pnwHeaderTarget,
+  (target) => pnwPresentationContext?.headerChannel.attachTarget(target),
+  { flush: "post", immediate: true },
+);
 
 async function pnwCommitTransferredFrames(): Promise<void> {
   await nextTick();
@@ -240,7 +266,13 @@ watchPostEffect(() => {
   if (props.record.mode === "embedded") pnwReleaseLease();
 });
 
-onBeforeUnmount(pnwReleaseLease);
+onBeforeUnmount(() => {
+  pnwReleaseLease();
+  const context = pnwPresentationContext;
+  if (context && context.headerChannel.target.value === pnwHeaderTarget.value) {
+    context.headerChannel.attachTarget(undefined);
+  }
+});
 
 defineExpose<PnwViewPresentationPortalHandle>({
   detach: pnwDetach,
@@ -262,14 +294,26 @@ defineExpose<PnwViewPresentationPortalHandle>({
       tabindex="-1"
     >
       <Teleport :to="pnwHeaderDestination" :disabled="!pnwTeleportEnabled">
-        <div ref="pnwHeaderFrame" class="pnw-view-presentation-portal__header-frame">
+        <div
+          ref="pnwHeaderFrame"
+          class="pnw-view-presentation-portal__header-frame"
+          :class="{
+            'pnw-view-presentation-portal__header-frame--empty': pnwHasContributedHeader,
+          }"
+        >
           <slot
+            v-if="!pnwHasContributedHeader"
             name="header"
             :mode="record.mode"
             :detach="pnwDetach"
             :focus="pnwFocus"
             :reattach="pnwReattach"
-          />
+          >
+            <strong
+              v-if="pnwPanelOpen"
+              class="pnw-view-presentation-dialog__title"
+            >{{ title }}</strong>
+          </slot>
         </div>
       </Teleport>
     </div>
@@ -310,13 +354,15 @@ defineExpose<PnwViewPresentationPortalHandle>({
     :aria-label="ariaLabel || title"
     :panel-class="pnwPanelClass"
     :close-on-escape="closeOnEscape"
+    :show-close-action="showCloseAction"
+    :close-label="pnwT('viewPresentation.close')"
     :layer="layer"
     :z-index="zIndex"
     :color-scheme="colorScheme"
     @update:bounds="pnwUpdateBounds"
     @activate="emit('activate', $event)"
     @reset-to-recommended-size="emit('resetToRecommendedSize', $event)"
-    @close="pnwReattach"
+    @close="pnwHandlePanelClose"
   >
     <template #header>
       <div
@@ -324,6 +370,18 @@ defineExpose<PnwViewPresentationPortalHandle>({
         class="pnw-view-presentation-dialog__header-target"
         data-pnw-view-presentation-header-target
       />
+    </template>
+    <template #actions>
+      <button
+        type="button"
+        class="pnw-view-presentation-dialog__reattach"
+        :title="pnwT('viewPresentation.reattach')"
+        :aria-label="pnwT('viewPresentation.reattach')"
+        @pointerdown.stop
+        @click="pnwReattach"
+      >
+        <PnwIcon name="window-reattach" :size="16" />
+      </button>
     </template>
     <div
       ref="pnwMainTarget"
@@ -345,9 +403,33 @@ defineExpose<PnwViewPresentationPortalHandle>({
 }
 
 :global(.pnw-view-presentation-dialog .pnw-floating-panel__header) {
-  min-height: 0;
-  gap: 0;
-  padding: 0 8px 0 0;
+  min-height: var(--pnw-view-presentation-header-min-height, 40px);
+  gap: var(--pnw-view-presentation-header-gap, 8px);
+  padding: 0 var(--pnw-view-presentation-header-padding-inline, 8px);
+}
+
+.pnw-view-presentation-dialog__reattach {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pnw-view-presentation-dialog__reattach:hover {
+  background: var(--pnw-control-hover-bg, rgba(148, 163, 184, 0.16));
+}
+
+.pnw-view-presentation-dialog__reattach:focus-visible {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: -2px;
 }
 
 :global(.pnw-view-presentation-dialog--preparing) {
@@ -356,7 +438,27 @@ defineExpose<PnwViewPresentationPortalHandle>({
 }
 
 .pnw-view-presentation-dialog__header-target {
+  flex: 1 1 0;
+  width: 0;
+  max-width: 100%;
   min-width: 0;
+  min-height: var(--pnw-view-presentation-header-min-height, 40px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.pnw-view-presentation-dialog__title,
+.pnw-view-presentation-portal__header-frame {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pnw-view-presentation-portal__header-frame--empty {
+  display: none;
 }
 
 .pnw-view-presentation-dialog__main-target {

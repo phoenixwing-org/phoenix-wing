@@ -4,7 +4,7 @@
 
 Owner：Phoenix Wing maintainers
 
-适用版本：Wing 0.6.2（已发布）
+适用版本：Wing 0.7.2 候选
 
 ## 1. 真实页面结论
 
@@ -15,8 +15,8 @@ padding。该规则减少重复留白，同时没有把业务控件贴到窗口�
 Wing 复用这个结构规律，不依赖 Cool 类名：
 
 - `PnwPageLayout` 外层结构固定为 `margin: 0; padding: 0`；
-- `PnwPageHeader` 紧贴 Editor 上沿；普通单行 Header 即使包含 32px Host 操作按钮，
-  默认实际高度仍为 `40px`；包含 eyebrow/description 等多行摘要时才按内容增高；
+- `PnwPageHeader` 紧贴 Editor 上沿并固定为单行；即使包含 32px Host 操作按钮，默认
+  实际高度仍为 `40px`；分类、状态和长说明移入 main，不再把 Header 撑成两行；
 - `.pnw-page-layout-body` 是结构与滚动层，固定 `padding: 0`；
 - 默认插槽由无业务 provider 的 `PnwPageMainBlock` 承载，使用
   `--pnw-page-main-block-padding`（回退 `--pnw-page-body-padding`，默认 `10px`）；
@@ -52,8 +52,8 @@ Editor 内容从 rail 之后开始，避免开关覆盖自定义标题。迁移�
 
 状态和事件属于 Layout；Header 只负责视觉对齐。`PnwPrimaryPanel` 与
 `PnwPageHeader` 共用 `--pnw-workbench-view-header-height`，默认 `40px`。公共 Header 的默认
-纵向 padding 是 `3px`，可容纳常见 32px Host 按钮而不把单行 Header 撑到 49px；富摘要
-Header 仍可自然增高。消费者不应为普通按钮覆盖 Header 高度或定位。
+纵向 padding 是 `3px`，可容纳常见 32px Host 按钮而不把单行 Header 撑到 49px；业务
+actions 过宽时在同一行横向滚动。消费者不应为普通按钮覆盖 Header 高度或定位。
 
 ## 3. 主题
 
@@ -70,11 +70,13 @@ token，但不应对 `.pnw-page-title` 写产品级 dark CSS。
 
 ```vue
 <PnwPageLayout title="用户列表" subtitle="COOL">
+  <template #leading><AppBackButton /></template>
   <template #actions>
     <AppRefreshButton />
     <AppCreateButton />
   </template>
 
+  <p>筛选、批量操作和权限说明放在 main，不进入 Header。</p>
   <AppCrud />
 </PnwPageLayout>
 ```
@@ -83,3 +85,22 @@ token，但不应对 `.pnw-page-title` 写产品级 dark CSS。
 Cool `.cl-crud` 的视觉层级提炼为 Wing 通用能力。若 `<AppCrud />` 已经提供自己的 10px，
 在 `PnwPageLayout` 上显式传 `:body-inset="false"`。查询、表格、权限、Router、Primary
 内容和状态持久化仍属于 Host。
+
+## 5. 完整 View 浮出时的 Header channel
+
+统一 Router/View Host 在业务 View 挂载前调用 `pnwProvideViewPresentationContext()`。
+Wing 会为该 View 自动创建隔离的 `PnwViewPresentationHeaderChannel`：
+
+- 嵌入态，`PnwPageHeader` 在 Editor 原位渲染；
+- 浮出态，同一个 Header DOM 通过 Teleport 进入 `PnwViewPresentationPortal` 的单行 chrome；
+- `leading / title / actions / help` 保持原 Vue renderer 与事件，不复制按钮或业务状态；
+- `leading / title` 保留最小可见宽度；超宽业务 actions 只在剩余区域内横向滚动，不能
+  覆盖右侧 Host 的恢复、收回和关闭动作；
+- Portal 发现已登记的公共 Header 后隐藏 Host fallback title，避免两行或重复标题；
+- 无公共 Header 的旧 View 继续使用 Portal 的 `title/#header` fallback。
+
+浮窗 chrome 使用 `--pnw-view-presentation-header-min-height`、
+`--pnw-view-presentation-header-gap` 与 `--pnw-view-presentation-header-padding-inline`，默认
+分别为 `40px / 8px / 8px`。业务 View 不应穿透覆盖 `.pnw-floating-panel__header`。
+标题保底宽度由 `--pnw-page-header-title-min-width` 控制，默认 `112px`；消费者可以通过
+Workbench 主题 token 统一调整，但不应按单个页面写定位或溢出补丁。

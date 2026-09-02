@@ -118,6 +118,7 @@ src/
 | `PnwInformationCardGroup` | JSON/DTO 驱动的 auto-fit 中立信息卡片组，默认卡片不可折叠 | PnwInformationBlock |
 | `PnwExpandCaret` | 展开/折叠三角图标 | 无 |
 | `PnwFloatingPanel` | 无背景遮罩、受控位置、可拖动且自动修正到可见范围的浮动面板 | Vue 3 |
+| `PnwViewDialogHost` | 全局挂载一次的非模态 View Dialog renderer/Promise Host | Vue 3 + PnwFloatingPanel |
 | `PnwIcon` | 公共壳层与导航 currentColor SVG catalog，回归 16/24/36/48/64px | Vue 3 |
 | `PnwIconRenderer` | 解析规范 `PnwIconId`、Host namespace 与旧运行时图标，未知 ID 可见回退 | Vue 3 |
 | `PnwAsyncProgressOverlay` | 任务进度浮层（全屏/浮动/最小化三态） | Vue 3 + Element Plus + Pinia |

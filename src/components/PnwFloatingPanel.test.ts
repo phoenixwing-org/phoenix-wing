@@ -74,12 +74,37 @@ describe("PnwFloatingPanel resize", () => {
     });
     expect([...document.body.querySelectorAll<HTMLElement>("[data-pnw-resize-direction]")]
       .map((handle) => handle.dataset.pnwResizeDirection)).toEqual(["east", "west"]);
-    await document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__reset-size")?.click();
+    await wrapper.vm.$nextTick();
+    const reset = document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__reset-size");
+    expect(reset?.disabled).toBe(false);
+    await reset?.click();
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted("resetToRecommendedSize")?.[0]?.[0]).toEqual({
       width: 640,
       height: 480,
     });
+    wrapper.unmount();
+  });
+
+  it("推荐尺寸已恢复时禁用，受控尺寸改变后重新启用", async () => {
+    const wrapper = mount(PnwFloatingPanel, {
+      attachTo: document.body,
+      props: {
+        open: true,
+        position: { x: 20, y: 20 },
+        size: { width: 640, height: 480 },
+        resizable: true,
+        recommendedSize: { width: 640, height: 480 },
+      },
+    });
+    await wrapper.vm.$nextTick();
+    const reset = document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__reset-size");
+    expect(reset?.disabled).toBe(true);
+    expect(reset?.getAttribute("aria-label")).toBe("恢复推荐尺寸");
+
+    await wrapper.setProps({ size: { width: 720, height: 520 } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(reset?.disabled).toBe(false);
     wrapper.unmount();
   });
 
@@ -135,6 +160,24 @@ describe("PnwFloatingPanel resize", () => {
       },
     });
     expect(document.body.querySelectorAll("[data-pnw-resize-direction]")).toHaveLength(0);
+    wrapper.unmount();
+  });
+
+  it("允许 owner 用明确图标和名称替代有歧义的 X", () => {
+    const wrapper = mount(PnwFloatingPanel, {
+      attachTo: document.body,
+      props: {
+        open: true,
+        position: { x: 20, y: 20 },
+        title: "Detached View",
+        closeIcon: "editor-restore",
+        closeLabel: "收回到 Editor",
+      },
+    });
+    const action = document.body.querySelector<HTMLButtonElement>(".pnw-floating-panel__close");
+    expect(action?.getAttribute("aria-label")).toBe("收回到 Editor");
+    expect(action?.getAttribute("title")).toBe("收回到 Editor");
+    expect(action?.querySelector("svg")).not.toBeNull();
     wrapper.unmount();
   });
 });

@@ -670,7 +670,7 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
     expect(html.indexOf("Pages")).toBeLessThan(html.indexOf("Settings"));
   });
 
-  it("业务 View Header 兼容紧凑标题并可追加分类、摘要、说明与操作", async () => {
+  it("业务 View Header 固定单行并把分类、摘要、长说明留给 main", async () => {
     const html = await pnwRenderComponent(
       PnwPageHeader,
       {
@@ -681,22 +681,27 @@ describe("Pnw Web 工作台 SSR 无障碍语义", () => {
         description: "View 自己持有标题和操作；工作台 Header 不重复业务标题。",
       },
       {
+        leading: () => [h("button", { type: "button", "aria-label": "返回" }, "←")],
         actions: () => [h("button", { type: "button" }, "执行")],
         help: () => [h("button", { type: "button", "aria-label": "帮助" }, "?")],
       },
     );
 
-    expect(html).toContain("pnw-head-eyebrow");
-    expect(html).toContain("工程工具");
+    expect(html).not.toContain("pnw-head-eyebrow");
+    expect(html).not.toContain("工程工具");
     expect(html).toContain("代码生成");
     expect(html).toContain("Foo.cpp");
-    expect(html).toContain("READY");
-    expect(html).toContain("工作台 Header 不重复业务标题");
+    expect(html).not.toContain("READY");
+    expect(html).not.toContain("工作台 Header 不重复业务标题");
+    expect(html).toContain('aria-label="返回"');
+    expect(html.indexOf("←")).toBeLessThan(html.indexOf("代码生成"));
     expect(html.indexOf("代码生成")).toBeLessThan(html.indexOf("执行"));
     expect(html.indexOf("执行")).toBeLessThan(html.indexOf("帮助"));
     expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-default-text");
     expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-default-muted");
     expect(PNW_PAGE_HEADER_SOURCE).toContain("--pnw-workbench-view-header-leading-space");
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("overflow-x: auto");
+    expect(PNW_PAGE_HEADER_SOURCE).not.toContain("grid-template-areas");
     expect(PNW_PAGE_HEADER_SOURCE).toMatch(
       /\.pnw-page-head\s*\{[\s\S]*?padding:\s*var\(--pnw-page-header-padding, 3px 12px\);[\s\S]*?min-height:\s*var\(--pnw-workbench-view-header-height, 40px\);/u,
     );
