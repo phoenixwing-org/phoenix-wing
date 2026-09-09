@@ -132,6 +132,13 @@
       "lastVerified": "2026-08-17"
     },
     {
+      "path": "docs/0.7.3发布候选.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
       "path": "docs/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
@@ -446,6 +453,13 @@
     },
     {
       "path": "docs/Pnw简单枚举Select.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
+      "path": "docs/Pnw可管理Combo与统一清理能力.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.7.x",

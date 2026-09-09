@@ -83,6 +83,14 @@ src/
 
 ## 模块说明
 
+### Node Run 清理适配器
+
+`@phoenix-wing/run-node` 的 `packages/run-node/src/cleanup.ts` 提供清理预览、冻结复验与执行，不持有 VS Code 确认 UI。
+直属规则入口维持原范围；Run 使用显式递归 `pnwPreviewRecursiveCleanupArtifacts` / `pnwCleanPreviewedRecursiveArtifacts`。
+Git 未跟踪/ignored 使用 `pnwPreviewGitUntrackedCleanup` / `pnwExecuteGitUntrackedCleanup`，单 force `clean -dfx`，无 reset，保留嵌套仓库；与双 force 的 Git 强制恢复入口分离。
+公开快照/结果类型为 `PnwRecursiveCleanupArtifactPreview`、`PnwGitUntrackedRepositoryPreview`、`PnwGitUntrackedCleanupPreview`、`PnwGitUntrackedCleanupResult`。
+边界、取消与安全约束详见 [run-node README](../packages/run-node/README.md)。
+
 ### 纯工具函数（零框架依赖）
 
 | 模块                      | 说明             | 主要导出                                                                                                                                                            |

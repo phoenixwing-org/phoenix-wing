@@ -59,11 +59,11 @@ export const KT_CODEGEN_TABLE_ACTIONS = [
   ["sort", "排序", "按旧 Qt 规则规范 Suffix 和 ID"],
   ["copy", "复制", "复制当前行"],
   ["paste", "粘贴", "用复制内容替换当前行"],
-  ["insert", "＋ 插入", "在当前行后插入"],
-  ["duplicate", "⧉ 副本", "在当前行后创建副本"],
-  ["moveUp", "↑", "上移"],
-  ["moveDown", "↓", "下移"],
-  ["delete", "− 删除", "删除当前行"],
+  ["insert", "插入", "在当前行后插入"],
+  ["duplicate", "副本", "在当前行后创建副本"],
+  ["moveUp", "上移", "上移"],
+  ["moveDown", "下移", "下移"],
+  ["delete", "删除", "删除当前行"],
 ] as const satisfies readonly (readonly [KtCodegenTableAction, string, string])[];
 
 /** 属性、attribute 与未知 JavaScript 输入共用的布局归一化边界。 */

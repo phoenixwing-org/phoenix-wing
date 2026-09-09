@@ -69,4 +69,37 @@ describe("@phoenix-wing/kt-codegen/ui host boundary", () => {
     expect(primary).toContain("composed: true");
     expect(control).toContain("composed: true");
   });
+
+  it("lets selected Primary paths and every status tag inherit the theme selection foreground", () => {
+    const primary = source("../src/ui/KtCodegenPrimaryPanel.ts");
+    const inherited = ".pnw-codegen-row.pnw-codegen-active .pnw-codegen-row-path,\n"
+      + ".pnw-codegen-row.pnw-codegen-active .pnw-codegen-tag { color: inherit; }";
+
+    expect(primary).toContain("--pnw-codegen-active-fg: var(--vscode-list-activeSelectionForeground,");
+    expect(primary).toContain(".pnw-codegen-row.pnw-codegen-active { color: var(--pnw-codegen-active-fg); background: var(--pnw-codegen-active-bg);");
+    expect(primary).toContain(inherited);
+    // The active descendant selector outranks all normal tone variants without
+    // changing normal-row color, the small label sizes, or the active background.
+    for (const tone of ["warning", "error", "success"]) {
+      const normalRule = `.pnw-codegen-tag.pnw-codegen-${tone} { color: var(`;
+      expect(primary).toContain(normalRule);
+      expect(primary.indexOf(inherited)).toBeGreaterThan(primary.indexOf(normalRule));
+    }
+    expect(primary).toContain(".pnw-codegen-row-path { color: var(--pnw-codegen-muted); font-size: 11px; }");
+    expect(primary).toContain(".pnw-codegen-tag { padding: 1px 5px; color: var(--pnw-codegen-muted);");
+  });
+
+  it("lets selected preflight ids and metadata inherit selection foreground while normal rows remain muted", () => {
+    const control = source("../src/ui/KtCodegenControlPanel.ts");
+    const inherited = '.pnw-codegen-row[aria-pressed="true"] .pnw-codegen-id,\n'
+      + '.pnw-codegen-row[aria-pressed="true"] .pnw-codegen-meta { color: inherit; }';
+
+    expect(control).toContain("--pnw-codegen-active-fg: var(--vscode-list-activeSelectionForeground,");
+    expect(control).toContain('.pnw-codegen-row[aria-pressed="true"] { color: var(--pnw-codegen-active-fg); background: var(--pnw-codegen-active-bg); }');
+    expect(control).toContain(inherited);
+    expect(control.indexOf(inherited)).toBeGreaterThan(control.indexOf(".pnw-codegen-meta {"));
+    expect(control).toContain(".pnw-codegen-id { flex: 0 0 auto; padding: 1px 4px; color: var(--pnw-codegen-muted);");
+    expect(control).toContain(".pnw-codegen-meta { overflow: hidden; color: var(--pnw-codegen-muted); font-size: 10px;");
+    expect(control).toContain('.pnw-codegen-row[aria-pressed="true"] .pnw-codegen-badge { color: inherit; opacity: .92; }');
+  });
 });

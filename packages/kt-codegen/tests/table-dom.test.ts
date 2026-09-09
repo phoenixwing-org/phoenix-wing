@@ -229,6 +229,54 @@ function installFakeDom(): void {
 describe("KtCodegenTable DOM contract", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it("异步保存快照不重建当前输入 DOM、不移动焦点，保留新草稿与新 checkpoint", async () => {
+    vi.resetModules();
+    installFakeDom();
+    const browser = await import("../src/table/index.js");
+    const { KtCodegenItem } = await import("../src/index.js");
+    const table = new browser.KtCodegenTable() as unknown as FakeHTMLElement
+      & InstanceType<typeof browser.KtCodegenTable>;
+    table.connectedCallback();
+    table.setData({ kind: "kt.codegen.table-data", schemaVersion: 1, documentRevision: 0,
+      selectedRow: 0, items: [new KtCodegenItem({ name: "Saved" })] });
+    const saved = table.getData();
+    const input = table.shadow.querySelectorAll("input").find((node) => node.getAttribute("aria-label") === "Title，第 1 行")!;
+    input.value = "Newer";
+    input.focus();
+    for (const listener of input.listeners.get("input") ?? []) listener({ type: "input" });
+    table.markCheckpoint(1, saved.items);
+    expect(table.getData().items[0]!.name).toBe("Newer");
+    expect(table.getData().documentRevision).toBe(1);
+    expect(table.shadow.querySelectorAll("input").find((node) => node.getAttribute("aria-label") === "Title，第 1 行")).toBe(input);
+    expect(table.shadow.activeElement).toBe(input);
+    expect(table.shadow.querySelector("[data-role='status']")!.textContent).toContain("未保存");
+    table.revertToCheckpoint();
+    expect(table.getData().items[0]!.name).toBe("Saved");
+  });
+
+  it("默认工具栏渲染九个纯文字按钮，保持 title、ARIA 与空表可用性", async () => {
+    vi.resetModules();
+    installFakeDom();
+    const browser = await import("../src/table/index.js");
+    const table = new browser.KtCodegenTable() as unknown as FakeHTMLElement
+      & InstanceType<typeof browser.KtCodegenTable>;
+    table.connectedCallback();
+
+    const tools = table.shadow.querySelectorAll("button[data-action]");
+    expect(tools.map((button) => [button.dataset.action, button.textContent, button.title,
+      button.getAttribute("aria-label"), button.disabled])).toEqual([
+      ["autoFit", "自适应", "根据当前内容调整列宽", "根据当前内容调整列宽", false],
+      ["sort", "排序", "按旧 Qt 规则规范 Suffix 和 ID", "按旧 Qt 规则规范 Suffix 和 ID", true],
+      ["copy", "复制", "复制当前行", "复制当前行", true],
+      ["paste", "粘贴", "用复制内容替换当前行", "用复制内容替换当前行", true],
+      ["insert", "插入", "在当前行后插入", "在当前行后插入", false],
+      ["duplicate", "副本", "在当前行后创建副本", "在当前行后创建副本", true],
+      ["moveUp", "上移", "上移", "上移", true],
+      ["moveDown", "下移", "下移", "下移", true],
+      ["delete", "删除", "删除当前行", "删除当前行", true],
+    ]);
+  });
+
   it("反射布局与折叠属性，只有用户 Header 动作发出折叠事件", async () => {
     vi.resetModules();
     installFakeDom();

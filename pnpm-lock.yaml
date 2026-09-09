@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.6.4
+        specifier: workspace:0.6.5
         version: link:packages/code-core
       '@phoenix-wing/db-node':
         specifier: workspace:0.6.3
@@ -159,7 +159,7 @@ importers:
   packages/run-node:
     dependencies:
       '@phoenix-wing/run-core':
-        specifier: workspace:0.6.3
+        specifier: workspace:0.6.4
         version: link:../run-core
       jsonc-parser:
         specifier: 3.3.1

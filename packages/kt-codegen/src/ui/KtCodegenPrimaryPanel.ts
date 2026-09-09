@@ -39,8 +39,8 @@ const STYLE = `
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 1px solid var(--pnw-codegen-focus); outline-offset: 1px; }
-.pnw-codegen-actions { position: sticky; z-index: 12; top: 0; display: flex; flex-wrap: nowrap; gap: 2px; padding: 2px 5px 3px; overflow: hidden; background: var(--vscode-sideBar-background, var(--sidebar-bg, #fff)); border-bottom: 1px solid var(--pnw-codegen-border); }
-.pnw-codegen-action { display: inline-grid; flex: 0 0 32px; width: 32px; height: 32px; min-height: 32px; place-items: center; padding: 0; color: var(--vscode-button-foreground, inherit); background: var(--vscode-button-background, var(--btn-bg, transparent)); border: 1px solid var(--pnw-codegen-border); border-radius: 3px; font-size: 17px; }
+.pnw-codegen-actions { position: sticky; z-index: 12; top: 0; display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 5px 3px; background: var(--vscode-sideBar-background, var(--sidebar-bg, #fff)); border-bottom: 1px solid var(--pnw-codegen-border); }
+.pnw-codegen-action { display: inline-grid; flex: 0 0 auto; min-width: 44px; height: 32px; min-height: 32px; place-items: center; padding: 0 8px; color: var(--vscode-button-foreground, inherit); background: var(--vscode-button-background, var(--btn-bg, transparent)); border: 1px solid var(--pnw-codegen-border); border-radius: 3px; font-size: 12px; }
 .pnw-codegen-action.pnw-codegen-secondary { color: inherit; background: var(--vscode-button-secondaryBackground, var(--btn-bg, transparent)); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .pnw-codegen-mini { min-width: 0; margin: 0; overflow: hidden; border: 0; border-block-end: 1px solid var(--pnw-codegen-border); border-radius: 0; background: var(--pnw-codegen-bg); }
@@ -69,6 +69,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .pnw-codegen-tag.pnw-codegen-warning { color: var(--vscode-editorWarning-foreground, #b45309); border-color: currentColor; }
 .pnw-codegen-tag.pnw-codegen-error { color: var(--vscode-errorForeground, #b91c1c); border-color: currentColor; }
 .pnw-codegen-tag.pnw-codegen-success { color: var(--vscode-testing-iconPassed, #15803d); border-color: currentColor; }
+.pnw-codegen-row.pnw-codegen-active .pnw-codegen-row-path,
+.pnw-codegen-row.pnw-codegen-active .pnw-codegen-tag { color: inherit; }
 .pnw-codegen-candidates { grid-auto-rows: 30px; }
 .pnw-codegen-candidate { display: flex; min-width: 0; min-height: 30px; align-items: center; gap: 6px; padding: 2px 4px; border: 0; border-bottom: 1px solid var(--pnw-codegen-border); }
 .pnw-codegen-candidate-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -107,11 +109,11 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     const actions = document.createElement("div");
     actions.className = "pnw-codegen-actions";
     actions.append(
-      this.actionButton("▣", "openJson", model.capabilities.openJson && !batchLocked && !hostLocked, "打开一份 Codegen JSON"),
-      this.actionButton("⇩", "importCsv", model.capabilities.importCsv && !batchLocked && !hostLocked, "导入或打开 CSV Codegen 配置"),
-      this.actionButton("✓", "applyAll", model.capabilities.applyAll && model.documents.length > 0 && !batchLocked && !hostLocked, "全部应用"),
-      this.actionButton(model.operation === "discovery" ? "×" : "↻", model.operation === "discovery" ? "cancelOperation" : "refresh", model.operation === "discovery" || (!model.operation && !hostLocked), model.operation === "discovery" ? "取消刷新" : "刷新配置"),
-      this.actionButton(model.operation === "candidates" ? "×" : "⌕", model.operation === "candidates" ? "cancelOperation" : "scanCandidates", model.operation === "candidates" || (model.capabilities.scanCandidates && !model.operation && !hostLocked), model.operation === "candidates" ? "取消扫描" : "扫描控制符源码候选"),
+      this.actionButton("打开", "openJson", model.capabilities.openJson && !batchLocked && !hostLocked, "打开一份 Codegen JSON"),
+      this.actionButton("导入", "importCsv", model.capabilities.importCsv && !batchLocked && !hostLocked, "导入或打开 CSV Codegen 配置"),
+      this.actionButton("全部应用", "applyAll", model.capabilities.applyAll && model.documents.length > 0 && !batchLocked && !hostLocked, "全部应用"),
+      this.actionButton(model.operation === "discovery" ? "取消" : "刷新", model.operation === "discovery" ? "cancelOperation" : "refresh", model.operation === "discovery" || (!model.operation && !hostLocked), model.operation === "discovery" ? "取消刷新" : "刷新配置"),
+      this.actionButton(model.operation === "candidates" ? "取消" : "扫描", model.operation === "candidates" ? "cancelOperation" : "scanCandidates", model.operation === "candidates" || (model.capabilities.scanCandidates && !model.operation && !hostLocked), model.operation === "candidates" ? "取消扫描" : "扫描控制符源码候选"),
     );
     const nodes: Node[] = [style, actions];
     if (active) nodes.push(this.currentConfig(active));
@@ -134,6 +136,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     button.className = "pnw-codegen-action pnw-codegen-secondary";
     button.textContent = label;
     button.title = title;
+    button.setAttribute("aria-label", title);
     button.disabled = ktCodegenPrimaryActionDisabled(this.currentModel, action, enabled);
     button.onclick = () => this.emit({ action });
     return button;
@@ -183,6 +186,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     const list = this.list("documents");
     for (const item of model.documents) {
       const row = this.row(item.fileName, `${item.className || "未命名类"} · ${item.displayPath}`);
+      row.disabled = ktCodegenPrimaryActionDisabled(model, "openDocument", true);
       row.classList.toggle("pnw-codegen-active", item.active);
       const tags = row.querySelector<HTMLElement>(".pnw-codegen-tags")!;
       tags.append(this.tag(`${item.itemCount} 行`));
@@ -202,6 +206,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     const list = this.list("reports");
     for (const report of model.reports.slice(0, 20)) {
       const row = this.row(report.subject, new Date(report.startedAt).toLocaleString());
+      row.disabled = ktCodegenPrimaryActionDisabled(model, "openReport", true);
       const tags = row.querySelector<HTMLElement>(".pnw-codegen-tags")!;
       tags.append(
         this.tag(report.applyKind === "batch" ? `批量 ${report.itemCount}` : "单次"),
@@ -218,6 +223,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
       directory.type = "button";
       directory.className = "pnw-codegen-report-directory";
       directory.textContent = "打开报告目录";
+      directory.disabled = ktCodegenPrimaryActionDisabled(model, "openReportDirectory", true);
       directory.onclick = () => this.emit({ action: "openReportDirectory" });
       details.append(directory);
     }
@@ -250,6 +256,9 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
       const row = document.createElement("button");
       row.type = "button";
       row.className = "pnw-codegen-row pnw-codegen-candidate";
+      row.disabled = ktCodegenPrimaryActionDisabled(model, "openCandidate", true);
+      row.title = candidate.displayPath;
+      row.setAttribute("aria-label", candidate.displayPath);
       const label = document.createElement("span");
       label.className = "pnw-codegen-candidate-label";
       const strong = document.createElement("span");
@@ -302,6 +311,8 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "pnw-codegen-row";
+    row.title = `${nameText} · ${pathText}`;
+    row.setAttribute("aria-label", row.title);
     const name = document.createElement("span");
     name.className = "pnw-codegen-row-name";
     name.textContent = nameText;

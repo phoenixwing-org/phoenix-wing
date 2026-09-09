@@ -9,6 +9,25 @@ import {
 } from "../src/index.js";
 
 describe("KtCodegenTableCore", () => {
+  it("保存旧快照时保留新草稿、选择和数组身份，还原只回到实际已保存内容", () => {
+    const param = new KtCodegenParam({ items: [new KtCodegenItem({ name: "Saved" })] });
+    const core = new KtCodegenTableCore(param);
+    const snapshot = core.getData();
+    const items = param.items;
+    core.updateCell(0, "name", "Newer");
+    core.select(0);
+    core.markCheckpoint(2, snapshot.items);
+    expect(core.dirty).toBe(true);
+    expect(core.documentRevision).toBe(2);
+    expect(core.selectedRow).toBe(0);
+    expect(param.items).toBe(items);
+    expect(param.items[0]!.name).toBe("Newer");
+    core.revertToCheckpoint();
+    expect(param.items[0]!.name).toBe("Saved");
+    expect(core.dirty).toBe(false);
+    core.markCheckpoint(3, core.getData().items);
+    expect(core.dirty).toBe(false);
+  });
   it("保持旧 Qt 表格的17列顺序", () => {
     expect(KT_CODEGEN_TABLE_COLUMNS.map((column) => column.field)).toEqual([
       "nameSuffix", "id", "name", "paramString", "dataType", "tcKind", "defaultValue",

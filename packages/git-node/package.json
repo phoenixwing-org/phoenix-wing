@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/git-node",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "Phoenix Git Node.js CLI、仓库读取与安全历史改写 adapter",
   "type": "module",
   "sideEffects": false,

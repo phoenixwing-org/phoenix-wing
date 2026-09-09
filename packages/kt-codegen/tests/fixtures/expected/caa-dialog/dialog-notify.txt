@@ -26,7 +26,7 @@
   ipDialogAgent->AcceptOnNotify(_RadioButtonChoice1, _RadioButtonChoice1->GetRadBModifyNotification());
 
   // 7, Mode
-  ipDialogAgent->AcceptOnNotify(_ComboMode, _ComboMode->GetComboModifyNotification());
+  ipDialogAgent->AcceptOnNotify(_ComboMode, _ComboMode->GetComboSelectNotification());
 
   // 8, Name
   ipDialogAgent->AcceptOnNotify(_EditorName, _EditorName->GetEditModifyNotification());
