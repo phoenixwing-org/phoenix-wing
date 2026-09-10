@@ -219,4 +219,207 @@ describe("PnwCleanupDialog", () => {
       /acquireVsCodeApi|postMessage|workspaceState|node:fs|execFile|git reset|git clean/iu,
     );
   });
+
+  it("默认保留select，新workspace slot在唯一滚动body首位，说明不占用错误grid轨道", () => {
+    const dialog = pnwMountCleanupDialog();
+    const root = dialog.shadowRoot!;
+    const slot = root.querySelector<HTMLSlotElement>('slot[name="workspace"]')!;
+    const workspace = document.createElement("section");
+    workspace.slot = "workspace"; workspace.textContent = "Host-owned YAML workspace";
+    dialog.append(workspace);
+    expect(dialog.model.modePresentation).toBe("select");
+    expect(root.querySelector(".pnw-cleanup-mode")).not.toBeNull();
+    expect(root.querySelector("details")).toBeNull();
+    expect(root.querySelectorAll(".pnw-cleanup-footer button")).toHaveLength(3);
+    expect(root.querySelectorAll(".pnw-cleanup-header-actions button")).toHaveLength(0);
+    expect(root.querySelector<HTMLElement>(".pnw-cleanup-footer")!.hidden).toBe(false);
+    const body = root.querySelector(".pnw-cleanup-content")!;
+    expect(body.children[0]).toBe(slot);
+    expect(body.children[1]).toBe(root.querySelector(".pnw-cleanup-description"));
+    expect(root.querySelector(".pnw-cleanup-shell")!.children).toHaveLength(3);
+    expect(root.querySelector("dialog")!.getAttribute("aria-labelledby")).toBe(root.querySelector("h2")!.id);
+    dialog.model = { ...dialog.model, description: "Updated", preview: { state: "ready", token: "new", items: [] } };
+    expect(root.querySelector('slot[name="workspace"]')).toBe(slot);
+    expect(dialog.querySelector('[slot="workspace"]')).toBe(workspace);
+    expect(slot.assignedElements()).toContain(workspace);
+  });
+
+  it.each([
+    { actionsPlacement: "footer", modePresentation: "select", collapsibleSections: false },
+    { actionsPlacement: "header", modePresentation: "radio", collapsibleSections: true },
+  ] as const)("$actionsPlacement/$modePresentation 顶边固定、底部自适应，折叠和换方式不恢复居中", (layout) => {
+    const dialog = pnwMountCleanupDialog(pnwCleanupDialogModel(layout));
+    const root = dialog.shadowRoot!;
+    const assertPositionContract = () => {
+      const css = root.querySelector("style")!.textContent!;
+      const rule = /\.pnw-cleanup-dialog\s*\{([^}]+)\}/u.exec(css)?.[1];
+      expect(rule).toBeDefined();
+      const style = document.createElement("div").style;
+      // happy-dom's declaration parser does not discard leading CSS comments.
+      style.cssText = rule!.replace(/\/\*[\s\S]*?\*\//gu, "");
+      expect(style.position).toBe("fixed");
+      expect(style.top).toBe("16px");
+      expect(style.bottom).toBe("auto");
+      expect(style.marginTop).toBe("0px");
+      expect(style.marginBottom).toBe("0px");
+      expect(style.marginLeft).toBe("auto");
+      expect(style.marginRight).toBe("auto");
+      // No fixed height or centering translation: content controls the lower edge.
+      expect(style.height).toBe("");
+      expect(style.transform).toBe("");
+    };
+    assertPositionContract();
+    root.querySelector<HTMLElement>("details > summary")?.click();
+    dialog.showModal("git");
+    assertPositionContract();
+    expect(dialog.model.modes.find(({ id }) => id === "git")?.risk).toBe("high");
+    expect(root.querySelector(".pnw-cleanup-confirm")).not.toBeNull();
+    expect(root.querySelector<HTMLButtonElement>(".pnw-cleanup-execute")!.disabled).toBe(true);
+    dialog.close(); dialog.showModal("rules");
+    assertPositionContract();
+  });
+
+  it("Header模式只移动原按钮与事件，Host操作slot不重复且可切回默认footer", () => {
+    const dialog = pnwMountCleanupDialog();
+    const root = dialog.shadowRoot!;
+    const actions: PnwCleanupDialogActionDetail[] = [];
+    dialog.addEventListener(PNW_CLEANUP_DIALOG_ACTION, (event) => actions.push((event as CustomEvent<PnwCleanupDialogActionDetail>).detail));
+    const controls = ["cancel", "preview-action", "execute"].map((name) => root.querySelector<HTMLButtonElement>(`.pnw-cleanup-${name}`)!);
+    const slot = root.querySelector<HTMLSlotElement>('slot[name="header-actions"]')!;
+    const hostAction = document.createElement("button");
+    hostAction.slot = "header-actions"; hostAction.textContent = "探测配置";
+    dialog.append(hostAction);
+    for (const actionsPlacement of ["header", "header", "footer", "header"] as const) {
+      dialog.model = { ...dialog.model, actionsPlacement };
+      const parent = root.querySelector(actionsPlacement === "header" ? ".pnw-cleanup-header-actions" : ".pnw-cleanup-footer");
+      for (const control of controls) {
+        expect(control.parentElement).toBe(parent);
+        expect(root.querySelectorAll(`.${control.classList[1]}`)).toHaveLength(1);
+      }
+      expect(root.querySelector<HTMLElement>(".pnw-cleanup-footer")!.hidden).toBe(actionsPlacement === "header");
+      expect(root.querySelector('slot[name="header-actions"]')).toBe(slot);
+      expect(slot.assignedElements()).toEqual([hostAction]);
+    }
+    controls[1]!.click();
+    expect(actions).toHaveLength(1);
+    expect(actions[0]?.kind).toBe("preview");
+  });
+
+  it("三个内部block整行summary独立折叠，刷新/切换模式/关闭重开保留状态", () => {
+    const dialog = pnwMountCleanupDialog(pnwCleanupDialogModel({ collapsibleSections: true, modePresentation: "radio", actionsPlacement: "header" }));
+    const root = dialog.shadowRoot!;
+    const blocks = () => Array.from(root.querySelectorAll<HTMLDetailsElement>("details"));
+    const find = (title: string) => blocks().find((block) => block.dataset.section === title)!;
+    expect(blocks().map((block) => block.dataset.section)).toEqual(["清理目标", "规则", "预览结果"]);
+    expect(blocks().every((block) => block.open)).toBe(true);
+    const events: PnwCleanupDialogActionDetail[] = [];
+    dialog.addEventListener(PNW_CLEANUP_DIALOG_ACTION, (event) => events.push((event as CustomEvent<PnwCleanupDialogActionDetail>).detail));
+    for (const title of ["清理目标", "规则"]) {
+      const summary = find(title).querySelector("summary")!;
+      const text = document.createElement("span"); text.textContent = summary.textContent;
+      summary.replaceChildren(text); text.click();
+      expect(find(title).open).toBe(false);
+    }
+    expect(find("预览结果").open).toBe(true);
+    expect(events).toEqual([]);
+    dialog.model = { ...dialog.model, preview: { state: "ready", token: "refreshed", items: ["new/build"] } };
+    expect(blocks().map((block) => block.open)).toEqual([false, false, true]);
+    dialog.showModal("git");
+    expect(blocks().map((block) => block.dataset.section)).toEqual(["清理目标", "预览结果"]);
+    expect(find("清理目标").open).toBe(false);
+    dialog.close(); dialog.showModal("rules");
+    expect(blocks().map((block) => block.open)).toEqual([false, false, true]);
+    find("规则").querySelector("summary")!.click();
+    expect(blocks().map((block) => block.open)).toEqual([false, true, true]);
+  });
+
+  it("radio单行呈现沿用事件/目标/风险门禁，方向键切换后保持焦点并使旧预检失效", () => {
+    const dialog = pnwMountCleanupDialog(pnwCleanupDialogModel({ modePresentation: "radio",
+      preview: { state: "ready", token: "old", items: ["old"] }, executeEnabled: true }));
+    const actions: PnwCleanupDialogActionDetail[] = [];
+    dialog.addEventListener(PNW_CLEANUP_DIALOG_ACTION, (event) => actions.push((event as CustomEvent<PnwCleanupDialogActionDetail>).detail));
+    const root = dialog.shadowRoot!;
+    expect(root.querySelector("select")).toBeNull();
+    expect(root.querySelector('[role="radiogroup"]')!.getAttribute("aria-label")).toBe("清理方式");
+    const first = root.querySelector<HTMLInputElement>('.pnw-cleanup-mode-radio[value="rules"]')!;
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+    const git = root.querySelector<HTMLInputElement>('.pnw-cleanup-mode-radio[value="git"]')!;
+    expect(dialog.model.selectedModeId).toBe("git");
+    expect(git.checked).toBe(true);
+    expect(root.activeElement).toBe(git);
+    expect(dialog.model.preview).toEqual({ state: "idle", items: [] });
+    expect(dialog.model.targets.filter(({ selected }) => selected).map(({ id }) => id)).toEqual(["repo"]);
+    expect(root.querySelector(".pnw-cleanup-confirm")).not.toBeNull();
+    expect(root.querySelector<HTMLButtonElement>(".pnw-cleanup-execute")!.disabled).toBe(true);
+    expect(actions).toEqual([{ kind: "change-mode", modeId: "git" }]);
+    git.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true, cancelable: true }));
+    expect(dialog.model.selectedModeId).toBe("rules");
+    expect((root.activeElement as HTMLInputElement).value).toBe("rules");
+  });
+
+  it.each(["loading", "executing"] as const)("忙时%s拒绝radio/select程序事件和showModal换模式", (state) => {
+    for (const modePresentation of ["select", "radio"] as const) {
+      const dialog = pnwMountCleanupDialog(pnwCleanupDialogModel({ modePresentation, preview: { state, items: [] } }));
+      const actions: PnwCleanupDialogActionDetail[] = [];
+      dialog.addEventListener(PNW_CLEANUP_DIALOG_ACTION, (event) => actions.push((event as CustomEvent<PnwCleanupDialogActionDetail>).detail));
+      const control = dialog.shadowRoot!.querySelector<HTMLInputElement | HTMLSelectElement>(modePresentation === "radio" ? '.pnw-cleanup-mode-radio[value="git"]' : "select")!;
+      expect(control.disabled).toBe(true);
+      if (control instanceof HTMLInputElement) control.checked = true;
+      else control.value = "git";
+      control.dispatchEvent(new Event("change"));
+      control.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }));
+      dialog.showModal("git");
+      expect(dialog.model.selectedModeId).toBe("rules");
+      expect(dialog.model.preview.state).toBe(state);
+      expect(actions).toEqual([]);
+    }
+  });
+
+  it("原生option配对前景背景，radio可横向滚动而不改变正式按钮色", () => {
+    const dialog = pnwMountCleanupDialog();
+    const css = dialog.shadowRoot!.querySelector("style")!.textContent!;
+    expect(css).toContain(".pnw-cleanup-mode option { color: var(--vscode-dropdown-foreground");
+    expect(css).toContain("background: var(--vscode-dropdown-background, var(--vscode-editor-background, Canvas))");
+    expect(css).toContain(".pnw-cleanup-modes { display: flex; flex-wrap: nowrap;");
+    expect(css).toContain("background: var(--vscode-button-secondaryBackground, #e5e5e5)");
+    expect(css).toContain("background: var(--vscode-button-background, #0078d4)");
+  });
+
+  it.each([false, true])("ready后输入立即撤下旧预览并禁用执行，保留同一textarea焦点/选区/滚动：折叠布局=%s", (collapsibleSections) => {
+    const dialog = pnwMountCleanupDialog(pnwCleanupDialogModel({
+      collapsibleSections, actionsPlacement: collapsibleSections ? "header" : "footer",
+      executeEnabled: true,
+      preview: { state: "ready", token: "old", summary: "旧匹配结果", items: ["old/build"] },
+    }));
+    const root = dialog.shadowRoot!;
+    const rules = root.querySelector<HTMLTextAreaElement>("textarea")!;
+    const execute = root.querySelector<HTMLButtonElement>(".pnw-cleanup-execute")!;
+    const actions: PnwCleanupDialogActionDetail[] = [];
+    dialog.addEventListener(PNW_CLEANUP_DIALOG_ACTION, (event) => actions.push((event as CustomEvent<PnwCleanupDialogActionDetail>).detail));
+    expect(execute.disabled).toBe(false);
+    if (collapsibleSections) root.querySelector<HTMLDetailsElement>('[data-section="预览结果"] summary')!.click();
+    rules.focus();
+    for (const suffix of ["\n# first", "\n# second"]) {
+      rules.value += suffix;
+      rules.setSelectionRange(5, 9, "backward");
+      rules.scrollTop = 24;
+      rules.scrollLeft = 8;
+      rules.dispatchEvent(new Event("input"));
+      expect(root.querySelector("textarea")).toBe(rules);
+      expect(root.activeElement).toBe(rules);
+      expect([rules.selectionStart, rules.selectionEnd, rules.selectionDirection]).toEqual([5, 9, "backward"]);
+      expect([rules.scrollTop, rules.scrollLeft]).toEqual([24, 8]);
+      expect(dialog.model.rulesYaml).toBe(rules.value);
+      expect(dialog.model.preview).toEqual({ state: "idle", items: [] });
+      expect(execute.disabled).toBe(true);
+      expect(root.textContent).not.toContain("旧匹配结果");
+      expect(root.textContent).not.toContain("old/build");
+      if (collapsibleSections) expect(root.querySelector<HTMLDetailsElement>('[data-section="预览结果"]')!.open).toBe(false);
+    }
+    expect(actions).toHaveLength(2);
+    expect(actions.every(({ kind }) => kind === "change-rules")).toBe(true);
+    execute.click();
+    expect(actions).toHaveLength(2);
+  });
 });

@@ -46,6 +46,10 @@ export interface PnwCleanupDialogModel {
   readonly description?: string;
   readonly modes: readonly PnwCleanupDialogMode[];
   readonly selectedModeId?: string;
+  /** Optional presentation only; selection, request and risk semantics are unchanged. */
+  readonly modePresentation?: "select" | "radio";
+  readonly collapsibleSections?: boolean;
+  readonly actionsPlacement?: "header" | "footer";
   readonly targets: readonly PnwCleanupDialogTarget[];
   readonly rulesVisible: boolean;
   readonly rulesLabel: string;
@@ -84,6 +88,7 @@ export type PnwCleanupDialogActionDetail =
 const PNW_EMPTY_CLEANUP_DIALOG_MODEL: PnwCleanupDialogModel = Object.freeze({
   title: "清理",
   modes: Object.freeze([]),
+  modePresentation: "select",
   targets: Object.freeze([]),
   rulesVisible: false,
   rulesLabel: "清理规则",
@@ -103,6 +108,8 @@ const PNW_CLEANUP_DIALOG_STYLE = `
 * { box-sizing: border-box; }
 button, select, textarea, input { font: inherit; }
 .pnw-cleanup-dialog {
+  /* Anchor the header to the viewport; mode/section changes grow downward only. */
+  position: fixed; top: 16px; bottom: auto; margin: 0 auto;
   width: min(680px, calc(100vw - 32px)); max-width: 100%; max-height: min(760px, calc(100vh - 32px)); padding: 0;
   overflow: hidden; border: 1px solid var(--vscode-widget-border, #8e8e8e); color: inherit;
   background: var(--vscode-editorWidget-background, var(--vscode-editor-background, #fff)); box-shadow: 0 8px 30px var(--vscode-widget-shadow, rgba(0,0,0,.35));
@@ -120,7 +127,24 @@ button, select, textarea, input { font: inherit; }
 .pnw-cleanup-field { display: grid; gap: 5px; margin-top: 10px; }
 .pnw-cleanup-field:first-child { margin-top: 0; }
 .pnw-cleanup-label { font-weight: 600; }
+.pnw-cleanup-block { margin-top: 10px; border: 1px solid var(--vscode-panel-border, #d4d4d4); }
+.pnw-cleanup-block > summary { cursor: pointer; padding: 6px 8px; font-weight: 600; background: var(--vscode-sideBarSectionHeader-background, rgba(128,128,128,.12)); }
+.pnw-cleanup-block > summary:hover { background: var(--vscode-list-hoverBackground, rgba(128,128,128,.16)); }
+.pnw-cleanup-block > :not(summary) { margin: 6px; }
+.pnw-cleanup-header-actions { display: flex; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; }
+.pnw-cleanup-header-actions:empty { display: none; }
+.pnw-cleanup-header-actions button, ::slotted(button[slot="header-actions"]) { flex: 0 0 auto; white-space: nowrap; }
+::slotted(button[slot="header-actions"]) { font: inherit; min-height: 28px; padding: 3px 8px; cursor: pointer; border: 1px solid var(--vscode-button-border, transparent); color: var(--vscode-button-secondaryForeground, inherit); background: var(--vscode-button-secondaryBackground, #e5e5e5); }
+::slotted(button[slot="header-actions"]:hover) { background: var(--vscode-button-secondaryHoverBackground, #d5d5d5); }
+::slotted(button[slot="header-actions"]:disabled) { opacity: .55; cursor: default; }
+::slotted(button[slot="header-actions"]:focus-visible) { outline: 1px solid var(--vscode-focusBorder, #0078d4); }
+.pnw-cleanup-shell[data-header-actions="true"] { grid-template-rows: auto minmax(0, 1fr); }
+.pnw-cleanup-footer[hidden] { display: none; }
 .pnw-cleanup-mode { width: 100%; min-height: 28px; padding: 3px 6px; border: 1px solid var(--vscode-dropdown-border, #8e8e8e); color: var(--vscode-dropdown-foreground, inherit); background: var(--vscode-dropdown-background, #fff); }
+.pnw-cleanup-mode option { color: var(--vscode-dropdown-foreground, var(--vscode-foreground, CanvasText)); background: var(--vscode-dropdown-background, var(--vscode-editor-background, Canvas)); }
+.pnw-cleanup-modes { display: flex; flex-wrap: nowrap; align-items: center; gap: 12px; min-width: 0; overflow-x: auto; }
+.pnw-cleanup-mode-choice { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; min-height: 28px; white-space: nowrap; cursor: pointer; }
+.pnw-cleanup-mode-radio { margin: 0; accent-color: var(--vscode-button-background, #0078d4); }
 .pnw-cleanup-mode-description { margin: 0; font-size: 12px; }
 .pnw-cleanup-targets { display: grid; border: 1px solid var(--vscode-panel-border, #d4d4d4); }
 .pnw-cleanup-target { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px; padding: 6px 7px; align-items: start; }
@@ -153,10 +177,14 @@ export class PnwCleanupDialog extends HTMLElement {
   private pnwBody?: HTMLDivElement;
   private pnwTitle?: HTMLHeadingElement;
   private pnwDescription?: HTMLParagraphElement;
+  private pnwWorkspaceSlot?: HTMLSlotElement;
   private pnwCancelButton?: HTMLButtonElement;
   private pnwPreviewButton?: HTMLButtonElement;
   private pnwExecuteButton?: HTMLButtonElement;
   private pnwHighRiskConfirmed = false;
+  private pnwHeaderActions?: HTMLDivElement;
+  private pnwFooter?: HTMLElement;
+  private readonly pnwSectionOpen = new Map<string, boolean>();
 
   connectedCallback(): void {
     this.pnwUpgradePreDefinitionModel();
@@ -212,17 +240,27 @@ export class PnwCleanupDialog extends HTMLElement {
     const header = document.createElement("header");
     header.className = "pnw-cleanup-header";
     const title = document.createElement("h2");
+    title.id = "pnw-cleanup-title";
     title.className = "pnw-cleanup-title";
+    dialog.setAttribute("aria-labelledby", title.id);
     const close = document.createElement("button");
     close.type = "button";
     close.className = "pnw-cleanup-close";
     close.setAttribute("aria-label", "关闭清理对话框");
     close.textContent = "×";
     close.onclick = () => this.pnwCancel();
+    const headerActions = document.createElement("div");
+    headerActions.className = "pnw-cleanup-header-actions";
+    const hostActions = document.createElement("slot");
+    hostActions.name = "header-actions";
+    headerActions.append(hostActions);
     const body = document.createElement("div");
     body.className = "pnw-cleanup-content";
     const description = document.createElement("p");
     description.className = "pnw-cleanup-description";
+    const workspace = document.createElement("slot");
+    workspace.name = "workspace";
+    body.append(workspace, description);
     const footer = document.createElement("footer");
     footer.className = "pnw-cleanup-footer";
     const cancel = this.pnwButton("pnw-cleanup-cancel", () => this.pnwCancel());
@@ -231,9 +269,9 @@ export class PnwCleanupDialog extends HTMLElement {
       "pnw-cleanup-execute pnw-cleanup-button-primary",
       () => this.pnwEmitExecute(),
     );
-    header.append(title, close);
+    header.append(title, headerActions, close);
     footer.append(cancel, preview, execute);
-    shell.append(header, description, body, footer);
+    shell.append(header, body, footer);
     dialog.append(shell);
     dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
@@ -244,9 +282,12 @@ export class PnwCleanupDialog extends HTMLElement {
     this.pnwBody = body;
     this.pnwTitle = title;
     this.pnwDescription = description;
+    this.pnwWorkspaceSlot = workspace;
     this.pnwCancelButton = cancel;
     this.pnwPreviewButton = preview;
     this.pnwExecuteButton = execute;
+    this.pnwHeaderActions = headerActions;
+    this.pnwFooter = footer;
   }
 
   private pnwRender(): void {
@@ -254,10 +295,17 @@ export class PnwCleanupDialog extends HTMLElement {
     const model = this.pnwActiveModel;
     const selectedMode = model.modes.find(({ id }) => id === model.selectedModeId);
     const busy = model.preview.state === "loading" || model.preview.state === "executing";
+    const active = this.pnwRoot.activeElement;
+    const focusedMode = active?.classList.contains("pnw-cleanup-mode-radio")
+      ? (active as HTMLInputElement).value : undefined;
+    const focusedSelect = active?.classList.contains("pnw-cleanup-mode") === true;
     this.pnwTitle.textContent = model.title;
     this.pnwDescription.textContent = model.description ?? "";
     this.pnwDescription.hidden = !model.description;
-    this.pnwBody.replaceChildren();
+    // Keep the Host-owned workspace slot mounted while refreshing mode/preview state.
+    for (const child of Array.from(this.pnwBody.children)) {
+      if (child !== this.pnwWorkspaceSlot && child !== this.pnwDescription) child.remove();
+    }
     this.pnwBody.append(
       this.pnwRenderMode(model, selectedMode, busy),
       this.pnwRenderTargets(model, busy),
@@ -270,6 +318,23 @@ export class PnwCleanupDialog extends HTMLElement {
       this.pnwBody.append(this.pnwRenderHighRisk(model, busy));
     }
 
+    this.pnwRenderActions();
+    if (focusedMode !== undefined && !busy) this.pnwFocusMode(focusedMode);
+    else if (focusedSelect && !busy) this.pnwRoot.querySelector<HTMLSelectElement>(".pnw-cleanup-mode")?.focus();
+  }
+
+  private pnwRenderActions(): void {
+    const model = this.pnwActiveModel;
+    const selectedMode = model.modes.find(({ id }) => id === model.selectedModeId);
+    const busy = this.pnwBusy();
+    const inHeader = model.actionsPlacement === "header";
+    if (this.pnwFooter && this.pnwHeaderActions && this.pnwCancelButton && this.pnwPreviewButton && this.pnwExecuteButton) {
+      const actions = inHeader ? this.pnwHeaderActions : this.pnwFooter;
+      // Move existing controls, never duplicate actions or their event handlers.
+      if (this.pnwCancelButton.parentElement !== actions) actions.append(this.pnwCancelButton, this.pnwPreviewButton, this.pnwExecuteButton);
+      this.pnwFooter.hidden = inHeader;
+      this.pnwFooter.parentElement?.setAttribute("data-header-actions", String(inHeader));
+    }
     if (this.pnwCancelButton) this.pnwCancelButton.textContent = model.cancelLabel;
     if (this.pnwPreviewButton) {
       this.pnwPreviewButton.textContent = model.preview.state === "loading" ? "预览中…" : model.previewLabel;
@@ -298,21 +363,58 @@ export class PnwCleanupDialog extends HTMLElement {
     busy: boolean,
   ): HTMLElement {
     const field = this.pnwField("清理方式");
-    const select = document.createElement("select");
-    select.className = "pnw-cleanup-mode";
-    select.disabled = busy;
-    select.setAttribute("aria-label", "清理方式");
-    for (const mode of model.modes) {
-      const option = document.createElement("option");
-      option.value = mode.id;
-      option.textContent = `${mode.label}${mode.risk === "high" ? " · 高风险" : ""}`;
-      option.selected = mode.id === model.selectedModeId;
-      select.append(option);
+    if (model.modePresentation === "radio") {
+      const group = document.createElement("div");
+      group.className = "pnw-cleanup-modes";
+      group.setAttribute("role", "radiogroup");
+      group.setAttribute("aria-label", "清理方式");
+      for (const mode of model.modes) {
+        const label = document.createElement("label");
+        label.className = "pnw-cleanup-mode-choice";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "pnw-cleanup-mode";
+        radio.className = "pnw-cleanup-mode-radio";
+        radio.value = mode.id;
+        radio.checked = mode.id === model.selectedModeId;
+        radio.disabled = busy;
+        radio.onchange = () => {
+          if (radio.checked && !radio.disabled) this.pnwActivateMode(mode.id, true);
+        };
+        radio.onkeydown = (event) => {
+          if (radio.disabled || this.pnwBusy()) return;
+          const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"];
+          if (!keys.includes(event.key)) return;
+          event.preventDefault();
+          const current = model.modes.findIndex(({ id }) => id === mode.id);
+          const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? model.modes.length - 1
+            : (current + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1) + model.modes.length) % model.modes.length;
+          const next = model.modes[nextIndex];
+          if (next) { this.pnwActivateMode(next.id, true); this.pnwFocusMode(next.id); }
+        };
+        const text = document.createElement("span");
+        text.textContent = `${mode.label}${mode.risk === "high" ? " · 高风险" : ""}`;
+        label.append(radio, text);
+        group.append(label);
+      }
+      field.append(group);
+    } else {
+      const select = document.createElement("select");
+      select.className = "pnw-cleanup-mode";
+      select.disabled = busy;
+      select.setAttribute("aria-label", "清理方式");
+      for (const mode of model.modes) {
+        const option = document.createElement("option");
+        option.value = mode.id;
+        option.textContent = `${mode.label}${mode.risk === "high" ? " · 高风险" : ""}`;
+        option.selected = mode.id === model.selectedModeId;
+        select.append(option);
+      }
+      select.onchange = () => {
+        if (!select.disabled) this.pnwActivateMode(select.value, true);
+      };
+      field.append(select);
     }
-    select.onchange = () => {
-      this.pnwActivateMode(select.value, true);
-    };
-    field.append(select);
     if (selectedMode?.description) {
       const description = document.createElement("p");
       description.className = "pnw-cleanup-mode-description";
@@ -380,6 +482,7 @@ export class PnwCleanupDialog extends HTMLElement {
   }
 
   private pnwActivateMode(modeId: string, emit: boolean): void {
+    if (this.pnwBusy() || !this.pnwActiveModel.modes.some(({ id }) => id === modeId)) return;
     const nextTargets = this.pnwActiveModel.targets.map((target) => ({
       ...target,
       selected: !target.disabled
@@ -396,6 +499,15 @@ export class PnwCleanupDialog extends HTMLElement {
     this.pnwRender();
   }
 
+  private pnwBusy(): boolean {
+    return this.pnwActiveModel.preview.state === "loading" || this.pnwActiveModel.preview.state === "executing";
+  }
+
+  private pnwFocusMode(modeId: string): void {
+    const radios = Array.from(this.pnwRoot.querySelectorAll<HTMLInputElement>(".pnw-cleanup-mode-radio"));
+    (radios.find(({ value }) => value === modeId) ?? radios.find(({ checked }) => checked))?.focus();
+  }
+
   private pnwRenderRules(model: PnwCleanupDialogModel, busy: boolean): HTMLElement {
     const field = this.pnwField(model.rulesLabel);
     const rules = document.createElement("textarea");
@@ -405,12 +517,20 @@ export class PnwCleanupDialog extends HTMLElement {
     rules.spellcheck = false;
     rules.setAttribute("aria-label", model.rulesLabel);
     rules.oninput = () => {
+      if (rules.disabled || this.pnwBusy()) return;
       this.pnwHighRiskConfirmed = false;
       this.pnwActiveModel = pnwNormalizeCleanupDialogModel({
         ...this.pnwActiveModel,
         rulesYaml: rules.value,
+        executeEnabled: false,
         preview: { state: "idle", items: [] },
       });
+      // Refresh feedback only: keep the active textarea node, caret, IME and scroll intact.
+      const previewField = this.pnwBody?.querySelector(".pnw-cleanup-preview")?.parentElement;
+      previewField?.replaceWith(this.pnwRenderPreview(this.pnwActiveModel));
+      this.pnwBody?.querySelector(".pnw-cleanup-confirm")
+        ?.replaceWith(this.pnwRenderHighRisk(this.pnwActiveModel, false));
+      this.pnwRenderActions();
       this.pnwEmit({ kind: "change-rules", rulesYaml: rules.value });
     };
     field.append(rules);
@@ -467,7 +587,24 @@ export class PnwCleanupDialog extends HTMLElement {
     return label;
   }
 
-  private pnwField(labelText: string): HTMLDivElement {
+  private pnwField(labelText: string): HTMLElement {
+    if (this.pnwActiveModel.collapsibleSections && labelText !== "清理方式") {
+      const field = document.createElement("details");
+      field.className = "pnw-cleanup-block";
+      field.dataset.section = labelText;
+      field.open = this.pnwSectionOpen.get(labelText) ?? true;
+      const summary = document.createElement("summary");
+      summary.textContent = labelText;
+      // Capture synchronously before mode/model refresh can replace this node.
+      summary.onclick = (event) => {
+        event.preventDefault();
+        field.open = !field.open;
+        this.pnwSectionOpen.set(labelText, field.open);
+      };
+      field.ontoggle = () => { if (field.isConnected) this.pnwSectionOpen.set(labelText, field.open); };
+      field.append(summary);
+      return field;
+    }
     const field = document.createElement("div");
     field.className = "pnw-cleanup-field";
     const label = document.createElement("div");
@@ -567,6 +704,7 @@ export function pnwNormalizeCleanupDialogModel(
     ...value,
     title: value.title.trim() || "清理",
     modes,
+    modePresentation: value.modePresentation === "radio" ? "radio" : "select",
     selectedModeId,
     targets,
     preview,

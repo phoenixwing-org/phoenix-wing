@@ -226,8 +226,8 @@
           "target": "cpp.parameter",
           "blockKey": "PARAM DECLARATION",
           "classId": "KtCourseGuardItem",
-          "contentSha256": "de8ed1746a1c1dea79b93aea829c5c44ab479dc44c7e4aa572c275f8dbf8112e",
-          "contentUtf8Bytes": 525,
+          "contentSha256": "a9f714c3ff2894482c44c6902cb772faa8f3284b4d048e0d4977b1e38998f585",
+          "contentUtf8Bytes": 531,
           "sourceParameters": [
             "MachineId",
             "GuardLength"

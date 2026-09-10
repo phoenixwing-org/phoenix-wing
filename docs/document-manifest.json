@@ -139,6 +139,13 @@
       "lastVerified": "2026-08-17"
     },
     {
+      "path": "docs/0.7.4发布验收.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
       "path": "docs/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",

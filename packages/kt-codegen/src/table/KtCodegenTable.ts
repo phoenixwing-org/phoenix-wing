@@ -204,6 +204,7 @@ export class KtCodegenTable extends HTMLElement {
 
     const toolbar = document.createElement("header");
     toolbar.className = KT_CODEGEN_TABLE_CLASSES.toolbar;
+    toolbar.dataset.codegenBlockHeader = "";
     const plainCaption = document.createElement("span");
     plainCaption.className = KT_CODEGEN_TABLE_CLASSES.caption;
     plainCaption.dataset.role = "plain-caption";
@@ -213,17 +214,23 @@ export class KtCodegenTable extends HTMLElement {
     toggle.id = KT_CODEGEN_TABLE_TOGGLE_ID;
     toggle.className = KT_CODEGEN_TABLE_CLASSES.collapseToggle;
     toggle.dataset.role = "collapse-toggle";
+    toggle.dataset.codegenBlockToggle = "";
     toggle.setAttribute(
       "aria-controls",
       `${KT_CODEGEN_TABLE_SHELL_ID} ${KT_CODEGEN_TABLE_STATUSBAR_ID}`,
     );
     toggle.addEventListener("click", () => this.handleCollapseToggle());
+    toolbar.addEventListener("click", (event) => {
+      if (event.target === toolbar && this.collapsible) toggle.click();
+    });
     const indicator = document.createElement("span");
     indicator.className = KT_CODEGEN_TABLE_CLASSES.collapseIndicator;
     indicator.dataset.role = "collapse-indicator";
+    indicator.dataset.codegenBlockIndicator = "";
     indicator.setAttribute("aria-hidden", "true");
     const caption = document.createElement("span");
     caption.className = KT_CODEGEN_TABLE_CLASSES.caption;
+    caption.dataset.codegenBlockTitle = "";
     caption.textContent = "参数表";
     toggle.append(indicator, caption);
     toolbar.append(plainCaption, toggle);
@@ -475,7 +482,7 @@ export class KtCodegenTable extends HTMLElement {
     toggle.title = disclosure.label;
     toggle.setAttribute("aria-label", disclosure.label);
     toggle.setAttribute("aria-expanded", String(disclosure.expanded));
-    indicator.textContent = disclosure.indicator;
+    indicator.textContent = "›";
     shell.hidden = disclosure.hidden;
     statusbar.hidden = disclosure.hidden;
     if (disclosure.hidden && active && (shell.contains(active) || statusbar.contains(active))) {

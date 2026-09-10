@@ -10,13 +10,30 @@ Owner：Phoenix Wing maintainers
 均已完成 12 个 npm 发布单元的锁步公开发布和 Registry 干净消费验收。根 Vue/UI 包
 `0.6.4` 已发布并统一 Primary Section 的 VS Code 风格左侧折叠箭头；`0.7.0` 已发布并完成
 可浮动 / Primary 停靠工具宿主、完整 View 呈现、Workspace Welcome 等 Registry 消费验收；
-`0.7.1` 已发布并增加通用 Navigation Tree、Git 提交图分页与 Codegen 连续 Section。
-根聚合包当前本地开发版本为 `0.7.2`，scoped 包继续保持 release matrix 中各自的
-`0.6.3 / 0.6.4` 独立版本。后续版本
+`0.7.1`、`0.7.2`、`0.7.3` 与 `0.7.4` 均已发布；`0.7.4` 从
+`develop@d2f73a48409c195a500787c16510c7d05aab1ea0` 发布根包 `0.7.4`、
+`code-core@0.6.6` 与 `kt-codegen@0.6.6`，完整 Registry 与干净消费结果见
+[发布回执](0.7.4发布验收.md)。
+`0.7.3` 六个发布单元的 Registry shasum 与干净消费者回执已从
+`079292d4bcf01e0deb3b948b497278019aa97a8a` 摘入[发布记录](0.7.3发布候选.md)，
+仅补历史证据，不合并该节点，也不把 `ec38785` 起的后续 Codegen/清理修改算入已发布包。
+2026-09-10 已用 pnpm 按依赖顺序正式发布三个变更单元；重新查询确认三个 exact 版本存在，
+对应 `latest` 分别为根包 `0.7.4`、`code-core@0.6.6` 与 `kt-codegen@0.6.6`。
+消费者的正式 Registry 依赖升级与回归仍由各自仓库独立完成。
+其他 scoped 包保持 release matrix 中各自的独立版本。后续版本
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-08-27
+最后核验：2026-09-10
+
+## 0.7.4 发布与归档
+
+- 按用户指定，将 `ec38785b` 起的五个提交（截至 `d14dc9e`）与本轮未提交修正合为一个节点，父节点固定为 `719b6b78fa`；主库 `develop` 随后快进到整理节点。原历史和整理前改动保留本地备份引用，不推送、不创建发布标签。
+- 包含独立生成规则及缓存身份、构造函数结束标记对齐、Combo 焦点/200 项边界与回填注释、参数表/预检 Header 统一、原生下拉主题配对，以及清理对话框的顶部动作、四区折叠、编辑失效保护和固定顶边。当前生成规则为 `1.0.2`。
+- 实际发布集合为根 `0.7.4`、`code-core/kt-codegen@0.6.6`，其他发布单元见[版本矩阵](三库版本矩阵.md)。正式消费者仍须精确升级 manifest/lock 并运行 Registry 门禁；此前本地来源联调不冒充 Registry 发布证明。
+- 本轮完整 `PNW_VERIFY_OFFLINE=1 pnpm verify:ci` 通过：97 份文档、架构检查、12 包矩阵、87 文件聚合产物、TypeScript/Vue 128 文件 / 810 测试、Rust 工作区 36 项、全部类型检查、干净 tarball 消费与 darwin-arm64 Rust source tarball 回归。首次调用缺少 Cargo PATH 后已补入本机工具路径并完整重跑成功。
+- 完整归档区间的源码/文档隐私检查未发现新增密钥、凭据或个人主目录路径；0.7.3 历史回执只保留制品校验信息。构建日志与旧本地联调包含机器路径，仅本机留存，不作为公开脱敏制品。
+- Windows 原生下拉配色、CAA 与实际格式化仍待实机验收；VS Code 独立浮窗不属于此次 Wing 改动。npm 发布与无相邻源码的干净 Registry consumer 已完成；本轮未执行 Git push、创建/推送 `v0.7.4` tag 或 Marketplace 上传。
 
 ## 已完成基线
 
@@ -249,6 +266,19 @@ Owner：Phoenix Wing maintainers
     Registry exact 版本在 2026-08-21 尚未占用。完整门禁、发布顺序、消费者证据和待办见
     [《0.7.1 发布候选与验收》](0.7.1发布候选.md)。未取得用户明确授权前不 publish，push/tag
     始终由开发者手工完成。
+
+11. **[后续 TODO：FCStd 动态属性写回与 Schema v13 路径规范]** 不阻塞当前
+    Desk 发布。真实 FreeCAD 1.1.0 点检证明，`pnwPatchEmbeddedBomFieldsInDocumentXml`
+    更新已有 `App::PropertyString` 时会重建紧凑 opening tag，从而丢失
+    `group/doc/attr/ro/hide/status` 等动态属性元数据；FreeCAD 重新打开后可不再注册
+    这些属性，再保存时删除 BOM 字段。后续由 `cad-core` 保留旧 opening tag
+    与非目标子节点，新建字段则补齐经验证的规范元数据；使用真实
+    `Document.xml` fixture 覆盖更新、新增、FreeCAD 保存/重开和兄弟属性不变。
+    同一任务审计 `pnwNormalizeCadRelativePath` 与内部 `indexRelativePath`
+    目前对 `./` 前缀的相反处理，为 Schema v13 的工作区相对路径冻结一种
+    canonical writer 格式与迁移期 reader 兼容策略；fixture、查询、索引键与文档必须一致。
+    Wing 新版本发布且 Desk 通过 `pnpm verify:cad-pointcheck` 后，消费端应删除
+    保留 opening tag 和双路径键的临时兼容层。
 
 Auto Code 已随 0.5.1 接入 `KtCodegenTable` 的 page/disclosure API；下一优先级是 Desk Tools 的 Registry 0.4.3 升级与消费验收。Windows NSIS 回执由用户手工并行，不阻塞本阶段代码目标。
 

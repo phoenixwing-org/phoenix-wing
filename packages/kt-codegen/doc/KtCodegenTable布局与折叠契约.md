@@ -74,6 +74,12 @@ table.collapsed = false;
 
 ## 验证
 
+### 2026-09-10 自动代码 Block Header 对齐
+
+`collapsible` 模式下，参数表与预检结果共用 `KtCodegenBlockHeader.ts` 的 Header 样式，按编译工具 Block 的基线统一旋转箭头、13px/600 标题、3px/7px 内边距和 4px 外圆角。标题及非工具空白区域均可折叠；原生 disclosure button 支持 Enter/空格，右侧工具、筛选、路径 checkbox 保持独立。参数表数据/选择及预检筛选/分栏状态不随折叠清空。
+
+此处复用的是 Header 展示基线，不是迁移所有 View 到新的折叠组件；未启用 `collapsible` 的旧消费者及 Body 的 contained/page、列表/详情滚动责任不变。纯 UI 修订不升级 `codegen-rules-version 1.0.0`。
+
 自动门禁：
 
 ```bash

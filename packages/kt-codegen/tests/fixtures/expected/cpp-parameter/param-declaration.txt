@@ -3,7 +3,7 @@
   // clang-format off
 
   // @app Kt Auto Code
-  // @version 5.0.0, (2024)
+  // @codegen-rules-version 1.0.2
 
   /**
    * @brief Machine ID
