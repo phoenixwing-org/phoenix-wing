@@ -13,6 +13,8 @@ Phoenix Code 可跨宿主复用的纯 TypeScript 算法与数据契约。包内�
 - CAA 工程环境和对话框 handoff 数据契约；
 - 跨宿主文件、成员排序、UUID 与搜索替换结果 ViewModel；成员排序、UUID 与搜索替换另提供 Host-neutral Web Components；
 - 递归多层 `PnwNavigationTreeModel` 与 `<pnw-navigation-tree>`：受控选择/展开事件、ARIA 键盘、受控图标以及 VS Code 风格 light/dark 状态。
+- Host-neutral `<pnw-combo>`：分组候选、逐行删除、全部清空和自动避让可见边界；
+- Host-neutral `<pnw-cleanup-dialog>`：多方式/多目标、冻结预览 token 与默认启用的高风险二次确认。Host 可设置 `requireHighRiskConfirmation: false` 省略额外勾选；高风险标记、有效预览和显式执行按钮仍保留。
 
 通用浏览器 UI 从稳定门面导入：
 
@@ -22,7 +24,8 @@ import type { PnwNavigationTreeModel } from "@phoenix-wing/code-core/ui/model";
 ```
 
 物理目录 `src/ui/elements/` 与 `src/ui/model/` 不是公共 subpath。完整契约见仓库
-[`docs/Pnw通用NavigationTreeWebComponent.md`](../../docs/Pnw通用NavigationTreeWebComponent.md)。
+[`docs/Pnw通用NavigationTreeWebComponent.md`](../../docs/Pnw通用NavigationTreeWebComponent.md)和
+[`docs/Pnw可管理Combo与统一清理能力.md`](../../docs/Pnw可管理Combo与统一清理能力.md)。
 
 `kt-auto-code` 与 Desk Tools 应直接消费本包。旧 `phoenix-wing/code-core` subpath 仅保留兼容 re-export，不再持有算法真源。
 

@@ -15,7 +15,8 @@ import {
   pnwValidateGitReadLimit,
 } from "./read-utils.js";
 
-export const PNW_GIT_COMMIT_GRAPH_CURSOR_VERSION = 1;
+// Version 1 used topo-order. Its skip/lane state cannot continue a date-order walk.
+export const PNW_GIT_COMMIT_GRAPH_CURSOR_VERSION = 2;
 
 export type PnwGitCommitGraphRefsScope =
   | "head"
@@ -39,7 +40,7 @@ export interface PnwGitCommitGraphPage {
   readonly root: string;
   readonly headOid: string;
   readonly refsScope: PnwGitCommitGraphRefsScope;
-  /** Newest-first topological page; every child appears before its parents. */
+  /** Committer-date order across branches, with every child before its parents. */
   readonly commits: readonly PnwGitCommitGraphCommit[];
   /** Pure lane projection aligned one-to-one with commits. */
   readonly graphRows: readonly PnwGitCommitGraphRow[];
@@ -171,7 +172,7 @@ async function pnwReadGitCommitGraphCommits(
     "log",
     "--no-color",
     "--no-show-signature",
-    "--topo-order",
+    "--date-order",
     "--decorate=full",
     "--decorate-refs=HEAD",
     "--decorate-refs=refs/heads/*",

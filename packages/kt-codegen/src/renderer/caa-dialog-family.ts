@@ -96,7 +96,7 @@ function ktCodegenRenderCaaDialogNotifyLines(
       lines.push(notes);
       const component = `${dialogPointer}_Combo${paramName}`;
       lines.push(
-        `${prefix}ipDialogAgent->AcceptOnNotify(${component}, ${component}->GetComboModifyNotification());`,
+        `${prefix}ipDialogAgent->AcceptOnNotify(${component}, ${component}->GetComboSelectNotification());`,
       );
       continue;
     }

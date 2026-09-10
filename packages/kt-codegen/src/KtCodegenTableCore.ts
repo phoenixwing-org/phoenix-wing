@@ -249,11 +249,16 @@ export class KtCodegenTableCore {
     };
   }
 
-  /** 把当前 items 设为保存/加载 checkpoint。 */
-  markCheckpoint(documentRevision = this.currentDocumentRevision): void {
+  /** 确认实际保存的 items 为 checkpoint；省略快照时使用当前 items。 */
+  markCheckpoint(
+    documentRevision = this.currentDocumentRevision,
+    savedItems?: KtCodegenTableData["items"],
+  ): void {
     this.currentDocumentRevision = Math.max(0, Math.trunc(documentRevision));
-    this.checkpointItems = ktCodegenCloneItems(this.param.items);
-    this.changed = false;
+    this.checkpointItems = ktCodegenCloneItems(savedItems ?? this.param.items);
+    // 异步保存只确认实际写出的快照，不能把保存期间的新草稿当成已保存。
+    this.changed = savedItems !== undefined
+      && JSON.stringify(this.param.items) !== JSON.stringify(this.checkpointItems);
   }
 
   /** 只还原 items，保持 Param/items 数组身份且不覆盖文档属性。 */

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { KtCodegenItem } from "../src/KtCodegenItem.js";
 import { KT_CODEGEN_TABLE_COLUMNS } from "../src/KtCodegenTableColumns.js";
 import {
+  KT_CODEGEN_TABLE_ACTIONS,
   ktCodegenFitTableColumnWidths,
   ktCodegenNormalizeTableLayout,
   ktCodegenTableColumnWidth,
@@ -14,6 +15,20 @@ import {
 } from "../src/table/KtCodegenTableViewModel.js";
 
 describe("KtCodegenTable ViewModel", () => {
+  it("九个默认业务按钮使用简短纯文字，保留动作顺序与完整提示", () => {
+    expect(KT_CODEGEN_TABLE_ACTIONS).toEqual([
+      ["autoFit", "自适应", "根据当前内容调整列宽"],
+      ["sort", "排序", "按旧 Qt 规则规范 Suffix 和 ID"],
+      ["copy", "复制", "复制当前行"],
+      ["paste", "粘贴", "用复制内容替换当前行"],
+      ["insert", "插入", "在当前行后插入"],
+      ["duplicate", "副本", "在当前行后创建副本"],
+      ["moveUp", "上移", "上移"],
+      ["moveDown", "下移", "下移"],
+      ["delete", "删除", "删除当前行"],
+    ]);
+  });
+
   it("归一化 contained/page，并让 collapsed 只在允许折叠时生效", () => {
     expect(ktCodegenNormalizeTableLayout(undefined)).toBe("contained");
     expect(ktCodegenNormalizeTableLayout("contained")).toBe("contained");

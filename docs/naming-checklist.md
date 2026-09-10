@@ -2,6 +2,12 @@
 
 规则：PascalCase → `Pnw` / camelCase → `pnw` / kebab-case → `pnw-` / UPPER_CASE → `PNW_`
 
+## Run Node 统一清理导出
+
+- 函数：`pnwPreviewRecursiveCleanupArtifacts`、`pnwCleanPreviewedRecursiveArtifacts`、`pnwPreviewGitUntrackedCleanup`、`pnwExecuteGitUntrackedCleanup`。
+- 类型：`PnwRecursiveCleanupArtifactPreview`、`PnwGitUntrackedRepositoryPreview`、`PnwGitUntrackedCleanupPreview`、`PnwGitUntrackedCleanupResult`。
+- Node 文件/Git 执行留在 `@phoenix-wing/run-node`；消费端保留确认、日志和 preview token 生命周期。递归/单 force 未跟踪清理不替换原直属/双 force 强制恢复入口。
+
 ---
 
 ## Vue 组件（5 个）— 全局注册，必须加

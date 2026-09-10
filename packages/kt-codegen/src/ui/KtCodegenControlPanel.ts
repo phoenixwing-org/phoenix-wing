@@ -66,6 +66,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 1px solid var(--pnw-co
 .pnw-codegen-row[aria-pressed="true"] .pnw-codegen-badge { color: inherit; opacity: .92; }
 .pnw-codegen-meta { overflow: hidden; color: var(--pnw-codegen-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .pnw-codegen-meta.pnw-codegen-path { overflow-wrap: anywhere; white-space: normal; }
+.pnw-codegen-row[aria-pressed="true"] .pnw-codegen-id,
+.pnw-codegen-row[aria-pressed="true"] .pnw-codegen-meta { color: inherit; }
 .pnw-codegen-splitter { position: relative; align-self: stretch; min-height: 100%; padding: 0; background: transparent; border: 0; cursor: col-resize; touch-action: none; }
 .pnw-codegen-splitter::before { content: ""; position: absolute; inset: 0 3px; background: var(--pnw-codegen-border); }
 .pnw-codegen-splitter:hover::before, .pnw-codegen-splitter:focus-visible::before { background: var(--pnw-codegen-focus); }

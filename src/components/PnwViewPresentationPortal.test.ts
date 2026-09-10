@@ -61,7 +61,7 @@ describe("PnwViewPresentationPortal", () => {
     );
   });
 
-  it("在 760px 与 480px 浮窗为标题保底，并将超宽业务 actions 收纳在 Host actions 左侧", async () => {
+  it("在 760px、480px 与最小 360px 浮窗保持三段式 Header，并只在中区收纳完整业务动作", async () => {
     expect(PNW_VIEW_PRESENTATION_PORTAL_SOURCE).toMatch(
       /pnw-view-presentation-dialog__header-target\s*\{[^}]*flex:\s*1 1 0;[^}]*width:\s*0;[^}]*overflow:\s*hidden;/su,
     );
@@ -69,10 +69,15 @@ describe("PnwViewPresentationPortal", () => {
       "--pnw-page-header-title-min-width, 112px",
     );
     expect(PNW_PAGE_HEADER_SOURCE).toMatch(
-      /pnw-head-actions\s*\{[^}]*width:\s*max-content;[^}]*overflow-x:\s*auto;/su,
+      /pnw-head-middle\s*\{[^}]*grid-column:\s*2;[^}]*min-width:\s*0;[^}]*overflow-x:\s*auto;/su,
     );
+    expect(PNW_PAGE_HEADER_SOURCE).toMatch(
+      /pnw-head-actions\s*>\s*\*,[\s\S]*?pnw-head-help\s*>\s*\*\s*\{\s*flex:\s*0 0 auto;/u,
+    );
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("justify-content: safe center");
+    expect(PNW_PAGE_HEADER_SOURCE).toContain("justify-content: safe flex-end");
 
-    for (const width of [760, 480]) {
+    for (const width of [760, 480, 360]) {
       const identity = {
         ...PNW_IDENTITY,
         viewInstanceId: `fixture.view:${width}`,
@@ -99,12 +104,15 @@ describe("PnwViewPresentationPortal", () => {
               record.value = next;
             },
           }, {
-            main: () => h(PnwPageHeader, { title: "功能列表" }, {
+            main: () => h(PnwPageHeader, {
+              title: "功能列表",
+              actionsAlign: width === 480 ? "end" : "center",
+            }, {
               actions: () => [
                 h("input", { class: "fixture-filter-wide", style: "width:300px" }),
                 h("select", { class: "fixture-filter-medium", style: "width:150px" }),
                 h("button", { class: "fixture-refresh" }, "刷新"),
-                h("button", { class: "fixture-archive" }, "归档"),
+                h("button", { class: "fixture-archive" }, "归档当前筛选结果"),
                 h("button", { class: "fixture-add" }, "添加"),
               ],
             }),
@@ -118,6 +126,10 @@ describe("PnwViewPresentationPortal", () => {
       const chrome = document.body.querySelector(".pnw-floating-panel__header");
       expect(chrome?.querySelector(".pnw-page-title")?.textContent).toBe("功能列表");
       expect(chrome?.querySelectorAll(".pnw-head-actions > *")).toHaveLength(5);
+      expect(chrome?.querySelector(".pnw-head-row")?.getAttribute("data-pnw-actions-align"))
+        .toBe(width === 480 ? "end" : "center");
+      expect(chrome?.querySelector(".fixture-archive")?.textContent)
+        .toBe("归档当前筛选结果");
       expect([...(chrome?.querySelectorAll<HTMLButtonElement>("button") ?? [])]
         .map((button) => button.className)).toEqual([
           "fixture-refresh",
@@ -126,6 +138,9 @@ describe("PnwViewPresentationPortal", () => {
           "pnw-floating-panel__reset-size",
           "pnw-view-presentation-dialog__reattach",
         ]);
+      const archive = chrome?.querySelector<HTMLButtonElement>(".fixture-archive");
+      archive?.focus();
+      expect(document.activeElement).toBe(archive);
       expect(document.body.querySelector<HTMLElement>(".pnw-floating-panel")?.style.getPropertyValue(
         "--pnw-floating-panel-width",
       )).toBe(`${width}px`);

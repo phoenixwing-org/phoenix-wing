@@ -59,6 +59,34 @@ describe("PnwPageLayout", () => {
     expect(wrapper.get(".pnw-page-layout-body").text()).toBe("Canvas");
   });
 
+  it("默认居中业务 actions，并允许通过公开语义配置靠右且保持子项可聚焦", () => {
+    const centered = mount(PnwPageLayout, {
+      props: { title: "品牌管理" },
+      slots: {
+        actions: () => [
+          h("button", { class: "fixture-runtime-check" }, "运行时点检"),
+          h("button", { class: "fixture-refresh" }, "刷新"),
+        ],
+      },
+      attachTo: document.body,
+    });
+    expect(centered.get(".pnw-head-row").attributes("data-pnw-actions-align")).toBe("center");
+    expect(centered.get(".pnw-head-middle").classes()).toContain("pnw-head-middle--center");
+    expect(centered.findAll(".pnw-head-actions > *")).toHaveLength(2);
+    const runtimeCheck = centered.get<HTMLButtonElement>(".fixture-runtime-check");
+    runtimeCheck.element.focus();
+    expect(document.activeElement).toBe(runtimeCheck.element);
+    centered.unmount();
+
+    const endAligned = mount(PnwPageLayout, {
+      props: { title: "品牌管理", actionsAlign: "end" },
+      slots: { actions: () => h("button", "刷新") },
+    });
+    expect(endAligned.get(".pnw-head-row").attributes("data-pnw-actions-align")).toBe("end");
+    expect(endAligned.get(".pnw-head-middle").classes()).toContain("pnw-head-middle--end");
+    expect(PNW_PAGE_LAYOUT_SOURCE).toContain(':actions-align="actionsAlign"');
+  });
+
   it("Primary 开关在 Editor Header 原位发出受控布局事件", async () => {
     const wrapper = mount(PnwWorkbenchLayout, {
       props: {

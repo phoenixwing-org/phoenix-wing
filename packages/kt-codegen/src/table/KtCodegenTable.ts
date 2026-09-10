@@ -160,10 +160,18 @@ export class KtCodegenTable extends HTMLElement {
     return this.core.getData();
   }
 
-  markCheckpoint(documentRevision = this.core.documentRevision): void {
+  markCheckpoint(
+    documentRevision = this.core.documentRevision,
+    savedItems?: KtCodegenTableData["items"],
+  ): void {
     const wasDirty = this.core.dirty;
-    this.core.markCheckpoint(documentRevision);
-    this.render();
+    this.core.markCheckpoint(documentRevision, savedItems);
+    if (savedItems === undefined) this.render();
+    else {
+      // 保存回执不修改当前数据；不要重绘正在编辑的输入框或移走焦点。
+      this.syncActions();
+      this.syncDirtyStatus();
+    }
     this.emitDirtyTransition(wasDirty);
   }
 

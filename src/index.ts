@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.7.2'
+export const PNW_VERSION = '0.7.3'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -647,6 +647,7 @@ export {
   type PnwViewPresentationContext,
   type PnwViewPresentationHeaderChannel,
 } from './composables/usePnwViewPresentationContext.js'
+export type { PnwPageHeaderActionsAlign } from './types/PnwPageHeader.js'
 
 // ---------------------------------------------------------------------------
 // Vue3 组件 — 根入口与兼容子路径均解析到同一 dist 模块图

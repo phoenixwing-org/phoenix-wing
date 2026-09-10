@@ -7,6 +7,9 @@
 `@phoenix-wing/kt-codegen/ui` 的 Primary 面板顶层 Section 默认横向满宽；Section
 之间 `gap: 0`，无横向边框与圆角卡片，只用下边框形成连续分隔。标题、列表、
 表单与按钮各自在内部保留紧凑 padding，Host 不需要穿透 Shadow DOM 补外边距。
+Primary 动作使用“打开 / 导入 / 应用 / 刷新 / 扫描”短文字，窄栏可换行；tooltip 与
+`aria-label` 保留完整含义。刷新/扫描中显示“取消”，其他按钮和列表行随操作锁禁用，
+结束后恢复。上述行为由组件统一提供，Host 只处理既有语义事件。
 
 ## 文件与命名规则
 

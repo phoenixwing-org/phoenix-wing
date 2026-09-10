@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type {
-  KtCodegenPrimaryAction,
+  KtCodegenPrimaryActionDetail,
   KtCodegenPrimaryUiModel,
 } from "./KtCodegenUiContracts.js";
 
@@ -12,7 +12,7 @@ type KtCodegenPrimaryOperationState = Pick<KtCodegenPrimaryUiModel, "operation" 
  */
 export function ktCodegenPrimaryActionDisabled(
   model: KtCodegenPrimaryOperationState | undefined,
-  action: KtCodegenPrimaryAction,
+  action: KtCodegenPrimaryActionDetail["action"],
   enabled: boolean,
 ): boolean {
   if (!enabled) return true;
