@@ -25,6 +25,7 @@
   _RadioButtonMode0->SetState((parameter->Mode == 0) ? CATDlgCheck : CATDlgUncheck, 0);
   _RadioButtonMode1->SetState((parameter->Mode == 1) ? CATDlgCheck : CATDlgUncheck, 0);
 
+  // 6,Index,integer combo
   _ComboIndex->SetSelect( parameter->Index, 0);
 
   _ComboBadCombo,NO ACTION,Data Type Error, KtString
@@ -46,8 +47,10 @@
   // 13,Wrong_List,invalid list type
 data type is wrong!
 
+  // 14,Scale,double combo
   _ComboScale->SetField( parameter->Scale);
 
+  // 15,Label,unicode combo
   _ComboLabel->SetField( parameter->Label);
 
   // 16,AxisSpec,absolute fallback

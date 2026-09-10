@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.6.5
+        specifier: workspace:0.6.6
         version: link:packages/code-core
       '@phoenix-wing/db-node':
         specifier: workspace:0.6.3

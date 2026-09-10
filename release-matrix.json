@@ -1,13 +1,13 @@
 {
   "schema_version": 2,
   "packages": [
-    { "name": "phoenix-wing", "version": "0.7.3", "manifest": "package.json", "kind": "compat-ui" },
-    { "name": "@phoenix-wing/code-core", "version": "0.6.5", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
+    { "name": "phoenix-wing", "version": "0.7.4", "manifest": "package.json", "kind": "compat-ui" },
+    { "name": "@phoenix-wing/code-core", "version": "0.6.6", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/git-core", "version": "0.6.4", "manifest": "packages/git-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/git-node", "version": "0.6.5", "manifest": "packages/git-node/package.json", "kind": "node-adapter" },
     { "name": "@phoenix-wing/run-core", "version": "0.6.4", "manifest": "packages/run-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/run-node", "version": "0.6.4", "manifest": "packages/run-node/package.json", "kind": "node-adapter" },
-    { "name": "@phoenix-wing/kt-codegen", "version": "0.6.5", "manifest": "packages/kt-codegen/package.json", "kind": "typescript-core" },
+    { "name": "@phoenix-wing/kt-codegen", "version": "0.6.6", "manifest": "packages/kt-codegen/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/cad-contracts", "version": "0.6.3", "manifest": "packages/cad-contracts/package.json", "kind": "typescript-contracts" },
     { "name": "@phoenix-wing/cad-core", "version": "0.6.3", "manifest": "packages/cad-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/workspace-schema", "version": "0.6.3", "manifest": "packages/workspace-schema/package.json", "kind": "schema" },

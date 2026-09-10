@@ -226,6 +226,7 @@ export class PnwCombo extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.pnwSetOpen(false);
     if (!this.pnwListening) return;
     this.ownerDocument.removeEventListener("pointerdown", this.pnwOnDocumentPointerDown);
     this.ownerDocument.removeEventListener("scroll", this.pnwOnViewportChange, true);
@@ -251,39 +252,42 @@ export class PnwCombo extends HTMLElement {
 
   private pnwEnsureDom(): void {
     if (this.pnwTrigger) return;
-    const style = document.createElement("style");
+    const style = this.ownerDocument.createElement("style");
     style.textContent = PNW_COMBO_STYLE;
-    const trigger = document.createElement("button");
+    const trigger = this.ownerDocument.createElement("button");
     trigger.type = "button";
     trigger.className = "pnw-combo-trigger";
     trigger.setAttribute("part", "trigger");
     trigger.setAttribute("role", "combobox");
     trigger.setAttribute("aria-haspopup", "listbox");
     trigger.setAttribute("aria-expanded", "false");
-    const value = document.createElement("span");
+    trigger.setAttribute("aria-controls", "pnw-combo-listbox");
+    const value = this.ownerDocument.createElement("span");
     value.className = "pnw-combo-value";
     value.setAttribute("part", "value");
     trigger.append(value, this.pnwCaret());
     trigger.onclick = () => this.pnwSetOpen(!this.pnwOpen, true);
     trigger.onkeydown = (event) => this.pnwOnTriggerKeyDown(event);
 
-    const popup = document.createElement("div");
+    const popup = this.ownerDocument.createElement("div");
     popup.className = "pnw-combo-popup";
     popup.setAttribute("part", "popup");
     popup.hidden = true;
     popup.onkeydown = (event) => this.pnwOnPopupKeyDown(event);
-    const list = document.createElement("div");
+    const list = this.ownerDocument.createElement("div");
+    list.id = "pnw-combo-listbox";
     list.className = "pnw-combo-list";
     list.setAttribute("role", "listbox");
-    const footer = document.createElement("div");
+    const footer = this.ownerDocument.createElement("div");
     footer.className = "pnw-combo-footer";
-    const clear = document.createElement("button");
+    const clear = this.ownerDocument.createElement("button");
     clear.type = "button";
     clear.className = "pnw-combo-clear";
     clear.setAttribute("part", "clear");
     clear.onclick = () => {
-      if (!this.pnwActiveModel.clearEnabled) return;
+      if (this.pnwActiveModel.disabled || !this.pnwActiveModel.clearEnabled) return;
       this.pnwSetOpen(false);
+      this.pnwTrigger?.focus();
       this.pnwEmit({ kind: "clear" });
     };
     footer.append(clear);
@@ -300,6 +304,11 @@ export class PnwCombo extends HTMLElement {
   private pnwApplyModel(): void {
     if (!this.pnwTrigger || !this.pnwValue || !this.pnwPopup || !this.pnwList
       || !this.pnwFooter || !this.pnwClearButton) return;
+    const active = this.pnwRoot.activeElement as HTMLElement | null;
+    const focusedRow = active?.closest<HTMLElement>(".pnw-combo-row");
+    const focusedRowIndex = focusedRow
+      ? Array.from(this.pnwList.querySelectorAll(".pnw-combo-row")).indexOf(focusedRow)
+      : -1;
     const selected = this.pnwActiveModel.items.find(({ id }) => id === this.pnwActiveModel.selectedId);
     this.pnwValue.textContent = selected?.label ?? this.pnwActiveModel.placeholder;
     this.pnwValue.title = selected?.title ?? selected?.label ?? this.pnwActiveModel.placeholder;
@@ -307,6 +316,7 @@ export class PnwCombo extends HTMLElement {
     this.pnwTrigger.title = this.pnwActiveModel.disabledReason
       ?? selected?.title ?? selected?.label ?? this.pnwActiveModel.placeholder;
     this.pnwTrigger.setAttribute("aria-label", this.pnwActiveModel.ariaLabel);
+    this.pnwList.setAttribute("aria-label", this.pnwActiveModel.ariaLabel);
     if (this.pnwActiveModel.disabled) this.pnwSetOpen(false);
 
     const groups = new Map<string, PnwComboItem[]>();
@@ -318,29 +328,44 @@ export class PnwCombo extends HTMLElement {
     }
     const groupNodes = Array.from(groups, ([group, items]) => this.pnwGroupNode(group, items));
     if (!groupNodes.length) {
-      const empty = document.createElement("div");
+      const empty = this.ownerDocument.createElement("div");
       empty.className = "pnw-combo-empty";
       empty.textContent = this.pnwActiveModel.emptyText;
       groupNodes.push(empty);
     }
     this.pnwList.replaceChildren(...groupNodes);
     this.pnwClearButton.textContent = this.pnwActiveModel.clearLabel;
-    this.pnwClearButton.disabled = !this.pnwActiveModel.clearEnabled;
+    this.pnwClearButton.disabled = this.pnwActiveModel.disabled || !this.pnwActiveModel.clearEnabled;
     this.pnwClearButton.title = this.pnwActiveModel.clearEnabled
       ? this.pnwActiveModel.clearLabel
       : (this.pnwActiveModel.clearDisabledReason ?? "当前没有可清空的项目");
-    this.pnwClearButton.setAttribute("aria-label", this.pnwActiveModel.clearLabel);
+    this.pnwClearButton.setAttribute("aria-label", this.pnwActiveModel.clearEnabled
+      ? this.pnwActiveModel.clearLabel
+      : `${this.pnwActiveModel.clearLabel}：${this.pnwClearButton.title}`);
     this.pnwFooter.hidden = this.pnwActiveModel.items.length === 0
       && !this.pnwActiveModel.clearEnabled;
+    if (this.pnwOpen && focusedRow) {
+      const rows = Array.from(this.pnwList.querySelectorAll<HTMLElement>(".pnw-combo-row"));
+      const retained = rows.find((row) => row.dataset.itemId === focusedRow.dataset.itemId);
+      const replacement = retained ?? rows[Math.min(focusedRowIndex, rows.length - 1)];
+      const action = active?.classList.contains("pnw-combo-remove") && retained
+        ? replacement?.querySelector<HTMLButtonElement>(".pnw-combo-remove:not(:disabled)")
+        : undefined;
+      if (replacement) (action ?? replacement.querySelector<HTMLButtonElement>(".pnw-combo-select"))?.focus();
+      else {
+        this.pnwSetOpen(false);
+        this.pnwTrigger.focus();
+      }
+    }
     if (this.pnwOpen) queueMicrotask(() => this.pnwPlacePopup());
   }
 
   private pnwGroupNode(group: string, items: readonly PnwComboItem[]): HTMLDivElement {
-    const groupNode = document.createElement("div");
+    const groupNode = this.ownerDocument.createElement("div");
     groupNode.className = "pnw-combo-group";
     groupNode.setAttribute("role", "group");
     if (group) {
-      const label = document.createElement("div");
+      const label = this.ownerDocument.createElement("div");
       label.className = "pnw-combo-group-label";
       label.textContent = group;
       label.title = group;
@@ -352,11 +377,11 @@ export class PnwCombo extends HTMLElement {
   }
 
   private pnwItemNode(item: PnwComboItem): HTMLDivElement {
-    const row = document.createElement("div");
+    const row = this.ownerDocument.createElement("div");
     row.className = "pnw-combo-row";
     row.setAttribute("part", "row");
     row.dataset.itemId = item.id;
-    const select = document.createElement("button");
+    const select = this.ownerDocument.createElement("button");
     select.type = "button";
     select.className = "pnw-combo-select";
     select.setAttribute("role", "option");
@@ -364,20 +389,25 @@ export class PnwCombo extends HTMLElement {
     select.setAttribute("aria-label", `选择${item.label}`);
     select.textContent = item.label;
     select.title = item.title ?? item.label;
+    select.disabled = this.pnwActiveModel.disabled;
     select.onclick = () => {
+      if (this.pnwActiveModel.disabled) return;
       this.pnwSetOpen(false);
+      this.pnwTrigger?.focus();
       this.pnwEmit({ kind: "select", itemId: item.id });
     };
-    const remove = document.createElement("button");
+    const remove = this.ownerDocument.createElement("button");
     remove.type = "button";
     remove.className = "pnw-combo-remove";
     remove.textContent = "×";
-    remove.disabled = !item.removable;
+    remove.disabled = this.pnwActiveModel.disabled || !item.removable;
     remove.title = item.removable ? `删除${item.label}` : (item.removeDisabledReason ?? "此项不能删除");
-    remove.setAttribute("aria-label", `删除${item.label}`);
+    remove.setAttribute("aria-label", item.removable
+      ? `删除${item.label}`
+      : `删除${item.label}：${remove.title}`);
     remove.onclick = (event) => {
       event.stopPropagation();
-      if (!item.removable) return;
+      if (this.pnwActiveModel.disabled || !item.removable) return;
       this.pnwEmit({ kind: "remove", itemId: item.id });
     };
     row.append(select, remove);
@@ -391,7 +421,9 @@ export class PnwCombo extends HTMLElement {
     this.pnwTrigger.setAttribute("aria-expanded", this.pnwOpen ? "true" : "false");
     if (this.pnwOpen) {
       this.pnwPlacePopup();
-      if (focusFirst) queueMicrotask(() => this.pnwOptionButtons()[0]?.focus());
+      if (focusFirst) queueMicrotask(() => {
+        if (this.pnwOpen && this.isConnected) this.pnwOptionButtons()[0]?.focus();
+      });
     }
   }
 
@@ -434,7 +466,8 @@ export class PnwCombo extends HTMLElement {
   ): typeof viewport {
     const boundary = { ...viewport };
     const view = this.ownerDocument.defaultView;
-    let ancestor = this.parentElement;
+    let ancestor = this.assignedSlot ?? this.parentElement
+      ?? (this.getRootNode() as ShadowRoot).host ?? null;
     while (ancestor) {
       const style = view?.getComputedStyle(ancestor);
       if (style && /(?:auto|scroll|hidden|clip)/u.test(
@@ -446,7 +479,8 @@ export class PnwCombo extends HTMLElement {
         boundary.right = Math.min(boundary.right, rect.right);
         boundary.bottom = Math.min(boundary.bottom, rect.bottom);
       }
-      ancestor = ancestor.parentElement;
+      ancestor = ancestor.assignedSlot ?? ancestor.parentElement
+        ?? (ancestor.getRootNode() as ShadowRoot).host ?? null;
     }
     return boundary;
   }
@@ -456,7 +490,9 @@ export class PnwCombo extends HTMLElement {
       event.preventDefault();
       this.pnwSetOpen(true);
       const options = this.pnwOptionButtons();
-      queueMicrotask(() => (event.key === "ArrowUp" ? options.at(-1) : options[0])?.focus());
+      queueMicrotask(() => {
+        if (this.pnwOpen && this.isConnected) (event.key === "ArrowUp" ? options.at(-1) : options[0])?.focus();
+      });
       return;
     }
     if (event.key === "Escape" && this.pnwOpen) {
@@ -474,6 +510,8 @@ export class PnwCombo extends HTMLElement {
     }
     if (event.key === "Tab") {
       this.pnwSetOpen(false);
+      // Let native Tab/Shift+Tab continue from the trigger, not a hidden option.
+      this.pnwTrigger?.focus();
       return;
     }
     if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
@@ -496,11 +534,11 @@ export class PnwCombo extends HTMLElement {
   }
 
   private pnwCaret(): SVGSVGElement {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const svg = this.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add("pnw-combo-caret");
     svg.setAttribute("viewBox", "0 0 16 16");
     svg.setAttribute("aria-hidden", "true");
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const path = this.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", "M4 6l4 4 4-4");
     svg.append(path);
     return svg;

@@ -26,6 +26,15 @@ phoenix-wing 是发布到 npm 的公共库，所有对外暴露的名称必须�
 
 详细规则见 `docs/命名规则.md`。
 
+### Codegen 生成规则版本（强制）
+
+- `packages/kt-codegen` 的 `@codegen-rules-version` 独立于 Wing/npm、Auto 插件、旧 Windows App、输入 JSON 与 Plan schema 版本；独立系列从 `1.0.0` 开始，当前规则为 `1.0.2`，不沿用旧 `@version` 与年份。
+- 对相同输入，START/END 控制符内部生成内容发生变化就必须升级规则版本：API/信号调用、声明/默认值、模板、输出注释、空白/缩进，以及 START/END 或 clang-format 边界输出。解析/选区变化若影响生成或替换内容，也必须让旧预检计划失效。纯 UI、布局、滚动和打包不升级规则版本。
+- 兼容修错升 patch，兼容新增规则升 minor，破坏性生成契约变化升 major。规则修改须同时更新公开规则常量、真实消费者的预检缓存版本/来源门禁、定向输出回归和版本说明；只改头部注释不等于旧缓存已失效。
+- 不批量改写用户源码，不大范围刷新旧 golden 来掩盖无关变化，不让旧 Registry 运行时冒充新规则。消费者本地门禁通过不等于已发布到 Registry。
+- 2026-09-10 用户已授权修复构造函数 END/clang-format 结束标记对齐。规则 `1.0.1` 只让两条结束标记跟随 END 后第一条非空、非纯注释语义行的缩进；无后续语义行时保留旧 END 的缩进。不得顺带修改用户代码区、其他模板或格式化工程；本机 clang-format 回归不等于 Windows 实机验收。
+- 2026-09-10 用户已授权 Combo 参数回填注释修复。规则 `1.0.2` 只在 CAA `UPDATE DIALOG` 的 `int` / `double` / `CATUnicodeString` Combo 赋值前追加当前字段自身的 `id,paramString,notes`，不改 `SetSelect` / `SetField` 参数、未支持分支或反向 `UPDATE INFORS`。前一规则 `1.0.1` 计划须失效；纯生成器测试不等于 Windows/CAA 实机验收。
+
 ## 项目定位
 
 phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `docs/plan.md`，历史迁移决策由 `docs/document-manifest.json` 标记为 archived/superseded。
@@ -47,6 +56,8 @@ phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `d
 `packages/` npm workspace 与 Cargo workspace 已落地；继续遵循真实消费者驱动，不预建无消费者的包。
 
 ## 消费者本地联调（AI 强制）
+
+本地活动开发工作树固定使用共享 Phoenix 根下的 `worktrees/phoenix-wing-working`（2026-09-10 用户指定，当前分支 `v0.7.4`）。`worktrees/phoenix-wing` 仅作为消费者并列解析的符号链接指向该目录。版本分支可演进，但不要再创建按版本命名的隐藏 `.worktrees` 开发目录，也不要将这些本机路径写入依赖清单或 lockfile。
 
 Phoenix 三个开发仓库使用唯一的标准并列目录，目录名不得自行变体：
 

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { KT_CODEGEN_BLOCK_HEADER_STYLE } from "../ui/KtCodegenBlockHeader.js";
+
 /** KtCodegenTable Shadow DOM 内部类名；同时驱动样式与 DOM，避免两处字符串漂移。 */
 export const KT_CODEGEN_TABLE_CLASSES = Object.freeze({
   toolbar: "pnw-kt-codegen-table-toolbar",
@@ -177,7 +179,13 @@ td > input:not([type="checkbox"]), td > select {
 }
 td.${KT_CODEGEN_TABLE_CLASSES.booleanCell} { text-align: center; }
 td.${KT_CODEGEN_TABLE_CLASSES.booleanCell} input { width: 16px; height: 16px; accent-color: var(--vscode-button-background, #007acc); }
+/* Native Windows popups must not inherit a selected table row's white text on a light menu. */
+td > select > option {
+  color: var(--vscode-dropdown-foreground, var(--vscode-input-foreground, var(--vscode-foreground, CanvasText)));
+  background: var(--vscode-dropdown-background, var(--vscode-input-background, var(--vscode-editor-background, Canvas)));
+}
 option.${KT_CODEGEN_TABLE_CLASSES.unknownOption} { color: var(--vscode-editorWarning-foreground, #b89500); }
+@media (forced-colors: active) { td > select > option { color: CanvasText; background: Canvas; } }
 .${KT_CODEGEN_TABLE_CLASSES.empty} {
   position: absolute;
   inset: 42px 16px auto;
@@ -205,4 +213,5 @@ option.${KT_CODEGEN_TABLE_CLASSES.unknownOption} { color: var(--vscode-editorWar
 .${KT_CODEGEN_TABLE_CLASSES.status}.${KT_CODEGEN_TABLE_CLASSES.error} { color: var(--vscode-errorForeground, #c72e0f); }
 .${KT_CODEGEN_TABLE_CLASSES.status}.${KT_CODEGEN_TABLE_CLASSES.dirty} { color: var(--vscode-editorWarning-foreground, #b89500); }
 :host([collapsible][collapsed]) .${KT_CODEGEN_TABLE_CLASSES.toolbar} { border-bottom: 0; }
+${KT_CODEGEN_BLOCK_HEADER_STYLE}
 `;

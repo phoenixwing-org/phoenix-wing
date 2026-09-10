@@ -218,9 +218,9 @@ function ktCodegenRenderCaaUpdateDialogLines(
     if (item.component.startsWith("Combo")) {
       const component = `${dialogPointer}_Combo${name}`;
       if (item.dataType === "int") {
-        lines.push(`${prefix}${component}->SetSelect( ${param}, 0);`);
+        lines.push(`${prefix}${notes}`, `${prefix}${component}->SetSelect( ${param}, 0);`);
       } else if (item.dataType === "double" || item.dataType === "CATUnicodeString") {
-        lines.push(`${prefix}${component}->SetField( ${param});`);
+        lines.push(`${prefix}${notes}`, `${prefix}${component}->SetField( ${param});`);
       } else {
         lines.push(
           `${prefix}${component},NO ACTION,Data Type Error, ${item.dataType}`,

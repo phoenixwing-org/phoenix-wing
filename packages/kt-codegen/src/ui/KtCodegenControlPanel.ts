@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { KT_CODEGEN_BLOCK_PRESENTATIONS } from "../KtCodegenBlockPresentation.js";
+import { KT_CODEGEN_BLOCK_HEADER_STYLE } from "./KtCodegenBlockHeader.js";
 import type { KtCodegenBlockKey } from "../blocks/legacy-blocks.js";
 import type { KtCodegenDiagnostic } from "../model/diagnostic.js";
 import {
@@ -19,6 +20,13 @@ import type {
 } from "./KtCodegenUiContracts.js";
 
 export const KT_CODEGEN_CONTROL_PANEL_TAG_NAME = "kt-codegen-control-panel";
+export const KT_CODEGEN_CONTROL_COLLAPSE_CHANGE = "kt-codegen-control-collapse-change";
+
+export interface KtCodegenControlCollapseChangeDetail {
+  readonly collapsed: boolean;
+}
+
+const CONTROL_BODY_ID = "pnw-codegen-control-body";
 
 const STYLE = `
 :host {
@@ -33,6 +41,7 @@ const STYLE = `
   display: block; min-width: 0; min-height: 0; color: var(--vscode-foreground, var(--text, inherit));
   background: var(--pnw-codegen-bg); font: 12px/1.35 var(--vscode-font-family, system-ui, sans-serif);
 }
+:host([collapsible]) { border: 1px solid var(--pnw-codegen-border); }
 * { box-sizing: border-box; }
 button, input { font: inherit; }
 button { cursor: pointer; }
@@ -83,11 +92,14 @@ button:focus-visible, [tabindex]:focus-visible { outline: 1px solid var(--pnw-co
 .pnw-codegen-preview { display: block; flex: 1 1 auto; min-height: 120px; margin: 9px 0 0; padding: 9px; overflow: auto; color: var(--vscode-editor-foreground, var(--text, inherit)); background: var(--vscode-textCodeBlock-background, color-mix(in srgb, var(--pnw-codegen-bg) 82%, #888)); border: 1px solid var(--pnw-codegen-border); border-radius: 5px; font: 12px/1.45 var(--vscode-editor-font-family, ui-monospace, monospace); white-space: pre; }
 .pnw-codegen-empty { padding: 22px 12px; color: var(--pnw-codegen-muted); text-align: center; }
 @media (max-width: 680px) { .pnw-codegen-layout { grid-template-columns: minmax(150px, var(--pnw-codegen-master, 42%)) 7px minmax(0, 1fr); } .pnw-codegen-detail { padding: 8px; } }
+${KT_CODEGEN_BLOCK_HEADER_STYLE}
 `;
 
 const presentationByKey = new Map(KT_CODEGEN_BLOCK_PRESENTATIONS.map((item) => [item.key, item]));
 
 export class KtCodegenControlPanel extends HTMLElement {
+  static get observedAttributes(): string[] { return ["collapsible", "collapsed"]; }
+
   private readonly root = this.attachShadow({ mode: "open" });
   private currentModel: KtCodegenControlUiModel | undefined;
   private resultFilter: KtCodegenControlUiFilter = "hits";
@@ -105,6 +117,18 @@ export class KtCodegenControlPanel extends HTMLElement {
     this.render();
   }
 
+  get collapsible(): boolean { return this.hasAttribute("collapsible"); }
+  set collapsible(value: boolean) {
+    if (this.collapsible === Boolean(value)) return;
+    this.toggleAttribute("collapsible", Boolean(value));
+  }
+
+  get collapsed(): boolean { return this.hasAttribute("collapsed"); }
+  set collapsed(value: boolean) {
+    if (this.collapsed === Boolean(value)) return;
+    this.toggleAttribute("collapsed", Boolean(value));
+  }
+
   get splitRatio(): number { return this.currentSplitRatio; }
   set splitRatio(value: number) {
     this.currentSplitRatio = ktCodegenClampControlSplitPercent(value);
@@ -113,21 +137,55 @@ export class KtCodegenControlPanel extends HTMLElement {
 
   connectedCallback(): void { this.render(); }
 
+  attributeChangedCallback(): void { this.render(); }
+
   private render(): void {
     if (!this.isConnected) return;
     const style = document.createElement("style");
     style.textContent = STYLE;
     const title = document.createElement("div");
     title.className = "pnw-codegen-title";
+    title.dataset.codegenBlockHeader = "";
     const name = document.createElement("span");
     name.className = "pnw-codegen-title-name";
+    name.dataset.codegenBlockTitle = "";
     name.textContent = "预检结果";
-    const spacer = document.createElement("span");
-    spacer.className = "pnw-codegen-spacer";
+    if (this.collapsible) {
+      const collapse = document.createElement("button");
+      collapse.type = "button";
+      collapse.className = "pnw-codegen-collapse";
+      collapse.dataset.codegenBlockToggle = "";
+      const indicator = document.createElement("span");
+      indicator.dataset.codegenBlockIndicator = "";
+      indicator.textContent = "›";
+      indicator.setAttribute("aria-hidden", "true");
+      collapse.append(indicator, name);
+      collapse.title = this.collapsed ? "展开预检结果" : "收起预检结果";
+      collapse.setAttribute("aria-label", collapse.title);
+      collapse.setAttribute("aria-expanded", String(!this.collapsed));
+      collapse.setAttribute("aria-controls", CONTROL_BODY_ID);
+      collapse.onclick = () => {
+        this.collapsed = !this.collapsed;
+        this.root.querySelector<HTMLButtonElement>(".pnw-codegen-collapse")?.focus();
+        this.dispatchEvent(new CustomEvent<KtCodegenControlCollapseChangeDetail>(
+          KT_CODEGEN_CONTROL_COLLAPSE_CHANGE,
+          { bubbles: true, composed: true, detail: { collapsed: this.collapsed } },
+        ));
+      };
+      // Header padding is also a disclosure target. Tool clicks are siblings,
+      // so their native checkbox/keyboard behavior never toggles the block.
+      title.onclick = (event) => { if (event.target === title) collapse.click(); };
+      title.append(collapse);
+    } else {
+      const spacer = document.createElement("span");
+      spacer.className = "pnw-codegen-spacer";
+      title.append(name, spacer);
+    }
     const plan = this.currentModel?.preflight?.plan;
     const issueCount = plan?.diagnostics.filter((item) => item.severity !== "info").length ?? 0;
-    title.append(name, spacer);
-    title.append(
+    const actions = this.collapsible ? document.createElement("div") : title;
+    if (this.collapsible) actions.dataset.codegenBlockActions = "";
+    actions.append(
       this.filterButton(`命中 ${plan?.markerRegions.length ?? 0}`, "hits"),
       this.filterButton(`问题 ${issueCount}`, "issues"),
       this.filterButton(`全部 ${(plan?.markerRegions.length ?? 0) + issueCount}`, "all"),
@@ -145,7 +203,13 @@ export class KtCodegenControlPanel extends HTMLElement {
     cache.className = "pnw-codegen-cache";
     cache.textContent = this.cacheLabel();
     cache.title = this.currentModel?.preflight?.message ?? "";
-    title.append(pathToggle, cache);
+    actions.append(pathToggle, cache);
+    if (actions !== title) title.append(actions);
+
+    const body = document.createElement("div");
+    body.className = "pnw-codegen-body";
+    body.id = CONTROL_BODY_ID;
+    body.hidden = this.collapsible && this.collapsed;
 
     const summary = document.createElement("div");
     summary.className = "pnw-codegen-summary";
@@ -153,7 +217,8 @@ export class KtCodegenControlPanel extends HTMLElement {
     summary.setAttribute("aria-live", "polite");
     if (!plan || !this.currentModel?.preflight) {
       summary.textContent = "尚未预检。可点击页面上方“预检”，或直接点击 Apply 自动预检并写入源码。";
-      this.root.replaceChildren(style, title, summary);
+      body.append(summary);
+      this.root.replaceChildren(style, title, body);
       return;
     }
     summary.textContent = `${plan.markerRegions.length} 个区域 · ${plan.artifacts.length} 个产物 · ${plan.diagnostics.length} 条诊断`
@@ -175,7 +240,8 @@ export class KtCodegenControlPanel extends HTMLElement {
     detail.setAttribute("aria-label", "当前预检项详情");
     detail.append(selected ? this.detailNode(selected) : this.empty("选择左侧条目查看详情。"));
     layout.append(master, this.resultSplitter(layout), detail);
-    this.root.replaceChildren(style, title, summary, layout);
+    body.append(summary, layout);
+    this.root.replaceChildren(style, title, body);
   }
 
   private cacheLabel(): string {

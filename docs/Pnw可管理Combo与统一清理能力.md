@@ -33,6 +33,21 @@ Wing 不保存业务项目状态、不选择持久化介质，也不调用 VS Co
 - 下拉浮层以 viewport 和滚动裁剪祖先的交集为可见边界，空间不足时自动向上展开，
   并在内部滚动，不要求用户先移动整个面板。
 
+2026-09-10，Auto Code 0.9.2 联合收尾只改 Combo，不扩展本文的清理对话框或编译工具：
+
+- `PnwComboModel`、`PnwComboActionDetail`、`PNW_COMBO_TAG`、`PNW_COMBO_ACTION` 和
+  `pnwCodeDefineCombo` 都由本包公开；消费者不再复制类型或通过 `unknown` 强制转换。
+- 保留 200 个有效唯一项的输入上限、冻结投影和受保护删除语义，不新增搜索或虚拟化。
+- `select / clear` 关闭后先返回触发器再发送事件，允许 Host 后续获得焦点；`remove` 后
+  Host 回传模型时保留原操作或邻近项焦点，空列表返回触发器，不抢组件外焦点。
+- Tab / Shift+Tab 沿原生顺序离开，Escape 返回触发器；点外或断开后不让旧微任务重新
+  聚焦隐藏菜单。combobox/listbox 通过 ARIA 关联，禁用删除原因进入可访问名称。
+- 沿 Shadow Host 和 assigned slot 继续计算裁剪祖先，DOM 由 `ownerDocument` 创建。
+- 定向 Happy DOM 13 例、本包全量 20 文件 / 111 例及类型检查通过。Chrome 独立组件页验证了键盘出口、选择/
+  删除/清空焦点、点外关闭、AX 禁用原因及上下避让。浅/深/高对比 token 样例仅为组件
+  截图点检，不等于实际 Extension Host 多窗口、Windows、系统强制颜色或屏幕阅读器通过。
+- 这些是候选源码改动，不表示 npm 已发布；scoped 版本与消费者 Registry 门禁须另行统一核验。
+
 这与只编辑一个字符串的 `PnwComboTextInput`、只选字典项的 `PnwDictSelect` 语义不同，
 因此不合并已有控件。
 

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { KtCodegenBlockKey } from "../src/blocks/index.js";
 import { KtCodegenController } from "../src/KtCodegenController.js";
 import { KtCodegenItem } from "../src/KtCodegenItem.js";
+import { KT_CODEGEN_GENERATOR_VERSION, ktCodegenCheckPlanCompatibility } from "../src/index.js";
 import { ktCodegenReadFixture } from "./helpers.js";
 
 const CPP_PARAMETER_BLOCKS = [
@@ -27,7 +28,7 @@ function loadedController(): KtCodegenController {
 }
 
 describe("KtCodegenRenderer C++ Parameter blocks", () => {
-  it("matches the four archived VB blocks and links every artifact to a safe region", () => {
+  it("matches approved C++ outputs and links every artifact to a safe region", () => {
     const controller = loadedController();
     const text = ktCodegenReadFixture("source/cpp-parameter-blocks.hpp");
     const originalParam = JSON.stringify(controller.param);
@@ -87,6 +88,32 @@ describe("KtCodegenRenderer C++ Parameter blocks", () => {
     expect(JSON.stringify(controller.param)).toBe(originalParam);
     expect(text.startsWith("// outside-before")).toBe(true);
     expect(text.endsWith("// outside-after\n")).toBe(true);
+  });
+
+  it("exports independent rules version, replaces only the declaration stamp and preserves legacy marker/JSON compatibility", () => {
+    expect(KT_CODEGEN_GENERATOR_VERSION).toBe("1.0.2");
+    const controller = loadedController();
+    const text = ktCodegenReadFixture("source/cpp-parameter-blocks.hpp");
+    expect(text).toContain("// @version 5.0.0, (2024)"); // Historical source stays readable, not rewritten as a fixture migration.
+    const plan = controller.analyze({
+      targets: ["cpp.parameter"], blockKeys: CPP_PARAMETER_BLOCKS,
+      snapshot: { files: [{ path: "legacy.hpp", text, fingerprint: "fixture:legacy-version" }] },
+    });
+    expect(plan.canApply).toBe(true);
+    expect(plan.markerRegions).toHaveLength(4);
+    expect(ktCodegenCheckPlanCompatibility(plan)).toMatchObject({ compatible: true, schemaVersion: 1 });
+    const declaration = plan.artifacts.find(artifact => artifact.blockKey === "PARAM DECLARATION")!;
+    expect(declaration.content).toContain(`// @app Kt Auto Code\n  // @codegen-rules-version ${KT_CODEGEN_GENERATOR_VERSION}`);
+    expect(declaration.content).not.toMatch(/@version|\(2024\)/u);
+    const legacyDeclaration = ktCodegenReadFixture("expected/cpp-parameter/param-declaration.txt")
+      .replace(`@codegen-rules-version ${KT_CODEGEN_GENERATOR_VERSION}`, "@version 5.0.0, (2024)");
+    expect(declaration.content.replace(`@codegen-rules-version ${KT_CODEGEN_GENERATOR_VERSION}`, "@version 5.0.0, (2024)"))
+      .toBe(legacyDeclaration);
+    for (const artifact of plan.artifacts.filter(artifact => artifact.blockKey !== "PARAM DECLARATION")) {
+      expect(artifact.content).toBe(ktCodegenReadFixture(CPP_PARAMETER_GOLDENS[artifact.blockKey]!));
+      expect(artifact.content).not.toContain("@codegen-rules-version");
+    }
+    expect(JSON.parse(controller.writeJson().value!)).toMatchObject({ version: "4.0" });
   });
 
   it("preserves CRLF and the source region final newline", () => {

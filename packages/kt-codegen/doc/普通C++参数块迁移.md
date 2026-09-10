@@ -36,11 +36,13 @@ flowchart LR
 
 - `id === 1` 使用 `: `，其余 Item 使用 `, `；不按数组位置自动修正；
 - 默认值复用 Core 中已经 golden 化的字符串、分号、毫米和角度规则；
-- 旧方法对 `m_CurrentControlEnd.Trim()`，所以该块的 `clang-format on` 和 End 标记不保留 Start 缩进。新 Renderer 有意保留这一历史输出。
+- 旧方法对 `m_CurrentControlEnd.Trim()`，所以历史输出把 `clang-format on` 和 End 标记写到第 1 列。2026-09-10 用户授权以规则 `1.0.1` 修正这一明确缺陷：读取同一源码快照中 End 之后的第一条非空、非纯注释语义行，两条结束标记与该行对齐；后续初始化项和只剩 `{` 分别按各自真实缩进处理，不统一套用 Start 缩进。
+- 空行、单行注释和跨行块注释不决定结束标记缩进；保留空格与 tab 原样。无后续语义行时保留现有 End 缩进，不猜测函数体。只替换已有安全区域，不改 End 后的用户初始化项、注释或函数体；Parser/Analyze/Apply 的安全边界不变。
 
 ### 参数声明
 
-- 生成旧版 `@app Kt Auto Code` 和 `@version 5.0.0, (2024)`；
+- 保留 `@app Kt Auto Code`。旧迁移基线使用 `@version 5.0.0, (2024)`，独立系列从 `1.0.0` 开始，当前输出 `@codegen-rules-version 1.0.1`，由公开的 `KT_CODEGEN_GENERATOR_VERSION` 常量生成；这是独立的生成规则版本，不是旧 Windows App、Wing/npm、插件、输入 JSON 或 Plan schema 版本；
+- 旧注释仍可被控制符扫描正常读取，不批量改写已有源码；新注释只随后续显式生成与 Apply 写入。规则变化须同步使消费者的旧预检缓存失效，不能仅更新注释；
 - 按 `CodeAppendNotes(item, 0)` 输出 `brief`、可选 `author/date/note` 和 `id`；
 - 相邻 Item 声明之间保留一个空行。
 
@@ -64,6 +66,8 @@ flowchart LR
 - [`cpp-parameter-blocks.hpp`](../tests/fixtures/source/cpp-parameter-blocks.hpp) 提供四块旧源码；
 - [`expected/cpp-parameter`](../tests/fixtures/expected/cpp-parameter) 保存逐块可人工审阅的 golden 文本；
 - 测试另外覆盖 CRLF、`CATISpecObject_var`、常规指针和首字符星号。
+- [`constructor-boundary.test.ts`](../tests/constructor-boundary.test.ts) 覆盖两组最小完整输出、LF/CRLF、重复生成、注释间隔、tab、缺少后续行及区域外文本保留。此次仅更新声明版本戳 golden 和跨 Host fixture 对应声明内容 SHA-256；其他旧 golden 不变。
+- 本地消费候选已用 macOS CppTools clang-format 23.1.0 和来源工程的 LLVM/4 空格样式对上述两组 LF/CRLF 生成结果做两次格式化：完整文本均未变化。未执行 Windows clang-format；Windows 版本、执行参数及最终样式来源仍应由消费工程记录，不把本机结果宣传为所有格式化环境保证。
 
 ## 当前边界
 

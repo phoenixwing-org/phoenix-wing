@@ -3,6 +3,7 @@
 import type { KtCodegenBlockKey } from "../blocks/legacy-blocks.js";
 import type { KtCodegenMarkerRegion } from "../KtCodegenMarker.js";
 import type { KtCodegenItem } from "../KtCodegenItem.js";
+import { KT_CODEGEN_GENERATOR_VERSION } from "../KtCodegenGeneratorVersion.js";
 import type {
   KtCodegenDefaultValueFormatter,
   KtCodegenRendererContext,
@@ -23,11 +24,42 @@ export const KT_CODEGEN_CPP_PARAMETER_BLOCKS = [
   "PARAM EQUAL",
 ] as const satisfies readonly KtCodegenBlockKey[];
 
+/** Follow the next semantic source line without changing anything outside the owned region. */
+function ktCodegenConstructorEndPrefix(
+  context: KtCodegenRendererContext,
+  region: KtCodegenMarkerRegion,
+): string {
+  const file = context.snapshot.files.find(candidate =>
+    candidate.path === region.path && candidate.fingerprint === region.sourceFingerprint);
+  let inBlockComment = false;
+  for (const line of (file?.text.slice(region.replaceEndOffset) ?? "").split(/\r\n|\n|\r/u)) {
+    let remainder = line.trimStart();
+    while (remainder.length > 0) {
+      if (inBlockComment) {
+        const end = remainder.indexOf("*/");
+        if (end < 0) break;
+        inBlockComment = false;
+        remainder = remainder.slice(end + 2).trimStart();
+      } else if (remainder.startsWith("//")) {
+        break;
+      } else if (remainder.startsWith("/*")) {
+        inBlockComment = true;
+        remainder = remainder.slice(2);
+      } else {
+        return /^[\t ]*/u.exec(line)![0];
+      }
+    }
+  }
+  // No following semantic line: do not invent a constructor-body indentation.
+  return /^[\t ]*/u.exec(region.end.linePrefix)![0];
+}
+
 /** 按旧 VB 规则生成一个普通 C++ Parameter 自动代码块的逻辑行。 */
 function ktCodegenRenderCppParameterLines(
   region: KtCodegenMarkerRegion,
   items: readonly KtCodegenItem[],
   formatDefaultValue: KtCodegenDefaultValueFormatter,
+  constructorEndPrefix = region.end.linePrefix,
 ): string[] {
   const prefix = region.start.linePrefix;
   const lines = ktCodegenRenderLegacyStart(region);
@@ -40,8 +72,8 @@ function ktCodegenRenderCppParameterLines(
           `${prefix}${initializerPrefix}${item.paramString}(${formatDefaultValue(item)}) // ${item.id}`,
         );
       }
-      // 旧方法使用 Trim 写出 End，故 clang-format 与 End 不保留 `_prefix`。
-      lines.push("", "// clang-format on", `// ${region.end.text}`);
+      // Rules 1.0.1: align with the next initializer/body line, not legacy Trim.
+      lines.push("", `${constructorEndPrefix}// clang-format on`, `${constructorEndPrefix}// ${region.end.text}`);
       return lines;
 
     case "PARAM EQUAL":
@@ -72,7 +104,7 @@ function ktCodegenRenderCppParameterLines(
       lines.push(
         "",
         `${prefix}// @app Kt Auto Code`,
-        `${prefix}// @version 5.0.0, (2024)`,
+        `${prefix}// @codegen-rules-version ${KT_CODEGEN_GENERATOR_VERSION}`,
         "",
       );
       items.forEach((item, index) => {
@@ -96,7 +128,8 @@ const cppParameterFamily: KtCodegenRendererFamily<KtCodegenDefaultValueFormatter
     );
     return {
       items,
-      lines: ktCodegenRenderCppParameterLines(region, items, formatDefaultValue),
+      lines: ktCodegenRenderCppParameterLines(region, items, formatDefaultValue,
+        region.blockKey === "PARAM CONSTRUCTOR" ? ktCodegenConstructorEndPrefix(context, region) : undefined),
     };
   },
 };

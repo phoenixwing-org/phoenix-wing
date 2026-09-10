@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from "vitest";
+import { KtCodegenController, KtCodegenItem } from "../src/index.js";
 import { ktCodegenCreateDialogUpdateController } from "./dialog-update-fixtures.js";
 import { ktCodegenReadFixture } from "./helpers.js";
 
 describe("KtCodegenRenderer CAA/Qt dialog update blocks", () => {
-  it("matches four legacy update goldens without mutating shared data", () => {
+  it("matches targeted Combo-note corrections and unchanged CAA/Qt update goldens without mutating shared data", () => {
     const controller = ktCodegenCreateDialogUpdateController();
     const text = ktCodegenReadFixture("source/dialog-updates.cpp");
     const before = JSON.stringify(controller.param);
@@ -91,6 +92,35 @@ describe("KtCodegenRenderer CAA/Qt dialog update blocks", () => {
     expect(caaRadio?.componentCount).toBe(1);
     expect(qtRadio?.componentCount).toBe(1);
     expect(JSON.stringify(controller.param)).toBe(before);
+  });
+
+  it.each([
+    ["int", "MyType", 42, "整数选择", "SetSelect"],
+    ["double", "Scale_Value", 17, "比例数值", "SetField"],
+    ["CATUnicodeString", "Label", 91, "显示文字", "SetField"],
+  ] as const)("UPDATE DIALOG %s Combo after NO ACTION emits its own metadata exactly once", (dataType, paramString, id, notes, method) => {
+    for (const isParamDlg of [false, true]) {
+      const controller = new KtCodegenController();
+      controller.param.namePrefix = "Kt";
+      controller.param.nameMiddle = "CourseGuard";
+      controller.param.items.splice(0, controller.param.items.length,
+        new KtCodegenItem({ nameSuffix: "Caa", id: 5, paramString: "FinishCalc", dataType: "int", componentCount: 0 }),
+        new KtCodegenItem({ nameSuffix: "Caa", id, paramString, dataType, notes, component: "ComboBox", componentCount: 1, isParamDlg }));
+      const before = JSON.stringify(controller.param);
+      const text = "  // START KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE DIALOG\n  stale\n  // END KEVIN CAA WIZARD SECTION KtCourseGuardCaa UPDATE DIALOG";
+      const plan = controller.analyze({ targets: ["caa.dialog"], blockKeys: ["UPDATE DIALOG"],
+        snapshot: { files: [{ path: "memory-combo.cpp", text, fingerprint: "fixture:combo-notes" }] } });
+      expect(plan.canApply).toBe(true);
+      expect(plan.diagnostics).toEqual([]);
+      const content = plan.artifacts[0]!.content;
+      const note = `  // ${id},${paramString},${notes}`;
+      const assignment = `  ${isParamDlg ? "dialogMore->" : ""}_Combo${paramString.replaceAll("_", "")}->${method}( parameter->${paramString}${method === "SetSelect" ? ", 0" : ""});`;
+      expect(content).toContain(`  // 5,FinishCalc,,NO ACTION,,0\n\n${note}\n${assignment}`);
+      expect(content.split(note)).toHaveLength(2);
+      expect(content.split(assignment)).toHaveLength(2);
+      expect(plan.artifacts[0]!.sourceParameters).toEqual(["FinishCalc", paramString]);
+      expect(JSON.stringify(controller.param)).toBe(before);
+    }
   });
 
   it("preserves audited legacy asymmetries and visible generator defects", () => {

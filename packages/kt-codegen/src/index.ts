@@ -9,6 +9,7 @@ export * from "./KtCodegenApply.js";
 export * from "./KtCodegenBlockPresentation.js";
 export * from "./KtCodegenController.js";
 export * from "./KtCodegenCore.js";
+export * from "./KtCodegenGeneratorVersion.js";
 export * from "./KtCodegenItem.js";
 export * from "./KtCodegenMarker.js";
 export * from "./KtCodegenOptions.js";

@@ -46,9 +46,26 @@ beforeAll(() => {
 
 afterEach(() => {
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe("PnwCombo", () => {
+  it("保留 200 个有效唯一项上限，并只允许清空可删除项", () => {
+    const items = Array.from({ length: 205 }, (_, index) => ({
+      id: `item-${index}`, label: `条目 ${index}`, removable: false,
+    }));
+    const model = pnwNormalizeComboModel({
+      ...PNW_TEST_COMBO_MODEL,
+      selectedId: "item-204",
+      items: [{ id: "", label: "无效", removable: true }, items[0]!, ...items],
+    });
+    expect(model.items).toHaveLength(200);
+    expect(model.items.at(-1)?.id).toBe("item-199");
+    expect(model.items.every(Object.isFrozen)).toBe(true);
+    expect(model.selectedId).toBeUndefined();
+    expect(model.clearEnabled).toBe(false);
+  });
+
   it("规范化、去重并冻结 Host 投影", () => {
     const normalized = pnwNormalizeComboModel({
       ...PNW_TEST_COMBO_MODEL,
@@ -75,6 +92,11 @@ describe("PnwCombo", () => {
     expect(removeButtons?.[0]?.disabled).toBe(false);
     expect(removeButtons?.[1]?.disabled).toBe(true);
     expect(removeButtons?.[1]?.title).toBe("共享方案不能删除");
+    expect(removeButtons?.[1]?.getAttribute("aria-label")).toContain("共享方案不能删除");
+    const trigger = combo.shadowRoot?.querySelector<HTMLButtonElement>(".pnw-combo-trigger");
+    const list = combo.shadowRoot?.querySelector('[role="listbox"]');
+    expect(trigger?.getAttribute("aria-controls")).toBe(list?.id);
+    expect(list?.getAttribute("aria-label")).toBe("选择方案");
     expect(combo.shadowRoot?.querySelector(".pnw-combo-clear")?.textContent)
       .toBe("全部清空");
   });
@@ -83,6 +105,8 @@ describe("PnwCombo", () => {
     const combo = pnwMountCombo();
     const actions: PnwComboActionDetail[] = [];
     combo.addEventListener(PNW_COMBO_ACTION, (event) => {
+      expect(event.bubbles).toBe(true);
+      expect(event.composed).toBe(true);
       actions.push((event as CustomEvent<PnwComboActionDetail>).detail);
     });
 
@@ -96,9 +120,118 @@ describe("PnwCombo", () => {
       { kind: "remove", itemId: "local" },
       { kind: "clear" },
     ]);
+    expect(actions.every(Object.isFrozen)).toBe(true);
     expect(PnwCombo.toString()).not.toMatch(
       /acquireVsCodeApi|postMessage|workspaceState|localStorage|projectRename|searchReplace/iu,
     );
+  });
+
+  it("选择与清空关闭后返回触发器，Host 的后续焦点决定不被覆盖", async () => {
+    const combo = pnwMountCombo();
+    const root = combo.shadowRoot!;
+    const trigger = root.querySelector<HTMLButtonElement>(".pnw-combo-trigger")!;
+    const other = document.createElement("button");
+    document.body.append(other);
+    trigger.click();
+    await Promise.resolve();
+    root.querySelector<HTMLButtonElement>(".pnw-combo-select")!.click();
+    expect(root.activeElement).toBe(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    trigger.click();
+    await Promise.resolve();
+    const clear = root.querySelector<HTMLButtonElement>(".pnw-combo-clear")!;
+    clear.focus();
+    clear.click();
+    expect(root.activeElement).toBe(trigger);
+    combo.addEventListener(PNW_COMBO_ACTION, () => other.focus());
+    trigger.click();
+    root.querySelector<HTMLButtonElement>(".pnw-combo-select")!.click();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(other);
+  });
+
+  it("删除后的 Host 模型刷新保留邻近焦点，最后一项消失返回触发器", async () => {
+    const combo = pnwMountCombo();
+    const root = combo.shadowRoot!;
+    const trigger = root.querySelector<HTMLButtonElement>(".pnw-combo-trigger")!;
+    trigger.click();
+    await Promise.resolve();
+    const remove = root.querySelector<HTMLButtonElement>(".pnw-combo-remove")!;
+    remove.focus();
+    combo.model = { ...PNW_TEST_COMBO_MODEL };
+    expect(root.activeElement?.classList.contains("pnw-combo-remove")).toBe(true);
+    combo.model = { ...PNW_TEST_COMBO_MODEL, items: PNW_TEST_COMBO_MODEL.items.slice(1) };
+    expect(root.activeElement?.textContent).toBe("共享方案");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    combo.model = { ...PNW_TEST_COMBO_MODEL, items: [] };
+    expect(root.activeElement).toBe(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("方向键、Home、End、Escape 与 Tab 保持原有键盘出口", async () => {
+    const combo = pnwMountCombo();
+    const root = combo.shadowRoot!;
+    const trigger = root.querySelector<HTMLButtonElement>(".pnw-combo-trigger")!;
+    const options = root.querySelectorAll<HTMLButtonElement>(".pnw-combo-select");
+    trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    await Promise.resolve();
+    expect(root.activeElement).toBe(options[1]);
+    for (const [key, index] of [["Home", 0], ["End", 1], ["ArrowDown", 0], ["ArrowUp", 1]] as const) {
+      root.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+      expect(root.activeElement).toBe(options[index]);
+    }
+    root.activeElement?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(root.activeElement).toBe(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    for (const shiftKey of [false, true]) {
+      trigger.click();
+      await Promise.resolve();
+      const tab = new KeyboardEvent("keydown", { key: "Tab", shiftKey, bubbles: true, cancelable: true });
+      root.activeElement?.dispatchEvent(tab);
+      expect(tab.defaultPrevented).toBe(false);
+      expect(root.activeElement).toBe(trigger);
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    }
+  });
+
+  it("点外或断开后，延迟的初始焦点不能重新进入已关闭弹层", async () => {
+    const combo = pnwMountCombo();
+    const trigger = combo.shadowRoot!.querySelector<HTMLButtonElement>(".pnw-combo-trigger")!;
+    const other = document.createElement("button");
+    document.body.append(other);
+    trigger.click();
+    other.dispatchEvent(new Event("pointerdown", { bubbles: true, composed: true }));
+    other.focus();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(other);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    trigger.click();
+    combo.remove();
+    await Promise.resolve();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(other);
+  });
+
+  it("整体禁用或受保护操作不发送业务事件", () => {
+    const combo = pnwMountCombo();
+    const listener = vi.fn();
+    combo.addEventListener(PNW_COMBO_ACTION, listener);
+    combo.shadowRoot!.querySelectorAll<HTMLButtonElement>(".pnw-combo-remove")[1]!.click();
+    combo.model = { ...PNW_TEST_COMBO_MODEL, disabled: true };
+    for (const button of combo.shadowRoot!.querySelectorAll<HTMLButtonElement>("button")) {
+      expect(button.disabled).toBe(true);
+      button.click();
+    }
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("模型刷新不抢走组件外的焦点", () => {
+    const combo = pnwMountCombo();
+    const other = document.createElement("button");
+    document.body.append(other);
+    other.focus();
+    combo.model = { ...PNW_TEST_COMBO_MODEL, selectedId: "shared" };
+    expect(document.activeElement).toBe(other);
   });
 
   it("下方空间不足时自动向上展开并保留 300px 高度上限", () => {
@@ -165,5 +298,31 @@ describe("PnwCombo", () => {
     expect(popup?.dataset.placement).toBe("top");
     expect(popup?.style.top).toBe("100px");
     expect(popup?.style.maxHeight).toBe("198px");
+  });
+
+  it("跨 Shadow Host 的裁剪边界与滚动/缩放仍可重新定位", () => {
+    const ancestor = document.createElement("section");
+    ancestor.style.overflow = "hidden";
+    document.body.append(ancestor);
+    vi.spyOn(ancestor, "getBoundingClientRect").mockReturnValue(new DOMRect(20, 100, 280, 300));
+    const shadow = ancestor.attachShadow({ mode: "open" });
+    const holder = document.createElement("div");
+    shadow.append(holder);
+    const combo = pnwMountCombo(holder);
+    const trigger = combo.shadowRoot!.querySelector<HTMLButtonElement>(".pnw-combo-trigger")!;
+    const popup = combo.shadowRoot!.querySelector<HTMLDivElement>(".pnw-combo-popup")!;
+    const rect = vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue(new DOMRect(40, 300, 200, 28));
+    Object.defineProperty(popup, "scrollHeight", { configurable: true, value: 260 });
+    trigger.click();
+    expect(popup.dataset.placement).toBe("top");
+    expect(popup.style.maxHeight).toBe("198px");
+    rect.mockReturnValue(new DOMRect(40, 110, 200, 28));
+    ancestor.dispatchEvent(new Event("scroll"));
+    expect(popup.dataset.placement).toBe("bottom");
+    expect(popup.style.top).toBe("140px");
+    rect.mockReturnValue(new DOMRect(40, 300, 200, 28));
+    window.dispatchEvent(new Event("resize"));
+    expect(popup.dataset.placement).toBe("top");
+    expect(popup.style.maxHeight).toBe("198px");
   });
 });

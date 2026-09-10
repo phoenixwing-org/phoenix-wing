@@ -92,4 +92,14 @@ describe("KtCodegenTable visual primitive", () => {
       `.${KT_CODEGEN_TABLE_CLASSES.status}.${KT_CODEGEN_TABLE_CLASSES.dirty}`,
     );
   });
+
+  it("原生popup option不继承选中行白字，配对dropdown前景背景且保留未知值提示", () => {
+    const optionRule = KT_CODEGEN_TABLE_STYLE.match(/td > select > option \{([^}]+)\}/u)![1]!;
+    expect(optionRule).toContain("color: var(--vscode-dropdown-foreground, var(--vscode-input-foreground, var(--vscode-foreground, CanvasText)))");
+    expect(optionRule).toContain("background: var(--vscode-dropdown-background, var(--vscode-input-background, var(--vscode-editor-background, Canvas)))");
+    expect(optionRule).not.toContain("selection-foreground");
+    expect(optionRule).not.toContain("inherit");
+    expect(KT_CODEGEN_TABLE_STYLE).toContain(`option.${KT_CODEGEN_TABLE_CLASSES.unknownOption} { color: var(--vscode-editorWarning-foreground`);
+    expect(KT_CODEGEN_TABLE_STYLE).toContain("@media (forced-colors: active) { td > select > option { color: CanvasText; background: Canvas; } }");
+  });
 });
