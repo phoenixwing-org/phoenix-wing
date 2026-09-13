@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.7.4'
+export const PNW_VERSION = '0.7.5'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -77,6 +77,17 @@ export {
   type PnwFloatingPanelSizeConstraints,
 } from './utils/pnwFloatingPanel.js'
 export {
+  pnwArrangeFloatingViewBounds,
+  pnwArrangeViewPresentationRecords,
+  type PnwFloatingViewArrangementItem,
+  type PnwFloatingViewArrangementMode,
+  type PnwFloatingViewArrangementOptions,
+  type PnwFloatingViewArrangementTarget,
+  type PnwViewPresentationArrangementItem,
+  type PnwViewPresentationArrangementOptions,
+  type PnwViewPresentationArrangementTarget,
+} from './utils/pnwFloatingViewArrangement.js'
+export {
   type PnwPresentationCloseBehavior,
   type PnwPresentationFrameDefinition,
   type PnwPresentationOwnerKind,
@@ -136,6 +147,12 @@ export {
   pnwProvideViewDialogHost,
   usePnwViewDialogHost,
 } from './composables/usePnwViewDialogHost.js'
+export {
+  type PnwTabActivationReason,
+  type PnwTabDefinition,
+  type PnwTabLabelSlotProps,
+  type PnwTabPanelSlotProps,
+} from './types/PnwTabContainer.js'
 
 // ---------------------------------------------------------------------------
 // 完整 View Web 浮出与收回
@@ -670,6 +687,7 @@ export { default as PnwOverlayThemeProvider } from './components/PnwOverlayTheme
 export { default as PnwPhoenixWingMark } from './components/PnwPhoenixWingMark.vue'
 export { default as PnwRecentWorkspaceList } from './components/PnwRecentWorkspaceList.vue'
 export { default as PnwSelect } from './components/PnwSelect.vue'
+export { default as PnwTabContainer } from './components/PnwTabContainer.vue'
 export { default as PnwViewDialogHost } from './components/PnwViewDialogHost.vue'
 export { default as PnwViewPresentationPortal } from './components/PnwViewPresentationPortal.vue'
 export { default as PnwFloatingWindowMenu } from './components/PnwFloatingWindowMenu.vue'

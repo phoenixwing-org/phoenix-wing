@@ -24,7 +24,7 @@ npm install phoenix-wing vue pinia
 
 ## 消费者本地联调
 
-标准开发目录要求 `phoenix-wing`、`kt-auto-code`、`phoenix-desk-tools` 三仓同级。Auto Code 使用 `pnpm dev`（AI 无 GUI 验证用 `pnpm ext:dev:prepare`），Desk Tools 使用 `pnpm dev`、`pnpm test:local-wing` 或 `pnpm build:local-wing`；找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。
+Phoenix 消费者统一使用 `pnpm dev` 启动 Registry Wing，使用 `pnpm wing` 启动同级 `../phoenix-wing` 本地源码；旧的根级 `pnpm dev:registry` 和本地开发同义命令均删除。找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。未完成 Wing 修改放在独立 working worktree，验证、提交归档并提升到主库 `develop` 后，其他目录可通过文件系统目录链接把同级 `phoenix-wing` 指向该主库。
 
 正式 npm 包行为必须另跑显式 Registry 对照命令。完整目录、命令、安全边界与消费者验收入口见 **[docs/本地验证方法.md](docs/本地验证方法.md)**。
 

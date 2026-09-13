@@ -69,8 +69,10 @@ describe("PnwInformationCardGroup", () => {
     const html = await renderToString(createSSRApp({
       render: () => h(PnwInformationCardGroup, { definition: PNW_GROUP }),
     }));
-    const source = readFileSync("src/components/PnwInformationCardGroup.vue", "utf8");
-    const cardSource = readFileSync("src/components/PnwInformationBlock.vue", "utf8");
+    const source = readFileSync("src/components/PnwInformationCardGroup.vue", "utf8")
+      .replace(/\r\n/g, "\n");
+    const cardSource = readFileSync("src/components/PnwInformationBlock.vue", "utf8")
+      .replace(/\r\n/g, "\n");
 
     expect(html).toContain("aria-label=\"运行信息卡片\"");
     expect(html).toContain("data-pnw-information-card-group-id=\"runtime-cards\"");

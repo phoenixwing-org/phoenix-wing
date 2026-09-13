@@ -316,7 +316,7 @@ Wing 只发出完整新状态，不选择 localStorage、IndexedDB 或后端数�
 - 日志必须明确显示 `[Wing][LOCAL]` 与实际路径、版本；
 - 本地通过不代表 npm 已发布，也不能据此改发布标签。
 
-Open Issue 的独立验证分支采用上述方式：manifest 仍锁定 `phoenix-wing@0.5.1`，`pnpm dev:local-wing` / `pnpm build:local-wing` 在进程内消费并列 Wing `0.6.0`。这是本地候选证据，不是 Registry 验收。
+Open Issue 的独立验证分支当时采用进程级 resolver：manifest 仍锁定 `phoenix-wing@0.5.1`，本地启动命令现统一为 `pnpm wing`，构建门禁仍可使用 `pnpm build:local-wing`。这是本地候选证据，不是 Registry 验收。
 
 ## 8. 开发者与 AI 验收清单
 
