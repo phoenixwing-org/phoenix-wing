@@ -1,6 +1,6 @@
 {
   "name": "phoenix-wing",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "packageManager": "pnpm@10.15.1",
   "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
   "type": "module",
@@ -88,7 +88,9 @@
     "verify:architecture": "node scripts/verify-import-boundaries.mjs",
     "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit --pretty false",
-    "dev": "vitest"
+    "dev": "pnpm example:workbench:dev",
+    "test:watch": "vitest",
+    "example:registry": "node scripts/run-workbench-registry.mjs"
   },
   "dependencies": {
     "@phoenix-wing/code-core": "workspace:0.6.6",

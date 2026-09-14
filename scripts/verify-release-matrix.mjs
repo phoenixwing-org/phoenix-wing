@@ -75,8 +75,11 @@ if (queryVersion !== rustVersion) {
   throw new Error(`fcstd-query crate must equal ${rustVersion}, got ${queryVersion}`);
 }
 const cargoLock = fs.readFileSync(path.join(rustRoot, "Cargo.lock"), "utf8");
-if (!cargoLock.includes(`name = "fcstd-query"\nversion = "${rustVersion}"`)) {
-  throw new Error(`Cargo.lock must record fcstd-query ${rustVersion}`);
+const lockedQueryVersion = cargoLock.match(
+  /\[\[package\]\]\r?\nname = "fcstd-query"\r?\nversion = "([^"]+)"/u,
+)?.[1];
+if (lockedQueryVersion !== rustVersion) {
+  throw new Error(`Cargo.lock must record fcstd-query ${rustVersion}, got ${lockedQueryVersion ?? "missing"}`);
 }
 
 const rootPackage = manifests.get("phoenix-wing");

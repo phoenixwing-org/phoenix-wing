@@ -146,7 +146,7 @@ describe("reorderHeaderEngine", () => {
   });
 
   it("removes the empty line between the final declaration and class terminator", () => {
-    const source = fixture("clang_format_class_tail.h");
+    const source = fixture("clang_format_class_tail.h").replace(/\r\n/g, "\n");
     const result = pnwReorderHeaderText(source, { sortMembers: true });
 
     expect(result.changed).toBe(true);

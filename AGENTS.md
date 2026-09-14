@@ -57,7 +57,7 @@ phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `d
 
 ## 消费者本地联调（AI 强制）
 
-本地活动开发工作树固定使用共享 Phoenix 根下的 `worktrees/phoenix-wing-working`（2026-09-10 用户指定，当前分支 `v0.7.4`）。`worktrees/phoenix-wing` 仅作为消费者并列解析的符号链接指向该目录。版本分支可演进，但不要再创建按版本命名的隐藏 `.worktrees` 开发目录，也不要将这些本机路径写入依赖清单或 lockfile。
+Wing 未完成的功能开发使用共享 Phoenix 根下的独立 `worktrees/phoenix-wing-working`；完成验证后先本地提交归档，再明确提升到主库 `phoenix-wing` 的 `develop`。消费者默认只消费已提升的主库。消费者所在目录需要同级 `../phoenix-wing` 时，可建立指向主库的文件系统目录链接（Windows 可使用非管理员 Junction）；该链接只是稳定路径入口，不是 `pnpm link`，也不得进入依赖清单或 lockfile。只有专门验证未提升候选时，才允许把同级链接临时指向已明确记录的 working worktree，并在验证后恢复到主库。
 
 Phoenix 三个开发仓库使用唯一的标准并列目录，目录名不得自行变体：
 
@@ -68,9 +68,10 @@ phoenix/
 └── phoenix-desk-tools/
 ```
 
-- Auto Code 本地联调在 `kt-auto-code` 根运行 `pnpm dev`；AI 只构建和验证来源时运行 `pnpm ext:dev:prepare`。Registry 对照分别使用 `pnpm dev:registry` 或不启动 GUI 的 `pnpm ext:dev:registry:prepare`。
-- Desk Tools 本地联调在 `phoenix-desk-tools` 根按目的运行 `pnpm dev`、`pnpm test:local-wing` 或 `pnpm build:local-wing`。Registry 对照使用对应的 `pnpm dev:registry`、`pnpm test:registry` 或 `pnpm build:registry`。
-- 标准本地命令找不到同级 `../phoenix-wing` 时必须说明上述目录要求并停止；若只需验证已发布包，应提示并改用显式 Registry 命令。禁止静默回退，也禁止由 AI 另造路径分支绕过目录错误。
+- 所有 Phoenix Wing 消费者的根级启动入口统一为：`pnpm dev` 使用 manifest/lockfile 中的 Registry Wing；`pnpm wing` 使用同级 `../phoenix-wing` 本地源码。不得新增或恢复根级 `pnpm dev:registry`、`pnpm dev:local-wing`、`pnpm dev:wing-local` 等同义入口。
+- Wing 自身不是上述产品消费者：本仓 `pnpm dev` 启动 `examples/PwwWorkbenchWeb` 的开发验证（先构建当前 checkout 的公共 dist）；`pnpm test:watch` 运行单测监听。`pnpm example:registry --wing-version <精确版本>` 必须在隔离目录安装 npm 包并运行同一示例，页面来源由真实解析结果生成，不能用环境变量/URL 将本地构建标成 Registry。开发标识是启动快照；公共库源码修改后重启开发命令，示例自身源文件可由 Vite 热更新。
+- Auto Code 的无 GUI 本地来源验证仍使用 `pnpm ext:dev:prepare`；Desk Tools 的本地测试/构建仍使用 `pnpm test:local-wing`、`pnpm build:local-wing`。这些专项门禁不改变统一的两个启动入口。
+- `pnpm wing` 找不到同级 `../phoenix-wing`、校验到错误仓库或缺少构建制品时必须说明实际路径并停止；禁止静默回退 Registry。只需使用已发布包时直接运行 `pnpm dev`。
 - 禁止运行 `pnpm link`，禁止写入 `link:`、`file:`、`workspace:` 本地依赖或 `pnpm.overrides`，禁止临时修改消费者 `pnpm-workspace.yaml`、`package.json`、`pnpm-lock.yaml`，禁止替换或编辑 `node_modules`。
 - 本地联调成功只证明并列源码消费，不等于 npm tarball、Registry 或真实发布完成；不得因此修改 Wing 版本、标签或发布矩阵。
 
@@ -78,6 +79,7 @@ phoenix/
 
 ## 文档
 
+- 版本候选、发布验收和发布回执统一放在 `docs/releases/`，由 `docs/releases/README.md` 导航；通用发布规则与操作步骤仍留在 `docs/` 顶层。迁移文档必须同步相对链接和 `document-policy.json`，再运行 `pnpm docs:manifest` 与 `pnpm docs:check`。
 - `docs/文档索引.md` — 当前文档唯一导航
 - `docs/命名规则.md` — 命名规则详细说明
 - `docs/naming-checklist.md` — 命名点检清单

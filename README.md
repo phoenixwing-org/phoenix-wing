@@ -24,7 +24,7 @@ npm install phoenix-wing vue pinia
 
 ## 消费者本地联调
 
-标准开发目录要求 `phoenix-wing`、`kt-auto-code`、`phoenix-desk-tools` 三仓同级。Auto Code 使用 `pnpm dev`（AI 无 GUI 验证用 `pnpm ext:dev:prepare`），Desk Tools 使用 `pnpm dev`、`pnpm test:local-wing` 或 `pnpm build:local-wing`；找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。
+Phoenix 消费者统一使用 `pnpm dev` 启动 Registry Wing，使用 `pnpm wing` 启动同级 `../phoenix-wing` 本地源码；旧的根级 `pnpm dev:registry` 和本地开发同义命令均删除。找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。未完成 Wing 修改放在独立 working worktree，验证、提交归档并提升到主库 `develop` 后，其他目录可通过文件系统目录链接把同级 `phoenix-wing` 指向该主库。
 
 正式 npm 包行为必须另跑显式 Registry 对照命令。完整目录、命令、安全边界与消费者验收入口见 **[docs/本地验证方法.md](docs/本地验证方法.md)**。
 
@@ -64,6 +64,8 @@ npm install phoenix-wing vue pinia
 
 ## 文档
 
+Wing 自身的示例入口：`pnpm dev` 启动开发验证工作台；`pnpm example:registry --wing-version 0.7.5` 在隔离目录验证指定 npm 版本。两者共用[示例页面](examples/PwwWorkbenchWeb/README.md)，固定显示真实来源；产品消费者原有 `pnpm dev` / `pnpm wing` 规则不变。
+
 | 文档 | 内容 |
 |------|------|
 | [docs/文档索引.md](docs/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
@@ -75,6 +77,7 @@ npm install phoenix-wing vue pinia
 | [docs/naming-checklist.md](docs/naming-checklist.md) | 命名点检清单 |
 | [docs/三库版本矩阵.md](docs/三库版本矩阵.md) | Wing 各发布物精确版本、消费端允许依赖与发布门禁 |
 | [docs/独立版本发布规则.md](docs/独立版本发布规则.md) | 0.6.4 起按真实改动确定版本、依赖和发布集合 |
+| [发布记录](docs/releases/README.md) | 历次版本候选、验收与正式 Registry 回执 |
 | [docs/C++成员排序算法规范.md](docs/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 | [packages/kt-codegen/README.md](packages/kt-codegen/README.md) | `kt-codegen` 数据模型、17列兼容、32个生成块与类图 |
 

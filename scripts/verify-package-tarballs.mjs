@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const releaseVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
@@ -898,7 +898,9 @@ if (result.choiceId !== "ok" || pnwChoiceDialogOpen.value !== false) {
   throw new Error("root choice-dialog state did not resolve through the compiled singleton");
 }
 `);
-  run(process.execPath, ["--experimental-loader", loader, smoke], { cwd: consumerRoot });
+  run(process.execPath, ["--experimental-loader", pathToFileURL(loader).href, smoke], {
+    cwd: consumerRoot,
+  });
 
   fs.writeFileSync(path.join(consumerRoot, "index.html"), '<div id="app"></div><script type="module" src="/ui-entry.js"></script>\n');
   fs.writeFileSync(path.join(consumerRoot, "ui-entry.js"), `
@@ -961,12 +963,15 @@ function pnpmCommand() {
 }
 
 function run(command, args, options = {}) {
+  const needsWindowsCommandShell = process.platform === "win32"
+    && /\.(?:cmd|bat)$/iu.test(command);
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
     env: process.env,
     encoding: "utf8",
     stdio: options.capture ? "pipe" : "inherit",
     windowsHide: true,
+    shell: needsWindowsCommandShell,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {

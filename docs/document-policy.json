@@ -23,33 +23,33 @@
       "reason": "完成态实施计划，保留为历史证据"
     },
     {
-      "match": "^docs/0\\.4\\.0发布验收\\.md$",
+      "match": "^docs/releases/0\\.4\\.0发布验收\\.md$",
       "status": "archived",
       "sourceOfTruth": "docs/三库版本矩阵.md",
       "reason": "0.4.0/0.4.1 发布历史证据"
     },
     {
-      "match": "^docs/0\\.4\\.2发布候选验收\\.md$",
+      "match": "^docs/releases/0\\.4\\.2发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "docs/0.4.3发布候选验收.md",
+      "sourceOfTruth": "docs/releases/0.4.3发布候选验收.md",
       "reason": "0.4.2 候选与公开发布历史证据"
     },
     {
-      "match": "^docs/0\\.4\\.3发布候选验收\\.md$",
+      "match": "^docs/releases/0\\.4\\.3发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "docs/0.5.0发布候选验收.md",
+      "sourceOfTruth": "docs/releases/0.5.0发布候选验收.md",
       "reason": "0.4.3 公开发布历史证据"
     },
     {
-      "match": "^docs/0\\.5\\.0发布候选验收\\.md$",
+      "match": "^docs/releases/0\\.5\\.0发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "docs/0.5.1本地发布候选验收.md",
+      "sourceOfTruth": "docs/releases/0.5.1本地发布候选验收.md",
       "reason": "0.5.0 公开发布历史证据"
     },
     {
-      "match": "^docs/0\\.5\\.1本地发布候选验收\\.md$",
+      "match": "^docs/releases/0\\.5\\.1本地发布候选验收\\.md$",
       "status": "archived",
-      "sourceOfTruth": "docs/0.6.0发布验收.md",
+      "sourceOfTruth": "docs/releases/0.6.0发布验收.md",
       "reason": "0.5.1 公开发布历史证据"
     },
     {

@@ -160,7 +160,7 @@ Vue 组件、Custom Element class 和数据模型。根 Vue 工作台已有的�
 
 本节供开发者和 AI 在**以后新增或修改 Web Component 时**复用，不是要求产品用户逐项确认，
 也不表示当前 0.7.1 候选尚未完成。当前发布状态只以
-[《0.7.1 发布候选与验收》](0.7.1发布候选.md)的发布硬门禁为准。
+[《0.7.1 发布候选与验收》](releases/0.7.1发布候选.md)的发布硬门禁为准。
 
 - 新 element 只从 `@phoenix-wing/code-core/ui` 暴露；
 - 新 model 只从 `@phoenix-wing/code-core/ui/model` 暴露；
