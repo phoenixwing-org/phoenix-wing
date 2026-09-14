@@ -1,6 +1,46 @@
 # Pww Workbench Web fixture 示例
 
-本目录用于《Pnw 工作台 Web 架构与示例计划》的 W3 视觉与交互回归。它是 Wing 仓内的第一方 fixture consumer，用消费者方式验证公共入口；它不是 npm 包、产品原型或第二套组件实现。
+本目录是 Wing 的统一示例与简单验证入口，兼顾《Pnw 工作台 Web 架构与示例计划》的 W3 视觉与交互回归。它是 Wing 仓内的第一方 fixture consumer，用消费者方式验证公共入口；它不是 npm 包、产品原型或第二套组件实现。
+
+## 日常入口与来源标识
+
+第一阶段默认打开“内部 Tab 与浮窗排列”的轻量 Wing 界面：左侧 Primary 选择测试，右侧 View 显示 Tab 保活、浮窗排列或简单断言。使用 `PnwWorkbenchLayout`、`PnwActivityTree`、`PnwPageLayout`、`PnwRibbonToolButton`，不把每个版本的临时验证复制成一套页面。
+
+“完整工作台示例”是 `target="_blank" rel="noopener noreferrer"` 链接，打开 `?example=workbench` 独立页面。新页面只装配原完整工作台与来源标识，不嵌入轻量测试区、不同时挂载两套工作台；查询参数只选择页面，不改变开发/Registry 来源。
+
+| 命令（Wing 仓库根） | 内容与来源 |
+| --- | --- |
+| `pnpm dev` | 最常用：构建当前 checkout 并启动示例，页面固定显示“开发验证 · 本地构建” |
+| `pnpm test:watch` | 单测监听；承接原来的 `pnpm dev` |
+| `pnpm example:registry --wing-version 0.7.5` | 新隔离目录精确安装 npm 包，同一示例类型/构建通过后启动 Registry 预览 |
+| `pnpm example:registry --wing-version 0.7.5 --build-only` | 相同 Registry 验证，但不启动预览服务 |
+
+开发服务为 `http://127.0.0.1:41789`；Registry 预览为 `http://127.0.0.1:41790`，均只监听 loopback 且 strictPort，不静默换端口。Registry 版本必须显式指定，不能填 latest、范围或本地路径。临时安装目录留存供点检，命令不改主仓或消费者的 manifest/lock/node_modules。
+
+固定标识显示实际 `PNW_VERSION`；开发另显示 Git commit/branch、dirty 状态和“不是 Registry 验收”。Registry 来源只能由隔离项目的精确依赖与实际 node_modules 解析生成，不接受 URL 或任意 mode 环境变量。两种模式的标识都不冒充“全部门禁通过”，声明版本与运行时不符会显示错误。
+
+开发标识是启动/构建快照，不是不断轮询的 Git 面板。当前公共库走构建后的 export，改 `src/` 或 scoped 包后须重新执行相应构建并重启 `pnpm dev`；示例自己的 Vue/TS 由 Vite 热更新。初次干净 checkout 先执行 `pnpm install --frozen-lockfile` 和 `pnpm -r --if-present build`。本轮不另起共享 dist 自动监听，避免与消费者并行构建争用。
+
+第一阶段页面入口：`src/main.ts` → `src/PwwExampleApp.vue`；验证页在 `src/validation/PwwTabArrangementValidation.vue`。包含：
+
+- Tab 内用 Wing Header、文字操作与默认内容 inset；输入/iframe 节点保活、键盘跳过禁用页；“读取草稿”只显示当前内存值，不写文件；
+- 三窗平铺/层叠、360px 可用区和保留输入的人工入口；
+- 1100/360/48px 纯几何边界、不重叠、record identity/mode/revision 断言；
+- 浅色/深色/跟随系统、版本不匹配提示。
+
+测试目录切换只隐藏已挂载内容，不清空草稿；浮窗仍由统一 stack 负责，点“关闭浮窗”或 X 才销毁。简单断言集中在单独 View，不用大卡片占据交互测试首屏。布局示意：
+
+```text
+来源标识：开发 / Registry · 实际包版本
+内部 Tab 与浮窗排列              完整工作台 ↗ · 主题
+┌ 测试目录（Primary） ┬ 当前测试 Header · 文字操作 ┐
+│ Tab 内容保活       │ 页签 → 页内 Header → 内容 │
+│ 浮窗平铺与层叠     │ 或：浮窗排列可用区         │
+│ 简单断言           │ 或：检查结果列表           │
+└───────────────────┴─────────────────────────┘
+```
+
+页面只声明实际跑过的简单断言；它不替代完整 `pnpm verify:ci`、tarball 验收或消费者的权限/路由/保存/平台测试。Registry 模式必须成功安装所选版本，不允许静默回退本地构建。后续旧临时验证按能力逐步迁入，不一次扩张。
 
 边界：
 

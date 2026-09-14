@@ -69,6 +69,7 @@ phoenix/
 ```
 
 - 所有 Phoenix Wing 消费者的根级启动入口统一为：`pnpm dev` 使用 manifest/lockfile 中的 Registry Wing；`pnpm wing` 使用同级 `../phoenix-wing` 本地源码。不得新增或恢复根级 `pnpm dev:registry`、`pnpm dev:local-wing`、`pnpm dev:wing-local` 等同义入口。
+- Wing 自身不是上述产品消费者：本仓 `pnpm dev` 启动 `examples/PwwWorkbenchWeb` 的开发验证（先构建当前 checkout 的公共 dist）；`pnpm test:watch` 运行单测监听。`pnpm example:registry --wing-version <精确版本>` 必须在隔离目录安装 npm 包并运行同一示例，页面来源由真实解析结果生成，不能用环境变量/URL 将本地构建标成 Registry。开发标识是启动快照；公共库源码修改后重启开发命令，示例自身源文件可由 Vite 热更新。
 - Auto Code 的无 GUI 本地来源验证仍使用 `pnpm ext:dev:prepare`；Desk Tools 的本地测试/构建仍使用 `pnpm test:local-wing`、`pnpm build:local-wing`。这些专项门禁不改变统一的两个启动入口。
 - `pnpm wing` 找不到同级 `../phoenix-wing`、校验到错误仓库或缺少构建制品时必须说明实际路径并停止；禁止静默回退 Registry。只需使用已发布包时直接运行 `pnpm dev`。
 - 禁止运行 `pnpm link`，禁止写入 `link:`、`file:`、`workspace:` 本地依赖或 `pnpm.overrides`，禁止临时修改消费者 `pnpm-workspace.yaml`、`package.json`、`pnpm-lock.yaml`，禁止替换或编辑 `node_modules`。
@@ -78,6 +79,7 @@ phoenix/
 
 ## 文档
 
+- 版本候选、发布验收和发布回执统一放在 `docs/releases/`，由 `docs/releases/README.md` 导航；通用发布规则与操作步骤仍留在 `docs/` 顶层。迁移文档必须同步相对链接和 `document-policy.json`，再运行 `pnpm docs:manifest` 与 `pnpm docs:check`。
 - `docs/文档索引.md` — 当前文档唯一导航
 - `docs/命名规则.md` — 命名规则详细说明
 - `docs/naming-checklist.md` — 命名点检清单

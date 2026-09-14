@@ -1,6 +1,6 @@
 # Pnw 通用内部 Tab 与浮窗排列
 
-状态：current（0.7.5 本地归档候选，尚未发布）
+状态：current（0.7.5 已发布；见[发布验收](releases/0.7.5发布验收.md)）
 
 Owner：Phoenix Wing maintainers
 

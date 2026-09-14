@@ -13,9 +13,9 @@ Owner：Phoenix Wing maintainers
 `0.7.1`、`0.7.2`、`0.7.3` 与 `0.7.4` 均已发布；`0.7.4` 从
 `develop@d2f73a48409c195a500787c16510c7d05aab1ea0` 发布根包 `0.7.4`、
 `code-core@0.6.6` 与 `kt-codegen@0.6.6`，完整 Registry 与干净消费结果见
-[发布回执](0.7.4发布验收.md)。
+[发布回执](releases/0.7.4发布验收.md)。
 `0.7.3` 六个发布单元的 Registry shasum 与干净消费者回执已从
-`079292d4bcf01e0deb3b948b497278019aa97a8a` 摘入[发布记录](0.7.3发布候选.md)，
+`079292d4bcf01e0deb3b948b497278019aa97a8a` 摘入[发布记录](releases/0.7.3发布候选.md)，
 仅补历史证据，不合并该节点，也不把 `ec38785` 起的后续 Codegen/清理修改算入已发布包。
 2026-09-10 已用 pnpm 按依赖顺序正式发布三个变更单元；重新查询确认三个 exact 版本存在，
 对应 `latest` 分别为根包 `0.7.4`、`code-core@0.6.6` 与 `kt-codegen@0.6.6`。
@@ -24,7 +24,23 @@ Owner：Phoenix Wing maintainers
 继续只实施经真实 consumer 证明的兼容修复；消费者仍以各自 manifest 中的已发布
 精确版本为准。
 
-最后核验：2026-09-10
+最后核验：2026-09-14
+
+## 0.7.5 发布与文档收口
+
+- 2026-09-14 从 clean `develop@27e92a31d2df826bb6c78d8fe96f124cef445821` 正式执行 `pnpm publish`，仅发布根 `phoenix-wing@0.7.5`；Registry exact/latest、精确内部依赖与隔离安装、类型和生产构建已通过。详见[发布验收](releases/0.7.5发布验收.md)。
+- 包含通用内部 Tab 保活，以及浮窗平铺、层叠和 View record 纯几何排列；11 个 scoped packages 不空升版本、不重复发布。
+- 发布前完整 `PNW_VERIFY_OFFLINE=1 pnpm verify:ci` 通过；TypeScript/Vue 130 文件 / 823 测试、Rust 36 项、12 包矩阵、聚合和 scoped tarball 干净消费均通过。
+- 版本候选、验收和回执统一迁入 `docs/releases/`；通用规则和步骤留在 `docs/` 顶层。发布后文档与示例先在 working 验证，经用户验收授权后本地提交、快进提升主库；不会改写 npm 0.7.5 制品。
+
+## 示例验证入口第一阶段（0.7.5 发布后验证）
+
+- `examples/PwwWorkbenchWeb` 作为共用示例与简单点检入口：`pnpm dev` 默认验证本 checkout 的构建；原测试监听移到 `pnpm test:watch`。
+- 页面与浏览器标题明确区分开发 / Registry；开发展示启动快照的 commit、branch、dirty，Registry 只认隔离安装的精确包，不用 URL、环境标签或源码 alias 冒充正式消费。
+- 先纳入内部 Tab 保活、三窗平铺/层叠与窄区域几何验证。轻量页由 Wing Primary 测试目录与右侧 View 组成；Tab 内仍使用公共 Header 和文字操作，不用一列大卡片堆叠。原完整工作台通过 `_blank` 独立打开，不嵌入测试 View；暂不扩张历史临时验证清单。
+- `pnpm example:registry --wing-version 0.7.5` 在临时目录安装同一示例所需精确 UI peers、类型和构建工具，然后执行类型检查、构建和预览；`--build-only` 用于非交互点检。入口说明见[示例 README](../examples/PwwWorkbenchWeb/README.md)。
+- 此项仅改变示例/开发脚本/文档；不升版本、不发布、不修改产品消费者。页面简单断言不替代完整发布或真实 Host 门禁。
+- 用户已验收轻量 Primary + View、页内 Header、图标加文字与独立工作台入口。聚焦测试 4 文件 / 22 项、示例类型与开发/Registry 构建通过；浏览器验证主题、480px 边界与输入保活。验证记录随 0.7.5 归档，不生成新版本。
 
 ## 0.7.4 发布与归档
 
@@ -42,7 +58,7 @@ Owner：Phoenix Wing maintainers
 - `code-core`、`kt-codegen`、CAD contracts/core、workspace schema、Node DB adapter 和 Rust source 已有真实消费者。
 - Auto Code/Auto CAD、Desk Tools 与 Open Issue 均从 Registry 消费 Wing；各仓不使用相邻目录 override，当前精确版本由各自的 manifest、lockfile 和依赖门禁维护。
 - 完整 workspace 测试、类型检查、release matrix、TypeScript/Rust tarball smoke 已进入 `pnpm verify:ci`。
-- 聚合 UI 编译入口、跨宿主契约、两项纯能力 fixture 与消费者验证均已进入制品门禁；0.4.2 归档、Registry 和七个消费者结果见[《0.4.2 本地候选与公开发布验收》](0.4.2发布候选验收.md)。
+- 聚合 UI 编译入口、跨宿主契约、两项纯能力 fixture 与消费者验证均已进入制品门禁；0.4.2 归档、Registry 和七个消费者结果见[《0.4.2 本地候选与公开发布验收》](releases/0.4.2发布候选验收.md)。
 - 大型 UI 分阶段拆分已经启动；Wing 的 `KtCodegenTable` 首轮治理已完成：领域编辑在 Core、布局与动作投影在无 DOM ViewModel、主题/滚动视觉规则在内部 Style，Web Component 保留单一 DOM renderer、焦点/事件接线与 Host 事件投影；`contained|page` 布局和公共 disclosure 属性/事件已经落地，公共 tag、数据方法和 browser 子路径保持稳定。
 
 旧 Phase 1–9、框架迁移、组件改进、多包迁移和单 block 迁移文档是实施证据，不再承担当前操作指导；分类见 [`document-manifest.json`](document-manifest.json)。
@@ -92,7 +108,7 @@ Owner：Phoenix Wing maintainers
      优先，缺失时自动回退应用默认内容与 tabs；默认层使 Footer Bottom 在空 View、
      Dashboard 和普通页面保持可用，切页不改受控显隐与高度。Primary/Secondary
      继续由当前 View 决定，0.6.0 的 View Bottom、`bottomTabs` 与 slot 入口保持兼容。
-   - [x] 2026-07-31 按锁步矩阵公开发布根包与 11 个 scoped packages 的 `0.6.0`；全部 `latest`、tarball 干净安装、可选 peer 补齐后的公共根入口及 `PNW_VERSION` 回归通过。详见[《0.6.0 发布验收》](0.6.0发布验收.md)。
+   - [x] 2026-07-31 按锁步矩阵公开发布根包与 11 个 scoped packages 的 `0.6.0`；全部 `latest`、tarball 干净安装、可选 peer 补齐后的公共根入口及 `PNW_VERSION` 回归通过。详见[《0.6.0 发布验收》](releases/0.6.0发布验收.md)。
    - [x] Open Issue 以 `2e900ad` 将 Wing 的 `light / dark / system` 真正同步到应用根与 Element Plus；Registry 141 项、LOCAL 144 项及完整 local-Wing build 通过。Desk 以 `81fdb7b` 修正 AppShell 自身不能 inject 自己 provide 的 Bottom context，并保留后代无参注入路径。
    - [x] 完成 0.6.0 候选后的 Desk Tools、Function Develop、KT BOM Studio 只读接入审计；新增 API 均不要求三个 0.5.1 消费者立即改动。Desk/BOM 等正式发布后走单一 Shell adapter，Function 随 Admin 迁移；未发现需要继续扩展的公共字段。详见[《扩展消费者接入审计》](Pnw工作台Web扩展消费者接入审计.md)。
    - [x] Open Issue 在 `023fa9b` / `4fb5611` 补齐完整显示偏好、稳定空态和真实页面级 View contribution；完整 `verify:local-wing` 已覆盖 LOCAL 140/5、9 项生命周期/窄屏定向测试及 core/server/Web 构建，Web 转换 3453 个模块；Registry 对照为 138/7。
@@ -128,12 +144,12 @@ Owner：Phoenix Wing maintainers
    - [x] Wing 已统一 `root-flyout` 的桌面时序：精细指针 `280ms` 首开、`120ms` 跨一级分组切换、离开安全区 `280ms` 关闭；触摸只使用 click，键盘立即操作且关闭后恢复触发项焦点；窄屏由壳层统一使用 Ribbon，不再单独扩展 Tree drawer。见[《侧目录外观可行性》](Pnw工作台Web侧目录外观可行性.md)。
    - [ ] Open Issue / Admin 继续用真实导航树验证 `root-flyout` 菜单密度、权限剪枝、触屏和浏览器焦点；该项是消费者验收，不再扩展 Wing hover timer 或 Tree drawer API。
    - [x] 通过单元测试、typecheck、build、文档门禁，并在内置浏览器验证 light/dark/custom、桌面/窄屏和 `16/24/36/48/64px` SVG 清晰度。
-   - [x] `0.6.1` 的代码、tarball 与真实 Host 候选验收通过，8 月 1 日的四条本地提交合并为一条；8 月 2 日更新 npm Token 后按依赖顺序发布 11 个 scoped packages 和根包。12 个 `latest` 均为 `0.6.1`，无相邻源码的 Registry 安装、精确内部依赖和公共入口 smoke 通过。详见[《0.6.1 发布验收》](0.6.1发布验收.md)。
-   - [x] `0.6.2` 于 2026-08-04 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 `0.6.2`，公开依赖无本地协议，全新 Registry cache 的隔离消费者通过 `PNW_VERSION`、Workbench/Output 与 SQLite smoke。本次未 push 或创建/推送 Git tag。详见[《0.6.2 发布验收》](0.6.2发布验收.md)。
+   - [x] `0.6.1` 的代码、tarball 与真实 Host 候选验收通过，8 月 1 日的四条本地提交合并为一条；8 月 2 日更新 npm Token 后按依赖顺序发布 11 个 scoped packages 和根包。12 个 `latest` 均为 `0.6.1`，无相邻源码的 Registry 安装、精确内部依赖和公共入口 smoke 通过。详见[《0.6.1 发布验收》](releases/0.6.1发布验收.md)。
+   - [x] `0.6.2` 于 2026-08-04 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 `0.6.2`，公开依赖无本地协议，全新 Registry cache 的隔离消费者通过 `PNW_VERSION`、Workbench/Output 与 SQLite smoke。本次未 push 或创建/推送 Git tag。详见[《0.6.2 发布验收》](releases/0.6.2发布验收.md)。
    - [x] `0.6.3` 修复 Git 群消息简报丢失 commit body：subject 与完整 body 之间固定一个空行，只归一化换行并裁剪正文首尾，保留正文内部空行、列表和顺序。权威测试覆盖 Open Issue `b245527` 的五条正文；用户已用 `phoenix-function-develop@2f32a48` 在 KT Auto Code Extension Host 完成真实剪贴板验收。见[《Git 群消息简报完整正文修复》](Git群消息简报完整正文修复.md)。
    - [x] `0.6.3` 增加纯 Core 的 `PnwGitLazyHistoryState`：更多 commit 默认收缩且不产生 page request；每次从收缩变为展开都按当前游标规划下一条，同一次展开不重复，保持展开时只允许下一条/下 5 条；page 合并拒绝 stale HEAD 与重复 OID。Auto 只在收到 request 时调用现有 `pnwReadGitCommitPage`，UI、AbortController 和持久化仍归 Host。见[《Git 轻量仓库读取与 OID 分页计划》](Git轻量仓库读取与OID分页计划.md)。
-   - [x] `0.6.3` 于 2026-08-09 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 0.6.3，公开内部依赖精确，隔离 Registry consumer 通过 Workbench、Git 正文/懒历史与 SQLite smoke。本次未执行 Git push 或 tag。详见[《0.6.3 发布验收》](0.6.3发布验收.md)。
-   - [x] 根 `phoenix-wing@0.6.4` 将 `PnwPrimarySection` 折叠箭头统一到标题左侧，保持收起向右、展开向下、键盘与 aria 契约不变；本轮未升级 11 个未变化 scoped packages，并完成 Registry 干净消费。详见[《0.6.4 发布候选》](0.6.4发布候选.md)。
+   - [x] `0.6.3` 于 2026-08-09 按依赖顺序公开发布 11 个 scoped packages 和根包；12 个 `latest` 与精确版本均为 0.6.3，公开内部依赖精确，隔离 Registry consumer 通过 Workbench、Git 正文/懒历史与 SQLite smoke。本次未执行 Git push 或 tag。详见[《0.6.3 发布验收》](releases/0.6.3发布验收.md)。
+   - [x] 根 `phoenix-wing@0.6.4` 将 `PnwPrimarySection` 折叠箭头统一到标题左侧，保持收起向右、展开向下、键盘与 aria 契约不变；本轮未升级 11 个未变化 scoped packages，并完成 Registry 干净消费。详见[《0.6.4 发布候选》](releases/0.6.4发布候选.md)。
    - [x] `0.7.0` 候选增加受控可浮动 / Primary 停靠工具宿主：纯状态机保持
      `closed / floating / primary` 互斥，保存浮窗坐标、Primary 首尾与折叠状态；
      `application / view` scope 只派生可见性，离开 owner View 不改写状态。浮窗复用
@@ -264,7 +280,7 @@ Owner：Phoenix Wing maintainers
 10. **[0.7.1 发布准备]** 本轮实际发布集合为根 `phoenix-wing@0.7.1`、
     `code-core/git-core/git-node/kt-codegen@0.6.4`；其余七个 scoped packages 保持 0.6.3。
     Registry exact 版本在 2026-08-21 尚未占用。完整门禁、发布顺序、消费者证据和待办见
-    [《0.7.1 发布候选与验收》](0.7.1发布候选.md)。未取得用户明确授权前不 publish，push/tag
+    [《0.7.1 发布候选与验收》](releases/0.7.1发布候选.md)。未取得用户明确授权前不 publish，push/tag
     始终由开发者手工完成。
 
 11. **[后续 TODO：FCStd 动态属性写回与 Schema v13 路径规范]** 不阻塞当前

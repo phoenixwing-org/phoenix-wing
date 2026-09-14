@@ -64,6 +64,8 @@ Phoenix 消费者统一使用 `pnpm dev` 启动 Registry Wing，使用 `pnpm win
 
 ## 文档
 
+Wing 自身的示例入口：`pnpm dev` 启动开发验证工作台；`pnpm example:registry --wing-version 0.7.5` 在隔离目录验证指定 npm 版本。两者共用[示例页面](examples/PwwWorkbenchWeb/README.md)，固定显示真实来源；产品消费者原有 `pnpm dev` / `pnpm wing` 规则不变。
+
 | 文档 | 内容 |
 |------|------|
 | [docs/文档索引.md](docs/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
@@ -75,6 +77,7 @@ Phoenix 消费者统一使用 `pnpm dev` 启动 Registry Wing，使用 `pnpm win
 | [docs/naming-checklist.md](docs/naming-checklist.md) | 命名点检清单 |
 | [docs/三库版本矩阵.md](docs/三库版本矩阵.md) | Wing 各发布物精确版本、消费端允许依赖与发布门禁 |
 | [docs/独立版本发布规则.md](docs/独立版本发布规则.md) | 0.6.4 起按真实改动确定版本、依赖和发布集合 |
+| [发布记录](docs/releases/README.md) | 历次版本候选、验收与正式 Registry 回执 |
 | [docs/C++成员排序算法规范.md](docs/C++成员排序算法规范.md) | `code-core` 成员排序的唯一算法规范、锁定规则与回归契约 |
 | [packages/kt-codegen/README.md](packages/kt-codegen/README.md) | `kt-codegen` 数据模型、17列兼容、32个生成块与类图 |
 
