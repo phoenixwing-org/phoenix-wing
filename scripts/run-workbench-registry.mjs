@@ -10,9 +10,12 @@ const pwwArgs = process.argv.slice(2).filter(arg => arg !== "--");
 const pwwBuildOnly = pwwArgs.includes("--build-only");
 const pwwIndex = pwwArgs.indexOf("--wing-version");
 const pwwVersion = pwwArgs[pwwIndex + 1];
+const pwwArchiveIndex = pwwArgs.indexOf("--wing-tarball");
+const pwwArchive = pwwArchiveIndex >= 0 ? pwwArgs[pwwArchiveIndex + 1] : undefined;
 if (pwwIndex < 0 || !/^\d+\.\d+\.\d+$/.test(pwwVersion ?? "")
-  || pwwArgs.some((arg, i) => i !== pwwIndex && i !== pwwIndex + 1 && arg !== "--build-only")) {
-  throw new Error("Usage: pnpm example:registry --wing-version 0.7.5 [--build-only]");
+  || (pwwArchiveIndex >= 0 && (!pwwArchive || !pwwArchive.endsWith('.tgz')))
+  || pwwArgs.some((arg, i) => i !== pwwIndex && i !== pwwIndex + 1 && !(pwwArchiveIndex >= 0 && (i === pwwArchiveIndex || i === pwwArchiveIndex + 1)) && arg !== "--build-only")) {
+  throw new Error("Usage: pnpm example:registry --wing-version <exact> [--wing-tarball <file.tgz>] [--build-only]");
 }
 const pwwConsumer = fs.mkdtempSync(path.join(os.tmpdir(), "phoenix-wing-example-registry-"));
 const pwwExample = "examples/PwwWorkbenchWeb";
@@ -51,21 +54,26 @@ fs.cpSync(path.join(pwwRoot, pwwExample), path.join(pwwConsumer, pwwExample), {
 });
 fs.copyFileSync(path.join(pwwRoot, "tsconfig.json"), path.join(pwwConsumer, "tsconfig.json"));
 const dependencies = { "phoenix-wing": pwwVersion };
+if (pwwArchive) {
+  fs.copyFileSync(path.resolve(pwwArchive), path.join(pwwConsumer, "wing-candidate.tgz"));
+  dependencies["phoenix-wing"] = "file:wing-candidate.tgz";
+}
 for (const name of ["vue", "pinia", "element-plus"]) dependencies[name] = pwwInstalledVersion(name);
 const devDependencies = {};
 for (const name of ["vite", "@vitejs/plugin-vue", "typescript", "vue-tsc", "@types/node"]) {
   devDependencies[name] = pwwInstalledVersion(name);
 }
 fs.writeFileSync(path.join(pwwConsumer, "package.json"), JSON.stringify({
-  name: "phoenix-wing-example-registry", private: true, type: "module",
+  name: pwwArchive ? "phoenix-wing-example-tarball" : "phoenix-wing-example-registry", private: true, type: "module",
+  ...(pwwArchive ? {pwwExpectedWingVersion: pwwVersion} : {}),
   packageManager: JSON.parse(fs.readFileSync(path.join(pwwRoot, "package.json"), "utf8")).packageManager,
   dependencies, devDependencies,
 }, null, 2) + "\n");
-console.log(`[Wing example][REGISTRY] exact phoenix-wing@${pwwVersion}; isolated consumer: ${pwwConsumer}`);
+console.log(`[Wing example][${pwwArchive ? 'TARBALL' : 'REGISTRY'}] exact phoenix-wing@${pwwVersion}; isolated example: ${pwwConsumer}`);
 pwwRun(["install", "--ignore-scripts", "--registry=https://registry.npmjs.org/"]);
 pwwRun(["exec", "vue-tsc", "-p", `${pwwExample}/tsconfig.json`, "--noEmit", "--pretty", "false"]);
 pwwRun(["exec", "vite", "build", "--config", `${pwwExample}/vite.config.ts`]);
-console.log("[Wing example][REGISTRY] typecheck/build passed; inspect the same sample in the browser. This is not the full release gate.");
+console.log(`[Wing example][${pwwArchive ? 'TARBALL' : 'REGISTRY'}] typecheck/build passed. This is not the full release gate.`);
 if (!pwwBuildOnly) {
   console.log("[Wing example] Preview: http://127.0.0.1:41790 — Ctrl+C stops preview; isolated evidence is retained.");
   pwwRun(["exec", "vite", "preview", "--config", `${pwwExample}/vite.config.ts`, "--host", "127.0.0.1", "--port", "41790", "--strictPort"], true);

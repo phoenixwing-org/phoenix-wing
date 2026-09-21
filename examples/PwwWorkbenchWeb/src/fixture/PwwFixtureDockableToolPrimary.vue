@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PwwFixtureResourceBrowser from "./PwwFixtureResourceBrowser.vue";
 import {
   PnwDockablePrimarySection,
   PnwPrimaryPanel,
@@ -19,9 +20,7 @@ defineProps<{ activeNodeId: string }>();
       :definition="PWW_FIXTURE_RESOURCE_TOOL"
       :active-view-id="activeNodeId"
     >
-      <div class="pww-resource-primary-body">
-        工程资源库已停靠；可以重新浮出、折叠、移动首尾或关闭。
-      </div>
+      <PwwFixtureResourceBrowser />
     </PnwDockablePrimarySection>
     <p v-if="pwwFixtureResourceToolState.mode !== 'primary'" class="pww-resource-primary-empty">
       工具当前为 {{ pwwFixtureResourceToolState.mode }}。

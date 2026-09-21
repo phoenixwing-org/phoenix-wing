@@ -10,6 +10,14 @@ const pwwWrappers: ReturnType<typeof mount>[] = [];
 afterEach(() => { pwwWrappers.splice(0).forEach(wrapper => wrapper.unmount()); });
 
 describe("simple validation UI", () => {
+  it("labels tarball evidence as unpublished instead of Registry", () => {
+    const wrapper = mount(PwwVerificationBanner, {props: {
+      source: {mode: 'tarball', version: '0.7.6', checkedAt: '2026-09-21', sha256: 'a'.repeat(64)}, runtimeVersion: '0.7.6',
+    }}); pwwWrappers.push(wrapper);
+    expect(wrapper.text()).toContain('本地制品验证 · 未发布');
+    expect(wrapper.text()).toContain('SHA-256 aaaaaaaaaaaa');
+    expect(wrapper.text()).not.toContain('npm 正式包');
+  });
   it("distinguishes development evidence from Registry and warns on stale build version", () => {
     const wrapper = mount(PwwVerificationBanner, { props: {
       source: { mode: "development", version: "0.7.5", checkedAt: "2026-09-14", commit: "a".repeat(40), branch: "sample", dirty: true }, runtimeVersion: "0.7.4",

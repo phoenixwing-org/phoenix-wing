@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, useSlots, type Component } from "vue";
+import { computed, ref, useSlots, type Component } from "vue";
+import PnwWorkbenchPanelSettings from "./PnwWorkbenchPanelSettings.vue";
 import type { PnwLocale } from "../types/PnwLocale.js";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 import type {
@@ -151,6 +152,7 @@ const emit = defineEmits<{
   "update:tabBarPlacement": [placement: PnwWorkbenchTabBarPlacement];
   "update:displaySettingsPositions": [positions: PnwWorkbenchDisplaySettingsPositions];
   "update:editorMaximized": [maximized: boolean];
+  "update:showFooter": [visible: boolean];
 }>();
 
 defineSlots<{
@@ -165,6 +167,7 @@ defineSlots<{
 }>();
 
 const pnwSlots = useSlots();
+const pnwLayout = ref<InstanceType<typeof PnwWorkbenchLayout>>();
 pnwProvideLocale(() => props.locale);
 const { t: pnwT } = usePnwLocale(() => props.locale);
 const pnwHeaderAriaLabel = computed(() => props.headerAriaLabel || pnwT("workbench.header"));
@@ -206,6 +209,7 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
 
 <template>
   <PnwWorkbenchLayout
+    ref="pnwLayout"
     :activity-bar-presentation="presentation"
     :contributions="pnwResolvedContributions"
     :visibility="visibility"
@@ -374,9 +378,23 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
             @open-advanced-settings="emit('openWorkbenchSettings')"
           >
             <template #additional-actions="slotProps">
+              <PnwWorkbenchPanelSettings
+                :show-footer="showFooter"
+                :contributions="pnwResolvedContributions"
+                :visibility="layoutState?.visibility ?? visibility"
+                @update:show-footer="emit('update:showFooter', $event)"
+                @toggle="pnwLayout?.toggleBlock($event)"
+              />
               <slot name="display-settings-actions" v-bind="slotProps" />
             </template>
             <template #panel-extra>
+              <PnwWorkbenchPanelSettings
+                :show-footer="showFooter"
+                :contributions="pnwResolvedContributions"
+                :visibility="layoutState?.visibility ?? visibility"
+                @update:show-footer="emit('update:showFooter', $event)"
+                @toggle="pnwLayout?.toggleBlock($event)"
+              />
               <slot name="display-settings-panel-extra" />
             </template>
           </PnwWorkbenchDisplaySettings>

@@ -6,6 +6,7 @@ import {
   pnwReduceDockableToolState,
 } from "phoenix-wing";
 import type { PwwFixtureEditorViewProps } from "./PwwFixtureEditorView.js";
+import PwwFixtureResourceBrowser from "./PwwFixtureResourceBrowser.vue";
 import {
   PWW_FIXTURE_RESOURCE_TOOL,
   pwwFixtureResourceToolState,
@@ -41,11 +42,7 @@ function pwwOpenResourceLibrary(): void {
     :definition="PWW_FIXTURE_RESOURCE_TOOL"
     :active-view-id="activeNodeId"
   >
-    <div class="pww-resource-tool-body">
-      <strong>工程资源库 fixture</strong>
-      <input value="workspace://fixture/resources/sample.dat" readonly>
-      <small>可缩放、停靠 Primary 或关闭；业务内容不进入 Wing。</small>
-    </div>
+    <PwwFixtureResourceBrowser />
   </PnwDockableToolWindow>
 </template>
 

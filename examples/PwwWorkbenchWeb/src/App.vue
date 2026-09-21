@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, ref, watch } from "vue";
 import { PnwWorkbenchShell } from "phoenix-wing";
 import { PWW_FIXTURE_NAVIGATION } from "./fixture/PwwFixtureNavigation.js";
 import { usePwwFixtureWorkbenchController } from "./fixture/PwwFixtureWorkbenchController.js";
@@ -8,9 +8,24 @@ import PwwFixtureNavigationLayoutView from "./fixture/PwwFixtureNavigationLayout
 import PwwFixtureViewDialogHost from "./fixture/PwwFixtureViewDialogHost.vue";
 import PwwFixtureWorkbenchView from "./fixture/PwwFixtureWorkbenchView.vue";
 import PwwFixtureWorkspaceWelcome from "./fixture/PwwFixtureWorkspaceWelcome.vue";
+import { pwwFixtureResourceToolState } from "./fixture/PwwFixtureResourceToolState.js";
 
 // App 只持有一个 fixture facade；真实 consumer 可换成自己的 Pinia/Router adapter。
 const pwwFixture = reactive(usePwwFixtureWorkbenchController());
+watch(() => pwwFixtureResourceToolState.value.mode, (mode) => {
+  if (mode === "primary") {
+    pwwFixture.layout.state = {
+      ...pwwFixture.layout.state,
+      visibility: { ...pwwFixture.layout.state.visibility, primary: true },
+    };
+  }
+});
+const pwwFooterKey = "phoenix-wing.fixture.show-footer.v1";
+const pwwShowFooter = ref(true);
+try { pwwShowFooter.value = localStorage.getItem(pwwFooterKey) !== "false"; } catch { /* Storage is optional. */ }
+watch(pwwShowFooter, (visible) => {
+  try { localStorage.setItem(pwwFooterKey, String(visible)); } catch { /* Keep the in-memory preference. */ }
+});
 
 function pwwCloseTab(tabId: string, showWelcome: () => void): void {
   pwwFixture.actions.closeTab(tabId);
@@ -38,6 +53,7 @@ function pwwCloseAllTabs(showWelcome: () => void): void {
       <PwwFixtureWorkspaceWelcome>
         <template #workbench="{ showWelcome }">
           <PnwWorkbenchShell
+        v-model:show-footer="pwwShowFooter"
         v-model:presentation="pwwFixture.appearance.presentation"
         v-model:expanded-node-ids="pwwFixture.navigation.expandedNodeIds"
         v-model:ribbon-appearance="pwwFixture.appearance.ribbon"

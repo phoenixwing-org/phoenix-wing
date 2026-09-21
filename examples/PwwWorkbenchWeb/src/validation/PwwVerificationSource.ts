@@ -4,4 +4,5 @@ export type PwwVerificationSource = {
 } & (
   | { readonly mode: "development"; readonly commit: string; readonly branch: string; readonly dirty: boolean }
   | { readonly mode: "registry" }
+  | { readonly mode: "tarball"; readonly sha256: string }
 );

@@ -64,14 +64,21 @@ describe("PwwWorkbenchWeb 非发布 fixture 示例", () => {
 
     expect(fs.readdirSync(path.join(PWW_WORKBENCH_ROOT, "src")).sort()).toEqual([
       "App.vue",
+      "PwwExampleApp.vue",
       "fixture",
       "main.ts",
+      "page-layout",
+      "validation",
     ]);
     const pwwFixtureFileNames = fs.readdirSync(path.join(PWW_WORKBENCH_ROOT, "src/fixture"));
     expect(pwwFixtureFileNames.every((name) => name.startsWith("PwwFixture"))).toBe(true);
   });
 
   it("只从 phoenix-wing 公共入口消费组件、类型和样式", () => {
+    const pageLayout = pwwReadFile("src/page-layout/Page.vue");
+    expect(pageLayout).toContain("from 'phoenix-wing'");
+    expect(pageLayout).toContain("'phoenix-wing/style.css'");
+    expect(pageLayout).not.toContain("../../../../src");
     const sources = [
       pwwReadFile("src/App.vue"),
       pwwReadFile("src/fixture/PwwFixtureNavigationLayoutView.vue"),

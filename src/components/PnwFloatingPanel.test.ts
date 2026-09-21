@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { mount } from "@vue/test-utils";
 import { pnwCreateFloatingWindowStack } from "../utils/pnwFloatingWindowStack.js";
 import PnwFloatingPanel from "./PnwFloatingPanel.vue";
@@ -10,6 +11,40 @@ afterEach(() => {
 });
 
 describe("PnwFloatingPanel resize", () => {
+  it("resize hit areas stay inside the clipped panel", () => {
+    const source = readFileSync("src/components/PnwFloatingPanel.vue", "utf8");
+    const directions = {
+      north: ["top"], south: ["bottom"], east: ["right"], west: ["left"],
+      "north-east": ["top", "right"], "south-east": ["bottom", "right"],
+      "south-west": ["bottom", "left"], "north-west": ["top", "left"],
+    };
+    for (const [direction, edges] of Object.entries(directions)) {
+      const rules = [...source.matchAll(new RegExp(`\\.pnw-floating-panel__resize-handle--${direction}\\s*\\{([^}]+)\\}`, "g"))];
+      expect(rules.length).toBeGreaterThan(0);
+      const rule = rules.map(match => match[1]).join("\n");
+      for (const edge of edges) expect(rule).toMatch(new RegExp(`${edge}:\\s*0;`));
+    }
+  });
+  it("header controls retain pointer events while blank header space remains draggable", () => {
+    const wrapper = mount(PnwFloatingPanel, {
+      attachTo: document.body,
+      props: { open: true, position: { x: 20, y: 20 }, title: 'Controls' },
+      slots: { header: '<button><span>Action</span></button><input><a href="#fixture">Link</a><div role="slider">Slider</div><div contenteditable="true">Edit</div>' },
+    });
+    const header = document.body.querySelector<HTMLElement>('.pnw-floating-panel__header')!;
+    for (const selector of ['button span', 'input', 'a', '[role="slider"]', '[contenteditable]']) {
+      const event = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+      header.querySelector(selector)!.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.body.style.cursor).not.toBe('move');
+    }
+    const drag = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+    header.dispatchEvent(drag);
+    expect(drag.defaultPrevented).toBe(true);
+    expect(document.body.style.cursor).toBe('move');
+    header.dispatchEvent(new PointerEvent('pointerup'));
+    wrapper.unmount();
+  });
   it("resizable 输出八向可聚焦手柄与语义名称", () => {
     const wrapper = mount(PnwFloatingPanel, {
       attachTo: document.body,

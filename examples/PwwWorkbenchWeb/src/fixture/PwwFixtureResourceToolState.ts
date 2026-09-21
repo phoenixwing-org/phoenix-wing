@@ -20,3 +20,5 @@ export const PWW_FIXTURE_RESOURCE_TOOL = {
 } as const satisfies PnwDockableToolDefinition;
 
 export const pwwFixtureResourceToolState = ref(pnwNormalizeDockableToolState());
+export const pwwFixtureResourceQuery = ref("");
+export const pwwFixtureSelectedResource = ref("sample.dat");

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import type { PwwVerificationSource } from "../src/validation/PwwVerificationSource.js";
 
 /** Read the resolved package, never an environment/query-string mode label. */
@@ -22,10 +23,14 @@ export function pwwReadVerificationSource(projectRoot: string): PwwVerificationS
       dirty: Boolean(git("status", "--porcelain")),
     };
   }
-  if (manifest.name !== "phoenix-wing-example-registry") {
+  const tarball = manifest.name === "phoenix-wing-example-tarball";
+  if (!tarball && manifest.name !== "phoenix-wing-example-registry") {
     throw new Error("Unknown example host: cannot certify dependency source");
   }
-  const expected = manifest.dependencies?.["phoenix-wing"];
+  const expected = tarball ? manifest.pwwExpectedWingVersion : manifest.dependencies?.["phoenix-wing"];
+  if (tarball && manifest.dependencies?.["phoenix-wing"] !== "file:wing-candidate.tgz") {
+    throw new Error("Tarball example must use its local candidate archive");
+  }
   if (!/^\d+\.\d+\.\d+$/.test(expected ?? "")) throw new Error("Registry version must be exact");
   const modules = path.join(root, "node_modules");
   if (!entry.startsWith(modules + path.sep)) throw new Error("Registry example resolved outside its isolated node_modules");
@@ -36,6 +41,12 @@ export function pwwReadVerificationSource(projectRoot: string): PwwVerificationS
       const installed = JSON.parse(fs.readFileSync(file, "utf8"));
       if (installed.name === "phoenix-wing") {
         if (installed.version !== expected) throw new Error("Installed Registry version differs from exact request");
+        if (tarball) {
+          const archive = fs.realpathSync(path.join(root, "wing-candidate.tgz"));
+          if (archive !== path.join(root, "wing-candidate.tgz")) throw new Error("Tarball archive must not be a symlink");
+          return { mode: "tarball", version: installed.version, checkedAt,
+            sha256: createHash("sha256").update(fs.readFileSync(archive)).digest("hex") };
+        }
         return { mode: "registry", version: installed.version, checkedAt };
       }
     }

@@ -276,6 +276,11 @@ function pnwRefreshResetSizeAvailability(
 
 function pnwStartDrag(event: PointerEvent): void {
   if (!props.movable || !pnwPanel.value) return;
+  const target = event.target;
+  // Slotted header controls own their pointer interaction, not the drag handle.
+  if (event.defaultPrevented || (target instanceof Element && target.closest(
+    'button, input, select, textarea, a[href], label, summary, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="checkbox"], [role="radio"], [role="switch"], [role="slider"], [role="textbox"], [role="combobox"], [role="tab"], [role="menuitem"]',
+  ))) return;
   const startPointer = { x: event.clientX, y: event.clientY };
   const startPosition = { ...props.position };
   const rect = pnwPanel.value.getBoundingClientRect();
@@ -670,8 +675,8 @@ onBeforeUnmount(() => {
   cursor: ns-resize;
 }
 
-.pnw-floating-panel__resize-handle--north { top: -4px; }
-.pnw-floating-panel__resize-handle--south { bottom: -4px; }
+.pnw-floating-panel__resize-handle--north { top: 0; }
+.pnw-floating-panel__resize-handle--south { bottom: 0; }
 
 .pnw-floating-panel__resize-handle--east,
 .pnw-floating-panel__resize-handle--west {
@@ -681,8 +686,8 @@ onBeforeUnmount(() => {
   cursor: ew-resize;
 }
 
-.pnw-floating-panel__resize-handle--east { right: -4px; }
-.pnw-floating-panel__resize-handle--west { left: -4px; }
+.pnw-floating-panel__resize-handle--east { right: 0; }
+.pnw-floating-panel__resize-handle--west { left: 0; }
 
 .pnw-floating-panel__resize-handle--north-east,
 .pnw-floating-panel__resize-handle--south-east,
@@ -693,26 +698,26 @@ onBeforeUnmount(() => {
 }
 
 .pnw-floating-panel__resize-handle--north-east {
-  top: -5px;
-  right: -5px;
+  top: 0;
+  right: 0;
   cursor: nesw-resize;
 }
 
 .pnw-floating-panel__resize-handle--south-east {
-  right: -5px;
-  bottom: -5px;
+  right: 0;
+  bottom: 0;
   cursor: nwse-resize;
 }
 
 .pnw-floating-panel__resize-handle--south-west {
-  bottom: -5px;
-  left: -5px;
+  bottom: 0;
+  left: 0;
   cursor: nesw-resize;
 }
 
 .pnw-floating-panel__resize-handle--north-west {
-  top: -5px;
-  left: -5px;
+  top: 0;
+  left: 0;
   cursor: nwse-resize;
 }
 </style>
