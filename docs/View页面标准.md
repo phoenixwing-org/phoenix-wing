@@ -69,6 +69,41 @@
 `PnwPageLayout` 透传这两个插槽。旧 `#actions`、`#help` 与 `actionsAlign` 保留原行为，
 仅作过渡兼容；确认依赖支持后应尽快迁移，新页面不要继续使用旧插槽。
 
+新旧插槽并存时，center 控件不参与 flex 压缩，最大宽度受中区约束；超出内容在中区横向滚动，
+Tab 焦点可进入旧操作与帮助。不能把搜索框压成细线，也不能挤走 right 或最右框架动作。
+
+### Block 外观与 Header 插槽
+
+复用现有 `PnwSidebarBlock variant`，不根据 DOM 所在位置自动改样式，避免移动/浮出时改变外观。
+
+| 使用位置 | 推荐公开入口 | 默认视觉 |
+| --- | --- | --- |
+| Primary | `PnwPrimarySection`；外层 `PnwPrimaryPanel` 使用 `strip` | 连续横向分隔线，无左右卡片边框、无圆角 |
+| Main 正文 | `PnwSidebarBlock variant="card"` | 1px 实线四边框，默认 8px 圆角，正文有内边距 |
+| Block Header | `#title` / `#suffix` / `#actions` | 用间距分组，不绘制操作区竖线 |
+
+`PnwSidebarBlock` 保持原默认 `variant="strip"`；Main 显式选择 `card`，用户也可选择 `strip`。
+`collapsible`、`v-model:expanded`、`bodyInset` 与 `bodyScroll` 保持现有职责；固定 Block 可设置
+`:collapsible="false"`。`--pnw-sidebar-block-radius` 可覆盖 card 圆角；颜色统一来自工作台主题 token。
+card / PrimarySection Header 默认带淡色背景，dark 下使用对应深色浅层，而非固定白色。
+普通 `strip`（包括卡片中的嵌套小块）默认透明标题背景和上下横线，默认可折叠；只传 title 和内容即可，
+不必逐块设置背景或折叠开关。PrimaryPanel 仍可提供自己的标题底色。消费者可在自己的容器 CSS
+设置 `--pnw-block-header-bg`（包括 `transparent`）覆盖 SidebarBlock 与 PrimarySection 的标题底色；
+原 `--panel-head-bg` / `--pnw-primary-section-header-bg` 仍可使用。不需要穿透内部样式。
+这里的 Block 不是 `PnwPageMainBlock`：后者只负责页面正文默认留白，不自动给整个页面套卡片。
+
+```vue
+<PnwSidebarBlock title="结果" variant="card" :collapsible="false">
+  <template #actions><button type="button">刷新</button></template>
+  <p>消费者自己的正文</p>
+</PnwSidebarBlock>
+```
+
+验证入口：本仓示例 `/` → 左侧「Block 样式」。可切换 strip/card，检查 Primary、Main、Header，
+以及 light/dark、窄屏、草稿保留和折叠；示例只负责排列，不覆盖组件边框 CSS。
+也可直接进入 `/?example=blocks`。其中 Main 的一级「图片与属性」Block 展示左侧 SVG 图片、右侧两个连续 strip 小块，
+窄容器改为上下排列；这是 slot 组合示例，不将图片或字段模型固化到公共 Block API。
+
 - [x] 公共 Header 与 PageLayout 新插槽实现。
 - [x] 库内 Header 示例页头源码适配；浏览器完整验收另行点检。
 - [ ] Registry 发布及隔离安装同一示例的回归。

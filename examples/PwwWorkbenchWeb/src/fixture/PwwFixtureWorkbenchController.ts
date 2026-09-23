@@ -1,4 +1,4 @@
-import { computed, onScopeDispose, ref, shallowRef, watch } from "vue";
+import { computed, markRaw, onScopeDispose, ref, shallowRef, watch } from "vue";
 import { storeToRefs } from "pinia";
 import {
   pnwNavigationLeaves,
@@ -107,7 +107,7 @@ export function usePwwFixtureWorkbenchController() {
     { id: "output", label: "工作台消息", count: pwwDiagnosticsSnapshot.value.logs.length },
   ]);
   const pwwDefaultBottomBlock: PnwBottomViewBlockComponentContribution = {
-    component: PwwFixtureViewBottom,
+    component: markRaw(PwwFixtureViewBottom),
     props: pwwDefaultBottomProps,
     tabs: pwwDefaultBottomTabs,
   };

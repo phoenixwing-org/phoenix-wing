@@ -4,8 +4,34 @@ import { describe, expect, it } from "vitest";
 import { defineComponent, h, ref } from "vue";
 import PnwPageHeader from "./PnwPageHeader.vue";
 import PnwPageLayout from "./PnwPageLayout.vue";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 describe("View Header business slots", () => {
+  it("keeps center controls non-shrinking within the middle overflow track", () => {
+    // happy-dom has no flex layout: real 380px geometry is checked in the example browser.
+    const source = readFileSync(resolve(process.cwd(), "src/layout/PnwPageHeader.vue"), "utf8");
+    expect(source).toMatch(/\.pnw-head-middle > \*\s*\{\s*flex-shrink:\s*0;\s*max-width:\s*100%;/u);
+    expect(source).toMatch(/\.pnw-head-middle\s*\{[^}]*overflow-x:\s*auto;/u);
+    expect(source).toContain("justify-content: safe flex-end");
+  });
+  it("preserves mixed-slot input and action identities when changing alignment", async () => {
+    const wrapper = mount(PnwPageHeader, {
+      props: { title: 'Mixed slots', presentationDetachable: true },
+      slots: {
+        center: '<input aria-label="Search">', actions: '<button>Legacy</button>',
+        help: '<a href="#help">Help</a>', right: '<button>Save</button>',
+      },
+    });
+    const input = wrapper.get<HTMLInputElement>('input');
+    await input.setValue('draft');
+    await wrapper.setProps({ actionsAlign: 'end' });
+    expect(wrapper.get('input').element).toBe(input.element);
+    expect(input.element.value).toBe('draft');
+    expect(wrapper.get('.pnw-head-middle').element.children).toHaveLength(3);
+    expect(wrapper.get('.pnw-head-row').element.lastElementChild?.className).toBe('pnw-head-presentation-action');
+    wrapper.unmount();
+  });
   it("updates conditional business slots without losing title or framework actions", async () => {
     const center = ref(true), right = ref(true);
     const host = defineComponent(() => () => h(PnwPageHeader, {

@@ -108,11 +108,11 @@ function pnwToggleSection(): void {
   min-height: 28px;
   background: var(
     --pnw-primary-section-header-bg,
-    color-mix(
+    var(--pnw-block-header-bg, color-mix(
       in srgb,
-      var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff)) 84%,
-      var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, #f1f5f9)) 16%
-    )
+      var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff)) 92%,
+      var(--pnw-workbench-text, var(--pnw-workbench-default-text, #0f172a)) 8%
+    ))
   );
 }
 

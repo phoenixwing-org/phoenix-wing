@@ -320,6 +320,13 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
   justify-content: safe flex-end;
 }
 
+/* Keep center controls usable beside legacy actions/help. Overflow belongs to
+   the middle track, not to compressed inputs or the fixed framework track. */
+.pnw-head-middle > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
 .pnw-head-actions {
   min-width: max-content;
   display: flex;

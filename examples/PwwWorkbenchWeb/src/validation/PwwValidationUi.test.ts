@@ -2,14 +2,40 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { afterEach, describe, expect, it } from "vitest";
-import { PnwFloatingPanel, PnwPageLayout, PnwWorkbenchLayout } from "phoenix-wing";
+import { PnwFloatingPanel, PnwPageLayout, PnwSelect, PnwSidebarBlock, PnwWorkbenchLayout } from "phoenix-wing";
 import PwwVerificationBanner from "./PwwVerificationBanner.vue";
 import PwwTabArrangementValidation from "./PwwTabArrangementValidation.vue";
+import PwwBlockVariantsValidation from "./PwwBlockVariantsValidation.vue";
 
 const pwwWrappers: ReturnType<typeof mount>[] = [];
 afterEach(() => { pwwWrappers.splice(0).forEach(wrapper => wrapper.unmount()); });
 
 describe("simple validation UI", () => {
+  it("exposes Block variants through public components and preserves the draft", async () => {
+    const wrapper = mount(PwwBlockVariantsValidation); pwwWrappers.push(wrapper);
+    const block = wrapper.findAllComponents(PnwSidebarBlock)[0];
+    expect(block.props('variant')).toBe('card');
+    expect(wrapper.get('[data-pww-static-block] .pnw-sidebar-block-head-toggle').attributes('aria-expanded')).toBeUndefined();
+    expect(wrapper.findAll('[data-pww-inner-strip]')).toHaveLength(2);
+    expect(wrapper.get('[data-pww-nested-block] [role="img"]').attributes('aria-label')).toBe('Wing 示例图片');
+    const nested = wrapper.findAll('[data-pww-inner-strip]');
+    expect(nested[0].get('button').attributes('aria-expanded')).toBe('true');
+    await nested[0].get('button').trigger('click');
+    expect(nested[0].get('button').attributes('aria-expanded')).toBe('false');
+    expect(nested[1].get('button').attributes('aria-expanded')).toBe('true');
+    await nested[0].get('button').trigger('click');
+    expect(nested[0].get('button').attributes('aria-expanded')).toBe('true');
+    const input = wrapper.get<HTMLInputElement>('[aria-label="Block 草稿"]');
+    await input.setValue('retained');
+    wrapper.getComponent(PnwSelect).vm.$emit('update:modelValue', 'strip');
+    await nextTick();
+    expect(block.props('variant')).toBe('strip');
+    expect(wrapper.get('[aria-label="Block 草稿"]').element).toBe(input.element);
+    expect(input.element.value).toBe('retained');
+    await wrapper.get('button[aria-label="刷新 Block"]').trigger('click');
+    expect(wrapper.text()).toContain('刷新次数：1');
+    expect(wrapper.get('.pnw-sidebar-block-head-toggle').attributes('aria-expanded')).toBe('true');
+  });
   it("labels tarball evidence as unpublished instead of Registry", () => {
     const wrapper = mount(PwwVerificationBanner, {props: {
       source: {mode: 'tarball', version: '0.7.6', checkedAt: '2026-09-21', sha256: 'a'.repeat(64)}, runtimeVersion: '0.7.6',
