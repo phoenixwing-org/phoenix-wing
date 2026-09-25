@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "packages": [
-    { "name": "phoenix-wing", "version": "0.7.5", "manifest": "package.json", "kind": "compat-ui" },
+    { "name": "phoenix-wing", "version": "0.7.6", "manifest": "package.json", "kind": "compat-ui" },
     { "name": "@phoenix-wing/code-core", "version": "0.6.6", "manifest": "packages/code-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/git-core", "version": "0.6.4", "manifest": "packages/git-core/package.json", "kind": "typescript-core" },
     { "name": "@phoenix-wing/git-node", "version": "0.6.5", "manifest": "packages/git-node/package.json", "kind": "node-adapter" },

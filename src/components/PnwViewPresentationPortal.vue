@@ -31,6 +31,8 @@ import PnwIcon from "./PnwIcon.vue";
 const props = withDefaults(defineProps<{
   record: PnwViewPresentationRecord;
   title: string;
+  /** page keeps the contributed header fixed and scrolls only the main frame. */
+  contentLayout?: "flow" | "page";
   ariaLabel?: string;
   panelClass?: string;
   closeOnEscape?: boolean;
@@ -45,6 +47,7 @@ const props = withDefaults(defineProps<{
   leaseRegistry?: PnwViewPresentationLeaseRegistry;
 }>(), {
   ariaLabel: "",
+  contentLayout: "flow",
   panelClass: "",
   closeOnEscape: true,
   showCloseAction: false,
@@ -285,6 +288,7 @@ defineExpose<PnwViewPresentationPortalHandle>({
 <template>
   <div
     class="pnw-view-presentation-portal"
+    :class="{ 'pnw-view-presentation-portal--page': contentLayout === 'page' }"
     :data-pnw-view-instance-id="record.identity.viewInstanceId"
     :data-pnw-view-presentation-mode="record.mode"
   >
@@ -320,7 +324,8 @@ defineExpose<PnwViewPresentationPortalHandle>({
 
     <div ref="pnwMainAnchor" class="pnw-view-presentation-portal__main-anchor">
       <Teleport :to="pnwMainDestination" :disabled="!pnwTeleportEnabled">
-        <div ref="pnwMainFrame" class="pnw-view-presentation-portal__main-frame">
+        <div ref="pnwMainFrame" class="pnw-view-presentation-portal__main-frame"
+          :class="{ 'pnw-view-presentation-portal__main-frame--page': contentLayout === 'page' }">
           <slot
             name="main"
             :mode="record.mode"
@@ -400,6 +405,25 @@ defineExpose<PnwViewPresentationPortalHandle>({
 
 .pnw-view-presentation-portal {
   min-height: 0;
+}
+
+.pnw-view-presentation-portal--page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  overflow: hidden;
+}
+
+.pnw-view-presentation-portal--page > .pnw-view-presentation-portal__main-anchor {
+  min-width: 0;
+  min-height: 0;
+}
+
+.pnw-view-presentation-portal__main-frame--page {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 :global(.pnw-view-presentation-dialog .pnw-floating-panel__header) {

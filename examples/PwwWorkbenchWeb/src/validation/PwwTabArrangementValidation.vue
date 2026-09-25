@@ -2,19 +2,21 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
   PnwFloatingPanel, PnwTabContainer, PnwWorkbenchLayout, PnwActivityTree,
-  PnwPageLayout, PnwRibbonToolButton, PnwPrimarySection, usePnwOverlayTheme, pnwArrangeFloatingViewBounds,
+  PnwPageLayout, PnwRibbonToolButton, PnwSidebarBlock, PnwPrimarySection, usePnwOverlayTheme, pnwArrangeFloatingViewBounds,
   pnwArrangeViewPresentationRecords, pnwCreateViewPresentationRecord,
   type PnwFloatingPanelBounds, type PnwFloatingViewArrangementItem,
   type PnwColorScheme, type PnwFloatingViewArrangementMode, type PnwTabDefinition, type PnwWorkbenchLayoutState,
 } from "phoenix-wing";
+import PwwBlockVariantsValidation from "./PwwBlockVariantsValidation.vue";
 
 const props = withDefaults(defineProps<{ colorScheme?: PnwColorScheme }>(), { colorScheme: "system" });
 const pwwResolvedTheme = usePnwOverlayTheme(() => props.colorScheme);
-const pwwTestId = ref("tabs");
+const pwwTestId = ref(new URLSearchParams(window.location.search).get("example") === "blocks" ? "blocks" : "tabs");
 const pwwTests = [
   { id: "tabs", label: "Tab 内容保活", icon: "pnw:document" },
   { id: "windows", label: "浮窗平铺与层叠", icon: "pnw:window-float" },
   { id: "checks", label: "简单断言", icon: "pnw:report" },
+  { id: "blocks", label: "Block 样式", icon: "pnw:dashboard" },
 ];
 const pwwTitle = computed(() => pwwTests.find(test => test.id === pwwTestId.value)!.label);
 const pwwLayout = ref<PnwWorkbenchLayoutState>({
@@ -56,9 +58,12 @@ function pwwAssert(condition: unknown, name: string): void {
 
 async function pwwRunChecks(): Promise<void> {
   if (pwwRunning.value) return;
+  const previousTestId = pwwTestId.value;
   const previousFocus = document.activeElement instanceof HTMLElement && document.activeElement !== document.body
     ? document.activeElement : undefined;
   pwwRunning.value = true;
+  // Real keyboard focus requires visible tabs, including a direct Block example entry.
+  pwwTestId.value = 'tabs';
   pwwChecks.value = [];
   const test = async (name: string, work: () => void | Promise<void>) => {
     try { await work(); pwwChecks.value.push({ name, passed: true }); }
@@ -113,9 +118,10 @@ async function pwwRunChecks(): Promise<void> {
   } finally {
     pwwRunning.value = false;
     pwwActive.value = "first";
+    pwwTestId.value = previousTestId;
     await nextTick();
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
-    else pwwTabHost.value?.querySelector<HTMLButtonElement>('[data-pnw-tab-id="first"]')?.focus({ preventScroll: true });
+    else if (previousTestId === 'tabs') pwwTabHost.value?.querySelector<HTMLButtonElement>('[data-pnw-tab-id="first"]')?.focus({ preventScroll: true });
   }
 }
 
@@ -139,12 +145,24 @@ onMounted(() => { void pwwRunChecks(); });
 <template>
   <PnwWorkbenchLayout v-model:layout-state="pwwLayout" :contributions="{ primary: true }" :color-scheme="colorScheme" :show-footer="false">
     <template #primary>
+      <div class="pww-validation-primary">
       <PnwActivityTree :nodes="pwwTests" :active-node-id="pwwTestId" :color-scheme="colorScheme"
+        :class="{ 'pww-test-navigation--compact': pwwTestId === 'blocks' }"
         header-label="测试目录" aria-label="简单验证目录" @activate="pwwTestId = $event"
         @update:collapsed="pwwLayout = { ...pwwLayout, visibility: { ...pwwLayout.visibility, primary: !$event } }" />
+      <template v-if="pwwTestId === 'blocks'">
+        <PnwPrimarySection title="Primary · 筛选" data-pww-primary-block>
+          <p class="pww-primary-note">Block 左右贴边，文字保留内 padding。</p>
+        </PnwPrimarySection>
+        <PnwPrimarySection title="Primary · 属性" :collapsible="false" data-pww-primary-block>
+          <template #actions><PnwRibbonToolButton label="读取 Primary" icon="pnw:document" @click="pwwReadDraft('first')" /></template>
+          <p class="pww-primary-note">连续横向分隔线，Header 无竖线。</p>
+        </PnwPrimarySection>
+      </template>
+      </div>
     </template>
     <PnwPageLayout :title="pwwTitle" :body-inset="false" :body-scroll="false" actions-align="end">
-      <template #actions>
+      <template #right>
         <template v-if="pwwTestId === 'windows'">
           <PnwRibbonToolButton label="平铺三窗" icon="pnw:dashboard" display-mode="icon-title" :show-title="true" @click="pwwArrange('tile')" />
           <PnwRibbonToolButton label="层叠三窗" icon="pnw:window-float" display-mode="icon-title" :show-title="true" @click="pwwArrange('cascade')" />
@@ -162,16 +180,16 @@ onMounted(() => { void pwwRunChecks(); });
           <PnwTabContainer v-model:active-tab-id="pwwActive" :tabs="pwwTabs" lazy-mount aria-label="验证内容页签">
             <template #default="{ tab }">
               <PnwPageLayout :title="`${tab.title} · 草稿`" actions-align="end">
-                <template #actions>
+                <template #right>
                   <PnwRibbonToolButton label="读取草稿" icon="pnw:document" display-mode="icon-title" :show-title="true" @click="pwwReadDraft(tab.id)" />
                 </template>
                 <div class="pww-draft-content">
                   <label class="pww-field">{{ tab.title }}草稿 <input :data-draft="tab.id" :aria-label="`${tab.title}草稿`" value="未保存内容" /></label>
                   <p class="pww-hint" role="status">{{ pwwDraftMessage || '可编辑，再切到第二页返回；本示例不写入文件。' }}</p>
-                  <PnwPrimarySection title="独立 iframe" :collapsible="false">
+                  <PnwSidebarBlock title="独立 iframe" variant="card" :collapsible="false">
                     <iframe :data-frame="tab.id" :title="`${tab.title}独立内容`" @load="pwwThemeFrames"
                       srcdoc="<!doctype html><html><head><style>body{margin:12px;font:14px system-ui;color:CanvasText;background:Canvas}input{font:inherit;color:inherit;background:Field;border:1px solid GrayText;padding:5px;max-width:100%;box-sizing:border-box}</style></head><body><p>独立文档 · 页签保活</p><label>内部草稿 <input value='iframe 内容也可编辑' /></label></body></html>" />
-                  </PnwPrimarySection>
+                  </PnwSidebarBlock>
                 </div>
               </PnwPageLayout>
             </template>
@@ -187,16 +205,17 @@ onMounted(() => { void pwwRunChecks(); });
         </section>
 
         <section v-show="pwwTestId === 'checks'" class="pww-check-stage" aria-label="自动断言">
-          <PnwPrimarySection title="检查结果" :collapsible="false">
+          <PnwSidebarBlock title="检查结果" variant="card" :collapsible="false">
             <template #suffix>{{ pwwCheckSummary }}</template>
             <ul class="pww-check-list" aria-live="polite">
               <li v-for="item in pwwChecks" :key="item.name" :data-passed="item.passed">
                 <strong>{{ item.passed ? '通过' : '失败' }}</strong><span>{{ item.name }}<span v-if="item.detail"> — {{ item.detail }}</span></span>
               </li>
             </ul>
-          </PnwPrimarySection>
+          </PnwSidebarBlock>
           <p class="pww-hint">只覆盖以上简单断言，不替代完整发布门禁或真实消费者验收。</p>
         </section>
+        <PwwBlockVariantsValidation v-show="pwwTestId === 'blocks'" :color-scheme="colorScheme" />
       </div>
     </PnwPageLayout>
     <PnwFloatingPanel v-for="item in pwwWindows" :key="item.id" open :title="`验证窗口 ${item.id}`"
@@ -212,6 +231,9 @@ onMounted(() => { void pwwRunChecks(); });
 </template>
 
 <style scoped>
+.pww-validation-primary { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; gap:0; padding:0; margin:0; overflow:auto; }
+.pww-test-navigation--compact { flex:0 0 auto; height:auto; }
+.pww-primary-note { margin:0; padding:8px; font-size:13px; }
 .pww-test-view { display:flex; flex-direction:column; height:100%; min-height:0; }
 .pww-test-status, .pww-test-options { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; padding:6px 10px; font-size:12px; color:var(--pnw-workbench-default-muted); border-bottom:1px solid var(--pnw-workbench-default-border); }
 .pww-test-count { margin-left:auto; white-space:nowrap; }

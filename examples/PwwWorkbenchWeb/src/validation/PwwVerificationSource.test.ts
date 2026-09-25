@@ -23,6 +23,20 @@ function pwwRegistry(root: string, version = "0.7.5"): void {
 afterEach(() => { for (const root of pwwTemporary.splice(0)) fs.rmSync(root, { recursive: true, force: true }); });
 
 describe("example verification source comes from package resolution", () => {
+  it("labels a local archive separately and rejects wrong specs or installed versions", () => {
+    const root = pwwRoot(); pwwRegistry(root);
+    const manifest = {name: 'phoenix-wing-example-tarball', pwwExpectedWingVersion: '0.7.5', dependencies: {'phoenix-wing': 'file:wing-candidate.tgz'}};
+    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify(manifest));
+    fs.writeFileSync(path.join(root, 'wing-candidate.tgz'), 'fixture archive');
+    const source = pwwReadVerificationSource(root);
+    expect(source).toMatchObject({mode: 'tarball', version: '0.7.5'});
+    expect(source.mode === 'tarball' && source.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(JSON.stringify(source)).not.toContain(root);
+    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({...manifest, pwwExpectedWingVersion: '0.7.6'}));
+    expect(() => pwwReadVerificationSource(root)).toThrow('differs');
+    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({...manifest, dependencies: {'phoenix-wing': '0.7.5'}}));
+    expect(() => pwwReadVerificationSource(root)).toThrow('local candidate');
+  });
   it("reports development HEAD/branch and detects dirty without publishing machine paths", () => {
     const root = pwwRoot();
     pwwPackage(root);

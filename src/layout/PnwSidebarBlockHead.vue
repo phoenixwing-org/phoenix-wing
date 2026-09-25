@@ -77,7 +77,12 @@ div.pnw-sidebar-block-head-toggle {
 }
 
 .pnw-sidebar-block-head-toggle:hover {
-  color: var(--el-text-color-primary);
+  background: var(--pnw-control-hover-bg, var(--pnw-workbench-default-hover-bg, rgb(59 130 246 / 9%)));
+}
+
+.pnw-sidebar-block-head-toggle:focus-visible {
+  outline: 2px solid var(--pnw-focus-ring, var(--pnw-workbench-default-focus, #3b82f6));
+  outline-offset: -2px;
 }
 
 .pnw-sidebar-block-title {
@@ -95,7 +100,7 @@ div.pnw-sidebar-block-head-toggle {
   margin-left: 4px;
   font-size: 12px;
   font-weight: 400;
-  color: var(--el-text-color-secondary);
+  color: var(--pnw-workbench-muted, var(--pnw-workbench-default-muted, #64748b));
 }
 
 .pnw-sidebar-block-actions {
@@ -104,7 +109,7 @@ div.pnw-sidebar-block-head-toggle {
   align-items: center;
   gap: 2px;
   padding: 0 6px 0 0;
-  border-left: 1px solid var(--border);
-  background: var(--panel-head-bg);
+  border: 0;
+  background: transparent;
 }
 </style>

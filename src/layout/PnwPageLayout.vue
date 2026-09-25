@@ -47,6 +47,8 @@ withDefaults(defineProps<{
         <template v-if="$slots.leading" #leading>
           <slot name="leading" />
         </template>
+        <template v-if="$slots.center" #center><slot name="center" /></template>
+        <template v-if="$slots.right" #right><slot name="right" /></template>
         <template v-if="$slots.actions" #actions>
           <slot name="actions" />
         </template>

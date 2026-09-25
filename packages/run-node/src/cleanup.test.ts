@@ -52,6 +52,7 @@ async function pnwGitFixture(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "pnw-git-clean-"));
   pnwCleanupTestRoots.push(root);
   await pnwExecFile("git", ["init", root]);
+  await pnwExecFile("git", ["-C", root, "config", "core.autocrlf", "false"]);
   await pnwExecFile("git", ["-C", root, "config", "user.name", "Pnw Test"]);
   await pnwExecFile("git", ["-C", root, "config", "user.email", "pnw@example.invalid"]);
   await writeFile(join(root, ".gitignore"), "ignored/\n");
@@ -257,12 +258,22 @@ describe("Pnw cleanup node capability", () => {
     expect(await readFile(join(root, "ignored", "late.obj"), "utf8")).toBe("late");
   });
 
-  it("Git 目标使用 NUL 列表冻结，支持中文、空格、引号与换行文件名", async () => {
+  it("Git 目标使用 NUL 列表冻结，支持中文与空格文件名", async () => {
     const root = await pnwGitFixture();
-    const names = ["中文 文件.obj", " name with spaces .obj", "quote\"file.obj", "line\nbreak.obj"];
+    const names = ["中文 文件.obj", " name with spaces .obj", "quote'file.obj", "[brackets].obj"];
     for (const name of names) await writeFile(join(root, name), "temporary");
     const preview = await pnwPreviewGitForcedCleanup(root);
     expect(preview.cleanTargets.map((target) => target.path).sort()).toEqual(names.map((name) => join(preview.repository, name)).sort());
+    await pnwExecuteGitForcedCleanup(preview);
+    for (const name of names) await expect(access(join(root, name))).rejects.toThrow();
+  });
+
+  it.skipIf(process.platform === "win32")("POSIX Git NUL 列表保留双引号与换行文件名", async () => {
+    const root = await pnwGitFixture();
+    const names = ["quote\"file.obj", "line\nbreak.obj"];
+    for (const name of names) await writeFile(join(root, name), "temporary");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    expect(preview.cleanTargets.map(target => target.path).sort()).toEqual(names.map(name => join(preview.repository, name)).sort());
     await pnwExecuteGitForcedCleanup(preview);
     for (const name of names) await expect(access(join(root, name))).rejects.toThrow();
   });

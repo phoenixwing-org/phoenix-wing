@@ -173,6 +173,8 @@ function pnwToggleBlock(blockId: PnwViewBlockId): void {
   emit("toggle", blockId);
 }
 
+defineExpose({ toggleBlock: pnwToggleBlock });
+
 function pnwLayoutViewport(): PnwWorkbenchLayoutViewport | undefined {
   const main = pnwMainElement.value;
   if (!main) return undefined;

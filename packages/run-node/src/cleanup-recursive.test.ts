@@ -20,6 +20,7 @@ async function pnwGit(root: string, ...args: string[]): Promise<string> {
 async function pnwRepository(root: string): Promise<void> {
   await mkdir(root, { recursive: true });
   await pnwGit(root, "init");
+  await pnwGit(root, "config", "core.autocrlf", "false");
   await pnwGit(root, "config", "user.name", "Pnw Fixture");
   await pnwGit(root, "config", "user.email", "pnw@example.invalid");
   await writeFile(join(root, "tracked.txt"), "HEAD\n");

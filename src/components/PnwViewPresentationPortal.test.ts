@@ -49,6 +49,19 @@ afterEach(() => {
 });
 
 describe("PnwViewPresentationPortal", () => {
+  it("page layout is opt-in and can switch back to the original flow layout", async () => {
+    const wrapper = mount(PnwViewPresentationPortal, {
+      props: { record: pnwCreateViewPresentationRecord(PNW_IDENTITY), title: "Page" },
+      slots: { header: "Header", main: "Long content" },
+    });
+    expect(wrapper.find('.pnw-view-presentation-portal--page').exists()).toBe(false);
+    await wrapper.setProps({ contentLayout: 'page' });
+    expect(wrapper.find('.pnw-view-presentation-portal--page').exists()).toBe(true);
+    expect(wrapper.find('.pnw-view-presentation-portal__main-frame--page').text()).toBe('Long content');
+    await wrapper.setProps({ contentLayout: 'flow' });
+    expect(wrapper.find('.pnw-view-presentation-portal__main-frame--page').exists()).toBe(false);
+    wrapper.unmount();
+  });
   it("冻结单行浮窗 chrome 的高度、gap 与 padding token", () => {
     expect(PNW_VIEW_PRESENTATION_PORTAL_SOURCE)
       .toContain("--pnw-view-presentation-header-min-height, 40px");
@@ -66,7 +79,7 @@ describe("PnwViewPresentationPortal", () => {
       /pnw-view-presentation-dialog__header-target\s*\{[^}]*flex:\s*1 1 0;[^}]*width:\s*0;[^}]*overflow:\s*hidden;/su,
     );
     expect(PNW_PAGE_HEADER_SOURCE).toContain(
-      "--pnw-page-header-title-min-width, 112px",
+      "minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)",
     );
     expect(PNW_PAGE_HEADER_SOURCE).toMatch(
       /pnw-head-middle\s*\{[^}]*grid-column:\s*2;[^}]*min-width:\s*0;[^}]*overflow-x:\s*auto;/su,

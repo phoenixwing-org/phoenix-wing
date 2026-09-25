@@ -508,7 +508,21 @@
       "lastVerified": "2026-08-17"
     },
     {
+      "path": "docs/releases/0.7.6发布候选.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
       "path": "docs/releases/README.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.7.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
+      "path": "docs/View页面标准.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
       "appliesTo": "0.7.x",

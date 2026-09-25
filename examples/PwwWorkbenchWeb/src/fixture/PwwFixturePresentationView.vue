@@ -59,6 +59,7 @@ onMounted(() => {
     :title="`${view.title} · 完整 View`"
     aria-label="浮出的完整工程 View fixture"
     panel-class="pww-presentation-panel"
+    content-layout="page"
     :frame="PWW_PRESENTATION_FRAME"
   >
     <template #main>
@@ -68,7 +69,10 @@ onMounted(() => {
         :title="view.title"
         :summary="`${activeNodeId} · ${presentation}`"
       >
-        <template #actions>
+        <template #center>
+          <label class="pww-presentation-sample">采样数 <input v-model="pwwSampleCount" inputmode="numeric" /></label>
+        </template>
+        <template #right>
           <button type="button" class="pww-presentation-header-action" @click="emit('action', 'fixture.runtime-check')">
             运行时点检
           </button>
@@ -80,10 +84,6 @@ onMounted(() => {
       <PnwPageMainBlock class="pww-presentation-main">
         <section class="pww-presentation-toolbar" aria-label="完整 View 工具条">
           <strong>{{ activeNodeId === "result-preview" ? "结果预览 fixture" : "工程分析 fixture" }}</strong>
-          <label>
-            <span>采样数</span>
-            <input v-model="pwwSampleCount" inputmode="numeric" />
-          </label>
           <span>{{ ribbonSummary }}</span>
           <button
             v-if="activeNodeId !== 'result-preview'"
@@ -108,6 +108,8 @@ onMounted(() => {
 .pww-presentation-header {
   width: 100%;
 }
+.pww-presentation-sample { display: inline-flex; align-items: center; gap: 6px; }
+.pww-presentation-sample input { width: 48px; min-width: 0; }
 
 .pww-presentation-header-action {
   min-height: 28px;

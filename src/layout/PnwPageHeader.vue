@@ -114,6 +114,8 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
         :class="{
           'pnw-head-row-toolbar': toolbar !== false,
           'pnw-head-row--presentation': pnwPresentationDetachable,
+          'pnw-head-row--right': Boolean($slots.right),
+          'pnw-head-row--no-middle': !$slots.center && !$slots.actions && !$slots.help,
         }"
         :data-pnw-actions-align="pnwActionsAlign"
       >
@@ -127,16 +129,20 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
           </div>
         </div>
         <div
-          v-if="$slots.actions || $slots.help"
+          v-if="$slots.center || $slots.actions || $slots.help"
           class="pnw-head-middle"
           :class="`pnw-head-middle--${pnwActionsAlign}`"
         >
+          <slot name="center" />
           <div v-if="$slots.actions" class="pnw-head-actions">
             <slot name="actions" />
           </div>
           <div v-if="$slots.help" class="pnw-head-help">
             <slot name="help" />
           </div>
+        </div>
+        <div v-if="$slots.right" class="pnw-head-right">
+          <slot name="right" />
         </div>
         <button
           v-if="pnwPresentationDetachable"
@@ -195,7 +201,7 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 .pnw-head-row {
   display: grid;
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 112px), max-content)
+    minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)
     minmax(0, 1fr)
     auto;
   align-items: center;
@@ -206,14 +212,14 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 
 .pnw-head-row-toolbar {
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 112px), max-content)
+    minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)
     minmax(0, 1fr)
     auto;
 }
 
 .pnw-head-row.pnw-head-row--presentation {
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 112px), max-content)
+    minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)
     minmax(0, 1fr)
     auto;
 }
@@ -226,6 +232,28 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
   gap: 8px;
   overflow: hidden;
 }
+
+.pnw-head-row.pnw-head-row--right {
+  grid-template-columns: minmax(var(--pnw-page-header-title-min-width, 0px), 1fr) minmax(0, 1fr) fit-content(45%) auto;
+}
+.pnw-head-row.pnw-head-row--no-middle {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.pnw-head-row.pnw-head-row--right.pnw-head-row--no-middle {
+  grid-template-columns: minmax(0, 1fr) fit-content(65%) auto;
+}
+.pnw-head-right {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+.pnw-head-row--no-middle .pnw-head-right { grid-column: 2; }
+.pnw-head-right > * { flex: 0 0 auto; }
 
 .pnw-head-title-row {
   min-width: 0;
@@ -292,6 +320,13 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
   justify-content: safe flex-end;
 }
 
+/* Keep center controls usable beside legacy actions/help. Overflow belongs to
+   the middle track, not to compressed inputs or the fixed framework track. */
+.pnw-head-middle > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
 .pnw-head-actions {
   min-width: max-content;
   display: flex;
@@ -312,7 +347,7 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 }
 
 .pnw-head-presentation-action {
-  grid-column: 3;
+  grid-column: -2 / -1;
   width: 28px;
   height: 28px;
   display: inline-grid;
