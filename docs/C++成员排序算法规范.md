@@ -1,25 +1,25 @@
 # C++ 成员排序算法规范
 
-> **权威位置**：`phoenix-wing`。本文件描述 `src/code-core/` 的排序语义、保护边界与回归契约。  
-> 消费方：`phoenix-desk-tools` 与 `kt-auto-code` 只能调用此 core，不复制或改写排序规则。  
+> **权威位置**：`phoenix-wing`。本文件描述 `packages/code-core/src/` 的排序语义、保护边界与回归契约。
+> 消费方只能调用此 core，不复制或改写排序规则。
 > 产品界面、文件选择、编码读写、Git 操作与写盘确认属于各自宿主，见本文“宿主契约”。
 
 ## 1. 实现与公开接口
 
 | 文件 | 接口 | 职责 |
 | --- | --- | --- |
-| `src/code-core/pnwReorderCpp.ts` | `pnwReorderCppText(text, fileStem)` | `.cpp/.cc/.cxx` 中同一类的成员实现排序与分隔线整理 |
-| `src/code-core/pnwReorderHeader.ts` | `pnwReorderHeaderText(text, options)` | `.h/.hpp/.hh` 类声明、访问区与锁定段处理 |
-| `src/code-core/pnwReorderHeader.ts` | `pnwFindLockedRegions` / `pnwExtractLockedRegionContents` | 锁定段发现与回归断言 |
+| `packages/code-core/src/pnwReorderCpp.ts` | `pnwReorderCppText(text, fileStem)` | `.cpp/.cc/.cxx` 中同一类的成员实现排序与分隔线整理 |
+| `packages/code-core/src/pnwReorderHeader.ts` | `pnwReorderHeaderText(text, options)` | `.h/.hpp/.hh` 类声明、访问区与锁定段处理 |
+| `packages/code-core/src/pnwReorderHeader.ts` | `pnwFindLockedRegions` / `pnwExtractLockedRegionContents` | 锁定段发现与回归断言 |
 
-core 只接受文本并返回文本、`changed` 和 header 警告；不读取文件、不写文件、不依赖 Git、VS Code、Node `fs`、Vue 或 Tauri。
+core 只接受文本并返回文本、`changed` 和警告（header 的 `warnings`；source 新增可选 `warnings`）；不读取文件、不写文件、不依赖 Git、VS Code、Node `fs`、Vue 或 Tauri。
 
 ## 2. 通用安全约束
 
 - 保留原文件换行风格：LF、CRLF、CR 均不被统一成另一种风格。
 - 排序必须幂等：同一输入连续执行两次，第二次 `changed === false`。
 - 代码位置识别跳过注释和字符串，避免把注释或字符串中的 `Class::method` 当成声明/定义。
-- 无法安全识别的结构宁可保留源顺序，并通过 header `warnings` 暴露风险；不得猜测后写盘。
+- 无法安全识别的结构宁可保留源顺序，并通过 `warnings` 暴露风险；不得猜测后写盘。
 - `GBK`、UTF-8 BOM 与文件字节写回不是 core 的职责：宿主须在调用前解码，并在写回时保持原编码/BOM。
 
 ## 3. `.cpp` 成员实现排序
@@ -30,6 +30,8 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 2. 没有可识别构造函数时不改写文件。这是为避免生成代码、Wizard 区和非典型实现被错误重排的保守边界。
 3. 只重排类外成员定义；函数体内对 `Class::method()` 的调用不提取为独立块。
 4. 函数前连续注释、分行返回类型与函数体随同一个块移动；函数之间的空白行被规范化。
+5. 2026-09-27 安全增量：函数间的非成员代码（CAA TIE 注册、宏、自由函数、namespace 边界等）以及排序范围内的预处理指令不能丢弃或跨越；遇到这些结构保留整份 source 并返回警告。
+6. 结构扫描屏蔽普通/原始字符串及注释，避免其中的大括号或伪成员名改变函数边界。重建后再次比较所有锁定段；不一致则拒绝输出并保留原文。
 
 ### 3.2 排序顺序
 
@@ -56,7 +58,7 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 
 ## 4. Header 类声明排序
 
-本算法以 KtAlarmClock 的项目级 clang-format 风格作为主要格式兼容基线，配置解读和完整 fixture 位置见 [C++ clang-format 规则说明](./C++%20clang-format规则说明.md)。兼容的含义是排序结果无需再次格式化即可符合与成员排序有关的稳定布局；不是在 core 内重做一套 clang-format。
+本算法以既有回归工程的 clang-format 风格作为主要格式兼容基线，配置解读和完整 fixture 位置见 [C++ clang-format 规则说明](./C++%20clang-format规则说明.md)。兼容的含义是排序结果无需再次格式化即可符合与成员排序有关的稳定布局；不是在 core 内重做一套 clang-format。
 
 ### 4.1 识别范围
 
@@ -72,6 +74,8 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 2. 普通方法按大小写不敏感字母序；
 3. 成员变量默认保持原位置与相对顺序；仅 `sortMembers: true` 时才按名称排序。
 
+2026-09-27：全部运算符重载（含带空格赋值、比较、调用、下标和类型转换）归入特殊成员，位于构造/析构之后、普通方法之前。只在既有访问区内排序，不将 private/protected 运算符提升为 public，也不为整齐而新增访问标签。宏和锁定段作为排序屏障，两侧声明不得交换位置。
+
 含编号 Doxygen（如 `/** 1. ... */`）的声明保持源序并报告 warning，避免编号语义失效。
 
 ### 4.3 锁定段（P0）
@@ -86,6 +90,8 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 | `pragma-region` | `#pragma region` … `#pragma endregion` | IDE/生成代码折叠区 |
 
 `#pragma region VirtualFunction` 当前按通用 `pragma-region` 处理，不另行赋予特殊排序语义。
+
+2026-09-27：锁定区内部出现 `public:` 等访问标签时，不能按标签切碎受保护区域；当前保守保留该类并报告警告。类体包含 `#if`、`#pragma` 等预处理边界时也保留整类。原始受保护字节是最终输出门禁，优先于类尾空行规范。本轮未改变生成规则或控制区域内容，`@codegen-rules-version` 不升级。
 
 锁定段的内部空白逐字保护，包括 Wizard 的 `//END ...` 与 `// clang-format on` 之间已有的空行。当 `// clang-format on` 是类结束标记前的最后一项时，只删除它与 `};` 之间的纯空行。
 
@@ -119,7 +125,7 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 
 ## 6. 回归契约与已知边界
 
-当前 core fixture 位于 `src/code-core/fixtures/`；其中 `ktalarmclock.clang-format.yaml` 保存实际项目格式基线，`clang_format_class_tail.h` 锁定类尾空行行为。测试覆盖：
+当前 core fixture 位于 `packages/code-core/src/fixtures/`；其中 `ktalarmclock.clang-format.yaml` 保存实际项目格式基线，`clang_format_class_tail.h` 锁定类尾空行行为。测试覆盖：
 
 - `.cpp` 的 Python 历史 golden hash、特殊成员、注释分隔线、函数体内部调用、分行返回类型、CRLF、初始化列表与幂等；
 - header 的访问区、特殊成员、成员变量可选排序、导出宏、嵌套锁定段、Kevin/CAA2 Wizard、通用 pragma region、Kevin system-code、Doxygen 编号警告、CRLF 与幂等。
@@ -127,7 +133,7 @@ core 只接受文本并返回文本、`changed` 和 header 警告；不读取文
 仍需补充最小 fixture 后再放宽的边界：
 
 1. 带 `requires`、尾置返回类型、复杂模板实参或函数指针的类外定义；
-2. 函数体中含有未覆盖的大括号字符串/原始字符串、复杂预处理条件时的 `.cpp` 块边界；
+2. 更复杂的 C++ 词法和预处理条件组合；当前覆盖常见字符串/原始字符串大括号，复杂预处理仍保守跳过；
 3. 多个同名/多命名空间类实现共存的 `.cpp`；
 4. 更复杂的宏声明、C++20 module、Unicode 标识符；
 5. 新的 CAA Wizard 标记。

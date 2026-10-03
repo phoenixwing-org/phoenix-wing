@@ -15,6 +15,43 @@ function fixture(name: string): string {
 }
 
 describe("reorderHeaderEngine", () => {
+  it("places all operator forms after constructors/destructor, without changing access", () => {
+    const source = ["class Sample {", "public:",
+      "  void alpha();", "  int operator[](int i) const;", "  bool operator==(const Sample&) const;",
+      "  Sample& operator = (const Sample&);", "  explicit operator bool() const;", "  void operator()();",
+      "  ~Sample();", "  Sample();", "  void zeta();", "private:",
+      "  void secret();", "  Sample& operator+=(int);", "};", ""].join("\n");
+    const result = pnwReorderHeaderText(source);
+    expect(result.text.indexOf("Sample();")).toBeLessThan(result.text.indexOf("~Sample();"));
+    for (const op of ["operator[]", "operator==", "operator =", "operator bool", "operator()"]) {
+      expect(result.text.indexOf(op)).toBeGreaterThan(result.text.indexOf("~Sample();"));
+      expect(result.text.indexOf(op)).toBeLessThan(result.text.indexOf("void alpha"));
+    }
+    expect(result.text.indexOf("operator+=")).toBeGreaterThan(result.text.indexOf("private:"));
+    expect(result.text.match(/public:/g)).toHaveLength(1);
+    expect(pnwReorderHeaderText(result.text).text).toBe(result.text);
+  });
+  it("never splits a generated locked region containing access labels", () => {
+    const source = ["class CaaInterface {", "public:", "  void zeta();",
+      "// START KEVIN CAA WIZARD SECTION Example GET", "// clang-format off", "public: // Get",
+      "  virtual int GetValue() const = 0;", "// clang-format on", "// END KEVIN CAA WIZARD SECTION Example GET",
+      "public:", "  void alpha();", "};", ""].join("\n");
+    const result = pnwReorderHeaderText(source);
+    expect(result.text).toBe(source);
+    expect(result.warnings.join()).toContain("protected access");
+  });
+  it.each(["#if FEATURE\n  void special();\n#endif", "#pragma pack(push, 1)\n  int value;\n#pragma pack(pop)"])("preserves class preprocessor boundaries: %s", boundary => {
+    const source = `class Sample {\npublic:\n  void zeta();\n${boundary}\n  void alpha();\n};\n`;
+    expect(pnwReorderHeaderText(source)).toMatchObject({ text: source, changed: false, warnings: [expect.stringContaining("preprocessor")] });
+  });
+  it("does not move declarations across CAA registration macros", () => {
+    const source = "class Sample {\npublic:\n  void zeta();\n  CATDeclareClass;\n  void alpha();\n};\n";
+    for (const invocation of [source, source.replace("CATDeclareClass;", "CATDeclareClass(Sample);")]) {
+      const result = pnwReorderHeaderText(invocation);
+      expect(result.text.indexOf("zeta()")).toBeLessThan(result.text.indexOf("CATDeclareClass"));
+      expect(result.text.indexOf("CATDeclareClass")).toBeLessThan(result.text.indexOf("alpha()"));
+    }
+  });
   it("orders special members and methods while keeping member slots stable", () => {
     const source = [
       "class ExportedByModule Sample final {",

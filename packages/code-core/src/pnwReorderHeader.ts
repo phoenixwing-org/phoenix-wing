@@ -1,3 +1,5 @@
+import { pnwMaskCppTrivia } from "./pnwCppSyntaxGuards.js";
+
 type KevinSystemCodeMode = "merge_strip" | "keep_markers" | "off";
 
 export type PnwHeaderReorderOptions = {
@@ -172,7 +174,8 @@ function normalizeAccessLabel(raw: string): string {
 }
 
 function isClassBodyMacro(stripped: string): boolean {
-  return stripped.startsWith("Q_") || stripped.startsWith("friend ") || /^[A-Z][A-Z0-9_]*.*(?:DECLARE|IMPLEMENT)\w*\s*\(/.test(stripped);
+  return stripped.startsWith("Q_") || stripped.startsWith("friend ") || /^CAT(?:Declare|Implement)\w*\s*[;(]/.test(stripped)
+    || /^[A-Z][A-Z0-9_]*.*(?:DECLARE|IMPLEMENT)\w*\s*\(/.test(stripped);
 }
 
 function stripComments(text: string): string {
@@ -260,6 +263,8 @@ function classifyDeclaration(text: string, className: string): DeclItem {
   if (isDoxygenGroupBlock(text)) return { ...item, kind: "group", name: firstMethodNameInBlock(text, className) };
 
   const sig = declarationSignature(text);
+  const operator = sig.match(/\boperator\s*(\(\s*\)|\[\s*\]|[^()]+?)\s*\(/);
+  if (operator) return { ...item, kind: "special", name: `operator${operator[1].replace(/\s+/g, "")}` };
   const code = stripComments(text);
   const usingMatch = code.match(/\busing\s+([A-Za-z_]\w*)\s*=/);
   if (usingMatch) return { ...item, kind: "nested", name: usingMatch[1] };
@@ -700,6 +705,24 @@ function sortSection(section: AccessSection, className: string, sortMembers: boo
   section.items = section.items.map((item) => item.kind === "locked" || item.kind === "system_code" ? item : { ...classifyDeclaration(item.text, className), trailingGap: item.trailingGap });
   if (isMemberOnly(section, className) || hasNumberedDoxygenSequence(section) || section.items.some((item) => item.kind === "nested")) return;
 
+  // Locked/generated blocks and CAA/Qt macros are ordering barriers, not empty
+  // slots through which declarations on opposite sides may be exchanged.
+  const isBarrier = (item: DeclItem) => ["macro", "locked", "system_code"].includes(item.kind);
+  if (section.items.some(isBarrier)) {
+    let run: DeclItem[] = [];
+    const output: DeclItem[] = [];
+    const flush = () => {
+      if (!run.length) return;
+      const partial = { ...section, items: run };
+      sortSection(partial, className, sortMembers);
+      output.push(...partial.items); run = [];
+    };
+    for (const item of section.items) {
+      if (isBarrier(item)) { flush(); output.push(item); } else run.push(item);
+    }
+    flush(); section.items = output; return;
+  }
+
   const kind = sectionKind(section.label);
   const fixedKinds = new Set<DeclKind>(["member", "nested", "locked", "system_code"]);
   if (kind === "signals" || kind === "slots") {
@@ -874,6 +897,12 @@ function reorderNormalizedHeader(text: string, options: Required<PnwHeaderReorde
     if (close < 0) break;
     const className = match[1].trim().split(/\s+/).at(-1)!;
     const body = output.slice(open + 1, close);
+    const locks = pnwFindLockedRegions(body);
+    if (locks.some(region => new RegExp(ACCESS_RE.source, ACCESS_RE.flags).test(region.content))
+      || /^\s*#/m.test(pnwMaskCppTrivia(body))) {
+      warnings.push(`${className}: protected access section or preprocessor boundary; source order was preserved`);
+      searchFrom = close + 1; continue;
+    }
     const parsed = splitClassSections(body, className, options.kevinSystemCodeMode);
     if (!parsed.sections.length) {
       searchFrom = close + 1;
@@ -895,6 +924,9 @@ export function pnwReorderHeaderText(text: string, options: PnwHeaderReorderOpti
     sortMembers: Boolean(options.sortMembers),
     kevinSystemCodeMode: normalizeMode(options.kevinSystemCodeMode),
   });
+  if (JSON.stringify(pnwExtractLockedRegionContents(normalized)) !== JSON.stringify(pnwExtractLockedRegionContents(result.text))) {
+    return { text, changed: false, warnings: [...result.warnings, "Protected region would change; original source was preserved"] };
+  }
   const output = eol === "\n" ? result.text : result.text.replace(/\n/g, eol);
   return { text: output, changed: output !== text, warnings: result.warnings };
 }

@@ -28,6 +28,34 @@ function normalizedHash(text: string): string {
 }
 
 describe("reorderCppEngine", () => {
+  it.each([
+    '#include "TIE_Example.h"\nTIE_Example(Sample);',
+    'CATImplementClass(Sample, Implementation, Base, CATNull);',
+    '#if FEATURE\nvoid helper() {}\n#endif',
+    '#pragma warning(push)\n#pragma warning(pop)',
+    'namespace Detail { void helper() {} }',
+  ])("preserves non-member content between methods: %s", gap => {
+    const source = `Sample::Sample() {}\nvoid Sample::zeta() {}\n${gap}\nvoid Sample::alpha() {}\n`;
+    const result = pnwReorderCppText(source, "Sample");
+    expect(result.text).toBe(source);
+    expect(result.warnings?.join()).toContain("non-member");
+  });
+  it("ignores braces and fake methods inside literals and comments", () => {
+    const source = ['Sample::Sample() {}', 'void Sample::zeta() {',
+      '  const char* text = "} Sample::fake() {";',
+      '  const char* raw = R"tag( } " Sample::fake() { )tag";',
+      '  // } Sample::fake() {', '}', 'void Sample::alpha() {}', ''].join("\n");
+    const result = pnwReorderCppText(source, "Sample");
+    expect(result.text).toContain('const char* raw = R"tag( } " Sample::fake() { )tag";');
+    expect(result.text.indexOf("Sample::alpha")).toBeLessThan(result.text.indexOf("Sample::zeta"));
+    expect(pnwReorderCppText(result.text, "Sample").text).toBe(result.text);
+  });
+  it("never reorders definitions across a locked generated block", () => {
+    const source = 'Sample::Sample() {}\n// clang-format off\nvoid Sample::zeta() {}\nvoid Sample::alpha() {}\n// clang-format on\n';
+    const result = pnwReorderCppText(source, "Sample");
+    expect(result.text).toBe(source);
+    expect(result.warnings?.join()).toContain("protected region");
+  });
   it("matches the archived Python output and converges for every local cpp fixture", () => {
     for (const [name, expectedHash] of Object.entries(PYTHON_PARITY_HASHES)) {
       const result = pnwReorderCppText(fixture(name), path.parse(name).name);
