@@ -245,11 +245,7 @@ Owner：Phoenix Wing maintainers
    - [ ] 真实消费者以 sibling Wing 验证首 5、下 1、下 5、多分支/合并显示与 stale
      HEAD 恢复；此项通过后才进入发布判定，Registry 消费不在本地候选前假升级。
 
-7. **[兼容冻结：CAD Rust source]** `@phoenix-wing/cad-rust-source` 在 0.6.2 继续作为
-   既有锁步发布单元，保持 tarball、协议和无安装期编译门禁；在维护所有者与真实消费
-   支持重新明确前不再增加功能，也不推荐新消费者接入。0.6.2 只修正 npm package、
-   source manifest、`fcstd-query` crate 与 Cargo lock 的发布身份一致性；删除包或 npm
-   deprecate 必须另行决策，不混入兼容发布准备。
+7. **[已退役：CAD Rust source]** 2026-10-07 用户确认 CAD 不再走 Rust/Python 执行链。0.8.0 候选移除该包、Cargo workspace、完整 XML、专属脚本和 CI；TypeScript CAD API 与兼容 JSON 契约保留。旧 npm 版本与 Git 历史不自动删除，退役不等于撤回既有 Registry 版本。
 
 8. **[0.7.1 候选：通用 Web Component 导航树]** 根 `src/layout/**/*.vue` 继续作为
    Vue 工作台专用层；`@phoenix-wing/code-core/ui` 保持 Host-neutral Web Component 门面，

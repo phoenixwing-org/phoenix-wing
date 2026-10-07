@@ -41,7 +41,7 @@ phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `d
 
 - 仓库根 `phoenix-wing` 在迁移期仍是兼容发布包，禁止直接改成 private 或一次性搬走 Vue SFC。
 - 新 npm 子包必须输出稳定 JavaScript 和 `.d.ts`；源码直出只允许作为旧聚合包兼容行为。
-- Rust source 包只发布源码和锁文件，禁止 npm `postinstall` 或运行时自动编译。
+- CAD 当前只维护 TypeScript 算法与契约；Rust source 发布单元已退役，不恢复 Rust/Python CAD 执行链，也不在安装期编译。
 - `core` 采用白名单迁移；依赖 DOM、Vue、Node 或产品宿主的模块不得放入无框架 core。
 
 ## 当前项目结构
@@ -53,7 +53,7 @@ phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `d
 - `src/types/` — TypeScript 类型定义
 - `src/stores/` — Pinia stores
 
-`packages/` npm workspace 与 Cargo workspace 已落地；继续遵循真实消费者驱动，不预建无消费者的包。
+`packages/` TypeScript npm workspace 已落地；继续遵循真实消费者驱动，不预建无消费者的包。
 
 ## 消费者本地联调（AI 强制）
 
@@ -109,11 +109,10 @@ phoenix/
 - Vue 3 / Pinia / Element Plus（均为 peerDependencies）
 - Vitest 测试
 - pnpm workspace
-- Rust 2021+ / Cargo workspace（CAD source 包；构建阶段使用 `--locked`）
 
-## Rust 与协议命名
+## CAD 协议兼容边界
 
-- Rust crate/binary 使用 kebab-case，如 `fcstd-reader`、`fcstd-xlink`。
+- 旧 native/provider v1 类型与 JSON 样本仅保留兼容，不表示提供原生可执行文件。
 - 跨语言 JSON 字段使用 snake_case，并由版本化 JSON Schema 固定。
 - CLI stdout 只输出协议 JSON，诊断写 stderr；写盘命令必须支持协议版本检查。
-- 产品路径发现、VS Code/Tauri/Hono API 不得进入 Rust 领域 crate。
+- 产品路径发现、VS Code/Tauri/Hono API 不得进入 CAD 纯算法与契约包。

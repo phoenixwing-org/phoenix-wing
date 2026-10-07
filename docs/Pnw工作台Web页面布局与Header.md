@@ -121,6 +121,9 @@ Wing 会为该 View 自动创建隔离的 `PnwViewPresentationHeaderChannel`：
 浮窗 chrome 使用 `--pnw-view-presentation-header-min-height`、
 `--pnw-view-presentation-header-gap` 与 `--pnw-view-presentation-header-padding-inline`，默认
 分别为 `40px / 8px / 8px`。业务 View 不应穿透覆盖 `.pnw-floating-panel__header`。
-标题与中间区默认共享剩余宽度，长标题省略，避免挤没搜索区。
+提供中间插槽时，短标题按文字与 leading 的实际宽度占位，最多占行宽 35%；
+right 业务操作按内容占位（上限 45%），剩余宽度全部交给中间区。长标题省略，
+极窄时 center/right 分别在自身区域内横向滚动；没有中间插槽时标题仍占剩余宽度。
+这是公共 Header 的布局策略，消费者只负责搜索/筛选自身的响应式排列，不覆盖内部 grid。
 `--pnw-page-header-title-min-width` 仍可显式设置标题保底宽度，默认改为 `0px`；
 设置非零值时须验证窄屏下搜索与工具按钮仍可用，不应按单个页面写定位或溢出补丁。

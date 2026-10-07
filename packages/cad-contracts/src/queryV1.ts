@@ -77,7 +77,7 @@ export interface PnwCadWorkspaceSummaryV1 {
 
 /**
  * Executes the stable phoenix-cad-query v1 BOM/reference reads without owning
- * a SQLite driver. Hosts may provide node:sqlite, WASM, Rust or another
+ * a SQLite driver. Hosts may provide node:sqlite, WASM or another
  * adapter, but every implementation shares the same parameterized SQL and DTO
  * guards. This function never executes a write statement.
  */

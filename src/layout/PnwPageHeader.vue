@@ -200,8 +200,9 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 
 .pnw-head-row {
   display: grid;
+  /* Short titles use their intrinsic width; only long titles reach the cap. */
   grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)
+    fit-content(35%)
     minmax(0, 1fr)
     auto;
   align-items: center;
@@ -210,23 +211,9 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
   min-width: 0;
 }
 
-.pnw-head-row-toolbar {
-  grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)
-    minmax(0, 1fr)
-    auto;
-}
-
-.pnw-head-row.pnw-head-row--presentation {
-  grid-template-columns:
-    minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)
-    minmax(0, 1fr)
-    auto;
-}
-
 .pnw-head-left {
   grid-column: 1;
-  min-width: 0;
+  min-width: var(--pnw-page-header-title-min-width, 0px);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -234,7 +221,7 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
 }
 
 .pnw-head-row.pnw-head-row--right {
-  grid-template-columns: minmax(var(--pnw-page-header-title-min-width, 0px), 1fr) minmax(0, 1fr) fit-content(45%) auto;
+  grid-template-columns: fit-content(35%) minmax(0, 1fr) fit-content(45%) auto;
 }
 .pnw-head-row.pnw-head-row--no-middle {
   grid-template-columns: minmax(0, 1fr) auto;

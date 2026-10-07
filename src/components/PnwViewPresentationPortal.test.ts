@@ -79,7 +79,7 @@ describe("PnwViewPresentationPortal", () => {
       /pnw-view-presentation-dialog__header-target\s*\{[^}]*flex:\s*1 1 0;[^}]*width:\s*0;[^}]*overflow:\s*hidden;/su,
     );
     expect(PNW_PAGE_HEADER_SOURCE).toContain(
-      "minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)",
+      "fit-content(35%)",
     );
     expect(PNW_PAGE_HEADER_SOURCE).toMatch(
       /pnw-head-middle\s*\{[^}]*grid-column:\s*2;[^}]*min-width:\s*0;[^}]*overflow-x:\s*auto;/su,

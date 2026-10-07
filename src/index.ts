@@ -1,7 +1,7 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.7.6'
+export const PNW_VERSION = '0.8.0'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
@@ -560,6 +560,7 @@ export {
   type PnwWorkbenchContext,
   pnwCreateWorkbench,
 } from './composables/pnwCreateWorkbench.js'
+export { pnwWorkbenchTabActionTargets, type PnwWorkbenchTabAction, type PnwWorkbenchTabActionRequest } from './utils/pnwWorkbenchTabActions.js'
 
 // ---------------------------------------------------------------------------
 // Ribbon 图标 & Tab 切换

@@ -17,15 +17,11 @@ function fixture(): Record<string, unknown> {
 }
 
 describe("Phoenix CAD database query protocol v1", () => {
-  it("accepts the Rust CLI contract fixture and publishes read-only client commands", () => {
+  it("accepts the shared query contract fixture and publishes read-only client commands", () => {
     const value = fixture();
     expect(pnwIsCadQueryContractV1(value)).toBe(true);
     expect(PNW_CAD_QUERY_V1_READ_COMMANDS).not.toContain("file-upsert");
-    const rustFixture = JSON.parse(readFileSync(
-      new URL("../../cad-rust-source/fixtures/database/query-contract-v1.json", import.meta.url),
-      "utf8",
-    ));
-    expect(rustFixture).toEqual(value);
+    expect(value.schema).toMatchObject({ id: "phoenix-workspace", version: 13 });
   });
 
   it.each([

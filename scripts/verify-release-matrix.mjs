@@ -59,29 +59,6 @@ for (const [packageName, { manifest }] of manifests) {
   }
 }
 
-const rustPackage = manifests.get("@phoenix-wing/cad-rust-source");
-if (!rustPackage) throw new Error("release matrix is missing @phoenix-wing/cad-rust-source");
-const rustVersion = rustPackage.entry.version;
-const rustRoot = path.dirname(path.resolve(root, rustPackage.entry.manifest));
-const sourceManifest = readJson(path.join(rustRoot, "source-manifest.json"));
-if (sourceManifest.package_version !== rustVersion) {
-  throw new Error(
-    `cad-rust-source package_version must equal ${rustVersion}, got ${sourceManifest.package_version}`,
-  );
-}
-const queryManifest = fs.readFileSync(path.join(rustRoot, "crates/fcstd-query/Cargo.toml"), "utf8");
-const queryVersion = queryManifest.match(/^version = "([^"]+)"$/mu)?.[1];
-if (queryVersion !== rustVersion) {
-  throw new Error(`fcstd-query crate must equal ${rustVersion}, got ${queryVersion}`);
-}
-const cargoLock = fs.readFileSync(path.join(rustRoot, "Cargo.lock"), "utf8");
-const lockedQueryVersion = cargoLock.match(
-  /\[\[package\]\]\r?\nname = "fcstd-query"\r?\nversion = "([^"]+)"/u,
-)?.[1];
-if (lockedQueryVersion !== rustVersion) {
-  throw new Error(`Cargo.lock must record fcstd-query ${rustVersion}, got ${lockedQueryVersion ?? "missing"}`);
-}
-
 const rootPackage = manifests.get("phoenix-wing");
 if (!rootPackage) throw new Error("release matrix is missing phoenix-wing");
 const aggregateSource = fs.readFileSync(path.join(root, "src/index.ts"), "utf8");

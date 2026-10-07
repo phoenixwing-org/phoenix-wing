@@ -15,6 +15,43 @@ function fixture(name: string): string {
 }
 
 describe("reorderHeaderEngine", () => {
+  it("places all operator forms after constructors/destructor, without changing access", () => {
+    const source = ["class Sample {", "public:",
+      "  void alpha();", "  int operator[](int i) const;", "  bool operator==(const Sample&) const;",
+      "  Sample& operator = (const Sample&);", "  explicit operator bool() const;", "  void operator()();",
+      "  ~Sample();", "  Sample();", "  void zeta();", "private:",
+      "  void secret();", "  Sample& operator+=(int);", "};", ""].join("\n");
+    const result = pnwReorderHeaderText(source);
+    expect(result.text.indexOf("Sample();")).toBeLessThan(result.text.indexOf("~Sample();"));
+    for (const op of ["operator[]", "operator==", "operator =", "operator bool", "operator()"]) {
+      expect(result.text.indexOf(op)).toBeGreaterThan(result.text.indexOf("~Sample();"));
+      expect(result.text.indexOf(op)).toBeLessThan(result.text.indexOf("void alpha"));
+    }
+    expect(result.text.indexOf("operator+=")).toBeGreaterThan(result.text.indexOf("private:"));
+    expect(result.text.match(/public:/g)).toHaveLength(1);
+    expect(pnwReorderHeaderText(result.text).text).toBe(result.text);
+  });
+  it("never splits a generated locked region containing access labels", () => {
+    const source = ["class CaaInterface {", "public:", "  void zeta();",
+      "// START KEVIN CAA WIZARD SECTION Example GET", "// clang-format off", "public: // Get",
+      "  virtual int GetValue() const = 0;", "// clang-format on", "// END KEVIN CAA WIZARD SECTION Example GET",
+      "public:", "  void alpha();", "};", ""].join("\n");
+    const result = pnwReorderHeaderText(source);
+    expect(result.text).toBe(source);
+    expect(result.warnings.join()).toContain("protected access");
+  });
+  it.each(["#if FEATURE\n  void special();\n#endif", "#pragma pack(push, 1)\n  int value;\n#pragma pack(pop)"])("preserves class preprocessor boundaries: %s", boundary => {
+    const source = `class Sample {\npublic:\n  void zeta();\n${boundary}\n  void alpha();\n};\n`;
+    expect(pnwReorderHeaderText(source)).toMatchObject({ text: source, changed: false, warnings: [expect.stringContaining("preprocessor")] });
+  });
+  it("does not move declarations across CAA registration macros", () => {
+    const source = "class Sample {\npublic:\n  void zeta();\n  CATDeclareClass;\n  void alpha();\n};\n";
+    for (const invocation of [source, source.replace("CATDeclareClass;", "CATDeclareClass(Sample);")]) {
+      const result = pnwReorderHeaderText(invocation);
+      expect(result.text.indexOf("zeta()")).toBeLessThan(result.text.indexOf("CATDeclareClass"));
+      expect(result.text.indexOf("CATDeclareClass")).toBeLessThan(result.text.indexOf("alpha()"));
+    }
+  });
   it("orders special members and methods while keeping member slots stable", () => {
     const source = [
       "class ExportedByModule Sample final {",
@@ -49,7 +86,7 @@ describe("reorderHeaderEngine", () => {
     "pragma_region.h",
     "clang_format_nested_markers.h",
     "clang_format_doubled.h",
-    "pnx_caa2_widget_decl.h",
+    "generated_widget_section.h",
   ])("preserves locked regions and remains idempotent for %s", (name) => {
     const source = fixture(name);
     const before = pnwExtractLockedRegionContents(source);
@@ -82,7 +119,7 @@ describe("reorderHeaderEngine", () => {
   });
 
   it("strips and merges Kevin system-code declarations like the Python engine", () => {
-    const basic = pnwReorderHeaderText(fixture("pnx_bom_analysis_param_min.h"));
+    const basic = pnwReorderHeaderText(fixture("generated_system_section.h"));
     expect(basic.text).not.toContain("KEVIN_SYSTEM_CODE START");
     expect(basic.text).not.toContain("KEVIN_SYSTEM_CODE END");
     const basicSection = basic.text.slice(basic.text.indexOf("public: // KEVIN_SYSTEM_CODE"));
@@ -90,7 +127,7 @@ describe("reorderHeaderEngine", () => {
     expect(basicSection.indexOf("convertJson")).toBeLessThan(basicSection.indexOf("GetSoftwareVersion"));
     expect(pnwReorderHeaderText(basic.text).changed).toBe(false);
 
-    const split = pnwReorderHeaderText(fixture("pnx_bom_param_system_split.h"));
+    const split = pnwReorderHeaderText(fixture("generated_system_split.h"));
     const systemStart = split.text.indexOf("public: // KEVIN_SYSTEM_CODE");
     const functionsStart = split.text.indexOf("public: // functions", systemStart);
     const systemBlock = split.text.slice(systemStart, functionsStart);
@@ -98,13 +135,13 @@ describe("reorderHeaderEngine", () => {
     expect(systemBlock).toContain("ConvertErrorListToString");
     expect(systemBlock).toContain("convertJson");
     expect(systemBlock).toContain("GetSoftwareVersion");
-    expect(functionsBlock).toContain("CheckoutAxis");
+    expect(functionsBlock).toContain("unrelatedHelper");
     expect(functionsBlock).not.toContain("convertJson");
     expect(pnwReorderHeaderText(split.text).changed).toBe(false);
   });
 
   it.each(["keep_markers", "off"] as const)("matches the alternate %s system-code mode", (mode) => {
-    const source = fixture("pnx_bom_analysis_param_min.h");
+    const source = fixture("generated_system_section.h");
     const result = pnwReorderHeaderText(source, { kevinSystemCodeMode: mode });
     expect(result.text).toContain("KEVIN_SYSTEM_CODE START");
     expect(result.text).toContain("KEVIN_SYSTEM_CODE END");

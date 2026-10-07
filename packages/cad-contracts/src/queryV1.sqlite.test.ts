@@ -13,13 +13,13 @@ afterEach(async () => {
 });
 
 describe("Phoenix CAD driver-neutral query core", () => {
-  it("matches the Rust v13 SQL fixture through a non-Rust SQLite adapter", async () => {
+  it("matches the synthetic v13 SQL fixture through a SQLite adapter", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "phoenix-cad-query-core-"));
     roots.push(root);
     const database = pnwCreateDb(path.join(root, "phoenix-workspace.sqlite"));
     try {
       database.exec(readFileSync(
-        new URL("../../cad-rust-source/fixtures/database/query-v13.sql", import.meta.url),
+        new URL("../fixtures/query-v13.sql", import.meta.url),
         "utf8",
       ));
       const changesBefore = database.get<{ changes: number }>(

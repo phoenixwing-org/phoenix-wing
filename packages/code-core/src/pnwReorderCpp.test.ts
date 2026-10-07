@@ -15,8 +15,6 @@ const PYTHON_PARITY_HASHES: Record<string, string> = {
   "ktca_KTCAutoCodeInterfaces_KTCAutoCodeItf.m_src_KTCAutoAttrAccess.cpp": "827b909e4f56915e258cfc1db57580eb57a3028d78428d44c8470a33c2392620",
   "ktca_KTCAutoCodeInterfaces_KTCAutoCodeItf.m_src_KTCAutoBuildGSM.cpp": "df96a6eb9754b844466a691bcf2c0a702e63fe9bde985ec0287addf494054bd5",
   "ktca_KTCAutoCodeInterfaces_KTCAutoCodeItf.m_src_KTCAutoPartDoc.cpp": "949e5c00b0e80bb5e033c45ce4a9bd0d8ab2a06db83d26543d4dcdd1ffa79422",
-  // 该片段没有构造函数；Python/TypeScript 安全边界都必须原样保留。
-  "pnx_bom_analysis_cmd_min.cpp": "3f6e585268d3adb34436883f3c3b730f8e4dc1915b7c2f388d92bbd5c79865ad",
 };
 
 function fixture(name: string): string {
@@ -28,6 +26,34 @@ function normalizedHash(text: string): string {
 }
 
 describe("reorderCppEngine", () => {
+  it.each([
+    '#include "TIE_Example.h"\nTIE_Example(Sample);',
+    'CATImplementClass(Sample, Implementation, Base, CATNull);',
+    '#if FEATURE\nvoid helper() {}\n#endif',
+    '#pragma warning(push)\n#pragma warning(pop)',
+    'namespace Detail { void helper() {} }',
+  ])("preserves non-member content between methods: %s", gap => {
+    const source = `Sample::Sample() {}\nvoid Sample::zeta() {}\n${gap}\nvoid Sample::alpha() {}\n`;
+    const result = pnwReorderCppText(source, "Sample");
+    expect(result.text).toBe(source);
+    expect(result.warnings?.join()).toContain("non-member");
+  });
+  it("ignores braces and fake methods inside literals and comments", () => {
+    const source = ['Sample::Sample() {}', 'void Sample::zeta() {',
+      '  const char* text = "} Sample::fake() {";',
+      '  const char* raw = R"tag( } " Sample::fake() { )tag";',
+      '  // } Sample::fake() {', '}', 'void Sample::alpha() {}', ''].join("\n");
+    const result = pnwReorderCppText(source, "Sample");
+    expect(result.text).toContain('const char* raw = R"tag( } " Sample::fake() { )tag";');
+    expect(result.text.indexOf("Sample::alpha")).toBeLessThan(result.text.indexOf("Sample::zeta"));
+    expect(pnwReorderCppText(result.text, "Sample").text).toBe(result.text);
+  });
+  it("never reorders definitions across a locked generated block", () => {
+    const source = 'Sample::Sample() {}\n// clang-format off\nvoid Sample::zeta() {}\nvoid Sample::alpha() {}\n// clang-format on\n';
+    const result = pnwReorderCppText(source, "Sample");
+    expect(result.text).toBe(source);
+    expect(result.warnings?.join()).toContain("protected region");
+  });
   it("matches the archived Python output and converges for every local cpp fixture", () => {
     for (const [name, expectedHash] of Object.entries(PYTHON_PARITY_HASHES)) {
       const result = pnwReorderCppText(fixture(name), path.parse(name).name);
@@ -88,12 +114,12 @@ describe("reorderCppEngine", () => {
     expect(result.text.indexOf("Foo::alpha()")).toBeLessThan(result.text.indexOf("Foo::zeta()"));
   });
 
-  it("leaves constructor-less Wizard excerpts unchanged", () => {
-    const source = fixture("pnx_bom_analysis_cmd_min.cpp");
-    const result = pnwReorderCppText(source, "pnx_bom_analysis_cmd_min");
+  it("leaves independently constructed constructor-less Wizard methods unchanged", () => {
+    const source = fixture("generated_without_constructor.cpp");
+    const result = pnwReorderCppText(source, "generated_without_constructor");
     expect(result.changed).toBe(false);
     expect(result.text).toBe(source);
-    expect(result.className).toBe("PNXBomAnalysisCmd");
+    expect(result.className).toBe("SampleCommand");
     expect(pnwExtractLockedRegionContents(result.text)).toEqual(pnwExtractLockedRegionContents(source));
   });
 

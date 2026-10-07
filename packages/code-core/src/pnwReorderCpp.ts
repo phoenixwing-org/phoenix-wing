@@ -1,13 +1,19 @@
+import { pnwMaskCppTrivia } from "./pnwCppSyntaxGuards.js";
+import { pnwExtractLockedRegionContents } from "./pnwReorderHeader.js";
+
 export type PnwCppReorderResult = {
   text: string;
   changed: boolean;
   className?: string;
+  warnings?: string[];
 };
 
 type CppBlock = {
   implName: string;
   text: string;
   separator: string;
+  start: number;
+  end: number;
 };
 
 const DEFAULT_SEPARATOR = "//----------------------------------------\n";
@@ -80,6 +86,7 @@ function isCodePosition(text: string, target: number): boolean {
 }
 
 function findClassName(text: string, fileStem: string): string | null {
+  text = pnwMaskCppTrivia(text);
   const counts = new Map<string, number>();
   const regex = /\b([A-Za-z_]\w*)::((?:~[A-Za-z_]\w*)|~?[A-Za-z_]\w*|operator\s*[^\s(]+)\s*[<(]/g;
   let match: RegExpExecArray | null;
@@ -117,6 +124,7 @@ function includeReturnTypeLines(text: string, blockStart: number, previousEnd: n
 }
 
 function splitPreambleAndBody(text: string, className: string): { preamble: string; body: string } {
+  const code = pnwMaskCppTrivia(text);
   const escaped = escapeRegExp(className);
   const constructor = new RegExp(
     `^[ \\t]*(?:[\\w:<>,\\s*&]+\\s+)?\\b${escaped}::${escaped}\\s*\\(`,
@@ -124,7 +132,7 @@ function splitPreambleAndBody(text: string, className: string): { preamble: stri
   );
   // Match the Python engine's safety boundary: files without a constructor
   // are left untouched because their generated/Wizard regions may be ordered.
-  if (!constructor.test(text)) return { preamble: text, body: "" };
+  if (!constructor.test(code)) return { preamble: text, body: "" };
 
   const memberName = `(?:~${escaped}|~?[A-Za-z_]\\w*|operator\\s*[^\\s(]+)`;
   const returnType = `(?:[\\w:<>,~*&]+(?:[ \\t]+[\\w:<>,~*&]+)*[ \\t]+)?`;
@@ -132,7 +140,7 @@ function splitPreambleAndBody(text: string, className: string): { preamble: stri
     `^[ \\t]*${returnType}\\b${escaped}::${memberName}\\s*[<(]`,
     "m",
   );
-  const match = regex.exec(text);
+  const match = regex.exec(code);
   if (!match) return { preamble: text, body: "" };
   let start = includeReturnTypeLines(text, match.index, 0, className);
   const lineStart = text.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
@@ -158,6 +166,8 @@ function advancePastFunctionEnd(text: string, start: number): { end: number; glu
 }
 
 function findFunctionBodyEnd(text: string, implementationStart: number): { end: number; gluedSeparator: string } {
+  const original = text;
+  text = pnwMaskCppTrivia(text);
   const parenStart = text.indexOf("(", implementationStart);
   if (parenStart < 0) return { end: text.length, gluedSeparator: "" };
   let paren = 1;
@@ -180,12 +190,12 @@ function findFunctionBodyEnd(text: string, implementationStart: number): { end: 
         else if (text[i] === "}") depth -= 1;
         i += 1;
       }
-      return advancePastFunctionEnd(text, i);
+      return advancePastFunctionEnd(original, i);
     }
     if (ch === ";") {
       i += 1;
       while (i < text.length && text[i] !== "\r" && text[i] !== "\n") i += 1;
-      return advancePastFunctionEnd(text, i);
+      return advancePastFunctionEnd(original, i);
     }
     if (ch === ":") {
       i += 1;
@@ -285,14 +295,15 @@ function walkBackBlockStart(
 }
 
 function scanBlocks(body: string, className: string): CppBlock[] {
+  const code = pnwMaskCppTrivia(body);
   const escaped = escapeRegExp(className);
   const regex = new RegExp(`\\b${escaped}::((?:~${escaped})|~?[A-Za-z_]\\w*|operator\\s*[^\\s(]+)\\s*[<(]`, "g");
   const blocks: CppBlock[] = [];
   let previousEnd = 0;
   let pendingGluedSeparator = "";
   let match: RegExpExecArray | null;
-  while ((match = regex.exec(body))) {
-    if (!isCodePosition(body, match.index) || match.index < previousEnd) continue;
+  while ((match = regex.exec(code))) {
+    if (match.index < previousEnd) continue;
     const implName = match[1].replace(/[<(]$/, "").trim();
     const functionLineStart = body.lastIndexOf("\n", Math.max(0, match.index - 1)) + 1;
     const walked = walkBackBlockStart(body, functionLineStart, previousEnd, className);
@@ -306,7 +317,7 @@ function scanBlocks(body: string, className: string): CppBlock[] {
       regex.lastIndex = Math.max(regex.lastIndex, found.end);
       continue;
     }
-    blocks.push({ implName, text, separator });
+    blocks.push({ implName, text, separator, start: walked.blockStart, end: found.end });
     previousEnd = found.end;
     regex.lastIndex = Math.max(regex.lastIndex, found.end);
   }
@@ -348,14 +359,30 @@ function rebuildBlocks(blocks: CppBlock[], className: string): string {
   return output;
 }
 
-function reorderNormalizedCpp(text: string, fileStem: string): { text: string; className?: string } {
+function reorderNormalizedCpp(text: string, fileStem: string): { text: string; className?: string; warnings?: string[] } {
   const className = findClassName(text, fileStem);
   if (!className) return { text };
   const split = splitPreambleAndBody(text, className);
   if (!split.body) return { text, className };
   const blocks = scanBlocks(split.body, className);
   if (!blocks.length) return { text, className };
-  return { text: split.preamble + rebuildBlocks(blocks, className), className };
+  // A regex member parser does not own namespace closures, registration macros,
+  // free functions or preprocessor branches between methods. Never discard them.
+  let previous = 0;
+  const unowned: string[] = [];
+  for (const block of blocks) {
+    unowned.push(split.body.slice(previous, block.start));
+    previous = block.end;
+  }
+  unowned.push(split.body.slice(previous));
+  if (unowned.some(gap => pnwMaskCppTrivia(gap).trim()) || /^\s*#/m.test(pnwMaskCppTrivia(split.body))) {
+    return { text, className, warnings: [`${className}: preserved source containing preprocessor directives or non-member code between definitions`] };
+  }
+  const output = split.preamble + rebuildBlocks(blocks, className);
+  if (JSON.stringify(pnwExtractLockedRegionContents(text)) !== JSON.stringify(pnwExtractLockedRegionContents(output))) {
+    return { text, className, warnings: [`${className}: preserved source because sorting would change a protected region`] };
+  }
+  return { text: output, className };
 }
 
 export function pnwReorderCppText(text: string, fileStem: string): PnwCppReorderResult {
@@ -363,5 +390,5 @@ export function pnwReorderCppText(text: string, fileStem: string): PnwCppReorder
   const normalized = text.replace(/\r\n|\r/g, "\n");
   const result = reorderNormalizedCpp(normalized, fileStem);
   const output = eol === "\n" ? result.text : result.text.replace(/\n/g, eol);
-  return { text: output, changed: output !== text, className: result.className };
+  return { text: output, changed: output !== text, className: result.className, ...(result.warnings ? { warnings: result.warnings } : {}) };
 }

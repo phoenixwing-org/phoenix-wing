@@ -29,12 +29,17 @@ const requiredPackageFiles = {
   "code-core": [
     "src/fixtures/annotation_sep.cpp",
     "src/fixtures/pure-capabilities-v1.json",
+    "src/fixtures/generated_without_constructor.cpp",
+    "src/fixtures/generated_system_section.h",
+    "src/fixtures/generated_system_split.h",
+    "src/fixtures/generated_widget_section.h",
+    "LICENSE.PNXCaaStudy.txt",
   ],
   "kt-codegen": [
     "tests/fixtures/contracts/apply-projection-v1.json",
     "tests/fixtures/contracts/codegen-host-contract-v1.json",
   ],
-  "cad-contracts": ["fixtures/query-contract-v1.json"],
+  "cad-contracts": ["fixtures/query-contract-v1.json", "fixtures/query-v13.sql", "LICENSE.phoenix-freecad-study.txt"],
   "workspace-schema": [
     "fixtures/workspace-schema-v13.json",
     "fixtures/workspace-schema-compatibility-v1.json",
@@ -91,8 +96,8 @@ import {
 import { KtCodegenParam, ktCodegenCheckPlanCompatibility } from "@phoenix-wing/kt-codegen";
 import { KT_CODEGEN_LEGACY_17_COLUMN_CSV_HEADERS } from "@phoenix-wing/kt-codegen/legacy";
 import { ktCodegenValidateParam } from "@phoenix-wing/kt-codegen/model";
-import { pnwNormalizeCadRelativePath } from "@phoenix-wing/cad-core";
-import { PNW_CAD_NATIVE_PROTOCOL } from "@phoenix-wing/cad-contracts";
+import { pnwNormalizeCadRelativePath, pnwBuildCadWorkspaceIndex, pnwAnalyzeCadIndexDocumentXml } from "@phoenix-wing/cad-core";
+import { PNW_CAD_NATIVE_PROTOCOL, pnwWriteCadWorkspaceIndexV1, pnwReadCadIndexRevisionV1, pnwPreviewCadIndexResetV1, pnwResetCadWorkspaceIndexV1 } from "@phoenix-wing/cad-contracts";
 import {
   PNW_WORKSPACE_SCHEMA_ID,
   PNW_WORKSPACE_SCHEMA_VERSION,
@@ -236,6 +241,18 @@ try {
   db.run("INSERT INTO phoenix_meta(key, value) VALUES (?, ?)", ["schema_version", "13"]);
   const row = db.get("SELECT value FROM phoenix_meta WHERE key = ?", ["schema_version"]);
   if (row?.value !== "13") throw new Error("db-node runtime smoke failed");
+  const emptyXml = pnwAnalyzeCadIndexDocumentXml("<Document/>");
+  if (emptyXml.objectCount !== 0) throw new Error("CAD index XML projection smoke failed");
+  const indexResult = pnwWriteCadWorkspaceIndexV1(db, pnwBuildCadWorkspaceIndex([]), {
+    scanUuid: "consumer-index", scanRoot: "consumer-workspace", scannedAt: "2026-01-01T00:00:00.000Z",
+    scope: "workspace", complete: true, expectedScanId: pnwReadCadIndexRevisionV1(db), assertCurrent() {},
+  });
+  if (indexResult.scanId !== 1 || indexResult.files !== 0) throw new Error("CAD shared index tarball smoke failed");
+  const reset = pnwResetCadWorkspaceIndexV1(db, {
+    expected: pnwPreviewCadIndexResetV1(db), confirmRemoveFileLinks: true, scanUuid: "consumer-reset",
+    scanRoot: "consumer-workspace", scannedAt: "2026-01-02T00:00:00.000Z", beforeReset() {},
+  });
+  if (reset.revision !== 2) throw new Error("CAD index reset tarball smoke failed");
 } finally {
   db.close();
 }
@@ -332,6 +349,19 @@ function verifyPackedManifest(item) {
   }
   if (manifest.version !== item.expectedVersion || manifest.private === true) {
     throw new Error(`${manifest.name} packed identity must remain public ${item.expectedVersion}`);
+  }
+  const packedFiles = fs.readdirSync(packageRoot, { recursive: true }).filter(file => fs.statSync(path.join(packageRoot, file)).isFile());
+  if (packedFiles.some(file => /(?:^|[/\\])(?:pnx_bom_|pnx_caa2_)|\.(?:rs|py|FCStd|FCBak)$|(?:^|[/\\])Cargo\.(?:toml|lock)$/i.test(file))) {
+    throw new Error(manifest.name + " contains retired CAD sources or unreviewed legacy excerpts");
+  }
+  if (["code-core", "cad-contracts"].includes(item.directoryName)) {
+    const sourceManifest = JSON.parse(fs.readFileSync(path.join(root, "packages", item.directoryName, "package.json"), "utf8"));
+    const fixturePrefix = item.directoryName === "code-core" ? "src/fixtures/" : "fixtures/";
+    const allowlist = new Set(sourceManifest.files.filter(file => file.startsWith(fixturePrefix)));
+    for (const file of packedFiles.map(file => file.split(path.sep).join("/"))) {
+      if (file.startsWith(fixturePrefix) && !allowlist.has(file)) throw new Error(manifest.name + " has an unreviewed fixture: " + file);
+    }
+    for (const file of allowlist) if (!fs.existsSync(path.join(packageRoot, file))) throw new Error(manifest.name + " is missing approved fixture: " + file);
   }
   const serialized = JSON.stringify({
     dependencies: manifest.dependencies,

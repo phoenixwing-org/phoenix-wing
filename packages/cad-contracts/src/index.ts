@@ -1,9 +1,11 @@
-/** Frozen identifier for the unversioned JSON emitted by the original Desk Tools Rust CLI. */
+/** Frozen identifier for the legacy CAD JSON contract; no native runtime is shipped. */
 export const PNW_CAD_LEGACY_PROTOCOL = "desk-tools-v0" as const;
 
 export * from "./nativeV1.js";
 export * from "./providerV1.js";
 export * from "./queryV1.js";
+export * from "./workspaceIndexV1.js";
+export * from "./workspaceIndexResetV1.js";
 
 export const PNW_CAD_LEGACY_NATIVE_TOOLS = ["fcstd-read", "fcstd-xlink"] as const;
 

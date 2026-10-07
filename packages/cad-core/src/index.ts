@@ -1,3 +1,5 @@
+export * from "./workspaceIndex.js";
+
 export type PnwCadBomFields = {
   repo_rel_path: string;
   filename: string;
@@ -198,6 +200,21 @@ export function pnwInferBomDocumentKinds(relativePathOrFilename: string): PnwCad
   };
 }
 
+/** Remove only terminal markers matching the known document suffix; preserve internal/name-only markers. */
+export function pnwNormalizeBomPartNameSuffix(name: string, suffix: string): string {
+  let partName = clean(name);
+  // Legacy metadata may already include the selected document suffix. Remove
+  // only matching terminal markers; internal dots/hyphens remain part of names.
+  const knownSuffix = /^\.(?:(ASSY|Drawing)\.)?FCStd$/i.exec(suffix);
+  if (knownSuffix) {
+    const repeatedTail = knownSuffix[1]
+      ? new RegExp(`(?:\\.${knownSuffix[1]}(?:\\.FCStd)?|\\.FCStd)$`, "i")
+      : /\.FCStd$/i;
+    while (repeatedTail.test(partName)) partName = partName.replace(repeatedTail, "").trimEnd();
+  }
+  return partName;
+}
+
 export function pnwComposeRecommendedBomFilename(
   fields: Partial<PnwCadBomFields>,
   suffix = ".FCStd",
@@ -207,7 +224,7 @@ export function pnwComposeRecommendedBomFilename(
   if (!partNumber || !partVersion) return "";
   const typeCode = cleanUpper(fields.TypeCode);
   const modelSeries = cleanUpper(fields.ModelSeries);
-  const partName = clean(fields.PartName) || clean(fields.label);
+  const partName = pnwNormalizeBomPartNameSuffix(clean(fields.PartName) || clean(fields.label), suffix);
   const parts = [`${partNumber}.${partVersion}`];
   if (typeCode) parts.push(typeCode);
   if (typeCode !== "S" && modelSeries) parts.push(modelSeries);
@@ -229,6 +246,44 @@ function decodeXmlAttribute(value: string): string {
 function xmlTagAttribute(tag: string, name: string): string {
   const match = new RegExp(`\\b${name}\\s*=\\s*(["'])([\\s\\S]*?)\\1`, "i").exec(tag);
   return match ? decodeXmlAttribute(match[2]) : "";
+}
+
+/** Bounded, conservative FCStd XML structural check and shared index projection. No DTD/entities/DOM. */
+export function pnwAnalyzeCadIndexDocumentXml(xml: string): {
+  readonly objectCount: number;
+  readonly xlinks: readonly PnwCadXlinkRef[];
+  readonly embeddedFields: Readonly<Partial<PnwCadEmbeddedBomFields>>;
+} {
+  if (xml.length > 32 * 1024 * 1024) throw new Error("Document.xml exceeds the index size limit");
+  const tokens = /<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<\/?[A-Za-z_][\w:.-]*(?:\s+[A-Za-z_][\w:.-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*\/?>/g;
+  const invalid = (): never => { throw new Error("Document.xml is incomplete or unsupported; index not written"); };
+  const stack: string[] = [];
+  const names = new Set<string>();
+  let end = 0; let roots = 0;
+  for (const match of xml.matchAll(tokens)) {
+    const token = match[0];
+    const text = xml.slice(end, match.index);
+    if (text.includes("<") || (!stack.length && text.trim())) invalid();
+    end = match.index + token.length;
+    if (token.startsWith("<![CDATA[")) { if (!stack.length) invalid(); continue; }
+    if (token.startsWith("<!") || token.startsWith("<?")) continue;
+    const tag = /^<\/?([\w:.-]+)/.exec(token)![1];
+    if (token.startsWith("</")) {
+      if (!/^<\/[\w:.-]+\s*>$/.test(token) || stack.pop() !== tag) invalid();
+      continue;
+    }
+    const attributes = [...token.matchAll(/\s([\w:.-]+)\s*=\s*(["'])([\s\S]*?)\2/g)].map(attribute => attribute[1]);
+    if (new Set(attributes).size !== attributes.length) invalid();
+    if (!stack.length && (++roots !== 1 || tag !== "Document")) invalid();
+    if (tag === "Object") { const name = xmlTagAttribute(token, "name"); if (name) names.add(name); }
+    if (!token.endsWith("/>")) stack.push(tag);
+  }
+  if (stack.length || roots !== 1 || xml.slice(end).trim()) invalid();
+  // Comment/CDATA examples are not semantic CAD properties or links.
+  const semanticXml = xml.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+  return Object.freeze({ objectCount: names.size,
+    xlinks: Object.freeze(pnwExtractXlinksFromDocumentXml(semanticXml).map(link => Object.freeze(link))),
+    embeddedFields: Object.freeze(pnwExtractEmbeddedBomFieldsFromDocumentXml(semanticXml) || {}) });
 }
 
 function isFcstdReference(value: string): boolean {

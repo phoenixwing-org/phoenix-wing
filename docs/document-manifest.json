@@ -13,56 +13,56 @@
       "path": ".claude/rules/naming-prefix.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "AGENTS.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "CLAUDE.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/本地验证方法.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/独立版本发布规则.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/发布配置步骤.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/共享能力目录.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/架构图.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -78,7 +78,7 @@
       "path": "docs/快速使用.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -94,14 +94,14 @@
       "path": "docs/命名规则.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/三库版本矩阵.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -117,7 +117,7 @@
       "path": "docs/文档索引.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -133,49 +133,49 @@
       "path": "docs/C++ clang-format规则说明.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/C++成员排序算法规范.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Git轻量仓库读取与OID分页计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Git群消息简报完整正文修复.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Git提交图轻量分页与拓扑车道.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/naming-checklist.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/overview.md",
       "status": "superseded",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17",
       "sourceOfTruth": "docs/文档索引.md",
       "reason": "v0.1 模块总览已由包 README 和文档索引替代"
@@ -184,21 +184,21 @@
       "path": "docs/plan.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw-SVG图标制作与选型规范.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw本地工程工作空间能力提炼计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17",
       "reason": "0.7.0 本地 Workspace 契约与后续 Host 实施真源"
     },
@@ -206,7 +206,7 @@
       "path": "docs/Pnw本地与服务器Host产品线边界.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17",
       "reason": "Phoenix Admin 正式名称与本地/服务器 Host 产品线边界真源"
     },
@@ -214,175 +214,175 @@
       "path": "docs/Pnw工作空间欢迎页与最近列表.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web-OpenIssue应用分析.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web编辑器最大化与国际化.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web侧目录外观可行性.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web动态布局与拖动可行性.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web非模态View对话框宿主.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web浮层主题契约.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web架构与示例计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web可浮动与Primary停靠工具宿主.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web可扩展显示配置中心.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web扩展消费者接入审计.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web双消费者验证计划.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web图标契约.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web完整View浮出与收回方案.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web问题与日志Block方案.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web消费者接入指南.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台Web页面布局与Header.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台WebPrimary面板与Section.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw工作台WebPrimary悬浮开关.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw简单枚举Select.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw可管理Combo与统一清理能力.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw通用内部Tab与浮窗排列.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw通用NavigationTreeWebComponent.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw通用WebComponent分层与命名规则.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/Pnw信息卡片组.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -434,168 +434,168 @@
       "path": "docs/releases/0.6.0发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.6.1发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.6.2发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.6.3发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.6.4发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.0发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.1发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.2发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.3发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.4发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.5发布验收.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/0.7.6发布候选.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
+      "path": "docs/releases/0.7.7发布候选.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.8.x",
+      "lastVerified": "2026-08-17"
+    },
+    {
+      "path": "docs/releases/0.8.0发布候选.md",
+      "status": "current",
+      "owner": "Phoenix Wing maintainers",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/releases/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "docs/View页面标准.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "examples/PwwWorkbenchWeb/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/cad-contracts/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/cad-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
-      "lastVerified": "2026-08-17"
-    },
-    {
-      "path": "packages/cad-rust-source/MIGRATION.md",
-      "status": "current",
-      "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
-      "lastVerified": "2026-08-17"
-    },
-    {
-      "path": "packages/cad-rust-source/README.md",
-      "status": "current",
-      "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/code-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/db-node/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/git-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/git-node/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/kt-codegen/doc/来源与许可归档.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -620,14 +620,14 @@
       "path": "packages/kt-codegen/doc/生成块迁移矩阵.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/kt-codegen/doc/自动代码标记扫描.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
@@ -724,56 +724,56 @@
       "path": "packages/kt-codegen/doc/KtCodegenTable布局与折叠契约.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/kt-codegen/README.md",
       "status": "current",
       "owner": "@phoenix-wing/kt-codegen maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/run-core/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/run-node/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "packages/workspace-schema/README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "README.md",
       "status": "current",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17"
     },
     {
       "path": "TODO.md",
       "status": "superseded",
       "owner": "Phoenix Wing maintainers",
-      "appliesTo": "0.7.x",
+      "appliesTo": "0.8.x",
       "lastVerified": "2026-08-17",
       "sourceOfTruth": "docs/plan.md",
       "reason": "旧 Phase 清单仅保留兼容跳转"

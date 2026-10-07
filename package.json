@@ -1,8 +1,8 @@
 {
   "name": "phoenix-wing",
-  "version": "0.7.6",
+  "version": "0.8.0",
   "packageManager": "pnpm@10.15.1",
-  "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、Rust CAD 源码、Vue3 控件",
+  "description": "Phoenix 跨语言共享核心与 UI 底座 — TypeScript 多包、CAD 共享算法、Vue3 控件",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -80,20 +80,20 @@
     "test": "vitest run",
     "test:workspace": "pnpm -r --include-workspace-root --if-present test",
     "typecheck:workspace": "pnpm -r --include-workspace-root --if-present typecheck",
-    "verify:cad-rust-tarball": "node scripts/verify-cad-rust-tarball.mjs",
     "verify:package-tarballs": "node scripts/verify-package-tarballs.mjs",
     "verify:release-matrix": "node scripts/verify-release-matrix.mjs",
+    "verify:cad-runtime": "node --test scripts/verify-cad-runtime.test.mjs && node scripts/verify-cad-runtime.mjs",
     "docs:manifest": "node scripts/generate-doc-manifest.mjs",
     "docs:check": "node scripts/generate-doc-manifest.mjs --check",
     "verify:architecture": "node scripts/verify-import-boundaries.mjs",
-    "verify:ci": "pnpm docs:check && pnpm verify:architecture && pnpm build && pnpm verify:aggregate-dist && pnpm verify:release-matrix && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs && pnpm verify:cad-rust-tarball",
+    "verify:ci": "pnpm verify:cad-runtime && pnpm docs:check && pnpm verify:architecture && pnpm -r --include-workspace-root --if-present build && pnpm verify:aggregate-dist && pnpm verify:release-matrix && pnpm test:workspace && pnpm typecheck:workspace && pnpm verify:package-tarballs",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit --pretty false",
     "dev": "pnpm example:workbench:dev",
     "test:watch": "vitest",
     "example:registry": "node scripts/run-workbench-registry.mjs"
   },
   "dependencies": {
-    "@phoenix-wing/code-core": "workspace:0.6.6",
+    "@phoenix-wing/code-core": "workspace:0.6.7",
     "@phoenix-wing/db-node": "workspace:0.6.3",
     "element-plus": "^2.0.0"
   },
@@ -119,7 +119,6 @@
   "keywords": [
     "phoenix",
     "cad",
-    "rust",
     "utils",
     "vue3",
     "typescript",

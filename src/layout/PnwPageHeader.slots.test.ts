@@ -8,6 +8,15 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 describe("View Header business slots", () => {
+  it("reserves intrinsic title/action widths and gives the remaining track to center", () => {
+    const source = readFileSync(resolve(process.cwd(), "src/layout/PnwPageHeader.vue"), "utf8");
+    expect(source).toMatch(/\.pnw-head-row\s*\{[^}]*fit-content\(35%\)\s+minmax\(0, 1fr\)\s+auto;/u);
+    expect(source).toContain("grid-template-columns: fit-content(35%) minmax(0, 1fr) fit-content(45%) auto;");
+    expect(source).not.toContain("minmax(var(--pnw-page-header-title-min-width, 0px), 1fr)");
+    expect(source).toContain("min-width: var(--pnw-page-header-title-min-width, 0px)");
+    // No middle slot still lets title use the remaining space; framework actions stay separate.
+    expect(source).toContain("grid-template-columns: minmax(0, 1fr) fit-content(65%) auto;");
+  });
   it("keeps center controls non-shrinking within the middle overflow track", () => {
     // happy-dom has no flex layout: real 380px geometry is checked in the example browser.
     const source = readFileSync(resolve(process.cwd(), "src/layout/PnwPageHeader.vue"), "utf8");

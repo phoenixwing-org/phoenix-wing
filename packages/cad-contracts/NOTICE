@@ -2,3 +2,10 @@ Phoenix Wing CAD Contracts
 Copyright 2024-2026 上海锟钛（Shanghai Kuntai）
 
 Licensed under the Apache License, Version 2.0.
+
+Open-source compatibility fixtures:
+native-read-real-summary-v1.json and native-xlink-real-success-v1.json derive
+from phoenix-freecad-study learning examples (MIT, Copyright (c) 2026 Phoenix).
+Source: https://gitee.com/PhoenixWing321/phoenix-freecad-study
+See LICENSE.phoenix-freecad-study.txt and README.md for provenance and scope.
+These archived compatibility outputs do not imply a supported Rust/Python CAD runtime.

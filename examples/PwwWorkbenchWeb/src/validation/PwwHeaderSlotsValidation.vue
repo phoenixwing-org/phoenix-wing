@@ -35,6 +35,7 @@ const pwwRecord = ref(pnwCreateViewPresentationRecord({rendererId:"header-slots"
         </template>
         <template #main>
           <section class="pww-header-results"><output>保存次数：{{ pwwSaved }} · 查询：{{ pwwSearch || '全部' }}</output>
+            <p>短标题按内容占宽，center 使用余下空间；长标题最多占 35% 并省略。切换窄容器后，业务操作与框架动作仍各自可用。</p>
             <ul><li v-for="index in 40" :key="index">测点 {{ index }}</li></ul>
           </section>
         </template>
