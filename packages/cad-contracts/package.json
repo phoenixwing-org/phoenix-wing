@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/cad-contracts",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "Phoenix CAD 跨宿主 JSON 契约、协议版本与 DTO",
   "type": "module",
   "sideEffects": false,
@@ -20,10 +20,22 @@
     "src/nativeV1.ts",
     "src/providerV1.ts",
     "src/queryV1.ts",
+    "src/workspaceIndexV1.ts",
+    "src/workspaceIndexResetV1.ts",
     "schemas",
-    "fixtures",
+    "fixtures/fcstd-document-legacy-v0.json",
+    "fixtures/native-error-v1.json",
+    "fixtures/native-protocol-info-v1.json",
+    "fixtures/native-provider-v1.json",
+    "fixtures/native-read-real-summary-v1.json",
+    "fixtures/native-read-success-v1.json",
+    "fixtures/native-xlink-real-success-v1.json",
+    "fixtures/native-xlink-scan-success-v1.json",
+    "fixtures/query-contract-v1.json",
+    "fixtures/query-v13.sql",
     "README.md",
     "LICENSE",
+    "LICENSE.phoenix-freecad-study.txt",
     "NOTICE"
   ],
   "scripts": {
@@ -33,7 +45,12 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "keywords": ["phoenix", "cad", "fcstd", "contracts"],
+  "keywords": [
+    "phoenix",
+    "cad",
+    "fcstd",
+    "contracts"
+  ],
   "author": "上海锟钛",
   "license": "Apache-2.0",
   "publishConfig": {
@@ -43,8 +60,12 @@
     "type": "git",
     "url": "https://gitee.com/phoenixwing/phoenix-wing.git"
   },
+  "dependencies": {
+    "@phoenix-wing/cad-core": "workspace:0.7.0"
+  },
   "devDependencies": {
     "@phoenix-wing/db-node": "workspace:0.6.3",
+    "@phoenix-wing/workspace-schema": "workspace:0.6.3",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }

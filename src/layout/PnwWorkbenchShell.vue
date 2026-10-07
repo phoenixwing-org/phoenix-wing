@@ -47,6 +47,7 @@ import PnwWorkbenchDisplaySettings from "./PnwWorkbenchDisplaySettings.vue";
 import PnwWorkbenchLayout from "./PnwWorkbenchLayout.vue";
 import PnwWorkbenchTabBar from "./PnwWorkbenchTabBar.vue";
 import { pnwProvideLocale, usePnwLocale } from "../composables/usePnwLocale.js";
+import type { PnwWorkbenchTabAction, PnwWorkbenchTabActionRequest } from "../utils/pnwWorkbenchTabActions.js";
 
 const props = withDefaults(defineProps<{
   nodes: readonly PnwNavigationNode[];
@@ -66,6 +67,8 @@ const props = withDefaults(defineProps<{
   activeBottomTabId?: string;
   colorScheme?: PnwColorScheme;
   tabs?: readonly PnwWorkbenchTabItem[];
+  tabContextActions?: readonly PnwWorkbenchTabAction[];
+  tabActionDisabled?: (request: PnwWorkbenchTabActionRequest) => boolean;
   tabBarPlacement?: PnwWorkbenchTabBarPlacement;
   activeTabId?: string;
   pageIcon?: (pageId: string) => Component | undefined;
@@ -136,6 +139,7 @@ const emit = defineEmits<{
   closeOtherTabs: [];
   refreshActiveTab: [];
   newTab: [];
+  tabAction: [request: PnwWorkbenchTabActionRequest];
   toggleBlock: [blockId: PnwViewBlockId];
   selectBottomTab: [tabId: string];
   "update:expandedNodeIds": [nodeIds: readonly string[]];
@@ -271,6 +275,8 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
             <slot name="pages">
               <PnwWorkbenchTabBar
                 :tabs="tabs"
+                :tab-context-actions="tabContextActions" :tab-action-disabled="tabActionDisabled" :color-scheme="colorScheme"
+                @tab-action="emit('tabAction', $event)"
                 :active-tab-id="activeTabId"
                 :page-icon="pageIcon"
                 :can-add="canAddTab"
@@ -305,6 +311,8 @@ const pnwActiveModuleId = computed(() => pnwRootNodes.value.find(
       <slot name="pages">
         <PnwWorkbenchTabBar
           :tabs="tabs"
+          :tab-context-actions="tabContextActions" :tab-action-disabled="tabActionDisabled" :color-scheme="colorScheme"
+          @tab-action="emit('tabAction', $event)"
           :active-tab-id="activeTabId"
           :page-icon="pageIcon"
           :can-add="canAddTab"

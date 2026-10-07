@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   pnwComposeBomLabel,
   pnwComposeRecommendedBomFilename,
+  pnwNormalizeBomPartNameSuffix,
   pnwCadXlinkRuleLabel,
   pnwBuildAssemblyTreeFromXrefs,
   pnwInferBomDocumentKinds,
@@ -15,6 +16,17 @@ import {
 } from "./index.js";
 
 describe("CAD BOM filename core", () => {
+  it.each([
+    ["支架.ASSY", ".ASSY.FCStd", "支架"],
+    ["支架.assy.ASSY.FCStd", ".ASSY.FCStd", "支架"],
+    ["支架.Drawing", ".ASSY.FCStd", "支架.Drawing"],
+    ["支架.ASSY.Detail", ".ASSY.FCStd", "支架.ASSY.Detail"],
+    ["支架-ASSY", ".ASSY.FCStd", "支架-ASSY"],
+    ["支架.ASSY", ".FCStd", "支架.ASSY"],
+    ["支架.ASSY", ".Custom", "支架.ASSY"],
+  ])("normalizes metadata suffixes without removing meaningful names: %s / %s", (name, suffix, expected) => {
+    expect(pnwNormalizeBomPartNameSuffix(name, suffix)).toBe(expected);
+  });
   it("preserves the Desk Tools filename inference baseline", () => {
     expect(pnwInferBomFieldsFromFilename("parts/100003.002-S-M6X12Bolt.FCStd")).toEqual({
       repo_rel_path: "parts/100003.002-S-M6X12Bolt.FCStd",
@@ -61,6 +73,25 @@ describe("CAD BOM filename core", () => {
     expect(pnwNormalizeCadRelativePath(".\\parts\\Bolt.FCStd")).toBe("parts/Bolt.FCStd");
     expect(() => pnwNormalizeCadRelativePath("../Bolt.FCStd")).toThrow(/Invalid workspace relative path/);
     expect(() => pnwNormalizeCadRelativePath("C:/parts/Bolt.FCStd")).toThrow(/Invalid workspace relative path/);
+  });
+
+  it.each([
+    ["支架.ASSY", ".ASSY.FCStd", "支架.ASSY.FCStd"],
+    ["支架.assy.ASSY.FCStd", ".ASSY.FCStd", "支架.ASSY.FCStd"],
+    ["支架.Drawing.Drawing", ".Drawing.FCStd", "支架.Drawing.FCStd"],
+    ["支架.FCStd.FCStd", ".FCStd", "支架.FCStd"],
+    ["支架-ASSY.ASSY.Detail", ".ASSY.FCStd", "支架-ASSY.ASSY.Detail.ASSY.FCStd"],
+    ["支架.Drawing", ".ASSY.FCStd", "支架.Drawing.ASSY.FCStd"],
+  ])("does not append a duplicate document suffix to %s", (name, suffix, expected) => {
+    const fields = { PartNumber: "200001", PartVersion: "001", TypeCode: "H", ModelSeries: "MDL", PartName: name };
+    expect(pnwComposeRecommendedBomFilename(fields, suffix)).toBe(`200001.001-H-MDL-${expected}`);
+    expect(fields.PartName).toBe(name);
+  });
+
+  it("deduplicates matching suffixes in label fallback without changing custom suffixes", () => {
+    const fields = { PartNumber: "200001", PartVersion: "001", label: "支架.ASSY" };
+    expect(pnwComposeRecommendedBomFilename(fields, ".ASSY.FCStd")).toBe("200001.001-支架.ASSY.FCStd");
+    expect(pnwComposeRecommendedBomFilename(fields, ".Custom")).toBe("200001.001-支架.ASSY.Custom");
   });
 });
 

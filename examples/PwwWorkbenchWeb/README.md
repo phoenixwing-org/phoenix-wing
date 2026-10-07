@@ -4,18 +4,27 @@
 
 ## 日常入口与来源标识
 
-发布前验证本地制品：`pnpm example:registry --wing-version 0.7.6 --wing-tarball <制品目录>/phoenix-wing-0.7.6.tgz --build-only`。同一入口支持显式 tarball 模式，在独立目录复制归档并安装，校验实际解析路径和版本；页面显示“本地制品验证 · 未发布”及归档 SHA-256，不标为 Registry。去掉 `--build-only` 可启动同一示例预览。哈希标识用于定位输入归档，不代表签名或完整验收。
+发布前验证本地制品：`pnpm example:registry --wing-version 0.8.0 --wing-tarball <制品目录>/phoenix-wing-0.8.0.tgz --build-only`。同一入口支持显式 tarball 模式，在独立目录复制归档并安装，校验实际解析路径和版本；页面显示“本地制品验证 · 未发布”及归档 SHA-256，不标为 Registry。去掉 `--build-only` 可启动同一示例预览。哈希标识用于定位输入归档，不代表签名或完整验收。
 
 第一阶段默认打开“内部 Tab 与浮窗排列”的轻量 Wing 界面：左侧 Primary 选择测试，右侧 View 显示 Tab 保活、浮窗排列或简单断言。使用 `PnwWorkbenchLayout`、`PnwActivityTree`、`PnwPageLayout`、`PnwRibbonToolButton`，不把每个版本的临时验证复制成一套页面。
 
 “完整工作台示例”是 `target="_blank" rel="noopener noreferrer"` 链接，打开 `?example=workbench` 独立页面。新页面只装配原完整工作台与来源标识，不嵌入轻量测试区、不同时挂载两套工作台；查询参数只选择页面，不改变开发/Registry 来源。
 
+首页「标签上下文菜单」进入 `?example=tab-menu`（Wing 0.8.0+）。该页只从公共入口使用
+`PnwWorkbenchShell`、`PnwPageLayout` 和 `pnwWorkbenchTabActionTargets`，用独立合成的 A/B/C
+标签演示刷新、关闭、关闭其他、关闭右侧和关闭全部；操作记录显示右键目标与实际范围。
+可切换 Header / 导航后 / Editor 底部、中文/英文、明暗主题及 360px 容器。
+启用菜单、保护未保存的 B、全部忙碌均可切换；示例在动作执行前再次核验保护条件。
+键盘验收：聚焦标签按 Shift+F10 / 菜单键，↑↓循环并跳过禁用项，Home/End 定位，
+Enter/Space 执行，Esc 返回目标标签，Tab/Shift+Tab 离开。关闭全部后由宿主将焦点移至重置按钮。
+这些数据只存在于内存，不读取工程、不调用产品 API、不写入文件。
+
 | 命令（Wing 仓库根） | 内容与来源 |
 | --- | --- |
 | `pnpm dev` | 最常用：构建当前 checkout 并启动示例，页面固定显示“开发验证 · 本地构建” |
 | `pnpm test:watch` | 单测监听；承接原来的 `pnpm dev` |
-| `pnpm example:registry --wing-version 0.7.5` | 新隔离目录精确安装 npm 包，同一示例类型/构建通过后启动 Registry 预览 |
-| `pnpm example:registry --wing-version 0.7.5 --build-only` | 相同 Registry 验证，但不启动预览服务 |
+| `pnpm example:registry --wing-version 0.8.0` | 新隔离目录精确安装 npm 包，同一示例类型/构建通过后启动 Registry 预览 |
+| `pnpm example:registry --wing-version 0.8.0 --build-only` | 相同 Registry 验证，但不启动预览服务 |
 
 开发服务为 `http://127.0.0.1:41789`；Registry 预览为 `http://127.0.0.1:41790`，均只监听 loopback 且 strictPort，不静默换端口。Registry 版本必须显式指定，不能填 latest、范围或本地路径。临时安装目录留存供点检，命令不改主仓或消费者的 manifest/lock/node_modules。
 

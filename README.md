@@ -1,6 +1,6 @@
 # phoenix-wing
 
-Phoenix Wing 跨语言共享核心与 UI 底座 — TypeScript 多包 · Rust CAD 源码 · Vue3 控件 · 壳层框架
+Phoenix Wing 跨语言共享核心与 UI 底座 — TypeScript 多包 · CAD 共享算法 · Vue3 控件 · 壳层框架
 
 ## 按需安装
 
@@ -12,7 +12,7 @@ npm install @phoenix-wing/workspace-schema
 npm install phoenix-wing vue pinia
 ```
 
-只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。参数驱动 CAA/Qt/C++ 代码生成使用 `@phoenix-wing/kt-codegen`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`；构建 Desk native tools 时单独安装 `@phoenix-wing/cad-rust-source`。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD/Codegen 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
+只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。参数驱动 CAA/Qt/C++ 代码生成使用 `@phoenix-wing/kt-codegen`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`。CAD 执行链使用 TypeScript；不再提供 Rust source 包或 Python CAD 后端。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD/Codegen 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
 
 `phoenix-wing` 聚合 UI 只发布 `dist` 编译产物。根入口和保留的 `.vue` 兼容子路径均落到同一份 JavaScript 模块图，避免 Vite 分别预构建根入口与源码 SFC 时产生 Vue/Pinia singleton 双实例。新代码优先使用根入口的命名导出；组件样式由编译入口自动加载。
 

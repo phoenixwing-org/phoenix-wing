@@ -30,3 +30,11 @@ import type { PnwNavigationTreeModel } from "@phoenix-wing/code-core/ui/model";
 `kt-auto-code` 与 Desk Tools 应直接消费本包。旧 `phoenix-wing/code-core` subpath 仅保留兼容 re-export，不再持有算法真源。
 
 `@phoenix-wing/code-core/fixtures/pure-capabilities-v1.json` 是 UUID 与 workspace path 的跨宿主 golden。其 SHA-256 为 `1d894c5ccffb8d8840c2fcf8a032ed34c79e7c5d2e44ad95fe1bf84665b32e8c`；消费者应比较字节与行为，不复制正则、格式器或路径包含算法。
+
+## 测试样本来源与发布边界
+
+2026-10-07 核对 [PNXCaaStudy](https://gitee.com/PhoenixWing321/PNXCaaStudy) 本地基线 `a677a6c` 的 `KTCAutoCodeWsp`：本包十份 `ktca_*` 夹具对应 Dialog、AttrAccess、BuildGSM、PartDoc 的头/实现文件及 CatalogParam、GSM 的头文件。来源和夹具均有逐文件 MIT 声明；五份忽略换行后与此基线一致，其余为排序回归所用的适配版本，不宣称全部逐字节复制。保留既有版权头和 [上游许可证](LICENSE.PNXCaaStudy.txt)，其 CATIA/第三方边界仍适用，不将学习仓库许可扩张为第三方 SDK 的再分发许可。
+
+此前三份 BOM 相关样本和一份业务命名的 widget 样本，不继续依赖摘录范围判断：改为四份独立构造的 `generated_*` 最小输入，仅表达无构造函数、锁定区域、system-code 分段与 widget 标记；不复制零件、业务字段或工程结构。新的断言验证这些算法条件，不用重写旧开源样本 golden 哈希掩盖行为变化。
+
+`ktalarmclock.clang-format.yaml` 对应 KtAlarmClock 的 Apache-2.0 格式风格；该学习项目许可证已本地核对。其余通用最小夹具不包含业务模型。npm 按审核后的明确文件清单打包；后续增加夹具时必须同步来源审查及制品门禁。

@@ -2,3 +2,12 @@ Phoenix Wing Code Core
 Copyright 2025-2026 上海锟钛
 
 Licensed under the Apache License, Version 2.0.
+
+The ten src/fixtures/ktca_* C++ test fixtures derive from MIT-marked examples
+in PNXCaaStudy/KTCAutoCodeWsp. Existing per-file notices are retained.
+Source: https://gitee.com/PhoenixWing321/PNXCaaStudy
+Upstream license: LICENSE.PNXCaaStudy.txt (including its third-party boundary).
+Files are adapted sorting regression inputs, not a redistributed CATIA SDK.
+The independently constructed generated_* fixtures are Phoenix Wing test inputs.
+ktalarmclock.clang-format.yaml is an Apache-2.0 style example associated with
+KtAlarmClock (Copyright 2026 Phoenix Wing); the Apache-2.0 license is included.

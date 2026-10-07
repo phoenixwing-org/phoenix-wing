@@ -4,11 +4,18 @@ import type { Component } from "vue";
 import type { PnwWorkbenchTabItem } from "../types/PnwWorkbenchWeb.js";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
 import PnwIcon from "../components/PnwIcon.vue";
+import PnwWorkbenchTabContextMenu from "./PnwWorkbenchTabContextMenu.vue";
+import { pnwWorkbenchTabActionTargets, type PnwWorkbenchTabAction, type PnwWorkbenchTabActionRequest } from "../utils/pnwWorkbenchTabActions.js";
+import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
 
 const props = withDefaults(
   defineProps<{
     /** Tab 列表 */
     tabs: readonly PnwWorkbenchTabItem[];
+    /** Opt-in commands emit explicit targets; no host mutation is implicit. */
+    tabContextActions?: readonly PnwWorkbenchTabAction[];
+    tabActionDisabled?: (request: PnwWorkbenchTabActionRequest) => boolean;
+    colorScheme?: PnwColorScheme;
     /** 当前激活 Tab ID */
     activeTabId: string;
     /** pageId → 图标组件 */
@@ -39,6 +46,7 @@ const props = withDefaults(
     canCloseOtherTabs: false,
     editorMaximized: false,
     showEditorMaximizeAction: false,
+    tabContextActions: () => [],
   },
 );
 
@@ -49,12 +57,52 @@ const emit = defineEmits<{
   closeOtherTabs: [];
   refreshActiveTab: [];
   newTab: [];
+  tabAction: [request: PnwWorkbenchTabActionRequest];
   "update:editorMaximized": [maximized: boolean];
 }>();
 
 const scrollEl = ref<HTMLElement | null>(null);
 const tabEls = new Map<string, HTMLElement>();
 const { t: pnwT } = usePnwLocale();
+const pnwContext = ref<{ tabId: string; x: number; y: number }>();
+const pnwContextItems = computed(() => [...new Set(props.tabContextActions)].map(action => ({
+  action,
+  label: pnwT(({ refresh: 'workbench.tab.refreshPage', close: 'workbench.tab.close',
+    'close-others': 'workbench.tab.closeOthers', 'close-right': 'workbench.tab.closeRight',
+    'close-all': 'workbench.tab.closeAll' } as const)[action]),
+  disabled: props.closingAll || !pnwContext.value
+    || pnwWorkbenchTabActionTargets(props.tabs, { action, tabId: pnwContext.value.tabId }).length === 0
+    || Boolean(props.tabActionDisabled?.({ action, tabId: pnwContext.value.tabId })),
+})));
+function pnwOpenContext(event: MouseEvent | KeyboardEvent, tabId: string) {
+  if (!props.tabContextActions.length) return;
+  event.preventDefault(); event.stopPropagation();
+  const rect = tabEls.get(tabId)?.getBoundingClientRect();
+  const pointer = event instanceof MouseEvent && (event.clientX || event.clientY);
+  pnwContext.value = { tabId, x: pointer ? event.clientX : rect?.left ?? 0, y: pointer ? event.clientY : rect?.bottom ?? 0 };
+}
+function pnwCloseContext(restoreFocus = false) {
+  const id = pnwContext.value?.tabId; pnwContext.value = undefined;
+  if (!restoreFocus || !id) return;
+  tabEls.get(id)?.focus({ preventScroll: true });
+  // A controlled host may remove the target in the same tick. Do not steal a
+  // focus destination chosen by the host (e.g. a dirty-document dialog).
+  void nextTick(() => {
+    if (document.activeElement === document.body) {
+      (tabEls.get(id) ?? tabEls.get(props.activeTabId) ?? tabEls.values().next().value ?? scrollEl.value)?.focus({ preventScroll: true });
+    }
+  });
+}
+function pnwRunContextAction(action: PnwWorkbenchTabAction) {
+  const tabId = pnwContext.value?.tabId;
+  const item = pnwContextItems.value.find(item => item.action === action);
+  if (!tabId || !item || item.disabled) return;
+  pnwCloseContext(true); emit('tabAction', { action, tabId });
+}
+watch(() => props.tabs.map(tab => tab.id), ids => {
+  if (pnwContext.value && !ids.includes(pnwContext.value.tabId)) pnwCloseContext(true);
+});
+watch(() => props.tabContextActions.length, count => { if (!count) pnwCloseContext(true); });
 
 function setTabRef(tabId: string, el: Element | null) {
   if (el instanceof HTMLElement) tabEls.set(tabId, el);
@@ -86,7 +134,7 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
 
 <template>
   <div class="pnw-tab-bar" :class="{ 'pnw-tab-bar-header': inHeader }">
-    <div ref="scrollEl" class="pnw-tab-scroll" role="tablist" :aria-label="pnwT('workbench.tabs')">
+    <div ref="scrollEl" class="pnw-tab-scroll" role="tablist" tabindex="-1" :aria-label="pnwT('workbench.tabs')">
       <span v-if="inHeader" class="pnw-tab-scroll-edge" aria-hidden="true" />
       <button
         v-for="tab in tabs"
@@ -99,6 +147,11 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
         :aria-selected="tab.id === activeTabId"
         :title="tab.subtitle || tab.title"
         @click="emit('select', tab.id)"
+        :aria-haspopup="tabContextActions.length ? 'menu' : undefined"
+        :aria-expanded="tabContextActions.length ? pnwContext?.tabId === tab.id : undefined"
+        @contextmenu="pnwOpenContext($event, tab.id)"
+        @keydown.shift.f10="pnwOpenContext($event, tab.id)"
+        @keydown="($event.key === 'ContextMenu') && pnwOpenContext($event, tab.id)"
       >
         <span v-if="pageIcon" class="pnw-tab-icon" aria-hidden="true">
           <component :is="pageIcon(tab.pageId)" />
@@ -155,6 +208,9 @@ onMounted(() => { void nextTick(() => scrollActiveIntoView("auto")); });
       :aria-label="pnwT('workbench.tab.new')"
       @click="emit('newTab')"
     >+</button>
+    <PnwWorkbenchTabContextMenu v-if="pnwContext" :key="`${pnwContext.tabId}:${pnwContext.x}:${pnwContext.y}`"
+      :x="pnwContext.x" :y="pnwContext.y" :items="pnwContextItems" :color-scheme="colorScheme"
+      :label="pnwT('workbench.tab.actions')" @close="pnwCloseContext" @action="pnwRunContextAction" />
   </div>
 </template>
 

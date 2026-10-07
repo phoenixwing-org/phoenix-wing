@@ -86,7 +86,7 @@ describe("reorderHeaderEngine", () => {
     "pragma_region.h",
     "clang_format_nested_markers.h",
     "clang_format_doubled.h",
-    "pnx_caa2_widget_decl.h",
+    "generated_widget_section.h",
   ])("preserves locked regions and remains idempotent for %s", (name) => {
     const source = fixture(name);
     const before = pnwExtractLockedRegionContents(source);
@@ -119,7 +119,7 @@ describe("reorderHeaderEngine", () => {
   });
 
   it("strips and merges Kevin system-code declarations like the Python engine", () => {
-    const basic = pnwReorderHeaderText(fixture("pnx_bom_analysis_param_min.h"));
+    const basic = pnwReorderHeaderText(fixture("generated_system_section.h"));
     expect(basic.text).not.toContain("KEVIN_SYSTEM_CODE START");
     expect(basic.text).not.toContain("KEVIN_SYSTEM_CODE END");
     const basicSection = basic.text.slice(basic.text.indexOf("public: // KEVIN_SYSTEM_CODE"));
@@ -127,7 +127,7 @@ describe("reorderHeaderEngine", () => {
     expect(basicSection.indexOf("convertJson")).toBeLessThan(basicSection.indexOf("GetSoftwareVersion"));
     expect(pnwReorderHeaderText(basic.text).changed).toBe(false);
 
-    const split = pnwReorderHeaderText(fixture("pnx_bom_param_system_split.h"));
+    const split = pnwReorderHeaderText(fixture("generated_system_split.h"));
     const systemStart = split.text.indexOf("public: // KEVIN_SYSTEM_CODE");
     const functionsStart = split.text.indexOf("public: // functions", systemStart);
     const systemBlock = split.text.slice(systemStart, functionsStart);
@@ -135,13 +135,13 @@ describe("reorderHeaderEngine", () => {
     expect(systemBlock).toContain("ConvertErrorListToString");
     expect(systemBlock).toContain("convertJson");
     expect(systemBlock).toContain("GetSoftwareVersion");
-    expect(functionsBlock).toContain("CheckoutAxis");
+    expect(functionsBlock).toContain("unrelatedHelper");
     expect(functionsBlock).not.toContain("convertJson");
     expect(pnwReorderHeaderText(split.text).changed).toBe(false);
   });
 
   it.each(["keep_markers", "off"] as const)("matches the alternate %s system-code mode", (mode) => {
-    const source = fixture("pnx_bom_analysis_param_min.h");
+    const source = fixture("generated_system_section.h");
     const result = pnwReorderHeaderText(source, { kevinSystemCodeMode: mode });
     expect(result.text).toContain("KEVIN_SYSTEM_CODE START");
     expect(result.text).toContain("KEVIN_SYSTEM_CODE END");

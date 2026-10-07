@@ -6,7 +6,9 @@ import PwwVerificationBanner from "./validation/PwwVerificationBanner.vue";
 import PwwTabArrangementValidation from "./validation/PwwTabArrangementValidation.vue";
 const PwwWorkbench = defineAsyncComponent(() => import("./App.vue"));
 const PwwHeaderSlots = defineAsyncComponent(() => import("./validation/PwwHeaderSlotsValidation.vue"));
+const PwwTabMenu = defineAsyncComponent(() => import("./validation/PwwTabContextMenuValidation.vue"));
 const pwwHeaderSlots = new URLSearchParams(window.location.search).get("example") === "header";
+const pwwTabMenu = new URLSearchParams(window.location.search).get("example") === "tab-menu";
 // This query selects a standalone page, never the dependency source.
 const pwwStandaloneWorkbench = new URLSearchParams(window.location.search).get("example") === "workbench";
 const pwwTheme = ref<"light" | "dark" | "system">("system");
@@ -17,8 +19,10 @@ onMounted(() => { document.title = `Wing 示例 · ${pwwSource.mode === "develop
   <PnwOverlayThemeProvider :color-scheme="pwwTheme">
     <div class="pww-example-app">
       <PwwVerificationBanner :source="pwwSource" :runtime-version="PNW_VERSION" />
-      <PnwPageHeader v-if="!pwwStandaloneWorkbench" :title="pwwHeaderSlots ? 'View Header 插槽' : '内部 Tab 与浮窗排列'">
+      <PnwPageHeader v-if="!pwwStandaloneWorkbench" :title="pwwTabMenu ? '工作台标签上下文菜单' : pwwHeaderSlots ? 'View Header 插槽' : '内部 Tab 与浮窗排列'">
         <template #right>
+          <a v-if="pwwTabMenu" class="pww-workbench-link" href="?">返回首页</a>
+          <a v-else class="pww-workbench-link" href="?example=tab-menu">标签上下文菜单</a>
           <a class="pww-workbench-link" :href="pwwHeaderSlots ? '?' : '?example=header'">{{ pwwHeaderSlots ? '内部 Tab 与浮窗排列' : 'View Header 插槽' }}</a>
           <a class="pww-workbench-link" href="?example=workbench" target="_blank" rel="noopener noreferrer" title="在新标签页中打开完整工作台"><PnwIcon name="window-float" :size="16" />完整工作台示例 · 新标签打开</a>
           <PnwColorSchemeToggle v-model="pwwTheme" />
@@ -28,6 +32,7 @@ onMounted(() => { document.title = `Wing 示例 · ${pwwSource.mode === "develop
       <div class="pww-example-body" :data-example-page="pwwStandaloneWorkbench ? 'workbench' : 'validation'">
         <PwwWorkbench v-if="pwwStandaloneWorkbench" />
         <PwwHeaderSlots v-else-if="pwwHeaderSlots" />
+        <PwwTabMenu v-else-if="pwwTabMenu" :color-scheme="pwwTheme" />
         <PwwTabArrangementValidation v-else :color-scheme="pwwTheme" />
       </div>
     </div>

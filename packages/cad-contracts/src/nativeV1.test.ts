@@ -17,13 +17,13 @@ function readFixture(name: string): unknown {
 }
 
 describe("Phoenix CAD native protocol v1", () => {
-  it("accepts the real FreeCAD Document.xml xlink golden fixture", () => {
+  it("accepts the open-source phoenix-freecad-study XLink compatibility fixture", () => {
     expect(pnwIsCadNativeV1XlinkScanSuccess(
       readFixture("native-xlink-real-success-v1.json"),
     )).toBe(true);
   });
 
-  it("publishes the stable real FCStd read parity summary", () => {
+  it("preserves the open-source phoenix-freecad-study read compatibility summary", () => {
     expect(readFixture("native-read-real-summary-v1.json")).toMatchObject({
       protocol: PNW_CAD_NATIVE_PROTOCOL,
       protocol_version: PNW_CAD_NATIVE_PROTOCOL_VERSION,
@@ -104,47 +104,5 @@ describe("Phoenix CAD native protocol v1", () => {
     value.result.objects[0].typeId = value.result.objects[0].type_id;
     delete value.result.objects[0].type_id;
     expect(pnwIsCadNativeV1ReadSuccess(value)).toBe(false);
-  });
-
-  it("keeps the Rust source manifest aligned with the public contract", () => {
-    const manifest = JSON.parse(readFileSync(
-      new URL("../../cad-rust-source/source-manifest.json", import.meta.url),
-      "utf8",
-    )) as Record<string, unknown>;
-    expect(manifest).toMatchObject({
-      schema_version: 4,
-      legacy_protocol: {
-        kind: "desk-tools-v0",
-        json_field_case: "mixed",
-      },
-      native_protocol: {
-        kind: PNW_CAD_NATIVE_PROTOCOL,
-        version: PNW_CAD_NATIVE_PROTOCOL_VERSION,
-        version_query: true,
-        version_query_args: ["--protocol-version"],
-        supported_protocol_majors: [1],
-        legacy_compatible: true,
-      },
-      database_query_protocol: {
-        kind: "phoenix-cad-query",
-        version: { major: 1, minor: 0 },
-        contract_query_args: ["--contract"],
-        workspace_schema: {
-          id: "phoenix-workspace",
-          version: 13,
-          ddl_sha256: "116c5bff9c95e6f670b9ecfc52c053ee08e33e9cf1f3f3b46c02888e97643e1c",
-        },
-      },
-      database_tools: {
-        "fcstd-query": {
-          package: "fcstd-query",
-          contract_query_args: ["--contract"],
-        },
-      },
-      binaries: {
-        "fcstd-read": { protocol_v1_capabilities: ["read"] },
-        "fcstd-xlink": { protocol_v1_capabilities: ["scan"] },
-      },
-    });
   });
 });
