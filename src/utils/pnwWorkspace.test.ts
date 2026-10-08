@@ -3,6 +3,7 @@ import type {
   PnwRecentWorkspaceEntry,
   PnwWorkspaceDescriptor,
   PnwWorkspaceLifecycleParticipant,
+  PnwWorkspaceTransitionContext,
 } from "../types/PnwWorkspace.js";
 import {
   PnwWorkspaceError,
@@ -109,7 +110,7 @@ describe("Pnw Workspace contract", () => {
       rootPath: PNW_WORKSPACE_B.rootPath,
       expectedWorkspaceId: "workspace-b",
     })).toMatchObject({ status: "switched", workspace: PNW_WORKSPACE_B, previous: PNW_WORKSPACE_A });
-    expect(close).toHaveBeenCalledWith(PNW_WORKSPACE_A, undefined);
+    expect(close).toHaveBeenCalledWith(PNW_WORKSPACE_A, expect.any(AbortSignal));
     expect(controller.getSnapshot().recent.map((item) => item.workspaceId))
       .toEqual(["workspace-b", "workspace-a"]);
 
@@ -246,5 +247,122 @@ describe("Pnw Workspace contract", () => {
     await controller.requestOpen({ rootPath: PNW_WORKSPACE_A.rootPath });
     expect((await controller.requestClose()).status).toBe("closed");
     expect((await controller.requestClose()).status).toBe("unchanged");
+  });
+});
+
+
+describe("Pnw Workspace cancellation boundaries", () => {
+  it.each(["prepare", "commit"] as const)("checks cancellation after the final %s and rolls back with a fresh signal", async (boundary) => {
+    const abort = new AbortController();
+    const close = vi.fn(async () => undefined);
+    const rollback = vi.fn(async (context: PnwWorkspaceTransitionContext) => { expect(context.signal.aborted).toBe(false); });
+    const controller = pnwCreateWorkspaceController({
+      host: { open: async () => PNW_WORKSPACE_A, close },
+      participants: [{ id: "session", [boundary]: async () => { abort.abort(); }, rollback }],
+    });
+    expect((await controller.requestOpen({ rootPath: PNW_WORKSPACE_A.rootPath, signal: abort.signal })).status).toBe("cancelled");
+    expect(rollback).toHaveBeenCalledOnce();
+    expect(controller.getSnapshot().current).toBeUndefined();
+    expect(close).toHaveBeenCalledTimes(boundary === "commit" ? 1 : 0);
+  });
+
+  it("includes a partially prepared participant in reverse rollback and exposes rollback failure despite cancellation", async () => {
+    const abort = new AbortController();
+    const events: string[] = [];
+    const controller = pnwCreateWorkspaceController({
+      host: { open: async () => PNW_WORKSPACE_A },
+      participants: [
+        { id: "first", rollback: async () => { events.push("first"); } },
+        { id: "partial", prepare: async () => { abort.abort(); throw new Error("partial prepare"); },
+          rollback: async (context) => { expect(context.signal.aborted).toBe(false); events.push("partial"); throw new Error("restore failed"); } },
+      ],
+    });
+    expect(await controller.requestOpen({ rootPath: PNW_WORKSPACE_A.rootPath, signal: abort.signal }))
+      .toMatchObject({ status: "rejected", error: { message: "restore failed", participantId: "partial" } });
+    expect(events).toEqual(["partial", "first"]);
+  });
+
+  it.each(["switch", "close"] as const)("waits for injected fresh recovery before a superseding request during %s", async (kind) => {
+    const entered = pnwDeferred<void>();
+    const release = pnwDeferred<void>();
+    const recovering = pnwDeferred<void>();
+    const restored = pnwDeferred<void>();
+    const live = new Set<string>();
+    const events: string[] = [];
+    let block = true;
+    const controller = pnwCreateWorkspaceController({
+      host: {
+        open: async (request) => {
+          const workspace = request.rootPath === PNW_WORKSPACE_A.rootPath ? PNW_WORKSPACE_A : PNW_WORKSPACE_B;
+          events.push("open:" + workspace.workspaceId);
+          live.add(workspace.workspaceId);
+          return workspace;
+        },
+        close: async (workspace, signal) => {
+          expect(signal).toBeInstanceOf(AbortSignal);
+          live.delete(workspace.workspaceId);
+          if (workspace.workspaceId === PNW_WORKSPACE_A.workspaceId && block) {
+            block = false; entered.resolve(); await release.promise;
+          }
+        },
+        recover: async (context) => {
+          expect(context.signal.aborted).toBe(false);
+          recovering.resolve(); await restored.promise;
+          live.add(context.current!.workspaceId);
+          events.push("restored");
+        },
+      },
+    });
+    await controller.requestOpen({ rootPath: PNW_WORKSPACE_A.rootPath });
+    const pending = kind === "close" ? controller.requestClose() : controller.requestSwitch({ rootPath: PNW_WORKSPACE_B.rootPath });
+    await entered.promise;
+    const next = controller.requestSwitch({ rootPath: PNW_WORKSPACE_B.rootPath });
+    release.resolve(); await recovering.promise;
+    const count = events.length;
+    await Promise.resolve(); expect(events).toHaveLength(count);
+    restored.resolve();
+    expect((await pending).status).toBe("superseded");
+    expect((await next).status).toBe("switched");
+    expect(events.lastIndexOf("restored")).toBeLessThan(events.lastIndexOf("open:workspace-b"));
+    expect([...live]).toEqual([PNW_WORKSPACE_B.workspaceId]);
+  });
+
+  it.each(["recover", "cleanup"] as const)("does not hide %s failures after cancellation", async (boundary) => {
+    const abort = new AbortController();
+    const controller = pnwCreateWorkspaceController({ host: {
+      open: async (request) => request.rootPath === PNW_WORKSPACE_A.rootPath ? PNW_WORKSPACE_A : PNW_WORKSPACE_B,
+      close: async (workspace) => {
+        if (workspace.workspaceId === PNW_WORKSPACE_A.workspaceId) { abort.abort(); }
+        else if (boundary === "cleanup") { throw new Error("cleanup failed"); }
+      },
+      recover: async (context) => {
+        expect(context.signal.aborted).toBe(false);
+        if (boundary === "recover") throw new Error("recover failed");
+      },
+    } });
+    await controller.requestOpen({ rootPath: PNW_WORKSPACE_A.rootPath });
+    expect(await controller.requestSwitch({ rootPath: PNW_WORKSPACE_B.rootPath, signal: abort.signal }))
+      .toMatchObject({ status: "rejected", error: { message: boundary + " failed" } });
+    expect(controller.getSnapshot().current?.workspaceId).toBe(boundary === "recover" ? undefined : PNW_WORKSPACE_A.workspaceId);
+  });
+});
+
+
+describe("Pnw Workspace Host recovery contract", () => {
+  it.each([true, false])("rejects a partially closed Host with recover=%s", async (hasRecovery) => {
+    let live = false;
+    const recover = vi.fn(async (context: PnwWorkspaceTransitionContext) => {
+      expect(context.signal.aborted).toBe(false);
+      live = true;
+    });
+    const controller = pnwCreateWorkspaceController({ host: {
+      open: async () => { live = true; return PNW_WORKSPACE_A; },
+      close: async () => { live = false; throw new Error("partial close"); },
+      recover: hasRecovery ? recover : undefined,
+    } });
+    await controller.requestOpen({ rootPath: PNW_WORKSPACE_A.rootPath });
+    expect((await controller.requestClose()).status).toBe("rejected");
+    expect(live).toBe(hasRecovery);
+    expect(controller.getSnapshot().current?.workspaceId).toBe(hasRecovery ? PNW_WORKSPACE_A.workspaceId : undefined);
   });
 });

@@ -15,7 +15,8 @@ import { pnwReadGitCommitPage, pnwReadGitRepositorySummary } from "./repository-
 import { pnwExecuteGitSquash, pnwUndoGitSquash } from "./squash-transaction.js";
 
 const roots: string[] = [];
-const GIT_INTEGRATION_TIMEOUT_MS = 30_000;
+// Windows runs real Git subprocesses and worktree transactions substantially slower.
+const GIT_INTEGRATION_TIMEOUT_MS = process.platform === "win32" ? 90_000 : 30_000;
 afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });

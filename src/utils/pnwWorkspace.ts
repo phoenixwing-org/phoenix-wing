@@ -43,6 +43,12 @@ class PnwWorkspaceFlowInterrupt extends Error {
   }
 }
 
+class PnwWorkspaceRecoveryError extends Error {
+  constructor(readonly failure: PnwWorkspaceFailure) {
+    super(failure.message);
+  }
+}
+
 export class PnwWorkspaceError extends Error {
   readonly code: PnwWorkspaceErrorCode;
   readonly participantId?: string;
@@ -275,21 +281,24 @@ export function pnwCreateWorkspaceController(
     prepared: readonly PnwWorkspaceLifecycleParticipant[],
     context: PnwWorkspaceTransitionContext,
   ): Promise<void> => {
+    const recoveryContext = Object.freeze({ ...context, signal: new AbortController().signal });
+    let failure: PnwWorkspaceFailure | undefined;
     for (const participant of [...prepared].reverse()) {
       if (!participant.rollback) continue;
       try {
-        await participant.rollback(context);
+        await participant.rollback(recoveryContext);
       } catch (error) {
-        report(pnwWorkspaceFailure(
+        failure ??= pnwWorkspaceFailure(
           new PnwWorkspaceError(
             "participant-failure",
             error instanceof Error ? error.message : String(error),
             participant.id,
           ),
           "participant-failure",
-        ));
+        );
       }
     }
+    if (failure) throw new PnwWorkspaceRecoveryError(failure);
   };
 
   const prepare = async (
@@ -297,10 +306,11 @@ export function pnwCreateWorkspaceController(
   ): Promise<readonly PnwWorkspaceLifecycleParticipant[]> => {
     const prepared: PnwWorkspaceLifecycleParticipant[] = [];
     for (const participant of participants) {
-      ensureLive(context.revision, context.signal);
       try {
-        const vote = await participant.prepare?.(context);
+        ensureLive(context.revision, context.signal);
         prepared.push(participant);
+        const vote = await participant.prepare?.(context);
+        ensureLive(context.revision, context.signal);
         if (vote && !vote.allowed) {
           throw new PnwWorkspaceError(
             "participant-rejected",
@@ -310,7 +320,7 @@ export function pnwCreateWorkspaceController(
         }
       } catch (error) {
         await rollback(prepared, context);
-        if (error instanceof PnwWorkspaceError) throw error;
+        if (error instanceof PnwWorkspaceError || error instanceof PnwWorkspaceFlowInterrupt) throw error;
         throw new PnwWorkspaceError(
           "participant-failure",
           error instanceof Error ? error.message : String(error),
@@ -337,7 +347,9 @@ export function pnwCreateWorkspaceController(
           participant.id,
         );
       }
+      ensureLive(context.revision, context.signal);
     }
+    ensureLive(context.revision, context.signal);
   };
 
   const closeHost = async (
@@ -384,6 +396,41 @@ export function pnwCreateWorkspaceController(
     return result.status === "selected" ? result.rootPath.trim() : undefined;
   };
 
+  // The Host owns resource restoration; the controller only waits and reports failure.
+  const recover = async (
+    prepared: readonly PnwWorkspaceLifecycleParticipant[],
+    context: PnwWorkspaceTransitionContext,
+    hostCloseAttempted: boolean,
+  ): Promise<void> => {
+    const signal = new AbortController().signal;
+    let failure: PnwWorkspaceFailure | undefined;
+    if (context.target && !pnwSameWorkspace(context.current, context.target)) {
+      try { await closeHost(context.target, signal); }
+      catch (error) { failure = pnwWorkspaceFailure(error, "host-failure"); }
+    }
+    if (hostCloseAttempted && context.current) {
+      // A descriptor cannot prove that a partially closed resource is still live.
+      publish({ ...state, current: undefined, phase: "closed" });
+      if (options.host.recover) {
+        try {
+          await options.host.recover(Object.freeze({ ...context, signal }));
+          publish({ ...state, current: context.current, phase: "open" });
+        } catch (error) { failure ??= pnwWorkspaceFailure(error, "host-failure"); }
+      } else {
+        failure ??= pnwWorkspaceFailure(
+          new PnwWorkspaceError("host-failure", "Host close was interrupted; resource recovery is required"),
+          "host-failure",
+        );
+      }
+    }
+    try { await rollback(prepared, { ...context, signal }); }
+    catch (error) {
+      failure ??= error instanceof PnwWorkspaceRecoveryError
+        ? error.failure : pnwWorkspaceFailure(error, "participant-failure");
+    }
+    if (failure) throw new PnwWorkspaceRecoveryError(failure);
+  };
+
   const executeOpen = async (
     request: PnwWorkspaceOpenRequest,
     revision: number,
@@ -411,7 +458,9 @@ export function pnwCreateWorkspaceController(
     });
     const prepared = await prepare(prepareContext);
     let target: PnwWorkspaceDescriptor | undefined;
+    let hostCloseAttempted = false;
     try {
+      ensureLive(revision, signal);
       publishFor(revision, {
         phase: previous ? "opening-target" : "opening",
         pendingRootPath: rootPath,
@@ -424,6 +473,7 @@ export function pnwCreateWorkspaceController(
       ensureLive(revision, signal);
       if (pnwSameWorkspace(previous, target)) {
         await rollback(prepared, { ...prepareContext, target });
+        ensureLive(revision, signal);
         publishFor(revision, {
           phase: "open",
           current: previous,
@@ -438,7 +488,10 @@ export function pnwCreateWorkspaceController(
         target,
       });
       await commit(prepared, commitContext);
-      await closeHost(previous);
+      ensureLive(revision, signal);
+      hostCloseAttempted = Boolean(options.host.close);
+      await closeHost(previous, signal);
+      ensureLive(revision, signal);
       publish({
         ...state,
         revision: requestedRevision,
@@ -455,14 +508,7 @@ export function pnwCreateWorkspaceController(
       };
     } catch (error) {
       const context = Object.freeze({ ...prepareContext, target });
-      await rollback(prepared, context);
-      if (target && !pnwSameWorkspace(previous, target)) {
-        try {
-          await closeHost(target);
-        } catch (cleanupError) {
-          report(pnwWorkspaceFailure(cleanupError, "host-failure"));
-        }
-      }
+      await recover(prepared, context, hostCloseAttempted);
       throw error;
     }
   };
@@ -484,9 +530,13 @@ export function pnwCreateWorkspaceController(
       signal,
     });
     const prepared = await prepare(context);
+    let hostCloseAttempted = false;
     try {
       await commit(prepared, context);
-      await closeHost(previous);
+      ensureLive(revision, signal);
+      hostCloseAttempted = Boolean(options.host.close);
+      await closeHost(previous, signal);
+      ensureLive(revision, signal);
       publish({
         ...state,
         revision: requestedRevision,
@@ -497,7 +547,7 @@ export function pnwCreateWorkspaceController(
       });
       return { status: "closed", previous };
     } catch (error) {
-      await rollback(prepared, context);
+      await recover(prepared, context, hostCloseAttempted);
       throw error;
     }
   };
@@ -517,6 +567,11 @@ export function pnwCreateWorkspaceController(
       try {
         return await run(revision, controller.signal);
       } catch (error) {
+        if (error instanceof PnwWorkspaceRecoveryError) {
+          publish({ ...state, phase: pnwStablePhase(state.current), pendingRootPath: undefined, error: error.failure });
+          report(error.failure);
+          return { status: "rejected", workspace: state.current, error: error.failure };
+        }
         if (revision !== requestedRevision) {
           return { status: "superseded", workspace: state.current };
         }

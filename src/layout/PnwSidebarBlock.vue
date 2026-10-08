@@ -75,6 +75,9 @@ function onHeadToggle() {
 
 <style scoped>
 .pnw-sidebar-block {
+  --pnw-block-resolved-border: var(--border, var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed)));
+  --pnw-block-resolved-bg: var(--sidebar-bg, var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff)));
+  --pnw-block-resolved-head-bg: var(--panel-head-bg, color-mix(in srgb, var(--pnw-block-resolved-bg) 88%, var(--pnw-workbench-bg, var(--pnw-workbench-default-bg, #f1f5f9)) 12%));
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -110,6 +113,8 @@ function onHeadToggle() {
 
 .pnw-sidebar-block--card > .pnw-sidebar-block-head-wrap {
   width: 100%;
+  min-height: 40px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
   background: var(--pnw-block-header-bg, var(--panel-head-bg, color-mix(in srgb,
     var(--pnw-workbench-surface, var(--pnw-workbench-default-surface, #fff)) 92%,
@@ -119,6 +124,12 @@ function onHeadToggle() {
 
 .pnw-sidebar-block--card.pnw-sidebar-block--collapsed > .pnw-sidebar-block-head-wrap {
   border-bottom: none;
+}
+
+.pnw-sidebar-block--card > .pnw-sidebar-block-body {
+  gap: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
 }
 
 .pnw-sidebar-block-body {
@@ -163,5 +174,21 @@ function onHeadToggle() {
   flex-shrink: 0;
   padding: 8px 10px;
   border-top: 1px solid var(--pnw-workbench-border, var(--pnw-workbench-default-border, #dbe3ed));
+}
+
+.pnw-sidebar-block--card :deep(.pnw-sidebar-block-head-toggle),
+.pnw-sidebar-block--card :deep(.pnw-sidebar-block-head.pnw-has-actions .pnw-sidebar-block-head-toggle) {
+  flex: 1 1 120px;
+  min-height: 40px;
+}
+.pnw-sidebar-block--card :deep(.pnw-sidebar-block-actions) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
 }
 </style>

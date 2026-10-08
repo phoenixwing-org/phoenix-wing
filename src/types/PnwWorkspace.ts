@@ -144,6 +144,10 @@ export interface PnwWorkspaceHostAdapter {
   readonly pickDirectory?: (request: PnwWorkspacePickRequest) => Promise<PnwWorkspacePickResult>;
   readonly open: (request: PnwWorkspaceHostOpenRequest) => Promise<PnwWorkspaceDescriptor>;
   readonly close?: (workspace: PnwWorkspaceDescriptor, signal?: AbortSignal) => Promise<void>;
+  /** close 尝试后失败或取消时由使用方恢复 current 的资源并核验身份；收到独立未取消 signal。
+   * 成功返回表示 current 已可用；失败须抛错。控制器等待恢复结束才运行下个请求，不自动重新 open。
+   */
+  readonly recover?: (context: PnwWorkspaceTransitionContext) => Promise<void>;
   readonly validate?: (
     workspace: PnwWorkspaceDescriptor,
     signal?: AbortSignal,
@@ -172,7 +176,7 @@ export interface PnwWorkspaceLifecycleParticipant {
   ) => Promise<PnwWorkspaceTransitionVote | void>;
   /** 提交 session、watcher、数据库和任务等工作空间资源切换。 */
   readonly commit?: (context: PnwWorkspaceTransitionContext) => Promise<void>;
-  /** prepare/commit/Host 失败时幂等恢复；按参与者逆序调用。 */
+  /** prepare/commit/Host 失败或取消时幂等恢复（含 prepare 抛错的参与者）；逆序调用并使用独立未取消 signal。 */
   readonly rollback?: (context: PnwWorkspaceTransitionContext) => Promise<void>;
 }
 

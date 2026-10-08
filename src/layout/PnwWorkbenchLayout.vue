@@ -741,6 +741,15 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 @container pnw-workbench (max-width: 840px) {
+  /* Stacked panels share the outer vertical scroll flow. Floating panels are
+     teleported outside this content subtree and retain their scroll boundary. */
+  .pnw-workbench-content :deep(.pnw-view-presentation-portal__main-frame--page),
+  .pnw-workbench-content .pnw-workbench-primary-region :deep(.pnw-sidebar-block.pnw-sidebar-block--body-scroll > .pnw-sidebar-block-body),
+  .pnw-workbench-content :deep(.pnw-sidebar-block--body-scroll .pnw-sidebar-block-body),
+  .pnw-workbench-content :deep(.pnw-page-layout--body-scroll .pnw-page-layout-body) {
+    overscroll-behavior-y: auto;
+  }
+
   .pnw-workbench-body {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: max-content minmax(0, 1fr);

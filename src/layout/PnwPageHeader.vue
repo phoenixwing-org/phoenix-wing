@@ -4,6 +4,7 @@ import type { PnwPageHeaderActionsAlign } from "../types/PnwPageHeader.js";
 import type { PnwViewPresentationMode } from "../types/PnwViewPresentation.js";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
 import { usePnwViewPresentationContext } from "../composables/usePnwViewPresentationContext.js";
+import { usePnwPresentationActions, usePnwPresentationActionClaim, PNW_VIEW_DETACH_ACTION_ID, PNW_VIEW_REATTACH_ACTION_ID } from "../composables/usePnwPresentationActions.js";
 import PnwIcon from "../components/PnwIcon.vue";
 
 const props = defineProps<{
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 
 const { t: pnwT } = usePnwLocale();
 const pnwPresentationContext = usePnwViewPresentationContext();
+const pnwActionScope = usePnwPresentationActions();
 const pnwInstance = getCurrentInstance();
 const pnwHasExplicitPresentationDetachable = computed(() => {
   const vnodeProps = pnwInstance?.vnode.props;
@@ -45,7 +47,7 @@ const pnwUsesPresentationContext = computed(() => Boolean(
   && props.presentationMode === undefined,
 ));
 const pnwPresentationMode = computed(() => (
-  props.presentationMode ?? pnwPresentationContext?.mode.value ?? "embedded"
+  props.presentationMode ?? pnwActionScope?.mode.value ?? pnwPresentationContext?.mode.value ?? "embedded"
 ));
 const pnwPresentationHeaderTarget = computed(() => (
   pnwUsesPresentationContext.value
@@ -57,11 +59,15 @@ const pnwPresentationHeaderTeleported = computed(() => Boolean(
   && pnwPresentationMode.value !== "embedded"
   && pnwPresentationMode.value !== "reattaching"
 ));
-const pnwPresentationDetachable = computed(() => (
+const pnwPresentationRequested = computed(() => Boolean(
   pnwHasExplicitPresentationDetachable.value
     ? props.presentationDetachable
-    : pnwUsesPresentationContext.value && pnwPresentationMode.value === "embedded"
+    : (pnwActionScope || pnwUsesPresentationContext.value) && pnwPresentationMode.value === "embedded"
 ));
+const pnwActionId = computed(() => pnwPresentationMode.value === "embedded" ? PNW_VIEW_DETACH_ACTION_ID : PNW_VIEW_REATTACH_ACTION_ID);
+const pnwPresentationDetachable = usePnwPresentationActionClaim(pnwActionScope, {
+  id: pnwActionId, active: pnwPresentationRequested, priority: 10,
+});
 const pnwPresentationTransitioning = computed(() => (
   pnwPresentationMode.value === "opening" || pnwPresentationMode.value === "reattaching"
 ));
@@ -79,6 +85,11 @@ const pnwActionsAlign = computed<PnwPageHeaderActionsAlign>(() => (
 
 function pnwRunPresentationAction(): void {
   if (pnwPresentationTransitioning.value) return;
+  if (pnwActionScope && !pnwHasExplicitPresentationDetachable.value && props.presentationMode === undefined) {
+    if (pnwPresentationAction.value === "detach") pnwActionScope.detach();
+    else pnwActionScope.reattach();
+    return;
+  }
   if (pnwUsesPresentationContext.value && pnwPresentationContext) {
     if (pnwPresentationAction.value === "detach") pnwPresentationContext.detach();
     else pnwPresentationContext.reattach();
@@ -148,6 +159,7 @@ onBeforeUnmount(() => pnwReleasePresentationHeader?.());
           v-if="pnwPresentationDetachable"
           type="button"
           class="pnw-head-presentation-action"
+          :data-pnw-action-id="pnwActionId"
           :disabled="pnwPresentationTransitioning"
           :aria-label="pnwPresentationLabel"
           :title="pnwPresentationLabel"

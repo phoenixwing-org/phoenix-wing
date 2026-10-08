@@ -49,6 +49,38 @@ afterEach(() => {
 });
 
 describe("PnwViewPresentationPortal", () => {
+  it("does not deduplicate framework actions across independent Portals", async () => {
+    const wrappers = ["a", "b"].map(id => mount(PnwViewPresentationPortal, {
+      attachTo: document.body,
+      props: { title: id, record: { ...pnwCreateViewPresentationRecord({ ...PNW_IDENTITY, viewInstanceId: id, instanceKey: id }), mode: "floating" } },
+      slots: { header: () => h(PnwPageHeader, { title: id, presentationDetachable: true, presentationMode: "floating" }) },
+    }));
+    await pnwFlushPresentation();
+    expect(document.querySelectorAll('[data-pnw-action-id="pnw.view.reattach"]')).toHaveLength(2);
+    wrappers[0].unmount();
+    await pnwFlushPresentation();
+    expect(document.querySelectorAll('[data-pnw-action-id="pnw.view.reattach"]')).toHaveLength(1);
+    wrappers[1].unmount();
+  });
+  it("owns the sole floating reattach action even with explicit Header props", async () => {
+    const record = ref(pnwCreateViewPresentationRecord(PNW_IDENTITY));
+    const Host = defineComponent({ setup: () => () => h(PnwViewPresentationPortal, {
+      record: record.value, title: "Explicit Header",
+      "onUpdate:record": (next: PnwViewPresentationRecord) => { record.value = next; },
+    }, { header: ({ mode }: { mode: PnwViewPresentationRecord["mode"] }) => h(PnwPageHeader, {
+      title: "Explicit Header", presentationDetachable: true, presentationMode: mode,
+    }) }) });
+    const wrapper = mount(Host, { attachTo: document.body });
+    expect(document.querySelectorAll(".pnw-head-presentation-action")).toHaveLength(1);
+    record.value = { ...record.value, mode: "floating" };
+    await pnwFlushPresentation();
+    expect(document.querySelectorAll(".pnw-head-presentation-action")).toHaveLength(0);
+    expect(document.querySelectorAll(".pnw-view-presentation-dialog__reattach")).toHaveLength(1);
+    record.value = { ...record.value, mode: "embedded" };
+    await pnwFlushPresentation();
+    expect(document.querySelectorAll(".pnw-head-presentation-action")).toHaveLength(1);
+    wrapper.unmount();
+  });
   it("page layout is opt-in and can switch back to the original flow layout", async () => {
     const wrapper = mount(PnwViewPresentationPortal, {
       props: { record: pnwCreateViewPresentationRecord(PNW_IDENTITY), title: "Page" },

@@ -42,6 +42,7 @@ const pnwViewPresentationContextKey: InjectionKey<PnwResolvedViewPresentationCon
   "pnw-view-presentation-context",
 );
 
+
 /** 创建单个 View Host 私有的 Header target/registration 通道。 */
 export function pnwCreateViewPresentationHeaderChannel(): PnwViewPresentationHeaderChannel {
   const target = shallowRef<HTMLElement>();

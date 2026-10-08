@@ -50,19 +50,35 @@
 
 ## 标准 A：普通工作台页面
 
+### Card 属性区块
+
+使用 `<PnwSidebarBlock title="属性" variant="card">…</PnwSidebarBlock>`，业务操作放 `#actions`，折叠状态可用 `v-model:expanded`。原生 card 提供 1px 外框、8px 圆角、至少 40px 的标题行、8px/10px 正文内边距及 8px 内容 gap；展开时只有一条标题/正文分隔线，折叠时去除该线。actions 靠右，空间不足时换行而非挤出卡片。`bodyInset=false` 关闭正文 padding/gap，`bodyScroll` 控制内部滚动。
+
+引入公共 `phoenix-wing/style.css`，用 `PnwOverlayThemeProvider` 或工作台主题提供明暗 token。不要额外补外框、圆角、标题高度、分隔线或 deep actions 样式；宿主仍可负责流式布局的 height/flex/min-width。旧 card 的上下 2px 直角外观改为完整卡片，strip 不变；原有外观补丁应在消费更新构建后撤除，避免双边框。超长且不可拆分的业务操作自身仍需提供合理尺寸。
+
+独立验收入口 `/?example=cards`：相邻 card、表格、图表、展开折叠、actions、窄容器及明暗主题；示例没有外观补丁。
+
 使用 `PnwWorkbenchLayout`（或宿主已有的 `PnwWorkbenchShell`）、`PnwPrimaryPanel`、`PnwPageLayout`。Primary 放属性与筛选；页头放标题及操作；正文使用 Wing Block。宿主已有布局时不再嵌套第二套 Workbench。
 
 `PnwPageLayout` 负责满高页面、页头与正文滚动。Primary 切换由 Workbench 提供，不复制按钮，不隐藏原生开关或清零标题避让空间。
 
 ## 标准 B：可浮出完整 View
 
-沿用同一 Workbench，在稳定 View 宿主使用 `PnwViewPresentationPortal`。`contentLayout="page"` 将页头与正文滚动分离，默认 `flow` 保留旧行为。显式 Header 插槽模式需传入 `presentationDetachable`、mode 和动作；使用 header channel 自动贡献时将 `PnwPageHeader` 放在 Main 内，不要重复放到 Header 插槽导致贡献递归。不要把本地能力描述为旧 Registry 已支持。
+Portal 内的 `PnwPageHeader` 推荐只传 `title` 与业务插槽，框架自动提供浮出/收回，无需调用方判断 mode。兼容旧的显式 `presentationDetachable`、`presentationMode` 和动作事件接线；不要添加隐藏按钮的 CSS 或自建去重器。框架使用稳定 ID `pnw.view.detach` / `pnw.view.reattach`（导出常量 `PNW_VIEW_DETACH_ACTION_ID` / `PNW_VIEW_REATTACH_ACTION_ID`），在每个 Portal 私有的响应式注册域中按 ID 和优先级解析唯一所有者：嵌入 Header 提供浮出，浮窗 chrome 优先拥有收回。卸载释放注册，不跨 View 去重，不扫描 DOM 或匹配文案。`#center` / `#right` 只放业务动作；框架按钮保持最右。Portal 外独立 Header 的显式事件模式保持兼容。
+
+`/page-layout.html` 可切换简化调用和旧显式调用，验证 embedded → floating → reattach 始终只有一个框架动作。AI 实施时先复用这套机制，不在消费者另做 mode 判断或注册框架动作副本。
+
+沿用同一 Workbench，在稳定 View 宿主使用 `PnwViewPresentationPortal`。`contentLayout="page"` 将页头与正文滚动分离，默认 `flow` 保留旧行为。Header 插槽模式优先使用上述简化调用，旧显式属性与事件仍兼容；使用 header channel 自动贡献时将 `PnwPageHeader` 放在 Main 内，不要重复放到 Header 插槽导致贡献递归。不要把本地能力描述为旧 Registry 已支持。
 
 公共入口示例：`examples/PwwWorkbenchWeb/src/page-layout/Page.vue`。构建当前 checkout 后运行示例，访问 `/page-layout.html`。统一 Router 宿主需要 header channel 的用法见 [完整 View 方案](Pnw工作台Web完整View浮出与收回方案.md)。
 
 ## 必须点检
 
 ### Header 业务插槽
+
+`PnwPageHeader` 使用 Teleport 贡献页头，不承诺将组件上的 `class`、`style` 或原生 `pointerdown` 监听自动透传到 DOM 根。业务布局使用公开 props 和插槽；需要原生事件时绑定到业务插槽内的实际元素，不在 Header 上绑定窗口拖动事件。框架负责浮窗页头拖动。
+
+窄屏（工作台容器不超过 840px）堆叠布局中，Primary、页面正文和 page 模式 View 的内部纵向滚动到达边界后应继续滚动外层内容区。宽屏和浮窗仍保留各自滚动边界；消费者不需要覆盖内部选择器。
 
 推荐 `#center` 放搜索、筛选和配置，`#right` 放保存、刷新等业务工具；两者可同时存在。
 未传 `#center` 且没有旧中间插槽时，中间容器和列均不存在，不挤占标题与右侧空间。
@@ -134,3 +150,19 @@ card / PrimarySection Header 默认带淡色背景，dark 下使用对应深色�
 - 宿主负责刷新恢复与资源权限，框架组件本身不等于已持久化业务状态。
 
 遇到缺口：先区分 API 接线错误、示例缺失、框架能力缺失，再记录复现与验收。不要让用户补充更长提示词来代替标准。
+
+
+## 嵌套模态与第三方确认
+
+0.8.1 本地候选提供 document 级模态所有权域。PnwAppModalOverlay 与 PnwChoiceDialogHost 自动注册；全局 ChoiceDialogHost 每个应用只挂载一次。层级由存活模态的 baseZIndex 下限及打开顺序计算，不以固定值强行覆盖宿主，也不扫描第三方组件私有 DOM。只有顶层响应 Escape、Tab 和焦点限制；关闭顶层后焦点返回仍存活父窗的触发元素。父所有者释放时，子确认取消并结算 Promise；ChoiceDialogHost 卸载也取消待决请求。
+
+第三方弹窗通过公共 pnwGetDocumentModalStack(document).register(options) 对接。options.element 返回调用方拥有的模态内容根（没有可聚焦控件时提供 tabindex=-1）；baseZIndex 包含实际遮罩层级。onChange({ zIndex, isTopmost }) 同步第三方遮罩/弹窗的公开 z-index 配置，并暂停非顶层的独立焦点限制。onClose(reason) 请求关闭宿主，reason 为 escape 或 owner-disposed。返回的 PnwModalLayer 提供 state、disposed、focus()、updateBaseZIndex(value)、dispose()；关闭或卸载时幂等释放，不在 Vue 响应式回调中重复注册同一所有者。
+
+pnwPromptChoice({ parentLayer, ...request }) 可显式关联该父所有者；省略时使用子模态注册时当前 document 的顶层。父句柄必须属于同一 document 且未释放；调用方如需动态改变基础层级，使用 updateBaseZIndex。第三方独立 Escape 处理应停用，由公共 onClose 接收顶层关闭；backdrop 关闭和焦点恢复也应尊重 isTopmost，避免后方宿主关闭抢焦点。
+
+无法通过公开接口暂停第三方 focus trap 时，注册 options.childContainer: () => ownedContainer，容器由调用方在父弹窗插槽内建立。Wing 子模态 Teleport 到它，使其焦点仍属于父框架允许范围，同时顶层模态栈接管子确认的 Tab/Escape。容器必须位于父焦点范围内，不得带裁剪、transform、独立 stacking context 或额外模态遮罩；不要将非顶层父容器设为 inert/aria-hidden，否则会一并禁用其中的子模态。父窗进入动画结束后注册，再允许发起子确认。
+
+示例 /?example=modal-stack 演示 Wing modal → choice 和真实 Element Plus ElDialog → choice。第三方示例使用调用方插槽中的 div ref、公开 z-index 与 close-on-press-escape 配置，不依赖组件内部类名或私有 focus-trap 实例。采用 body Teleport 时，宿主负责暂停第三方独立 trap；采用 childContainer 时，宿主负责容器的布局与焦点范围。未注册且保持独立 focus trap 的第三方弹窗不保证兼容，iframe/跨 document 与浏览器原生 top layer 不在此模态栈内。
+
+
+模态遮罩、面板与确认按钮拥有自身 border-box 及宽度约束，不要求宿主设置全局 reset。/modal-sizing.html 为无 reset 的独立回归入口，覆盖 390×844 窄屏与 916px 对照。替换 pnwPromptChoice 请求时旧请求按现有约定取消，新请求重新注册父所有者和子容器；释放旧父不会关闭已转属新父的确认。
