@@ -109,3 +109,13 @@ export {
   pnwCodeResolveReplacementRules,
   pnwCodeSuggestNameReplacement,
 } from "./pnwCodeReplacementRules.js";
+export { PNW_REORDER_SAFETY_VERSION } from "./pnwReorderSafety.js";
+export { pnwDocumentCppFunctionsText, type PnwDocumentCppOptions, type PnwDocumentCppResult } from "./pnwDocumentCpp.js";
+export {
+  PNW_INCLUDE_GROUPING_VERSION,
+  pnwGroupCppIncludesText,
+  type PnwCppIncludeGroup,
+  type PnwTrustedCppHeader,
+  type PnwGroupCppIncludesOptions,
+  type PnwGroupCppIncludesResult,
+} from "./pnwGroupCppIncludes.js";

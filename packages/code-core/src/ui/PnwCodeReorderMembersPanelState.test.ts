@@ -58,18 +58,21 @@ describe("shared member reorder panel state", () => {
     )).toEqual({ selectedUris: ["one"], revision: 8 });
   });
 
-  it("projects changed/unchanged independently and only applies pending", () => {
+  it("separates blocked from normal rows and only applies pending", () => {
     const projected = pnwCodeProjectReorderMembersPanel(
       model([
         row("pending", "pending"), row("blocked", "blocked"), row("applied", "applied"),
         row("same", "unchanged"), row("cancelled", "cancelled"),
+        { ...row("notice", "pending"), warnings: ["Review this notice"] },
+        { ...row("blocked-no-change", "blocked"), changed: false },
       ]),
       { selectedUris: ["pending", "blocked", "cancelled"], revision: 1 },
     );
-    expect(projected.changedRows.map((entry) => entry.uri)).toEqual(["pending", "blocked", "applied"]);
+    expect(projected.changedRows.map((entry) => entry.uri)).toEqual(["pending", "applied", "notice"]);
+    expect(projected.blockedRows.map((entry) => entry.uri)).toEqual(["blocked", "blocked-no-change"]);
     expect(projected.unchangedRows.map((entry) => entry.uri)).toEqual(["same"]);
     expect(projected.selectedPendingUris).toEqual(["pending"]);
-    expect(projected).toMatchObject({ allPendingSelected: true, somePendingSelected: false, applyDisabled: false, applyLabel: "应用所选（1）" });
+    expect(projected).toMatchObject({ allPendingSelected: false, somePendingSelected: true, applyDisabled: false, applyLabel: "应用所选（1）" });
   });
 
   it("locks Apply/workset projection while running or cacheless", () => {
@@ -82,4 +85,12 @@ describe("shared member reorder panel state", () => {
       { selectedUris: [], revision: undefined },
     ).worksetDisabled).toBe(true);
   });
+});
+
+it("keeps reviewed blocked candidates out of automatic and explicit batch selection", () => {
+  const candidate = { ...row("review", "blocked"), reviewCandidateAvailable: true, reviewCandidateViewed: true };
+  const snapshot = model([candidate, row("pending", "pending")], { reorderRevision: 2 });
+  expect(pnwCodeNextReorderSelection({ selectedUris: [], revision: 1 }, snapshot).selectedUris).toEqual(["pending"]);
+  expect(pnwCodeSetReorderSelection({ selectedUris: [], revision: 2 }, snapshot, ["review", "pending"]).selectedUris).toEqual(["pending"]);
+  expect(pnwCodeProjectReorderMembersPanel(snapshot, { selectedUris: ["review"] }).applyDisabled).toBe(true);
 });

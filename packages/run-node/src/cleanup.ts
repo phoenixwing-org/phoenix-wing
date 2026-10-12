@@ -60,6 +60,7 @@ export interface PnwCleanupResult {
 export interface PnwGitForcedCleanupPreview {
   readonly repository: string;
   readonly repositoryIdentity: PnwCleanupPathIdentity;
+  readonly ancestorIdentities: readonly PnwCleanupPathIdentity[];
   readonly head: string;
   readonly trackedStatus: string;
   /** Exact HEAD-to-worktree diff frozen at preview time. */
@@ -119,6 +120,7 @@ export async function pnwPreviewRecursiveCleanupArtifacts(
 ): Promise<PnwRecursiveCleanupArtifactPreview> {
   pnwAssertCleanupCanContinue(options);
   const resolvedRoot = await pnwResolveSafeCleanupRoot(root);
+  pnwAssertOutsidePhoenixData(resolvedRoot);
   const rootIdentity = await pnwReadCleanupPathIdentity(resolvedRoot);
   const rules = pnwParseCleanupConfigurationYaml(rulesYaml);
   if (rules.unlinkDirectories.length) throw new Error("递归规则不支持 unlinkDirectories；目录链接始终跳过。");
@@ -130,6 +132,7 @@ export async function pnwPreviewRecursiveCleanupArtifacts(
     for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
       pnwAssertCleanupCanContinue(options);
       const target = path.join(directory, entry.name);
+      if (entry.name.toLowerCase() === ".phoenix") continue;
       if (entry.name.toLowerCase() === ".git" || entry.isSymbolicLink()) { skippedPaths.add(target); continue; }
       await pnwReadCleanupAncestors(resolvedRoot, target);
       if (entry.isDirectory() && rules.directories.some((name) => pnwCleanupNameEquals(name, entry.name))) {
@@ -147,7 +150,7 @@ export async function pnwPreviewRecursiveCleanupArtifacts(
   pnwAssertCleanupCanContinue(options);
   return Object.freeze({ scope: "recursive", root: resolvedRoot, rootIdentity, rules,
     matched: Object.freeze(frozenTargets.map(({ path: value }) => value)), targets: frozenTargets,
-    ancestorIdentities, skippedPaths: Object.freeze([...skippedPaths].sort()) });
+    ancestorIdentities, skippedPaths: Object.freeze([...skippedPaths].filter(value => !pnwIsPhoenixDataPath(value)).sort()) });
 }
 
 /** Discover repository boundaries without traversing directory links. */
@@ -157,6 +160,7 @@ export async function pnwPreviewGitUntrackedCleanup(
 ): Promise<PnwGitUntrackedCleanupPreview> {
   pnwAssertCleanupCanContinue(options);
   const resolvedRoot = await pnwResolveSafeCleanupRoot(root);
+  pnwAssertOutsidePhoenixData(resolvedRoot);
   const rootIdentity = await pnwReadCleanupPathIdentity(resolvedRoot);
   const repositories: PnwGitUntrackedRepositoryPreview[] = [];
   const walk = async (directory: string): Promise<void> => {
@@ -169,7 +173,7 @@ export async function pnwPreviewGitUntrackedCleanup(
     }
     for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
       pnwAssertCleanupCanContinue(options);
-      if (!entry.isDirectory() || entry.isSymbolicLink()) continue;
+      if (!entry.isDirectory() || entry.isSymbolicLink() || entry.name.toLowerCase() === ".phoenix") continue;
       const child = path.join(directory, entry.name);
       await pnwReadCleanupAncestors(resolvedRoot, path.join(child, ".pnw-ancestor-check"));
       await walk(child);
@@ -187,6 +191,8 @@ export async function pnwCleanPreviewedRecursiveArtifacts(
   if (preview.scope !== "recursive" || !Array.isArray(preview.ancestorIdentities)
     || preview.targets.length !== preview.matched.length) throw new Error("递归清理快照不完整，请重新预览。");
   const root = await pnwResolveSafeCleanupRoot(preview.root);
+  pnwAssertOutsidePhoenixData(root);
+  pnwAssertPhoenixDataExcluded(preview.targets);
   const deleted: string[] = [];
   const deletedNodes: string[] = [];
   let phase = "整批复验";
@@ -238,6 +244,11 @@ export async function pnwExecuteGitUntrackedCleanup(
 ): Promise<PnwGitUntrackedCleanupResult> {
   pnwAssertCleanupCanContinue(options);
   const root = await pnwResolveSafeCleanupRoot(preview.root);
+  pnwAssertOutsidePhoenixData(root);
+  for (const repository of preview.repositories) {
+    pnwAssertOutsidePhoenixData(repository.repository);
+    pnwAssertPhoenixDataExcluded(repository.cleanTargets);
+  }
   pnwAssertCleanupRootIdentity(preview.rootIdentity, await pnwReadCleanupPathIdentity(root));
   for (const repository of preview.repositories) await pnwVerifyUntrackedRepository(root, repository);
   const results: Array<PnwGitUntrackedCleanupResult["repositories"][number]> = [];
@@ -290,27 +301,29 @@ async function pnwPreviewUntrackedRepository(root: string, repository: string, o
   return Object.freeze({ repository, repositoryIdentity, ancestorIdentities,
     trackedIndex, cleanDryRun, cleanTargets,
     untrackedAndIgnored: Object.freeze(cleanTargets.map(({ path: value }) => path.relative(repository, value))),
-    preservedRepositories: Object.freeze([...preserved].sort()) });
+    preservedRepositories: Object.freeze([...preserved].filter(value => !pnwIsPhoenixDataPath(value)).sort()) });
 }
 
 /** Split selected trees around preserved metadata/links without claiming retained parents were removed. */
-async function pnwProtectedCleanupTargets(target: string, skipped: Set<string>, protectLinks: boolean, options: PnwCleanupExecutionOptions = {}): Promise<PnwCleanupArtifactTarget[]> {
+async function pnwProtectedCleanupTargets(target: string, skipped: Set<string>, protectLinks: boolean, options: PnwCleanupExecutionOptions = {}, protectGit = true): Promise<PnwCleanupArtifactTarget[]> {
   pnwAssertCleanupCanContinue(options);
+  if (pnwIsPhoenixDataPath(target)) { skipped.add(target); return []; }
   const entry = await lstat(target);
   if (entry.isSymbolicLink() && protectLinks) { skipped.add(target); return []; }
   if (entry.isDirectory()) {
     const entries = await readdir(target, { withFileTypes: true });
-    if (entries.some(({ name }) => name.toLowerCase() === ".git")) { skipped.add(target); return []; }
+    if (protectGit && entries.some(({ name }) => name.toLowerCase() === ".git")) { skipped.add(target); return []; }
     const before = skipped.size;
     const children: PnwCleanupArtifactTarget[] = [];
     for (const child of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-      children.push(...await pnwProtectedCleanupTargets(path.join(target, child.name), skipped, protectLinks, options));
+      children.push(...await pnwProtectedCleanupTargets(path.join(target, child.name), skipped, protectLinks, options, protectGit));
     }
     if (skipped.size !== before) return children;
   }
   const tree = await pnwSnapshotCleanupTree(target, options);
   if (tree.some(({ kind, identity }) => (protectLinks && kind === "directory-link")
-    || path.relative(target, identity.path).split(path.sep).some((name) => name.toLowerCase() === ".git"))) {
+    || pnwIsPhoenixDataPath(identity.path)
+    || (protectGit && path.relative(target, identity.path).split(path.sep).some((name) => name.toLowerCase() === ".git")))) {
     throw new Error("清理目标在预览期间出现新的链接或 Git 边界，请重新预览。");
   }
   return [Object.freeze({ path: target, kind: tree[0]!.kind, tree })];
@@ -527,6 +540,7 @@ export async function pnwPreviewGitForcedCleanup(
   repository: string,
 ): Promise<PnwGitForcedCleanupPreview> {
   const resolved = await pnwResolveSafeCleanupRoot(repository);
+  pnwAssertOutsidePhoenixData(resolved);
   const topLevel = (await pnwGit(resolved, ["rev-parse", "--show-toplevel"])).trim();
   const resolvedTopLevel = await realpath(path.resolve(topLevel));
   if (resolvedTopLevel !== resolved) {
@@ -546,12 +560,23 @@ export async function pnwPreviewGitForcedCleanup(
     "HEAD",
   ]);
   const trackedIndexDiff = await pnwGit(resolved, ["diff", "--cached", "--binary", "--no-ext-diff", "--no-textconv", "HEAD"]);
+  // A reset would overwrite tracked plugin data too, so refuse before any destructive step.
+  for (const cached of [false, true]) {
+    const changed = await pnwGit(resolved, ["diff", ...(cached ? ["--cached"] : []), "--name-only", "-z", "HEAD"]);
+    if (changed.split("\0").some(pnwIsPhoenixDataPath)) throw new Error("Git 强制恢复会修改 .phoenix，已阻止；请使用明确的 TOML 规则。");
+  }
   // Preview must use the same two force flags as execution, including nested Git repositories.
-  const cleanDryRun = await pnwGit(resolved, ["clean", "-nffdx"]);
-  const cleanTargets = await pnwSnapshotGitCleanupTargets(resolved);
+  const cleanDryRun = await pnwGit(resolved, ["clean", "-nffdx", "-e", ".phoenix/"]);
+  const candidates = await pnwSnapshotGitCleanupTargets(resolved);
+  await pnwAssertNoPhoenixResetObstructions(resolved);
+  const preserved = new Set<string>();
+  const targets: PnwCleanupArtifactTarget[] = [];
+  for (const candidate of candidates) targets.push(...await pnwProtectedCleanupTargets(candidate.path, preserved, false, {}, false));
+  const cleanTargets = Object.freeze(targets.sort((a, b) => a.path.localeCompare(b.path)));
   return Object.freeze({
     repository: resolved,
     repositoryIdentity: await pnwReadCleanupPathIdentity(resolved),
+    ancestorIdentities: await pnwCollectCleanupAncestors(resolved, cleanTargets.map(target => target.path)),
     head,
     trackedStatus,
     trackedDiff,
@@ -560,24 +585,70 @@ export async function pnwPreviewGitForcedCleanup(
     cleanTargets,
     trackedChanges: Object.freeze(pnwNonEmptyLines(trackedStatus)),
     untrackedAndIgnored: Object.freeze(
-      pnwNonEmptyLines(cleanDryRun).map((line) => line.replace(/^Would remove\s+/u, "")),
+      cleanTargets.map(target => path.relative(resolved, target.path) + (target.kind === "directory" ? "/" : "")),
     ),
   });
 }
 
+/** reset --hard can remove untracked directories obstructing a HEAD file/link, before clean runs. */
+async function pnwAssertNoPhoenixResetObstructions(
+  repository: string,
+): Promise<void> {
+  // ls-files --others --directory can omit a directory occupying a tracked file's
+  // path. Inspect HEAD's blob leaves directly instead of trusting clean candidates.
+  // NUL records preserve spaces/newlines and pathspec metacharacters; gitlinks are
+  // excluded because execution explicitly disables recursive submodule reset.
+  const records = (await pnwGit(repository, ["ls-tree", "-r", "-z", "HEAD"])).split("\0");
+  for (const record of records) {
+    const separator = record.indexOf("\t");
+    if (separator < 0 || record.slice(0, separator).split(" ")[1] !== "blob") continue;
+    const target = path.resolve(repository, record.slice(separator + 1));
+    const relative = path.relative(repository, target);
+    if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)
+      || relative.split(path.sep)[0]?.toLowerCase() === ".git") {
+      throw new Error("Git HEAD 中的恢复路径越出仓库或指向 Git 元数据，拒绝强制清理。");
+    }
+    let entry;
+    try { entry = await lstat(target); }
+    catch (error) {
+      if (["ENOENT", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? "")) continue;
+      throw error;
+    }
+    if (entry.isDirectory() && await pnwResetObstructionContainsPhoenix(repository, target)) {
+      throw new Error("Git 强制恢复会覆盖含 .phoenix 的目录，已阻止；请先处理路径类型冲突或使用明确的 TOML 规则。");
+    }
+  }
+}
+
+async function pnwResetObstructionContainsPhoenix(repository: string, directory: string): Promise<boolean> {
+  // Verify ordinary parents before reading contents; do not follow directory links.
+  await pnwReadCleanupAncestors(repository, path.join(directory, ".pnw-ancestor-check"));
+  const entries = await readdir(directory, { withFileTypes: true });
+  if (entries.some(entry => entry.name.toLowerCase() === ".phoenix")) return true;
+  for (const entry of entries) {
+    if (entry.isDirectory() && !entry.isSymbolicLink()
+      && await pnwResetObstructionContainsPhoenix(repository, path.join(directory, entry.name))) return true;
+  }
+  return false;
+}
+
 /**
- * Execute exactly `git reset --hard HEAD` followed by `git clean -ffdx` after
- * revalidating the accepted repository, HEAD, tracked status, clean dry-run and complete target trees.
+ * Reset tracked files, then clean only frozen literal targets with two force flags.
+ * Plugin data is excluded even inside otherwise disposable parent directories.
  */
 export async function pnwExecuteGitForcedCleanup(
   preview: PnwGitForcedCleanupPreview,
   options: PnwCleanupExecutionOptions = {},
 ): Promise<PnwGitForcedCleanupResult> {
+  if (!Array.isArray(preview.ancestorIdentities)) throw new Error("Git 强制清理快照缺少祖先身份，请重新预览。");
   const current = await pnwPreviewGitForcedCleanup(preview.repository);
   pnwAssertGitCleanupPreview(preview, current);
+  await pnwVerifyFrozenCleanupTargets(preview.repository, preview.cleanTargets, preview.ancestorIdentities);
   pnwAssertCleanupCanContinue(options);
 
-  const resetOutput = await pnwGit(preview.repository, ["reset", "--hard", "HEAD"]);
+  // Do not inherit submodule.recurse from repository/User Git configuration:
+  // only the selected repository's tracked tree was previewed and accepted.
+  const resetOutput = await pnwGit(preview.repository, ["reset", "--hard", "--no-recurse-submodules", "HEAD"]);
   try {
     const afterReset = await pnwPreviewGitForcedCleanup(preview.repository);
     pnwAssertCleanupRootIdentity(preview.repositoryIdentity, afterReset.repositoryIdentity);
@@ -590,8 +661,15 @@ export async function pnwExecuteGitForcedCleanup(
     throw new Error(`Git reset --hard 已完成；未继续 clean，不自动回滚已恢复的文件。${error instanceof Error ? error.message : String(error)}`);
   }
   try {
-    const cleanOutput = await pnwGit(preview.repository, ["clean", "-ffdx"]);
-    return Object.freeze({ repository: preview.repository, resetOutput, cleanOutput });
+    const outputs: string[] = [];
+    for (const target of preview.cleanTargets) {
+      pnwAssertCleanupCanContinue(options);
+      await pnwVerifyCleanupAncestors(preview.repository, target.path, preview.ancestorIdentities);
+      pnwAssertCleanupTree(target.tree, await pnwSnapshotCleanupTree(target.path), target.path);
+      const relative = path.relative(preview.repository, target.path).split(path.sep).join("/");
+      outputs.push(await pnwGit(preview.repository, ["--literal-pathspecs", "clean", "-ffdx", "--", relative]));
+    }
+    return Object.freeze({ repository: preview.repository, resetOutput, cleanOutput: outputs.join("") });
   } catch (error) {
     throw new Error(`Git reset --hard 已完成；clean 未完整完成，部分内容可能已删除，不自动回滚。${error instanceof Error ? error.message : String(error)}`);
   }
@@ -840,4 +918,18 @@ function pnwCleanupDepth(value: string): number {
 
 function pnwCleanupNameEquals(left: string, right: string): boolean {
   return left.toLocaleLowerCase() === right.toLocaleLowerCase();
+}
+
+function pnwIsPhoenixDataPath(value: string): boolean {
+  return value.split(/[\\/]/u).some(name => name.toLowerCase() === ".phoenix");
+}
+
+function pnwAssertOutsidePhoenixData(root: string): void {
+  if (pnwIsPhoenixDataPath(root)) throw new Error(".phoenix 仅允许由明确的项目规则清理。");
+}
+
+function pnwAssertPhoenixDataExcluded(targets: readonly PnwCleanupArtifactTarget[]): void {
+  if (targets.some(target => target.tree.some(node => pnwIsPhoenixDataPath(node.identity.path)))) {
+    throw new Error("清理快照包含 .phoenix，请重新预览并使用明确的项目规则。");
+  }
 }

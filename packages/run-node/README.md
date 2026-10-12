@@ -5,14 +5,19 @@ Node 22 工作区 Run adapter：受限扫描脚本/可执行文件、JSONC `task
 VS Code Task 对象、Terminal、Problems、确认 UI 和运行状态仍属于消费端 adapter。
 
 本包同时提供规则产物和 Git 强制清理的预览/执行 API。规则清理冻结候选文件与完整目录树；
-Git 清理冻结仓库身份、HEAD、工作树与暂存区各自的 tracked diff 和 `git clean -nffdx` 清单，再受控执行
-`git reset --hard HEAD` 与 `git clean -ffdx`。预览与执行均使用双 force，嵌套 Git 仓库也必须显示；
+Git 清理冻结仓库身份、HEAD、工作树与暂存区各自的 tracked diff 和排除 `.phoenix` 的 `git clean -nffdx` 清单，再受控执行
+`git reset --hard --no-recurse-submodules HEAD` 与逐个冻结目标的 `git --literal-pathspecs clean -ffdx -- <目标>`。reset 不继承本机 `submodule.recurse` 配置，不恢复未获确认的子模块已跟踪内容；预览与执行 clean 均使用双 force，嵌套未跟踪 Git 仓库也必须显示；
 以 `git ls-files -z` 收集未跟踪/ignored 目标并冻结完整目录树，不解析人类可读清单作为路径、也不跟随链接。
 执行前以及 reset 后、clean 前复核目标身份和内容时间戳；旧的无完整目标快照必须重新预览。
 确认 UI 和 preview token 生命周期仍由 Host 持有，Host 必须在取消/关闭时撤销 token 并提供 `shouldContinue`。
 取消是步骤间协作检查，不能回滚已经完成的 reset/删除，也不能保证阻止已启动的 Git 子进程；
 reset 已完成后停止或 clean 失败会在错误中明确报告阶段，Host 应将它保留到日志。
 预览与执行不是文件系统事务，请停止其他写入者后再确认高风险清理。
+
+默认递归/Git 清理不扫描或删除 `.phoenix`（不区分大小写），也不将它作为可清理条目显示。
+含该目录的候选父目录会拆成安全子目标，保留父目录与插件数据；Git 已跟踪的 `.phoenix` 工作树或暂存区有变化时，强制恢复在 reset 前拒绝。
+`reset --hard` 本身也可能删除阻挡 HEAD 文件或符号链接的未跟踪目录；预览与执行前复验均检查 HEAD 的 NUL 清单，独立检查这些路径实际占用的目录，不依赖可能漏报冲突目录的 `ls-files --others --directory`。若恢复路径会覆盖含 `.phoenix` 的目录（插件目录名不区分大小写），在任何 reset/clean 前拒绝。不跟随目录链接，不把安全拒绝改为自动移动或删除插件数据。
+强制快照同时冻结中间祖先身份，旧的无祖先快照须重新预览。规则直属 API 仍只执行明确的输入规则，消费者必须在规则适配边界控制显式授权，不把默认保护绕过变成界面内置选项。
 
 ## Run 统一清理
 

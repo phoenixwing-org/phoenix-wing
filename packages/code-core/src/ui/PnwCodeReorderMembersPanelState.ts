@@ -19,6 +19,10 @@ export interface PnwCodeReorderMembersPanelRow {
   readonly changed: boolean;
   readonly state: PnwCodeReorderMembersRowState;
   readonly warnings: readonly string[];
+  /** A real Host-owned candidate exists; it is excluded from bulk selection. */
+  readonly reviewCandidateAvailable?: boolean;
+  /** The Host has opened that exact candidate for individual review. */
+  readonly reviewCandidateViewed?: boolean;
 }
 
 export interface PnwCodeReorderMembersPanelCapabilities {
@@ -54,6 +58,7 @@ export interface PnwCodeReorderMembersPanelProjection {
   readonly hasCache: boolean;
   readonly running: boolean;
   readonly changedRows: readonly PnwCodeReorderMembersPanelRow[];
+  readonly blockedRows: readonly PnwCodeReorderMembersPanelRow[];
   readonly unchangedRows: readonly PnwCodeReorderMembersPanelRow[];
   readonly pendingRows: readonly PnwCodeReorderMembersPanelRow[];
   readonly selectedPendingUris: readonly string[];
@@ -109,7 +114,8 @@ export function pnwCodeProjectReorderMembersPanel(
 ): PnwCodeReorderMembersPanelProjection {
   const hasCache = Array.isArray(model.reorderResults);
   const rows = hasCache ? model.reorderResults!.filter((row) => row.state !== "cancelled") : [];
-  const changedRows = rows.filter((row) => row.state !== "unchanged");
+  const changedRows = rows.filter((row) => row.state !== "unchanged" && row.state !== "blocked");
+  const blockedRows = rows.filter((row) => row.state === "blocked");
   const unchangedRows = rows.filter((row) => row.state === "unchanged");
   const pendingRows = changedRows.filter((row) => row.state === "pending");
   const pending = new Set(pendingRows.map((row) => row.uri));
@@ -119,6 +125,7 @@ export function pnwCodeProjectReorderMembersPanel(
     hasCache,
     running,
     changedRows,
+    blockedRows,
     unchangedRows,
     pendingRows,
     selectedPendingUris,

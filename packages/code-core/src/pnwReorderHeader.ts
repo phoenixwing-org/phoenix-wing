@@ -1,9 +1,12 @@
 import { pnwMaskCppTrivia } from "./pnwCppSyntaxGuards.js";
+import { pnwAddMissingFunctionComment } from "./pnwCppFunctionComments.js";
+import { pnwReorderBoundaryWarnings } from "./pnwReorderBoundaryGuard.js";
 
 type KevinSystemCodeMode = "merge_strip" | "keep_markers" | "off";
 
 export type PnwHeaderReorderOptions = {
   sortMembers?: boolean;
+  addMissingFunctionComments?: boolean;
   kevinSystemCodeMode?: KevinSystemCodeMode;
 };
 
@@ -166,7 +169,7 @@ function splitByLockedRegions(text: string): Array<{ text: string; locked: boole
 }
 
 function normalizeMode(raw: unknown): KevinSystemCodeMode {
-  return raw === "keep_markers" || raw === "off" || raw === "merge_strip" ? raw : "merge_strip";
+  return raw === "keep_markers" || raw === "off" || raw === "merge_strip" ? raw : "keep_markers";
 }
 
 function normalizeAccessLabel(raw: string): string {
@@ -197,16 +200,6 @@ function declarationSignature(decl: string): string {
   return before;
 }
 
-function firstTopLevelParen(sig: string): number {
-  let angle = 0;
-  for (let i = 0; i < sig.length; i += 1) {
-    if (sig[i] === "<") angle += 1;
-    else if (sig[i] === ">") angle = Math.max(0, angle - 1);
-    else if (sig[i] === "(" && angle === 0) return i;
-  }
-  return -1;
-}
-
 function isDoxygenGroupBlock(text: string): boolean {
   let hasOpen = false;
   let hasClose = false;
@@ -228,11 +221,8 @@ function parseMemberName(decl: string): string {
 }
 
 function parseMethodName(decl: string): string {
-  const sig = declarationSignature(decl) || decl.replace(/\s+/g, " ").slice(0, 200);
-  if (sig.includes("operator=")) return "operator=";
-  const op = sig.match(/\boperator\s*[^\s(]+\s*\(/);
-  if (op) return op[0].split("(")[0].trim();
-  const paren = firstTopLevelParen(sig);
+  const sig = pnwMaskCppTrivia(decl);
+  const paren = firstDeclaratorParen(sig);
   if (paren < 0) return sig.slice(0, 40);
   const name = sig.slice(0, paren).trimEnd().match(/([A-Za-z_]\w*)\s*$/)?.[1];
   return name && !CPP_KEYWORDS.has(name) ? name : sig.slice(0, 40);
@@ -262,27 +252,49 @@ function classifyDeclaration(text: string, className: string): DeclItem {
   if (isClassBodyMacro(stripped)) return { ...item, kind: "macro", name: stripped };
   if (isDoxygenGroupBlock(text)) return { ...item, kind: "group", name: firstMethodNameInBlock(text, className) };
 
-  const sig = declarationSignature(text);
-  const operator = sig.match(/\boperator\s*(\(\s*\)|\[\s*\]|[^()]+?)\s*\(/);
-  if (operator) return { ...item, kind: "special", name: `operator${operator[1].replace(/\s+/g, "")}` };
-  const code = stripComments(text);
+  const declarator = pnwMaskCppTrivia(text);
+  const sig = declarationSignature(declarator);
+  const operator = declarator.match(/\boperator\s*(\(\s*\)|\[\s*\]|[^()]+?)\s*\(/);
+  if (operator) {
+    // Substitute the operator token while locating its parameter list. This
+    // allows operator= / operator< without accepting initializer calls or
+    // operator-looking text in a string or a decltype operand.
+    const operatorStart = operator.index!;
+    const parameterStart = operatorStart + operator[0].lastIndexOf("(");
+    const probe = declarator.slice(0, operatorStart) + "pnwOperator" + declarator.slice(parameterStart);
+    if (firstDeclaratorParen(probe) === operatorStart + "pnwOperator".length) {
+      return { ...item, kind: "special", name: `operator${operator[1].replace(/\s+/g, "")}` };
+    }
+  }
+  const code = declarator;
   const usingMatch = code.match(/\busing\s+([A-Za-z_]\w*)\s*=/);
   if (usingMatch) return { ...item, kind: "nested", name: usingMatch[1] };
   const enumMatch = code.match(/\benum\s+(?:class\s+)?([A-Za-z_]\w*)/);
   if (enumMatch && text.includes("{")) return { ...item, kind: "nested", name: enumMatch[1] };
   const structMatch = code.match(/\bstruct\s+([A-Za-z_]\w*)/);
   if (structMatch && text.includes("{")) return { ...item, kind: "nested", name: structMatch[1] };
+  const classMatch = code.match(/\bclass\s+([A-Za-z_]\w*)/);
+  if (classMatch && text.includes("{")) return { ...item, kind: "nested", name: classMatch[1] };
 
+  // Inspect the declarator, not calls inside a default member initializer or a
+  // callable type. A constructor call on the right of '=' is still a field.
+  const methodParen = firstDeclaratorParen(declarator);
+  if (methodParen < 0 || /^\(\s*(?:[A-Za-z_]\w*::\s*)*[*&]/.test(declarator.slice(methodParen))) {
+    if (declarator.includes(";")) return { ...item, kind: "member", name: parseMemberName(text) };
+  }
+
+  const methodName = methodParen < 0 ? "" : declarator.slice(0, methodParen).trimEnd().match(/(~?[A-Za-z_]\w*)$/)?.[1];
+  const isConstructorOrDestructor = methodName === className || methodName === `~${className}`;
   if (sig.includes("= delete") || sig.includes("= default")) {
-    if (new RegExp(`\\b~?${escapeRegExp(className)}\\s*\\(`).test(sig) || sig.includes("operator=")) {
+    if (isConstructorOrDestructor) {
       return { ...item, kind: "special", name: parseSpecialName(sig, className) };
     }
     return { ...item, kind: "method", name: parseMethodName(text) };
   }
-  if (new RegExp(`\\b~?${escapeRegExp(className)}\\s*\\(`).test(sig)) {
+  if (isConstructorOrDestructor) {
     return { ...item, kind: "special", name: parseSpecialName(sig, className) };
   }
-  if (sig.includes("(")) {
+  if (methodParen >= 0) {
     const memberName = parseMemberName(text);
     if (memberName.endsWith("_") && new RegExp(`\\b${escapeRegExp(memberName)}\\s*;`).test(sig) && !new RegExp(`\\b${escapeRegExp(memberName)}\\s*\\(`).test(sig)) {
       return { ...item, kind: "member", name: memberName };
@@ -291,6 +303,34 @@ function classifyDeclaration(text: string, className: string): DeclItem {
   }
   if (sig.includes(";") && !sig.trimEnd().endsWith(");")) return { ...item, kind: "member", name: parseMemberName(text) };
   return { ...item, name: stripped.slice(0, 40) };
+}
+
+function firstDeclaratorParen(code: string): number {
+  let angle = 0;
+  let square = 0;
+  for (let i = 0; i < code.length; i += 1) {
+    const ch = code[i];
+    if (ch === "[") square += 1;
+    else if (ch === "]") square = Math.max(0, square - 1);
+    if (square) continue;
+    if (ch === "<") angle += 1;
+    else if (ch === ">") angle = Math.max(0, angle - 1);
+    if (angle) continue;
+    if (ch === "=" || ch === "{" || ch === ";") return -1;
+    if (ch !== "(") continue;
+    // Type operands are not the function's parameter list.
+    if (/\b(?:decltype|alignas|__declspec)\s*$/.test(code.slice(0, i))) {
+      let depth = 1;
+      while (++i < code.length && depth) {
+        if (code[i] === "(") depth += 1;
+        if (code[i] === ")") depth -= 1;
+      }
+      i -= 1;
+      continue;
+    }
+    return i;
+  }
+  return -1;
 }
 
 function escapeRegExp(value: string): string {
@@ -555,11 +595,18 @@ function splitNonLockedChunk(chunk: string, className: string, mode: KevinSystem
       buffer.push(startLine, ...inner);
       continue;
     }
+    if (mode === "keep_markers") {
+      // The existing spacer belongs to the fixed block, including at a section tail.
+      let text = `${startLine}${inner.join("")}${endLine}`;
+      while (i < lines.length && !lines[i].trim()) text += lines[i++];
+      items.push({ text, name: "kevin_system_code", kind: "locked", trailingGap: false });
+      continue;
+    }
     const sorted = sortPool(splitDeclarationRun(inner.join(""), className), className);
     let innerText = joinItems(sorted);
     if (innerText && !innerText.endsWith("\n")) innerText += "\n";
     items.push({
-      text: mode === "keep_markers" ? `${startLine}${innerText}${endLine}` : innerText,
+      text: innerText,
       name: "kevin_system_code",
       kind: "system_code",
       trailingGap: false,
@@ -592,15 +639,104 @@ function splitDeclarations(chunk: string, className: string, mode: KevinSystemCo
   return items;
 }
 
-function splitClassSections(body: string, className: string, mode: KevinSystemCodeMode): { preamble: string; sections: AccessSection[] } {
+// This deliberately supports only redundant, standalone access labels. Treat
+// each complete locked block as a barrier, including its access-label lines.
+const SEMANTIC_ACCESS_RE = /\b(?:public|private|protected)(?:[ \t]+slots)?[ \t]*:|\bsignals[ \t]*:/g;
+
+function hasLockedAccessLabel(body: string, locks: PnwLockedRegion[]): boolean {
+  const masked = pnwMaskCppTrivia(body);
+  return locks.some(region => new RegExp(SEMANTIC_ACCESS_RE.source, "g").test(masked.slice(region.start, region.end)));
+}
+
+function hasCompleteDeclarationRun(text: string, className: string): boolean {
+  return splitDeclarationRun(text, className).every(item => {
+    const code = pnwMaskCppTrivia(item.text).trim();
+    if (!code) return true;
+    // A leading comment can hide a macro from the legacy classifier. Do not
+    // newly enable sorting when that barrier would become an ordinary slot.
+    if (isClassBodyMacro(code) && item.kind !== "macro") return false;
+    if (item.kind === "nested") return false;
+    if (code.endsWith(";")) return true;
+    if (code.endsWith("}") && (item.kind === "method" || item.kind === "special")) return true;
+    return isClassBodyMacro(code) && !code.includes("\n");
+  });
+}
+
+function hasSafeLockedAccessLabels(body: string, locks: PnwLockedRegion[], className: string): boolean {
+  const masked = pnwMaskCppTrivia(body);
+  // Physical continuation can change comment/macro boundaries before parsing.
+  if (/\\[ \t]*\n/.test(body)) return false;
+  const rawLabels = [...body.matchAll(new RegExp(ACCESS_RE.source, ACCESS_RE.flags))];
+  const labels = [...masked.matchAll(new RegExp(SEMANTIC_ACCESS_RE.source, "g"))];
+  const events: Array<{ start: number; end: number }> = [];
+  const checkpoints = new Set<number>();
+  let access = "private"; // This engine's class matcher does not match structs.
+  for (const label of labels) {
+    const raw = rawLabels.find(match => match.index! + match[1].length === label.index);
+    if (!raw) return false; // Inline/unsupported access-label spelling stays blocked.
+    const nextAccess = raw[2].trim().replace(/[ \t]+/g, " ");
+    const inside = locks.some(region => raw.index! >= region.start && raw.index! < region.end);
+    if (inside && nextAccess !== access) return false;
+    access = nextAccess;
+    checkpoints.add(raw.index!);
+    events.push({ start: raw.index!, end: raw.index! + raw[0].length });
+  }
+  for (const region of locks) {
+    if (!isCodePosition(body, region.start) || !isCodePosition(body, region.end)) return false;
+    checkpoints.add(region.start); checkpoints.add(region.end);
+    events.push({ start: region.start, end: region.start }, { start: region.end, end: region.end });
+  }
+  // A label or either edge of a lock cannot split a signature, body, array or
+  // initializer. Bracket kinds must match, not merely have a net zero count.
+  const stack: string[] = [];
+  const opening = new Map([["(", ")"], ["[", "]"], ["{", "}"]]);
+  for (let i = 0; i <= masked.length; i += 1) {
+    if (checkpoints.has(i) && stack.length) return false;
+    const ch = masked[i];
+    if (ch === ";" && !stack.length) {
+      const lineEnd = masked.indexOf("\n", i + 1);
+      // The legacy declaration splitter consumes the rest of a semicolon line.
+      // Multiple declarations there could move a field or macro with a method.
+      if (/\S/.test(masked.slice(i + 1, lineEnd < 0 ? masked.length : lineEnd))) return false;
+    }
+    if (opening.has(ch)) stack.push(opening.get(ch)!);
+    else if (ch === ")" || ch === "]" || ch === "}") {
+      if (stack.pop() !== ch) return false;
+    }
+  }
+  if (stack.length) return false;
+  // Zero delimiter depth alone does not prove a declaration boundary: `void`
+  // or an unfinished field initializer can still precede a lock marker.
+  let cursor = 0;
+  for (const event of events.sort((a, b) => a.start - b.start || a.end - b.end)) {
+    if (event.start < cursor || !hasCompleteDeclarationRun(body.slice(cursor, event.start), className)) return false;
+    cursor = event.end;
+  }
+  return hasCompleteDeclarationRun(body.slice(cursor), className);
+}
+
+function splitClassSections(body: string, className: string, mode: KevinSystemCodeMode, locks: PnwLockedRegion[] = []): { preamble: string; sections: AccessSection[] } {
   const regex = new RegExp(ACCESS_RE.source, ACCESS_RE.flags);
-  const matches = [...body.matchAll(regex)];
+  const masked = pnwMaskCppTrivia(body);
+  let scanned = 0;
+  let depth = 0;
+  const matches = [...body.matchAll(regex)].filter(match => {
+    while (scanned < match.index!) {
+      if (masked[scanned] === "{") depth += 1;
+      else if (masked[scanned] === "}") depth -= 1;
+      scanned += 1;
+    }
+    return depth === 0 && /\S/.test(masked.slice(match.index!, match.index! + match[0].length))
+      && !locks.some(region => match.index! >= region.start && match.index! < region.end);
+  });
   if (!matches.length) return { preamble: body, sections: [] };
   const sections = matches.map((match, index) => {
     const start = match.index! + match[0].length;
     const end = index + 1 < matches.length ? matches[index + 1].index! : body.length;
     const rawChunk = body.slice(start, end);
-    const trailingGap = /(?:\n[ \t]*){2,}$/.test(rawChunk);
+    const keepSystemTail = mode === "keep_markers"
+      && KEVIN_SYSTEM_CODE_END_RE.test(rawChunk.trimEnd().split("\n").at(-1) ?? "");
+    const trailingGap = !keepSystemTail && /(?:\n[ \t]*){2,}$/.test(rawChunk);
     const chunk = trailingGap ? rawChunk.replace(/(?:\n[ \t]*){2,}$/, "\n") : rawChunk;
     return {
       label: normalizeAccessLabel(match[2]),
@@ -707,7 +843,8 @@ function sortSection(section: AccessSection, className: string, sortMembers: boo
 
   // Locked/generated blocks and CAA/Qt macros are ordering barriers, not empty
   // slots through which declarations on opposite sides may be exchanged.
-  const isBarrier = (item: DeclItem) => ["macro", "locked", "system_code"].includes(item.kind);
+  const isBarrier = (item: DeclItem) => ["macro", "locked", "system_code"].includes(item.kind)
+    || /\b(?:virtual|override)\b/.test(pnwMaskCppTrivia(item.text));
   if (section.items.some(isBarrier)) {
     let run: DeclItem[] = [];
     const output: DeclItem[] = [];
@@ -752,6 +889,7 @@ function startsWithDoxygen(text: string): boolean {
 }
 
 function emitItem(item: DeclItem, trailingGap = item.trailingGap): string {
+  if (item.kind === "locked" && item.name === "kevin_system_code") return item.text;
   let out: string;
   if (item.kind === "locked") out = item.text.endsWith("\n") ? item.text : `${item.text}\n`;
   else out = `${item.text.replace(/[\r\n \t]+$/g, "")}\n`;
@@ -766,7 +904,7 @@ function removeClassTailGap(body: string): string {
   return `${content}\n${closingIndent}`;
 }
 
-function rebuildClassBody(preamble: string, sections: AccessSection[], className: string, sortMembers: boolean): string {
+function rebuildClassBody(preamble: string, sections: AccessSection[], className: string, sortMembers: boolean, addMissingFunctionComments: boolean, preserveSectionOrder = false): string {
   const ordinary: AccessSection[] = [];
   const signals: AccessSection[] = [];
   const slots: AccessSection[] = [];
@@ -781,8 +919,23 @@ function rebuildClassBody(preamble: string, sections: AccessSection[], className
   }
 
   let out = preamble;
-  for (const section of [...ordinary, ...signals, ...slots, ...privateMembers]) {
+  const grouped = [...ordinary, ...signals, ...slots, ...privateMembers];
+  const memberSequence = (entries: AccessSection[]) => entries.flatMap(section =>
+    section.items.filter(item => item.kind === "member").map(item => item.text));
+  const virtualSequence = (entries: AccessSection[]) => entries.flatMap(section =>
+    section.items.filter(item => /\b(?:virtual|override)\b/.test(pnwMaskCppTrivia(item.text))).map(item => item.text));
+  // Moving whole access sections must not reorder fields across those sections.
+  const ordered = !preserveSectionOrder && JSON.stringify(memberSequence(grouped)) === JSON.stringify(memberSequence(sections))
+    && JSON.stringify(virtualSequence(grouped)) === JSON.stringify(virtualSequence(sections))
+    ? grouped : sections;
+  for (const section of ordered) {
     out += `${section.labelText || `${section.indent}${section.label}`}\n`;
+    if (preserveSectionOrder && addMissingFunctionComments && !hasNumberedDoxygenSequence(section)
+      && !section.items.some(item => item.kind === "nested")) {
+      // Decide spacing against the final comment text on the first pass too.
+      section.items = section.items.map(item => item.kind === "method" || item.kind === "special"
+        ? { ...item, text: pnwAddMissingFunctionComment(item.text, item.name, className) } : item);
+    }
     for (let i = 0; i < section.items.length; i += 1) {
       const item = section.items[i];
       let trailing = item.trailingGap;
@@ -791,14 +944,21 @@ function rebuildClassBody(preamble: string, sections: AccessSection[], className
         if (item.kind === "member" && startsWithDoxygen(item.text)) trailing = true;
         else if (next && startsWithDoxygen(next.text)) trailing = true;
       }
-      out += emitItem(item, trailing);
+      const isFunction = (entry: DeclItem | undefined) => entry?.kind === "method" || entry?.kind === "special";
+      const canDocument = addMissingFunctionComments && !hasNumberedDoxygenSequence(section)
+        && !section.items.some(entry => entry.kind === "nested");
+      if (canDocument && isFunction(item)) {
+        if (isFunction(next)) trailing = true;
+        out += emitItem({ ...item, text: pnwAddMissingFunctionComment(item.text, item.name, className) }, trailing);
+      } else out += emitItem(item, trailing);
     }
     if (section.trailingGap && !out.endsWith("\n\n")) out += "\n";
   }
   // KtAlarmClock's clang-format style keeps the class tail compact. Only trim
   // padding between the final item and `};`; preserve blank lines between
   // independent comment/locked-region lines, including before `clang-format on`.
-  return removeClassTailGap(out);
+  const lastItem = ordered.at(-1)?.items.at(-1);
+  return lastItem?.kind === "locked" && lastItem.name === "kevin_system_code" ? out : removeClassTailGap(out);
 }
 
 function isCodePosition(text: string, target: number): boolean {
@@ -898,19 +1058,20 @@ function reorderNormalizedHeader(text: string, options: Required<PnwHeaderReorde
     const className = match[1].trim().split(/\s+/).at(-1)!;
     const body = output.slice(open + 1, close);
     const locks = pnwFindLockedRegions(body);
-    if (locks.some(region => new RegExp(ACCESS_RE.source, ACCESS_RE.flags).test(region.content))
+    const protectedAccess = hasLockedAccessLabel(body, locks);
+    if ((protectedAccess && (options.kevinSystemCodeMode !== "keep_markers" || !hasSafeLockedAccessLabels(body, locks, className)))
       || /^\s*#/m.test(pnwMaskCppTrivia(body))) {
       warnings.push(`${className}: protected access section or preprocessor boundary; source order was preserved`);
       searchFrom = close + 1; continue;
     }
-    const parsed = splitClassSections(body, className, options.kevinSystemCodeMode);
+    const parsed = splitClassSections(body, className, options.kevinSystemCodeMode, protectedAccess ? locks : []);
     if (!parsed.sections.length) {
       searchFrom = close + 1;
       continue;
     }
     if (options.kevinSystemCodeMode === "merge_strip") normalizeSystemCodeSections(parsed.sections, className);
     warnings.push(...collectWarnings(parsed.sections, className));
-    const nextBody = rebuildClassBody(parsed.preamble, parsed.sections, className, options.sortMembers);
+    const nextBody = rebuildClassBody(parsed.preamble, parsed.sections, className, options.sortMembers, options.addMissingFunctionComments, protectedAccess);
     output = `${output.slice(0, open + 1)}${nextBody}${output.slice(close)}`;
     searchFrom = open + 1 + nextBody.length + 1;
   }
@@ -918,10 +1079,16 @@ function reorderNormalizedHeader(text: string, options: Required<PnwHeaderReorde
 }
 
 export function pnwReorderHeaderText(text: string, options: PnwHeaderReorderOptions = {}): PnwHeaderReorderResult {
+  const boundaryWarnings = pnwReorderBoundaryWarnings(text, { rejectRawLiterals: true });
+  if (boundaryWarnings.length) return { text, changed: false, warnings: boundaryWarnings };
   const eol = text.includes("\r\n") ? "\r\n" : text.includes("\r") ? "\r" : "\n";
   const normalized = text.replace(/\r\n|\r/g, "\n");
+  if (new Set(text.match(/\r\n|\r|\n/g)).size > 1 && hasLockedAccessLabel(normalized, pnwFindLockedRegions(normalized))) {
+    return { text, changed: false, warnings: ["Protected access section has mixed line endings; original source was preserved"] };
+  }
   const result = reorderNormalizedHeader(normalized, {
     sortMembers: Boolean(options.sortMembers),
+    addMissingFunctionComments: Boolean(options.addMissingFunctionComments),
     kevinSystemCodeMode: normalizeMode(options.kevinSystemCodeMode),
   });
   if (JSON.stringify(pnwExtractLockedRegionContents(normalized)) !== JSON.stringify(pnwExtractLockedRegionContents(result.text))) {
