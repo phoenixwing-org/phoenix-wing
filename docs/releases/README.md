@@ -12,7 +12,7 @@
 
 ## 版本记录（新到旧）
 
-- [0.8.1 发布目标与候选验收](0.8.1发布候选.md) — Workspace/UI、Primary 动态宽度、Code Core 重排与 Node 清理保护；根 0.8.1、Code Core 0.6.8、Run Node 0.6.5 本地候选，未发布。
+- [0.8.1 发布验收与回执](0.8.1发布候选.md) — Workspace/UI、Primary 动态宽度、Code Core 重排与 Node 清理保护；根 0.8.1、Code Core 0.6.8、Run Node 0.6.5 正式发布，exact/latest、实际包及隔离 Registry 消费者核验通过。
 
 - [0.8.0 发布验收与回执](0.8.0发布候选.md) — 聚合 0.8.0、CAD core/contracts 0.7.0、Code core 0.6.7；四包正式发布，菜单与隔离 Registry 验收通过。
 - [0.7.7 本地候选](0.7.7发布候选.md) — 历史候选及制品证据；当前候选集合已由 0.8.0 接替。
