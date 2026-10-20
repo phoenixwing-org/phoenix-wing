@@ -71,7 +71,9 @@ export function pnwShouldRestoreEditorFromKeyboard(
 
 export const PNW_WORKBENCH_PANEL_SIZE_LIMITS = Object.freeze({
   primaryMin: 160,
-  primaryMax: 560,
+  /** 持久化输入的安全上限；实际显示上限由 View 宽度与 Editor 预算决定。 */
+  primaryMax: Number.MAX_SAFE_INTEGER,
+  primaryMaxRatio: 0.6,
   secondaryMin: 160,
   secondaryMax: 560,
   bottomMin: 112,
@@ -271,7 +273,9 @@ function pnwClampWorkbenchSize(
 }
 
 /**
- * 修正可持久化布局尺寸。viewport.width 应排除 Tree ActivityBar；隐藏面板保留上次尺寸。
+ * 无 viewport 时只修正可持久化尺寸；有 viewport 时返回当前可显示尺寸。
+ * viewport.width 应排除 Tree ActivityBar；隐藏 Primary 保留上次首选宽度。
+ * 临时显示约束不应由 consumer 自动回写为首选尺寸。
  */
 export function pnwResolveWorkbenchLayoutState(
   state: PnwWorkbenchLayoutState,
@@ -298,6 +302,12 @@ export function pnwResolveWorkbenchLayoutState(
   );
 
   if (availableWidth !== undefined) {
+    if (state.visibility.primary) {
+      primaryWidth = Math.min(primaryWidth, Math.max(
+        limits.primaryMin,
+        Math.floor(availableWidth * limits.primaryMaxRatio),
+      ));
+    }
     const sideBudget = Math.max(
       limits.primaryMin + limits.secondaryMin,
       availableWidth - limits.editorMinWidth,

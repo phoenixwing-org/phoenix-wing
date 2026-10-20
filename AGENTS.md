@@ -57,7 +57,7 @@ phoenix-wing 是 Phoenix 跨语言共享核心与 UI 底座。当前路线见 `d
 
 ## 消费者本地联调（AI 强制）
 
-Wing 未完成的功能开发使用共享 Phoenix 根下的独立 `worktrees/phoenix-wing-working`；完成验证后先本地提交归档，再明确提升到主库 `phoenix-wing` 的 `develop`。消费者默认只消费已提升的主库。消费者所在目录需要同级 `../phoenix-wing` 时，可建立指向主库的文件系统目录链接（Windows 可使用非管理员 Junction）；该链接只是稳定路径入口，不是 `pnpm link`，也不得进入依赖清单或 lockfile。只有专门验证未提升候选时，才允许把同级链接临时指向已明确记录的 working worktree，并在验证后恢复到主库。
+2026-10-20 用户明确调整：Wing 默认直接在正式开发库 `phoenix-wing` 的 `develop` 修改、验证并本地提交归档，不再强制使用 working worktree。仅在用户另行要求隔离或确有并发冲突时使用独立 worktree；完成后归档并回收。消费者默认消费主库。消费者所在目录需要同级 `../phoenix-wing` 时，可建立指向主库的文件系统目录链接（Windows 可使用非管理员 Junction）；该链接只是稳定路径入口，不是 `pnpm link`，也不得进入依赖清单或 lockfile。只有专门验证未提升候选时，才允许把同级链接临时指向已明确记录的 worktree，并在验证后恢复到主库。
 
 Phoenix 三个开发仓库使用唯一的标准并列目录，目录名不得自行变体：
 

@@ -215,7 +215,7 @@ core 只接受文本并返回文本、`changed` 和警告（header 的 `warnings
 
 ### 6.1 原实现迁移审计（2026-07）
 
-对 DeskTools 历史 Python `reorder_members.py` 与当前 `code-core` 的逐项审计结论：
+对历史 Python `reorder_members.py` 与当前 `code-core` 的逐项审计结论：
 
 | 能力 | core 状态 | 证据 |
 | --- | --- | --- |
@@ -230,5 +230,5 @@ core 只接受文本并返回文本、`changed` 和警告（header 的 `warnings
 ## 7. 文档归属
 
 - `phoenix-wing`（本文）：算法语义、公开接口、锁定规则、回归契约的唯一规范。
-- `phoenix-desk-tools/docs/code/`：Web/CLI 使用、工作集、Python 兼容入口与 DeskTools 页面行为；算法规则链接到本文。
-- `kt-auto-code/docs/`：VS Code 扫描、选择、Git 预览、会话还原与发布验收；算法规则链接到本文。
+- 本地工作台的消费端文档：Web/CLI 使用、工作集、Python 兼容入口与页面行为；算法规则链接到本文。
+- 编辑器扩展的消费端文档：扫描、选择、Git 预览、会话还原与发布验收；算法规则链接到本文。

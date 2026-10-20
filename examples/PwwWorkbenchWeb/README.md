@@ -8,6 +8,8 @@
 
 第一阶段默认打开“内部 Tab 与浮窗排列”的轻量 Wing 界面：左侧 Primary 选择测试，右侧 View 显示 Tab 保活、浮窗排列或简单断言。使用 `PnwWorkbenchLayout`、`PnwActivityTree`、`PnwPageLayout`、`PnwRibbonToolButton`，不把每个版本的临时验证复制成一套页面。
 
+首页「Primary 动态宽度」也可由 `/?example=primary-size` 直接进入。宽屏 Primary 的上限为当前 View 可用宽度的 60%，并受 Editor 与可见 Secondary 的最小空间约束，不再固定为 560px。拖动和键盘 Home/End 使用同一限制；700px 嵌入预览只改变当前呈现，恢复宽屏后保留原宽度偏好。
+
 “完整工作台示例”是 `target="_blank" rel="noopener noreferrer"` 链接，打开 `?example=workbench` 独立页面。新页面只装配原完整工作台与来源标识，不嵌入轻量测试区、不同时挂载两套工作台；查询参数只选择页面，不改变开发/Registry 来源。
 
 首页「标签上下文菜单」进入 `?example=tab-menu`（Wing 0.8.0+）。该页只从公共入口使用
