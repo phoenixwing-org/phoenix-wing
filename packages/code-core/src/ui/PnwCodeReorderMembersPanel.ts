@@ -19,10 +19,11 @@ export type PnwCodeReorderMembersPanelActionDetail =
   | { readonly kind: "run"; readonly action: "preview" | "addToWorkset" }
   | {
       readonly kind: "reorderAction";
-      readonly action: "open" | "preview" | "apply" | "cancel" | "gitDiff" | "revert";
+      readonly action: "open" | "preview" | "apply" | "cancel" | "gitDiff" | "revert" | "reviewApply";
       readonly uris: readonly string[];
+      readonly reorderRevision?: number;
     }
-  | { readonly kind: "reorderSelection"; readonly uris: readonly string[] };
+  | { readonly kind: "reorderSelection"; readonly uris: readonly string[]; readonly reorderRevision?: number };
 
 const STYLE = `
 :host { display:block; min-width:0; max-width:100%; color:var(--vscode-foreground,var(--text,#172033)); font:12px/1.35 var(--vscode-font-family,system-ui,sans-serif); }
@@ -33,7 +34,11 @@ h2 { margin:0 0 6px; font-size:13px; font-weight:650; } .summary { margin:6px 0;
 .actions,.options { display:flex; align-items:center; gap:6px; } .options { justify-content:space-between; margin:7px 0 1px; }
 .action,.text-button { min-height:27px; padding:3px 9px; color:inherit; border:1px solid var(--ktc-ui-border,var(--vscode-panel-border,var(--border,#d7dde8))); border-radius:3px; background:var(--vscode-button-secondaryBackground,var(--btn-bg,transparent)); }
 .action.primary { color:var(--vscode-button-foreground,#fff); background:var(--vscode-button-background,var(--accent,#2563eb)); border-color:var(--vscode-button-background,var(--accent,#2563eb)); }
-button:disabled { opacity:.5; cursor:not-allowed; } .filter { display:flex; align-items:center; gap:5px; min-width:0; color:var(--vscode-descriptionForeground,var(--muted,#64748b)); font-size:11px; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+.result-filters { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:7px 0; } .result-filters[hidden] { display:none; }
+.result-types { display:flex; flex-wrap:wrap; align-items:center; gap:3px; } .result-filter-button { min-height:24px; padding:2px 6px; color:inherit; border:1px solid var(--vscode-panel-border,var(--border,#d7dde8)); border-radius:3px; background:transparent; }
+.hidden-selection-note { flex-basis:100%; margin:0; color:var(--vscode-descriptionForeground,var(--muted,#64748b)); }
+.result-filter-button[aria-pressed="true"] { color:var(--vscode-button-foreground,#fff); background:var(--vscode-button-background,var(--accent,#2563eb)); border-color:var(--vscode-button-background,var(--accent,#2563eb)); }
 .status { min-height:28px; margin:8px 0; padding:6px 8px; color:var(--vscode-descriptionForeground,var(--muted,#64748b)); background:var(--vscode-editorWidget-background,var(--panel-head-bg,rgba(100,116,139,.08))); border-left:3px solid var(--vscode-focusBorder,var(--accent,#2563eb)); }
 .status:empty { display:none; } .status.error { color:var(--vscode-errorForeground,var(--danger,#b91c1c)); border-color:currentColor; }
 .groups { min-width:0; margin-top:6px; } .group { min-width:0; border-top:1px solid var(--vscode-panel-border,var(--border,#d7dde8)); }
@@ -56,7 +61,7 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
   private readonly root = this.attachShadow({ mode: "open" });
   private currentModel: PnwCodeReorderMembersPanelModel | undefined;
   private selection: PnwCodeReorderMembersSelectionState = { selectedUris: [] };
-  private showUnchanged = false;
+  private resultFilter: "all" | "normal" | "error" = "all";
 
   get model(): PnwCodeReorderMembersPanelModel | undefined { return this.currentModel; }
   set model(value: PnwCodeReorderMembersPanelModel | undefined) {
@@ -73,7 +78,7 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
     return this.currentModel?.capabilities?.[key] !== false;
   }
 
-  private render(): void {
+  private render(focusFilter?: "all" | "normal" | "error"): void {
     if (!this.isConnected) return;
     const style = document.createElement("style"); style.textContent = STYLE;
     const model = this.currentModel;
@@ -87,24 +92,45 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
     const summary = document.createElement("p"); summary.className = "summary"; summary.textContent = "扫描、预览、勾选并确认写回；Host 负责文件与事务。";
     const actions = document.createElement("div"); actions.className = "actions";
     if (this.enabled("scan")) actions.append(this.button("扫描", "action primary", projection.running, () => this.emit({ kind: "run", action: "preview" })));
-    if (this.enabled("apply")) actions.append(this.button(projection.applyLabel, "action", projection.applyDisabled, () => this.emit({ kind: "reorderAction", action: "apply", uris: projection.selectedPendingUris })));
+    if (this.enabled("apply")) actions.append(this.button(projection.applyLabel, "action", projection.applyDisabled, () => this.emit({ kind: "reorderAction", action: "apply", uris: projection.selectedPendingUris, ...this.revisionToken(model.reorderRevision) })));
     const options = document.createElement("div"); options.className = "options";
-    const filter = document.createElement("label"); filter.className = "filter";
-    const show = document.createElement("input"); show.type = "checkbox"; show.checked = this.showUnchanged;
-    show.onchange = () => { this.showUnchanged = show.checked; this.render(); };
-    filter.append(show, document.createTextNode("显示无变更文件")); options.append(filter);
+    const filters = document.createElement("div"); filters.className = "result-filters"; filters.hidden = !projection.hasCache;
+    const types = document.createElement("div"); types.className = "result-types"; types.role = "group"; types.setAttribute("aria-label", "按结果筛选");
+    const normalCount = projection.changedRows.length + projection.unchangedRows.length;
+    let focusButton: HTMLButtonElement | undefined;
+    for (const [value, label, count] of [
+      ["all", "全部", normalCount + projection.blockedRows.length],
+      ["normal", "正常", normalCount],
+      ["error", "错误", projection.blockedRows.length],
+    ] as const) {
+      const button = this.button(`${label} · ${count}`, "result-filter-button", false, () => { this.resultFilter = value; this.render(value); });
+      button.dataset.filter = value; button.setAttribute("aria-pressed", String(this.resultFilter === value)); types.append(button);
+      if (value === focusFilter) focusButton = button;
+    }
+    filters.append(types);
+    if (this.resultFilter === "error" && projection.selectedPendingUris.length) {
+      const note = document.createElement("p"); note.className = "hidden-selection-note"; note.role = "status";
+      note.textContent = `已选 ${projection.selectedPendingUris.length} 个正常文件（当前隐藏），应用所选仍包含这些文件。`;
+      filters.append(note);
+    }
     if (this.enabled("addToWorkset")) options.append(this.button("加入工作集", "text-button", projection.worksetDisabled, () => this.emit({ kind: "run", action: "addToWorkset" })));
     const status = document.createElement("p"); status.className = `status${model.status === "error" ? " error" : ""}`; status.textContent = model.message ?? ""; status.title = model.message ?? ""; status.role = "status"; status.setAttribute("aria-live", "polite");
     const groups = document.createElement("div"); groups.className = "groups"; groups.hidden = !projection.hasCache;
     if (projection.hasCache) {
-      groups.append(this.group("变更文件", projection.changedRows, model, {
-        pendingRows: projection.pendingRows,
-        allSelected: projection.allPendingSelected,
-        someSelected: projection.somePendingSelected,
-      }));
-      if (this.showUnchanged) groups.append(this.group("无变更文件", projection.unchangedRows, model));
+      if (this.resultFilter !== "error") {
+        groups.append(this.group("变更文件", projection.changedRows, model, {
+          pendingRows: projection.pendingRows,
+          allSelected: projection.allPendingSelected,
+          someSelected: projection.somePendingSelected,
+        }));
+        groups.append(this.group("无变更文件", projection.unchangedRows, model));
+      }
+      if (this.resultFilter !== "normal" && (projection.blockedRows.length || this.resultFilter === "error")) {
+        groups.append(this.group("错误 / 已阻止", projection.blockedRows, model));
+      }
     }
-    shell.append(title, summary, actions, options, status, groups); this.root.replaceChildren(style, shell);
+    shell.append(title, summary, actions, options, status, filters, groups); this.root.replaceChildren(style, shell);
+    focusButton?.focus();
   }
 
   private group(titleText: string, rows: readonly PnwCodeReorderMembersPanelRow[], model: PnwCodeReorderMembersPanelModel, selection?: { readonly pendingRows: readonly PnwCodeReorderMembersPanelRow[]; readonly allSelected: boolean; readonly someSelected: boolean }): HTMLElement {
@@ -112,47 +138,70 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
     const header = document.createElement("div"); header.className = "group-header";
     if (selection && this.enabled("selection")) {
       const all = document.createElement("input"); all.type = "checkbox"; all.disabled = !selection.pendingRows.length || model.status === "running"; all.checked = selection.allSelected; all.indeterminate = selection.someSelected; all.setAttribute("aria-label", "选择全部待写盘文件");
-      all.onchange = () => { const pending = new Set(selection.pendingRows.map((row) => row.uri)); this.updateSelection(all.checked ? [...pending] : this.selection.selectedUris.filter((uri) => !pending.has(uri))); }; header.append(all);
+      all.onchange = () => { const pending = new Set(selection.pendingRows.map((row) => row.uri)); this.updateSelection(all.checked ? [...pending] : this.selection.selectedUris.filter((uri) => !pending.has(uri)), model.reorderRevision); }; header.append(all);
     }
     const label = document.createElement("span"); label.textContent = `${titleText} · ${rows.length} 个`;
     const detail = document.createElement("span"); detail.className = "detail"; detail.textContent = `扫描 ${model.scanned ?? rows.length} 个`;
     header.append(label, detail); group.append(header);
     const list = document.createElement("ul"); list.className = "list";
-    for (const row of rows) list.append(this.row(row, model.status === "running", Boolean(selection) && this.enabled("selection")));
+    for (const row of rows) list.append(this.row(row, model.status === "running", Boolean(selection) && this.enabled("selection"), model.reorderRevision));
     if (!rows.length) { const empty = document.createElement("li"); empty.className = "empty"; empty.textContent = "没有文件"; list.append(empty); }
     group.append(list); return group;
   }
 
-  private row(row: PnwCodeReorderMembersPanelRow, running: boolean, selectable: boolean): HTMLElement {
+  private row(row: PnwCodeReorderMembersPanelRow, running: boolean, selectable: boolean, reorderRevision?: number): HTMLElement {
     const item = document.createElement("li"); item.className = "file-row";
     if (selectable) {
       const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = this.selection.selectedUris.includes(row.uri); checkbox.disabled = row.state !== "pending" || running; checkbox.setAttribute("aria-label", `选择 ${row.relativePath}`);
-      checkbox.onchange = () => { const selected = new Set(this.selection.selectedUris); if (checkbox.checked) selected.add(row.uri); else selected.delete(row.uri); this.updateSelection([...selected]); }; item.append(checkbox);
+      checkbox.onchange = () => { const selected = new Set(this.selection.selectedUris); if (checkbox.checked) selected.add(row.uri); else selected.delete(row.uri); this.updateSelection([...selected], reorderRevision); }; item.append(checkbox);
     }
     const kind = document.createElement("span"); kind.className = "kind"; kind.textContent = row.kind === "header" ? "C" : "C++";
-    const main = document.createElement("span"); main.className = `file-main${this.enabled("open") ? "" : " static"}`;
+    const viewAction = !running && (row.state === "pending" || row.state === "blocked") && this.enabled("preview") ? "preview"
+      : !running && row.state === "applied" && this.enabled("gitDiff") ? "gitDiff" : undefined;
+    const main = document.createElement("span"); main.className = `file-main${viewAction ? "" : " static"}`;
     const parts = row.relativePath.split("/"); const file = parts.pop() || row.relativePath;
     const name = document.createElement("span"); name.className = "file-name"; name.textContent = file;
     const directory = document.createElement("span"); directory.className = "file-dir"; directory.textContent = parts.length ? ` · ${parts.join("/")}` : "";
     main.append(name, directory); main.title = [row.relativePath, row.encoding, ...row.warnings].join("\n");
-    if (this.enabled("open")) main.onclick = () => this.emit({ kind: "reorderAction", action: "open", uris: [row.uri] });
+    if (viewAction) {
+      const viewTitle = row.state === "blocked" ? (row.reviewCandidateAvailable ? "查看阻止原因与候选差异" : "查看阻止原因（未生成候选）")
+        : row.state === "applied" ? "查看 Git 差异" : "预览排序差异";
+      main.role = "button"; main.tabIndex = 0; main.setAttribute("aria-label", `${viewTitle}：${row.relativePath}`);
+      main.onclick = () => this.emit({ kind: "reorderAction", action: viewAction, uris: [row.uri], ...this.revisionToken(reorderRevision) });
+      main.onkeydown = (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); main.click(); } };
+    }
     const inline = document.createElement("span"); inline.className = "inline";
     if (!running && row.state === "pending") {
-      if (this.enabled("preview")) inline.append(this.icon("⇄", "预览排序差异", "preview", row.uri));
-      if (this.enabled("apply")) inline.append(this.icon("✓", "应用此文件", "apply", row.uri));
-      if (this.enabled("cancel")) inline.append(this.icon("×", "从本次结果移除", "cancel", row.uri));
+      if (this.enabled("open")) inline.append(this.icon("◉", "查看", "open", row.uri, reorderRevision));
+      if (this.enabled("apply")) inline.append(this.icon("✓", "应用此文件", "apply", row.uri, reorderRevision));
+      if (this.enabled("cancel")) inline.append(this.icon("×", "从本次结果移除", "cancel", row.uri, reorderRevision));
+    } else if (!running && row.state === "blocked") {
+      if (this.enabled("open")) inline.append(this.icon("◉", "打开源文件", "open", row.uri, reorderRevision));
+      if (this.enabled("preview")) inline.append(this.icon("⇄", row.reviewCandidateAvailable ? "查看阻止原因与候选差异" : "查看阻止原因（未生成候选）", "preview", row.uri, reorderRevision));
+      if (this.enabled("apply")) {
+        const canReviewApply = row.reviewCandidateAvailable === true && row.reviewCandidateViewed === true;
+        const title = !row.reviewCandidateAvailable ? "未生成候选，无法应用"
+          : !row.reviewCandidateViewed ? "先查看候选差异，再单独确认应用" : "单独确认应用此候选";
+        inline.append(this.icon("✓", title, "reviewApply", row.uri, reorderRevision, !canReviewApply));
+      }
     } else if (!running && row.state === "applied") {
-      if (this.enabled("gitDiff")) inline.append(this.icon("⇄", "查看 Git 差异", "gitDiff", row.uri));
-      if (this.enabled("revert")) inline.append(this.icon("↶", "还原本次成员排序", "revert", row.uri));
+      if (this.enabled("gitDiff")) inline.append(this.icon("⇄", "查看 Git 差异", "gitDiff", row.uri, reorderRevision));
+      if (this.enabled("revert")) inline.append(this.icon("↶", "还原本次成员排序", "revert", row.uri, reorderRevision));
     }
     const state = document.createElement("span"); state.className = `state ${row.state}`; state.textContent = pnwCodeReorderStateMark(row.state); state.title = `${pnwCodeReorderStateLabel(row.state)} · ${row.encoding}`;
     item.append(kind, main, inline, state); return item;
   }
 
-  private button(label: string, className: string, disabled: boolean, action: () => void): HTMLButtonElement { const button = document.createElement("button"); button.type = "button"; button.className = className; button.textContent = label; button.disabled = disabled; button.onclick = action; return button; }
-  private icon(text: string, title: string, action: "preview" | "apply" | "cancel" | "gitDiff" | "revert", uri: string): HTMLButtonElement { const button = this.button(text, "icon", false, () => this.emit({ kind: "reorderAction", action, uris: [uri] })); button.title = title; button.setAttribute("aria-label", title); return button; }
-  private updateSelection(requestedUris: readonly string[]): void { if (!this.currentModel) return; this.selection = pnwCodeSetReorderSelection(this.selection, this.currentModel, requestedUris); const uris = [...this.selection.selectedUris]; this.render(); this.emit({ kind: "reorderSelection", uris }); }
-  private emit(detail: PnwCodeReorderMembersPanelActionDetail): void { this.dispatchEvent(new CustomEvent<PnwCodeReorderMembersPanelActionDetail>(PNW_CODE_REORDER_MEMBERS_PANEL_ACTION, { bubbles: true, composed: true, detail })); }
+  private button(label: string, className: string, disabled: boolean, action: () => void): HTMLButtonElement { const button = document.createElement("button"); button.type = "button"; button.className = className; button.textContent = label; button.disabled = disabled; button.onclick = () => { if (!button.disabled) action(); }; return button; }
+  private icon(text: string, title: string, action: "open" | "preview" | "apply" | "cancel" | "gitDiff" | "revert" | "reviewApply", uri: string, reorderRevision?: number, disabled = false): HTMLButtonElement { const button = this.button(text, "icon", disabled, () => this.emit({ kind: "reorderAction", action, uris: [uri], ...this.revisionToken(reorderRevision) })); button.title = title; button.setAttribute("aria-label", title); return button; }
+  private revisionToken(reorderRevision?: number): { readonly reorderRevision?: number } { return reorderRevision === undefined ? {} : { reorderRevision }; }
+  private updateSelection(requestedUris: readonly string[], reorderRevision?: number): void { if (!this.currentModel || reorderRevision !== this.currentModel.reorderRevision) return; this.selection = pnwCodeSetReorderSelection(this.selection, this.currentModel, requestedUris); const uris = [...this.selection.selectedUris]; this.render(); this.emit({ kind: "reorderSelection", uris, ...this.revisionToken(reorderRevision) }); }
+  private emit(detail: PnwCodeReorderMembersPanelActionDetail): void {
+    // The token belongs to the rendered row, not whichever model happens to be
+    // current when a detached button eventually delivers its click.
+    if (detail.kind !== "run" && detail.reorderRevision !== this.currentModel?.reorderRevision) return;
+    this.dispatchEvent(new CustomEvent<PnwCodeReorderMembersPanelActionDetail>(PNW_CODE_REORDER_MEMBERS_PANEL_ACTION, { bubbles: true, composed: true, detail }));
+  }
 }
 
 export function pnwCodeDefineReorderMembersPanel(tagName = PNW_CODE_REORDER_MEMBERS_PANEL_TAG): typeof PnwCodeReorderMembersPanel {

@@ -12,7 +12,7 @@ npm install @phoenix-wing/workspace-schema
 npm install phoenix-wing vue pinia
 ```
 
-只有 Desk Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。参数驱动 CAA/Qt/C++ 代码生成使用 `@phoenix-wing/kt-codegen`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`。CAD 执行链使用 TypeScript；不再提供 Rust source 包或 Python CAD 后端。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，VS Code 可接宿主内置 SQLite 而不安装 Desk Tools。纯 Code/CAD/Codegen 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
+只有 Web UI 或旧消费者需要 Vue 聚合包时才安装 `phoenix-wing`。参数驱动 CAA/Qt/C++ 代码生成使用 `@phoenix-wing/kt-codegen`。Node SQLite adapter 单独安装 `@phoenix-wing/db-node`。CAD 执行链使用 TypeScript；不再提供 Rust source 包或 Python CAD 后端。`cad-contracts` 还提供无驱动的 Schema v13 只读查询核心，编辑器扩展可接宿主内置 SQLite 而不安装桌面应用。纯 Code/CAD/Codegen 小包不会带入 Vue、Element Plus、SQLite 或 Rust 二进制。
 
 `phoenix-wing` 聚合 UI 只发布 `dist` 编译产物。根入口和保留的 `.vue` 兼容子路径均落到同一份 JavaScript 模块图，避免 Vite 分别预构建根入口与源码 SFC 时产生 Vue/Pinia singleton 双实例。新代码优先使用根入口的命名导出；组件样式由编译入口自动加载。
 
@@ -24,7 +24,7 @@ npm install phoenix-wing vue pinia
 
 ## 消费者本地联调
 
-Phoenix 消费者统一使用 `pnpm dev` 启动 Registry Wing，使用 `pnpm wing` 启动同级 `../phoenix-wing` 本地源码；旧的根级 `pnpm dev:registry` 和本地开发同义命令均删除。找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。未完成 Wing 修改放在独立 working worktree，验证、提交归档并提升到主库 `develop` 后，其他目录可通过文件系统目录链接把同级 `phoenix-wing` 指向该主库。
+Phoenix 消费者统一使用 `pnpm dev` 启动 Registry Wing，使用 `pnpm wing` 启动同级 `../phoenix-wing` 本地源码；旧的根级 `pnpm dev:registry` 和本地开发同义命令均删除。找不到同级 Wing 时本地命令必须停止，不会回退 Registry，也不需要 `pnpm link` 或修改依赖文件。Wing 默认直接在主库 `develop` 修改、验证和本地提交归档；用户另行要求隔离时才使用独立 worktree。其他目录可通过文件系统目录链接把同级 `phoenix-wing` 指向该主库。
 
 正式 npm 包行为必须另跑显式 Registry 对照命令。完整目录、命令、安全边界与消费者验收入口见 **[docs/本地验证方法.md](docs/本地验证方法.md)**。
 
@@ -70,7 +70,7 @@ Wing 自身的示例入口：`pnpm dev` 启动开发验证工作台；`pnpm exam
 |------|------|
 | [docs/文档索引.md](docs/文档索引.md) | 当前文档唯一导航、历史资料入口与维护责任 |
 | [docs/快速使用.md](docs/快速使用.md) | 各类 API 快速上手示例 |
-| [docs/本地验证方法.md](docs/本地验证方法.md) | 三仓并列目录、Auto/Desk 本地 Wing 命令与 Registry 对照边界 |
+| [docs/本地验证方法.md](docs/本地验证方法.md) | 标准并列目录、消费者本地 Wing 命令与 Registry 对照边界 |
 | [docs/架构图.md](docs/架构图.md) | 壳层组件树和引擎清单 |
 | [docs/plan.md](docs/plan.md) | 当前路线、已完成基线和后续治理顺序 |
 | [docs/命名规则.md](docs/命名规则.md) | 命名规则、前缀对照、违规示例 |
@@ -87,14 +87,9 @@ Wing 自身的示例入口：`pnpm dev` 启动开发验证工作台；`pnpm exam
 - `pinia` ^2.0 \|\| ^3.0（可选，仅使用 store 时需要）
 - `element-plus` ^2.0（可选，部分控件需要）
 
-## 相关项目
+## 消费场景
 
-| 项目 | 地址 | 说明 |
-|------|------|------|
-| **phoenix-wing** | [Gitee](https://gitee.com/phoenixwing/phoenix-wing) | 本仓库 — 共享 TypeScript 工具库与壳层框架 |
-| **phoenix-desk-tools** | [Gitee](https://gitee.com/phoenixwing/phoenix-desk-tools) | 源项目 — FreeCAD 桌面辅助工具，phoenix-wing 的提炼来源 |
-| **kt-auto-code** | [Gitee](https://gitee.com/phoenixwing/kt-auto-code) | VS Code 自动化扩展，按需消费 `@phoenix-wing/code-core` 的成员排序、UUID 与工作集能力 |
-| **phoenix-open-issue** | [Gitee](https://gitee.com/phoenixwing/phoenix-open-issue) | 应用案例 — 基于 phoenix-wing 框架搭建的 Open Issue 管理应用 |
+[Wing 源码](https://gitee.com/phoenixwing/phoenix-wing)提供共享 TypeScript 工具库与壳层框架。典型消费方式包括本地 CAD 工作台、编辑器扩展和 Web 管理应用；各消费者按需安装领域小包或聚合 UI 包。本页不披露未核实公开许可的消费者身份、仓库地址或业务样本。
 
 ## 许可
 

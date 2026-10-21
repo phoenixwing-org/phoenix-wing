@@ -25,6 +25,7 @@ import { pnwResolvePresentationFrameDefinition } from "../utils/pnwPresentationF
 import { pnwGetDocumentViewPresentationLeaseRegistry } from "../utils/pnwViewPresentationLease.js";
 import { usePnwLocale } from "../composables/usePnwLocale.js";
 import { usePnwViewPresentationContext } from "../composables/usePnwViewPresentationContext.js";
+import { pnwProvidePresentationActions, usePnwPresentationActionClaim, PNW_VIEW_REATTACH_ACTION_ID } from "../composables/usePnwPresentationActions.js";
 import PnwFloatingPanel from "./PnwFloatingPanel.vue";
 import PnwIcon from "./PnwIcon.vue";
 
@@ -84,6 +85,10 @@ const pnwCommittedRevision = ref(-1);
 let pnwLease: PnwViewPresentationLeaseHandle | undefined;
 
 const pnwPanelOpen = computed(() => props.record.mode !== "embedded");
+const pnwActionScope = pnwProvidePresentationActions({ mode: computed(() => props.record.mode), detach: pnwDetach, reattach: pnwReattach });
+const pnwOwnsReattachAction = usePnwPresentationActionClaim(pnwActionScope, {
+  id: computed(() => PNW_VIEW_REATTACH_ACTION_ID), active: pnwPanelOpen, priority: 100,
+});
 const pnwHasContributedHeader = computed(() => (
   (pnwPresentationContext?.headerChannel.registeredCount.value ?? 0) > 0
 ));
@@ -380,6 +385,8 @@ defineExpose<PnwViewPresentationPortalHandle>({
       <button
         type="button"
         class="pnw-view-presentation-dialog__reattach"
+        v-if="pnwOwnsReattachAction"
+        :data-pnw-action-id="PNW_VIEW_REATTACH_ACTION_ID"
         :title="pnwT('viewPresentation.reattach')"
         :aria-label="pnwT('viewPresentation.reattach')"
         @pointerdown.stop

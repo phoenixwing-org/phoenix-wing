@@ -11,12 +11,14 @@ import PwwBlockVariantsValidation from "./PwwBlockVariantsValidation.vue";
 
 const props = withDefaults(defineProps<{ colorScheme?: PnwColorScheme }>(), { colorScheme: "system" });
 const pwwResolvedTheme = usePnwOverlayTheme(() => props.colorScheme);
-const pwwTestId = ref(new URLSearchParams(window.location.search).get("example") === "blocks" ? "blocks" : "tabs");
+const pwwRequestedTest = new URLSearchParams(window.location.search).get("example");
+const pwwTestId = ref(pwwRequestedTest === "blocks" || pwwRequestedTest === "primary-size" ? pwwRequestedTest : "tabs");
 const pwwTests = [
   { id: "tabs", label: "Tab 内容保活", icon: "pnw:document" },
   { id: "windows", label: "浮窗平铺与层叠", icon: "pnw:window-float" },
   { id: "checks", label: "简单断言", icon: "pnw:report" },
   { id: "blocks", label: "Block 样式", icon: "pnw:dashboard" },
+  { id: "primary-size", label: "Primary 动态宽度", icon: "pnw:window-float" },
 ];
 const pwwTitle = computed(() => pwwTests.find(test => test.id === pwwTestId.value)!.label);
 const pwwLayout = ref<PnwWorkbenchLayoutState>({
@@ -24,6 +26,10 @@ const pwwLayout = ref<PnwWorkbenchLayoutState>({
   sizes: { primaryWidth: 224, secondaryWidth: 260, bottomHeight: 180 },
 });
 const pwwDraftMessage = ref("");
+const pwwNarrowWorkbench = ref(false);
+function pwwSetPrimaryPreference(width: number): void {
+  pwwLayout.value = { ...pwwLayout.value, sizes: { ...pwwLayout.value.sizes, primaryWidth: width } };
+}
 const pwwCheckSummary = computed(() => pwwRunning.value ? "正在检查…"
   : `${pwwChecks.value.filter(item => item.passed).length} / ${pwwChecks.value.length} 通过`);
 
@@ -143,7 +149,10 @@ onMounted(() => { void pwwRunChecks(); });
 </script>
 
 <template>
-  <PnwWorkbenchLayout v-model:layout-state="pwwLayout" :contributions="{ primary: true }" :color-scheme="colorScheme" :show-footer="false">
+  <PnwWorkbenchLayout v-model:layout-state="pwwLayout"
+    :contributions="{ primary: true, secondary: pwwTestId === 'primary-size' }"
+    :style="pwwNarrowWorkbench ? { maxWidth: '700px' } : undefined"
+    :color-scheme="colorScheme" :show-footer="false">
     <template #primary>
       <div class="pww-validation-primary">
       <PnwActivityTree :nodes="pwwTests" :active-node-id="pwwTestId" :color-scheme="colorScheme"
@@ -159,8 +168,12 @@ onMounted(() => { void pwwRunChecks(); });
           <p class="pww-primary-note">连续横向分隔线，Header 无竖线。</p>
         </PnwPrimarySection>
       </template>
+      <PnwPrimarySection v-if="pwwTestId === 'primary-size'" title="宽度偏好" :collapsible="false">
+        <p class="pww-primary-note">保存偏好 {{ pwwLayout.sizes.primaryWidth }} px。拖动右边界，或聚焦边界后按 End / Home。</p>
+      </PnwPrimarySection>
       </div>
     </template>
+    <template #secondary><PnwSidebarBlock title="Secondary" :collapsible="false"><p class="pww-primary-note">与 Primary 共用 View 空间，仍保留 Editor 的最小预算。</p></PnwSidebarBlock></template>
     <PnwPageLayout :title="pwwTitle" :body-inset="false" :body-scroll="false" actions-align="end">
       <template #right>
         <template v-if="pwwTestId === 'windows'">
@@ -173,9 +186,22 @@ onMounted(() => { void pwwRunChecks(); });
 
       <div class="pww-test-view">
         <div class="pww-test-status" role="status">
-          <span>{{ pwwTestId === 'windows' ? '输入草稿后重新排列，检查内容仍在。X 关闭并销毁窗口。' : '切换页签或测试目录不会重建草稿与 iframe。' }}</span>
+          <span>{{ pwwTestId === 'windows' ? '输入草稿后重新排列，检查内容仍在。X 关闭并销毁窗口。' : pwwTestId === 'primary-size' ? 'Primary 上限随当前 View 宽度变化，不再固定 560px。' : '切换页签或测试目录不会重建草稿与 iframe。' }}</span>
           <span class="pww-test-count">{{ pwwCheckSummary }}</span>
         </div>
+        <section v-if="pwwTestId === 'primary-size'" class="pww-primary-size-stage" aria-label="Primary 动态宽度验证">
+          <PnwSidebarBlock title="大屏与嵌入 View" variant="card" :collapsible="false">
+            <p>Primary 最大为当前 View 的 60%，同时保留 Editor 与可见 Secondary 的空间。依据的是排除 Tree 后的 View，不是整块显示器。</p>
+            <div class="pww-test-options">
+              <button type="button" @click="pwwSetPrimaryPreference(1000)">首选 1000 px</button>
+              <button type="button" @click="pwwSetPrimaryPreference(224)">恢复 224 px</button>
+              <label><input v-model="pwwNarrowWorkbench" type="checkbox" />700px 嵌入 View</label>
+              <label><input type="checkbox" :checked="pwwLayout.visibility.secondary"
+                @change="pwwLayout = { ...pwwLayout, visibility: { ...pwwLayout.visibility, secondary: ($event.target as HTMLInputElement).checked } }" />显示 Secondary</label>
+            </div>
+            <p>缩小容器只夹住当前显示；取消嵌入预览后恢复保存的宽度。鼠标拖动与方向键、Home、End 使用相同限制。</p>
+          </PnwSidebarBlock>
+        </section>
         <div v-show="pwwTestId === 'tabs'" ref="pwwTabHost" class="pww-tab-stage">
           <PnwTabContainer v-model:active-tab-id="pwwActive" :tabs="pwwTabs" lazy-mount aria-label="验证内容页签">
             <template #default="{ tab }">
@@ -231,7 +257,7 @@ onMounted(() => { void pwwRunChecks(); });
 </template>
 
 <style scoped>
-.pww-validation-primary { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; gap:0; padding:0; margin:0; overflow:auto; }
+.pww-validation-primary { --pnw-activity-tree-width:100%; --pnw-activity-tree-min-width:0px; --pnw-activity-tree-max-width:100%; display:flex; flex-direction:column; width:100%; height:100%; min-height:0; gap:0; padding:0; margin:0; overflow:auto; }
 .pww-test-navigation--compact { flex:0 0 auto; height:auto; }
 .pww-primary-note { margin:0; padding:8px; font-size:13px; }
 .pww-test-view { display:flex; flex-direction:column; height:100%; min-height:0; }
@@ -248,6 +274,8 @@ iframe { display:block; width:100%; height:160px; border:0; }
 .pww-arrangement-area { display:grid; place-items:center; flex:1; min-height:180px; margin:8px; border:1px dashed var(--pnw-workbench-default-border); background:var(--pnw-workbench-default-bg); color:var(--pnw-workbench-default-muted); font-size:12px; }
 .pww-window-content { padding:10px; }
 .pww-check-stage { overflow:auto; }
+.pww-primary-size-stage { padding:10px; overflow:auto; }
+.pww-primary-size-stage button { font:inherit; color:inherit; background:var(--pnw-workbench-default-bg); border:1px solid var(--pnw-workbench-default-border); border-radius:4px; padding:5px 8px; cursor:pointer; }
 .pww-check-stage > .pww-hint { margin:10px; }
 .pww-check-list { list-style:none; padding:0; margin:0; }
 .pww-check-list li { display:flex; gap:16px; padding:10px; border-top:1px solid var(--pnw-workbench-default-border); font-size:13px; overflow-wrap:anywhere; }

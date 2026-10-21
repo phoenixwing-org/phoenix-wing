@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onUnmounted, watch } from "vue";
+import { ref, onUnmounted, watch } from "vue";
 import type { PnwColorScheme } from "../utils/pnwColorScheme.js";
+import { pnwGetDocumentModalStack, type PnwModalLayer } from "../utils/pnwModalStack.js";
 import PnwOverlayThemeProvider from "./PnwOverlayThemeProvider.vue";
 
 const props = withDefaults(
@@ -9,6 +10,9 @@ const props = withDefaults(
     ariaLabel?: string;
     panelClass?: string;
     closeOnBackdrop?: boolean;
+    zIndex?: number;
+    parentLayer?: PnwModalLayer;
+    initialFocus?: (panel: HTMLElement) => HTMLElement | null | undefined;
     /** 显式覆盖全局 overlay scheme；缺省跟随 Host 的 pnwApplyColorScheme。 */
     colorScheme?: PnwColorScheme;
   }>(),
@@ -23,49 +27,57 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-function onBackdropClick() {
-  if (props.closeOnBackdrop) emit("close");
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") {
-    e.preventDefault();
-    emit("close");
+const pnwPanel = ref<HTMLElement | null>(null);
+const pnwTeleportTarget = ref<string | HTMLElement>("body");
+watch(() => props.open, isOpen => {
+  if (isOpen && typeof document !== "undefined") {
+    const parent = props.parentLayer ?? pnwGetDocumentModalStack(document).topLayer;
+    pnwTeleportTarget.value = parent?.childContainer ?? "body";
   }
+}, { immediate: true, flush: "sync" });
+const pnwLayerState = ref({ zIndex: 2000, isTopmost: false });
+let pnwLayer: PnwModalLayer | undefined;
+function onBackdropClick() {
+  if (props.closeOnBackdrop && pnwLayer?.state.isTopmost) emit("close");
 }
-
-watch(
-  () => props.open,
-  (isOpen) => {
-    if (typeof window === "undefined") return;
-    if (isOpen) {
-      window.addEventListener("keydown", onKeydown);
-    } else {
-      window.removeEventListener("keydown", onKeydown);
-    }
-  },
-  { immediate: true },
-);
-
-onUnmounted(() => {
-  if (typeof window !== "undefined") window.removeEventListener("keydown", onKeydown);
-});
+watch([() => props.open, pnwPanel], ([isOpen, panel]) => {
+  if (!isOpen || !panel) { pnwLayer?.dispose(); pnwLayer = undefined; return; }
+  if (pnwLayer) return;
+  const overlay = panel.parentElement;
+  const css = panel.ownerDocument.defaultView?.getComputedStyle(overlay ?? panel);
+  const configured = Number.parseFloat(css?.getPropertyValue("--pnw-overlay-modal-z-index")
+    || css?.getPropertyValue("--pnw-workbench-overlay-modal") || "2000");
+  pnwLayer = pnwGetDocumentModalStack(panel.ownerDocument).register({
+    element: () => pnwPanel.value,
+    baseZIndex: props.zIndex ?? (Number.isFinite(configured) ? configured : 2000),
+    parentLayer: props.parentLayer,
+    initialFocus: element => props.initialFocus?.(element),
+    onChange: state => { pnwLayerState.value = state; },
+    onClose: () => emit("close"),
+  });
+}, { flush: "post" });
+watch(() => props.zIndex, value => { if (value !== undefined) pnwLayer?.updateBaseZIndex(value); });
+onUnmounted(() => pnwLayer?.dispose());
+defineExpose({ focus: () => pnwLayer?.focus() });
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="pnwTeleportTarget">
     <Transition name="pnw-modal-fade">
       <PnwOverlayThemeProvider
         v-if="open"
         class="pnw-modal-overlay"
+        :style="{ zIndex: pnwLayerState.zIndex }"
         :color-scheme="colorScheme"
         @click.self="onBackdropClick"
       >
         <div
+          ref="pnwPanel"
+          tabindex="-1"
           class="pnw-modal-panel"
           :class="panelClass"
           role="dialog"
-          aria-modal="true"
+          :aria-modal="pnwLayerState.isTopmost"
           :aria-label="ariaLabel"
         >
           <slot />
@@ -77,6 +89,9 @@ onUnmounted(() => {
 
 <style scoped>
 .pnw-modal-overlay {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
   position: fixed;
   inset: 0;
   z-index: var(--pnw-overlay-modal-z-index, var(--pnw-workbench-overlay-modal, 2000));
@@ -91,6 +106,9 @@ onUnmounted(() => {
 }
 
 .pnw-modal-panel {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
   width: min(720px, 100%);
   max-height: min(88vh, 920px);
   overflow: auto;

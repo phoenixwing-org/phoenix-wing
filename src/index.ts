@@ -1,11 +1,12 @@
 // phoenix-wing — Phoenix Wing 共享 TypeScript 工具库
 // 纯逻辑 + Vue3 控件 + 算法
 
-export const PNW_VERSION = '0.8.0'
+export const PNW_VERSION = '0.8.1'
 
 // ---------------------------------------------------------------------------
 // 异步任务进度
 // ---------------------------------------------------------------------------
+export { PNW_VIEW_DETACH_ACTION_ID, PNW_VIEW_REATTACH_ACTION_ID } from './composables/usePnwPresentationActions.js'
 export {
   type PnwAsyncProgressStep,
   type PnwAsyncTaskState,
@@ -752,3 +753,5 @@ export { default as PnwWorkbenchLayout } from './layout/PnwWorkbenchLayout.vue'
 //   import PnwIcon from 'phoenix-wing/components/PnwIcon.vue'
 //   import PnwAsyncProgressOverlay from 'phoenix-wing/components/PnwAsyncProgressOverlay.vue'
 //   import PnwPhoenixWingMark from 'phoenix-wing/components/PnwPhoenixWingMark.vue'
+
+export { pnwGetDocumentModalStack, type PnwDocumentModalStack, type PnwModalLayer, type PnwModalLayerOptions, type PnwModalLayerState, type PnwModalCloseReason } from "./utils/pnwModalStack.js";

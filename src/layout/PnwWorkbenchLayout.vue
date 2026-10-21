@@ -84,6 +84,7 @@ const pnwSlots = useSlots();
 const pnwLayoutElement = ref<HTMLElement>();
 const pnwMainElement = ref<HTMLElement>();
 const pnwContainerWidth = ref<number>();
+const pnwMainViewport = ref<PnwWorkbenchLayoutViewport>();
 let pnwResponsiveObserver: ResizeObserver | undefined;
 pnwProvideLocale(() => props.locale);
 const { t: pnwT } = usePnwLocale(() => props.locale);
@@ -95,7 +96,7 @@ const pnwAvailableContributions = computed<PnwViewBlockContributions>(() => ({
   secondary: Boolean(props.contributions.secondary && pnwSlots.secondary),
 }));
 
-const pnwLayoutState = computed(() => pnwResolveWorkbenchLayoutState(
+const pnwPreferredLayoutState = computed(() => pnwResolveWorkbenchLayoutState(
   props.layoutState ?? {
     visibility: props.visibility,
     sizes: PNW_DEFAULT_WORKBENCH_PANEL_SIZES,
@@ -103,8 +104,18 @@ const pnwLayoutState = computed(() => pnwResolveWorkbenchLayoutState(
 ));
 const pnwVisibility = computed(() => pnwResolveViewBlockVisibility(
   pnwAvailableContributions.value,
-  pnwLayoutState.value.visibility,
+  pnwPreferredLayoutState.value.visibility,
 ));
+// A smaller View changes only the current presentation, never the saved sizes.
+const pnwLayoutState = computed(() => pnwResolveWorkbenchLayoutState({
+  visibility: pnwVisibility.value,
+  sizes: pnwPreferredLayoutState.value.sizes,
+}, pnwMainViewport.value));
+const pnwPrimaryMaximum = computed(() => pnwMainViewport.value
+  ? pnwResizeWorkbenchLayoutState(
+    pnwLayoutState.value, "primary", Number.MAX_SAFE_INTEGER, pnwMainViewport.value,
+  ).sizes.primaryWidth
+  : undefined);
 const pnwPrimaryToggleLabel = computed(() => pnwT(
   pnwVisibility.value.primary
     ? "workbench.layout.primaryCollapse"
@@ -127,16 +138,18 @@ const pnwLayoutSlotState = computed(() => ({
 function pnwMeasureContainer(): void {
   const width = pnwLayoutElement.value?.clientWidth;
   pnwContainerWidth.value = width && width > 0 ? width : undefined;
+  const main = pnwMainElement.value;
+  pnwMainViewport.value = main && main.clientWidth > 0
+    ? { width: main.clientWidth, height: main.clientHeight }
+    : undefined;
 }
 
 onMounted(() => {
   pnwMeasureContainer();
   if (typeof ResizeObserver !== "undefined") {
-    pnwResponsiveObserver = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width;
-      pnwContainerWidth.value = width && width > 0 ? width : undefined;
-    });
+    pnwResponsiveObserver = new ResizeObserver(pnwMeasureContainer);
     if (pnwLayoutElement.value) pnwResponsiveObserver.observe(pnwLayoutElement.value);
+    if (pnwMainElement.value) pnwResponsiveObserver.observe(pnwMainElement.value);
   } else if (typeof window !== "undefined") {
     window.addEventListener("resize", pnwMeasureContainer);
   }
@@ -165,35 +178,36 @@ function pnwHandleEditorMaximizedKeydown(event: KeyboardEvent): void {
 function pnwToggleBlock(blockId: PnwViewBlockId): void {
   const visibility = pnwToggleViewBlockVisibility(
     pnwAvailableContributions.value,
-    pnwLayoutState.value.visibility,
+    pnwPreferredLayoutState.value.visibility,
     blockId,
   );
   emit("update:visibility", visibility);
-  emit("update:layoutState", { ...pnwLayoutState.value, visibility });
+  emit("update:layoutState", { ...pnwPreferredLayoutState.value, visibility });
   emit("toggle", blockId);
 }
 
 defineExpose({ toggleBlock: pnwToggleBlock });
 
-function pnwLayoutViewport(): PnwWorkbenchLayoutViewport | undefined {
-  const main = pnwMainElement.value;
-  if (!main) return undefined;
-  return {
-    width: main.clientWidth,
-    height: main.clientHeight,
-  };
-}
-
 function pnwResizeBlock(blockId: PnwViewBlockId, requestedSize: number): void {
-  emit("update:layoutState", pnwResizeWorkbenchLayoutState(
+  pnwMeasureContainer();
+  const resized = pnwResizeWorkbenchLayoutState(
     pnwLayoutState.value,
     blockId,
     requestedSize,
-    pnwLayoutViewport(),
-  ));
+    pnwMainViewport.value,
+  );
+  const sizeKey = blockId === "primary" ? "primaryWidth"
+    : blockId === "secondary" ? "secondaryWidth" : "bottomHeight";
+  // Only the explicitly resized panel is a new preference. Other panels may be
+  // temporarily constrained by this View's size or contribution availability.
+  emit("update:layoutState", {
+    ...pnwPreferredLayoutState.value,
+    sizes: { ...pnwPreferredLayoutState.value.sizes, [sizeKey]: resized.sizes[sizeKey] },
+  });
 }
 
 function pnwStartBlockResize(blockId: PnwViewBlockId, event: PointerEvent): void {
+  pnwMeasureContainer();
   const startPosition = blockId === "bottom" ? event.clientY : event.clientX;
   const startSize = blockId === "primary"
     ? pnwLayoutState.value.sizes.primaryWidth
@@ -212,6 +226,7 @@ function pnwStartBlockResize(blockId: PnwViewBlockId, event: PointerEvent): void
 }
 
 function pnwResizeBlockByKeyboard(blockId: PnwViewBlockId, event: KeyboardEvent): void {
+  pnwMeasureContainer();
   const current = blockId === "primary"
     ? pnwLayoutState.value.sizes.primaryWidth
     : blockId === "secondary"
@@ -295,7 +310,7 @@ function pnwSelectBottomTab(tabId: string): void {
                 :aria-label="pnwT('workbench.layout.primaryResize')"
                 :aria-valuenow="pnwLayoutState.sizes.primaryWidth"
                 :aria-valuemin="PNW_WORKBENCH_PANEL_SIZE_LIMITS.primaryMin"
-                :aria-valuemax="PNW_WORKBENCH_PANEL_SIZE_LIMITS.primaryMax"
+                :aria-valuemax="pnwPrimaryMaximum"
                 tabindex="0"
                 :title="pnwT('workbench.layout.primaryResizeHint')"
                 @pointerdown="pnwStartBlockResize('primary', $event)"
@@ -741,6 +756,15 @@ function pnwSelectBottomTab(tabId: string): void {
 }
 
 @container pnw-workbench (max-width: 840px) {
+  /* Stacked panels share the outer vertical scroll flow. Floating panels are
+     teleported outside this content subtree and retain their scroll boundary. */
+  .pnw-workbench-content :deep(.pnw-view-presentation-portal__main-frame--page),
+  .pnw-workbench-content .pnw-workbench-primary-region :deep(.pnw-sidebar-block.pnw-sidebar-block--body-scroll > .pnw-sidebar-block-body),
+  .pnw-workbench-content :deep(.pnw-sidebar-block--body-scroll .pnw-sidebar-block-body),
+  .pnw-workbench-content :deep(.pnw-page-layout--body-scroll .pnw-page-layout-body) {
+    overscroll-behavior-y: auto;
+  }
+
   .pnw-workbench-body {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: max-content minmax(0, 1fr);

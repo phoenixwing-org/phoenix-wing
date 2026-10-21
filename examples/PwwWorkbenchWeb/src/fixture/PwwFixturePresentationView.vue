@@ -64,7 +64,6 @@ onMounted(() => {
   >
     <template #main>
       <PnwPageHeader
-        class="pww-presentation-header"
         :eyebrow="view.eyebrow"
         :title="view.title"
         :summary="`${activeNodeId} · ${presentation}`"
@@ -105,9 +104,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.pww-presentation-header {
-  width: 100%;
-}
 .pww-presentation-sample { display: inline-flex; align-items: center; gap: 6px; }
 .pww-presentation-sample input { width: 48px; min-width: 0; }
 

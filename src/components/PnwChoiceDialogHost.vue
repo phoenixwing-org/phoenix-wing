@@ -19,7 +19,10 @@ const open = pnwChoiceDialogOpen;
 const request = pnwChoiceDialogRequest;
 
 const checkedIds = ref<string[]>([]);
-let pnwReturnFocusElement: HTMLElement | null = null;
+const pnwRequestRevision = ref(0);
+// A replacement request owns a fresh modal registration and Teleport container.
+watch(request, () => { pnwRequestRevision.value += 1; }, { flush: "sync" });
+const pnwOverlay = ref<InstanceType<typeof PnwAppModalOverlay> | null>(null);
 let pnwFocusRevision = 0;
 
 const choices = computed(() => request.value?.choices ?? []);
@@ -96,22 +99,12 @@ function onCancel() {
   pnwResolveChoice(null, [...checkedIds.value]);
 }
 
-function pnwFocusableElements(): HTMLElement[] {
-  if (typeof document === "undefined") return [];
-  const panel = document.querySelector<HTMLElement>(".pnw-modal-panel.pnw-choice-dialog");
-  if (!panel) return [];
-  return [...panel.querySelectorAll<HTMLElement>([
-    "button:not([disabled])",
-    "input:not([disabled])",
-    "select:not([disabled])",
-    "textarea:not([disabled])",
-    "[href]",
-    "[tabindex]:not([tabindex='-1'])",
-  ].join(","))].filter((element) => !element.hasAttribute("hidden"));
+function pnwFocusableElements(panel: HTMLElement): HTMLElement[] {
+  return [...panel.querySelectorAll<HTMLElement>("button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[href],[tabindex]:not([tabindex='-1'])")].filter(element => !element.closest("[hidden],[inert]"));
 }
 
-function pnwResolveInitialFocusElement(): HTMLElement | undefined {
-  const focusable = pnwFocusableElements();
+function pnwResolveInitialFocusElement(panel: HTMLElement): HTMLElement | undefined {
+  const focusable = pnwFocusableElements(panel);
   const enabledChoices = choices.value.filter((choice) => !isChoiceDisabled(choice));
   const preferredChoice = enabledChoices.find((choice) => choice.id === defaultChoiceId.value)
     ?? enabledChoices.find((choice) => choice.id === "cancel")
@@ -130,70 +123,21 @@ async function pnwFocusCurrentRequest(expectedRequest = request.value): Promise<
     || !open.value
     || request.value !== expectedRequest
   ) return;
-  pnwResolveInitialFocusElement()?.focus({ preventScroll: true });
+  pnwOverlay.value?.focus();
 }
 
-async function pnwRestoreTriggerFocus(): Promise<void> {
-  const revision = ++pnwFocusRevision;
-  await nextTick();
-  if (revision !== pnwFocusRevision || open.value) return;
-  const target = pnwReturnFocusElement;
-  pnwReturnFocusElement = null;
-  if (target?.isConnected) target.focus({ preventScroll: true });
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    onCancel();
-    return;
-  }
-  if (e.key !== "Tab") return;
-  const focusable = pnwFocusableElements();
-  if (focusable.length === 0) {
-    e.preventDefault();
-    return;
-  }
-  const first = focusable[0];
-  const last = focusable.at(-1);
-  const active = typeof document === "undefined" ? null : document.activeElement;
-  if (e.shiftKey && (active === first || !focusable.includes(active as HTMLElement))) {
-    e.preventDefault();
-    last?.focus({ preventScroll: true });
-  } else if (!e.shiftKey && (active === last || !focusable.includes(active as HTMLElement))) {
-    e.preventDefault();
-    first?.focus({ preventScroll: true });
-  }
-}
-
-watch([open, request], ([isOpen, currentRequest], [wasOpen]) => {
-  if (typeof window === "undefined") return;
-  if (isOpen) {
-    if (!wasOpen && typeof document !== "undefined") {
-      pnwReturnFocusElement = document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    }
-    initCheckedIds();
-    window.addEventListener("keydown", onKeydown);
-    void pnwFocusCurrentRequest(currentRequest);
-  } else {
-    window.removeEventListener("keydown", onKeydown);
-    if (wasOpen) void pnwRestoreTriggerFocus();
-  }
+watch([open, request], ([isOpen, currentRequest]) => {
+  if (isOpen) { initCheckedIds(); void pnwFocusCurrentRequest(currentRequest); }
 }, { immediate: true, flush: "post" });
-
-onUnmounted(() => {
-  pnwFocusRevision += 1;
-  if (typeof window !== "undefined") window.removeEventListener("keydown", onKeydown);
-  if (pnwReturnFocusElement?.isConnected) pnwReturnFocusElement.focus({ preventScroll: true });
-  pnwReturnFocusElement = null;
-});
+onUnmounted(() => { pnwFocusRevision += 1; if (open.value) pnwResolveChoice(null); });
 </script>
 
 <template>
   <PnwAppModalOverlay
+    :key="pnwRequestRevision"
+    ref="pnwOverlay"
+    :parent-layer="request?.parentLayer"
+    :initial-focus="pnwResolveInitialFocusElement"
     :open="open && request !== null"
     :aria-label="request?.title ?? '选择对话框'"
     panel-class="pnw-choice-dialog"
@@ -261,7 +205,10 @@ onUnmounted(() => {
 
 <style scoped>
 :global(.pnw-modal-panel.pnw-choice-dialog) {
-  width: min(560px, calc(100vw - 48px));
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  width: min(560px, 100%);
   max-height: min(80vh, 640px);
   padding: 20px 22px;
   border-radius: 10px;
@@ -404,6 +351,9 @@ onUnmounted(() => {
 }
 
 .pnw-choice-btn {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
   width: 100%;
   text-align: center;
   padding: 10px 14px;

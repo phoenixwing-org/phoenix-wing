@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import type { PnwModalLayer } from "../utils/pnwModalStack.js";
 
 export type PnwChoiceDialogOption = {
   id: string;
@@ -20,6 +21,8 @@ export type PnwChoiceDialogCheckboxes = {
 };
 
 export type PnwChoiceDialogRequest = {
+  /** 跨框架父模态所有权；省略时使用注册时的顶层模态。 */
+  parentLayer?: PnwModalLayer;
   title: string;
   message: string;
   choices: PnwChoiceDialogOption[];

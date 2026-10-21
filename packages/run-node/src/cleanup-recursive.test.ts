@@ -61,6 +61,21 @@ describe("cancellable cleanup previews", () => {
 });
 
 describe("explicit recursive cleanup", () => {
+  it("excludes .phoenix from display and splits disposable parents around it", async () => {
+    const root = await pnwFixture();
+    await mkdir(join(root, "build", ".phoenix"), { recursive: true });
+    await mkdir(join(root, ".phoenix", "build"), { recursive: true });
+    await writeFile(join(root, "build", ".phoenix", "state.obj"), "keep");
+    await writeFile(join(root, ".phoenix", "build", "state.obj"), "keep");
+    await writeFile(join(root, "build", "remove.obj"), "remove");
+    const preview = await pnwPreviewRecursiveCleanupArtifacts(root, PNW_RULES);
+    expect(preview.matched).toEqual([join(root, "build", "remove.obj")]);
+    expect(preview.skippedPaths.join("\n")).not.toContain(".phoenix");
+    await pnwCleanPreviewedRecursiveArtifacts(preview);
+    expect(await readFile(join(root, "build", ".phoenix", "state.obj"), "utf8")).toBe("keep");
+    expect(await readFile(join(root, ".phoenix", "build", "state.obj"), "utf8")).toBe("keep");
+    await expect(pnwPreviewRecursiveCleanupArtifacts(join(root, ".phoenix"), PNW_RULES)).rejects.toThrow(".phoenix");
+  });
   it("保留直属 API 默认，只在显式递归模式处理深层 build/objects/obj", async () => {
     const root = await pnwFixture();
     await mkdir(join(root, "module", "build"), { recursive: true });
@@ -191,6 +206,31 @@ describe("explicit recursive cleanup", () => {
     await writeFile(join(root, "late.obj"), "late");
     expect((await pnwCleanPreviewedRecursiveArtifacts(preview)).deleted).toEqual([join(root, "a.obj")]);
     expect(existsSync(join(root, "late.obj"))).toBe(true);
+  });
+});
+
+describe("Git plugin data protection", () => {
+  it("preserves root and nested .phoenix while cleaning ordinary siblings", async () => {
+    const root = await pnwFixture(); await pnwRepository(root);
+    for (const directory of [".phoenix", "ignored/.phoenix", "untracked/.phoenix"]) {
+      await mkdir(join(root, directory), { recursive: true });
+      await writeFile(join(root, directory, "state.obj"), "keep");
+    }
+    await writeFile(join(root, "ignored/remove.obj"), "remove");
+    await writeFile(join(root, "untracked/remove.obj"), "remove");
+    const preview = await pnwPreviewGitUntrackedCleanup(root);
+    expect(preview.repositories[0]!.untrackedAndIgnored).toEqual([join("ignored", "remove.obj"), join("untracked", "remove.obj")]);
+    expect(preview.repositories[0]!.preservedRepositories.join("\n")).not.toContain(".phoenix");
+    await pnwExecuteGitUntrackedCleanup(preview);
+    for (const directory of [".phoenix", "ignored/.phoenix", "untracked/.phoenix"]) {
+      expect(await readFile(join(root, directory, "state.obj"), "utf8")).toBe("keep");
+    }
+    expect(existsSync(join(root, "ignored/remove.obj"))).toBe(false);
+    expect(existsSync(join(root, "untracked/remove.obj"))).toBe(false);
+  });
+  it("does not discover Git repositories inside .phoenix", async () => {
+    const root = await pnwFixture(); await pnwRepository(join(root, ".phoenix/repository"));
+    expect((await pnwPreviewGitUntrackedCleanup(root)).repositories).toEqual([]);
   });
 });
 

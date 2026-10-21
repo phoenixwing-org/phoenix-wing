@@ -66,4 +66,4 @@ Header 排序只移动完整声明块，不应重新生成上述标点和空格�
 1. 这份 fixture 保留项目实际配置的语义；除非 KtAlarmClock 基线主动改变，不随意“现代化”字段名或默认值。
 2. clang-format 不同版本可能对旧字段名给出弃用提示。升级工具链时，应先用目标版本验证配置，再单独更新项目配置和 fixture。
 3. 排序结果应在 clang-format 前后保持相同的成员顺序；格式化器只负责布局，不应成为修复排序输出的必需步骤。
-4. 新发现的格式冲突先补最小 fixture 和幂等测试，再修改 `phoenix-wing/code-core`；DeskTools 与 KT Auto Code 不复制修正规则。
+4. 新发现的格式冲突先补最小 fixture 和幂等测试，再修改 `phoenix-wing/code-core`；消费者不复制修正规则。

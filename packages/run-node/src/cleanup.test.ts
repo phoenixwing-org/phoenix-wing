@@ -63,6 +63,132 @@ async function pnwGitFixture(): Promise<string> {
 }
 
 describe("Pnw cleanup node capability", () => {
+  it("Git forced cleanup preserves .phoenix, including cache inside a disposable parent", async () => {
+    const root = await pnwGitFixture();
+    for (const directory of [".phoenix", "ignored/.phoenix", "nested/.PHOENIX"]) {
+      await mkdir(join(root, directory), { recursive: true });
+      await writeFile(join(root, directory, "state.json"), "keep");
+    }
+    await writeFile(join(root, "ignored/remove.obj"), "remove");
+    await writeFile(join(root, "nested/remove.obj"), "remove");
+    await writeFile(join(root, "tracked.txt"), "modified");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    expect(preview.untrackedAndIgnored.join("\n").toLowerCase()).not.toContain(".phoenix");
+    await pnwExecuteGitForcedCleanup(preview);
+    for (const directory of [".phoenix", "ignored/.phoenix", "nested/.PHOENIX"]) {
+      expect(await readFile(join(root, directory, "state.json"), "utf8")).toBe("keep");
+    }
+    await expect(access(join(root, "ignored/remove.obj"))).rejects.toThrow();
+    await expect(access(join(root, "nested/remove.obj"))).rejects.toThrow();
+    expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("original\n");
+  });
+  it.each(["working", "index"])("refuses to reset tracked .phoenix data (%s)", async area => {
+    const root = await pnwGitFixture();
+    await mkdir(join(root, ".phoenix"));
+    await writeFile(join(root, ".phoenix/state.json"), "original");
+    await pnwExecFile("git", ["-C", root, "add", ".phoenix/state.json"]);
+    await pnwExecFile("git", ["-C", root, "commit", "-m", "tracked fixture data"]);
+    await writeFile(join(root, ".phoenix/state.json"), "keep");
+    if (area === "index") {
+      await pnwExecFile("git", ["-C", root, "add", ".phoenix/state.json"]);
+      await writeFile(join(root, ".phoenix/state.json"), "original");
+    }
+    await writeFile(join(root, "tracked.txt"), "do not reset anything");
+    await expect(pnwPreviewGitForcedCleanup(root)).rejects.toThrow(".phoenix");
+    expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("do not reset anything");
+  });
+  it.each([[".phoenix", false], [".PHOENIX", false], [".phoenix", true]] as const)("protects plugin data from reset obstruction (%s, staged deletion=%s)", async (directory, stagedDeletion) => {
+    const root = await pnwGitFixture();
+    const obstruction = join(root, "replacement [1]");
+    await writeFile(obstruction, "tracked file");
+    await pnwExecFile("git", ["-C", root, "add", "replacement [1]"]);
+    await pnwExecFile("git", ["-C", root, "commit", "-m", "tracked obstruction fixture"]);
+    if (stagedDeletion) await pnwExecFile("git", ["-C", root, "rm", "--cached", "replacement [1]"]);
+    await rm(obstruction);
+    const protectedDirectory = join(obstruction, "nested", directory);
+    await mkdir(protectedDirectory, { recursive: true });
+    await writeFile(join(protectedDirectory, "state.json"), "keep plugin data");
+    await writeFile(join(root, "tracked.txt"), "keep tracked edit");
+
+    await expect(pnwPreviewGitForcedCleanup(root)).rejects.toThrow(".phoenix");
+    expect(await readFile(join(protectedDirectory, "state.json"), "utf8")).toBe("keep plugin data");
+    expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("keep tracked edit");
+  });
+  it("revalidates reset obstruction when protected data appears after preview", async () => {
+    const root = await pnwGitFixture();
+    const obstruction = join(root, "replacement");
+    await writeFile(obstruction, "tracked file");
+    await pnwExecFile("git", ["-C", root, "add", "replacement"]);
+    await pnwExecFile("git", ["-C", root, "commit", "-m", "tracked obstruction fixture"]);
+    await rm(obstruction);
+    await mkdir(obstruction);
+    await writeFile(join(root, "tracked.txt"), "keep tracked edit");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    await mkdir(join(obstruction, ".phoenix"));
+    await writeFile(join(obstruction, ".phoenix", "state.json"), "keep late plugin data");
+
+    await expect(pnwExecuteGitForcedCleanup(preview)).rejects.toThrow(".phoenix");
+    expect(await readFile(join(obstruction, ".phoenix", "state.json"), "utf8")).toBe("keep late plugin data");
+    expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("keep tracked edit");
+  });
+  it("does not confuse sibling path prefixes with reset obstruction", async () => {
+    const root = await pnwGitFixture();
+    await mkdir(join(root, "tracked.txt-sibling", ".phoenix"), { recursive: true });
+    await writeFile(join(root, "tracked.txt-sibling", ".phoenix", "state.json"), "keep sibling data");
+    await writeFile(join(root, "tracked.txt"), "modified");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    await pnwExecuteGitForcedCleanup(preview);
+    expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("original\n");
+    expect(await readFile(join(root, "tracked.txt-sibling", ".phoenix", "state.json"), "utf8")).toBe("keep sibling data");
+  });
+  it.runIf(process.platform !== "win32")("protects plugin data obstructing a HEAD symlink", async () => {
+    const root = await pnwGitFixture();
+    const obstruction = join(root, "tracked-link");
+    await symlink("tracked.txt", obstruction);
+    await pnwExecFile("git", ["-C", root, "add", "tracked-link"]);
+    await pnwExecFile("git", ["-C", root, "commit", "-m", "tracked link fixture"]);
+    await rm(obstruction);
+    await mkdir(join(obstruction, ".phoenix"), { recursive: true });
+    await writeFile(join(obstruction, ".phoenix", "state.json"), "keep plugin data");
+    await expect(pnwPreviewGitForcedCleanup(root)).rejects.toThrow(".phoenix");
+    expect(await readFile(join(obstruction, ".phoenix", "state.json"), "utf8")).toBe("keep plugin data");
+  });
+  it.runIf(process.platform !== "win32")("does not follow links when checking a reset obstruction", async () => {
+    const root = await pnwGitFixture();
+    const linkedRoot = await mkdtemp(join(tmpdir(), "pnw-reset-linked-fixture-"));
+    pnwCleanupTestRoots.push(linkedRoot);
+    await mkdir(join(linkedRoot, ".phoenix"));
+    await writeFile(join(linkedRoot, ".phoenix", "state.json"), "keep external data");
+    const obstruction = join(root, "replacement");
+    await writeFile(obstruction, "tracked file");
+    await pnwExecFile("git", ["-C", root, "add", "replacement"]);
+    await pnwExecFile("git", ["-C", root, "commit", "-m", "tracked obstruction fixture"]);
+    await rm(obstruction);
+    await mkdir(obstruction);
+    await symlink(linkedRoot, join(obstruction, "external"), "dir");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    expect(preview.repository).toBe(await realpath(root));
+    expect(await readFile(join(linkedRoot, ".phoenix", "state.json"), "utf8")).toBe("keep external data");
+  });
+  it("does not inherit recursive submodule reset into protected data", async () => {
+    const root = await pnwGitFixture();
+    const moduleSource = await pnwGitFixture();
+    await writeFile(join(moduleSource, "replacement"), "tracked module file");
+    await pnwExecFile("git", ["-C", moduleSource, "add", "replacement"]);
+    await pnwExecFile("git", ["-C", moduleSource, "commit", "-m", "module obstruction fixture"]);
+    await pnwExecFile("git", ["-C", root, "-c", "protocol.file.allow=always", "submodule", "add", moduleSource, "module"]);
+    await pnwExecFile("git", ["-C", root, "commit", "-m", "module fixture"]);
+    await pnwExecFile("git", ["-C", root, "config", "submodule.recurse", "true"]);
+    const obstruction = join(root, "module", "replacement");
+    await rm(obstruction);
+    await mkdir(join(obstruction, ".phoenix"), { recursive: true });
+    await writeFile(join(obstruction, ".phoenix", "state.json"), "keep module data");
+    await writeFile(join(root, "module", "tracked.txt"), "keep module edit");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    await pnwExecuteGitForcedCleanup(preview);
+    expect(await readFile(join(obstruction, ".phoenix", "state.json"), "utf8")).toBe("keep module data");
+    expect(await readFile(join(root, "module", "tracked.txt"), "utf8")).toBe("keep module edit");
+  });
   it("预览直属产物并只删除已冻结目标", async () => {
     const root = await pnwCleanupFixture();
     const canonicalRoot = await realpath(root);
@@ -296,6 +422,15 @@ describe("Pnw cleanup node capability", () => {
     const preview = await pnwPreviewGitForcedCleanup(root);
     const { cleanTargets: _removed, ...legacy } = preview;
     await expect(pnwExecuteGitForcedCleanup(legacy as typeof preview)).rejects.toThrow("重新预览");
+    expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("keep tracked edit");
+  });
+
+  it("Git 缺少祖先身份的旧快照在 reset 前拒绝", async () => {
+    const root = await pnwGitFixture();
+    await writeFile(join(root, "tracked.txt"), "keep tracked edit");
+    const preview = await pnwPreviewGitForcedCleanup(root);
+    const { ancestorIdentities: _removed, ...legacy } = preview;
+    await expect(pnwExecuteGitForcedCleanup(legacy as typeof preview)).rejects.toThrow("缺少祖先身份");
     expect(await readFile(join(root, "tracked.txt"), "utf8")).toBe("keep tracked edit");
   });
 

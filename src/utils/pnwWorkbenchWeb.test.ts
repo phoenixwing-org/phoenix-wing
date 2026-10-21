@@ -7,6 +7,7 @@ import {
   PNW_DEFAULT_WORKBENCH_LAYOUT_STATE,
   PNW_DEFAULT_WORKBENCH_TAB_BAR_PLACEMENT,
   PNW_WORKBENCH_NARROW_BREAKPOINT,
+  PNW_WORKBENCH_PANEL_SIZE_LIMITS,
   PNW_DEFAULT_ACTIVITY_TREE_APPEARANCE,
   PNW_DEFAULT_RIBBON_APPEARANCE,
   pnwAvailableViewBlockIds,
@@ -66,6 +67,144 @@ describe("PnwWorkbench 四区布局状态", () => {
       .toEqual(visibleState.sizes);
     expect(PNW_DEFAULT_WORKBENCH_LAYOUT_STATE.visibility)
       .toEqual({ primary: false, bottom: false, secondary: false });
+  });
+
+  it.each([
+    [1920, 1152],
+    [3840, 2304],
+    [1281, 768],
+    [1536.5, 921],
+  ])("Primary 在 %spx View 中以向下取整的 60%% 为上限", (width, expected) => {
+    const resolved = pnwResizeWorkbenchLayoutState(
+      visibleState,
+      "primary",
+      Number.MAX_SAFE_INTEGER,
+      { width, height: 1080 },
+    );
+    expect(resolved.sizes.primaryWidth).toBe(expected);
+    expect(resolved.sizes.primaryWidth).toBeLessThanOrEqual(width * 0.6);
+    expect(width - resolved.sizes.primaryWidth - resolved.sizes.secondaryWidth)
+      .toBeGreaterThanOrEqual(PNW_WORKBENCH_PANEL_SIZE_LIMITS.editorMinWidth);
+  });
+
+  it("Primary 比例限制后仍优先收缩 Secondary 并保留两个面板与 Editor 的下限", () => {
+    const resolved = pnwResizeWorkbenchLayoutState(
+      visibleState,
+      "primary",
+      Number.MAX_SAFE_INTEGER,
+      { width: 1000, height: 800 },
+    );
+    expect(resolved.sizes).toEqual({
+      primaryWidth: 520,
+      secondaryWidth: 160,
+      bottomHeight: 240,
+    });
+    expect(1000 - resolved.sizes.primaryWidth - resolved.sizes.secondaryWidth).toBe(320);
+    expect(pnwResolveWorkbenchLayoutState({
+      ...visibleState,
+      sizes: { ...visibleState.sizes, primaryWidth: 500 },
+    }, { width: 1000, height: 800 }).sizes).toEqual({
+      primaryWidth: 500,
+      secondaryWidth: 180,
+      bottomHeight: 240,
+    });
+  });
+
+  it("隐藏 Secondary 时只按 Primary 比例与 Editor 预算约束", () => {
+    const resolved = pnwResizeWorkbenchLayoutState({
+      ...visibleState,
+      visibility: { ...visibleState.visibility, secondary: false },
+    }, "primary", Number.MAX_SAFE_INTEGER, { width: 700, height: 800 });
+    expect(resolved.sizes).toEqual({
+      primaryWidth: 380,
+      secondaryWidth: 300,
+      bottomHeight: 240,
+    });
+  });
+
+  it("无 viewport 的首选宽度可超过 560px，其他面板的固定范围不变", () => {
+    expect(pnwResolveWorkbenchLayoutState({
+      ...visibleState,
+      sizes: { primaryWidth: 1400, secondaryWidth: 900, bottomHeight: 900 },
+    }).sizes).toEqual({ primaryWidth: 1400, secondaryWidth: 560, bottomHeight: 600 });
+    expect(PNW_WORKBENCH_PANEL_SIZE_LIMITS).toEqual({
+      primaryMin: 160,
+      primaryMax: Number.MAX_SAFE_INTEGER,
+      primaryMaxRatio: 0.6,
+      secondaryMin: 160,
+      secondaryMax: 560,
+      bottomMin: 112,
+      bottomMax: 600,
+      editorMinWidth: 320,
+      editorMinHeight: 180,
+    });
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "不可测的 View 宽度 %s 不限制有限 Primary 首选值",
+    (width) => {
+      expect(pnwResolveWorkbenchLayoutState({
+        ...visibleState,
+        sizes: { ...visibleState.sizes, primaryWidth: 1400 },
+      }, { width, height: 800 }).sizes.primaryWidth).toBe(1400);
+    },
+  );
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "非法 Primary 首选值 %s 回到默认宽度",
+    (primaryWidth) => {
+      expect(pnwResolveWorkbenchLayoutState({
+        ...visibleState,
+        sizes: { ...visibleState.sizes, primaryWidth },
+      }).sizes.primaryWidth).toBe(260);
+    },
+  );
+
+  it("极大有限 Primary 值限制为安全整数，合法小数仍按既有像素规则取整", () => {
+    expect(pnwResizeWorkbenchLayoutState(visibleState, "primary", Number.MAX_VALUE)
+      .sizes.primaryWidth).toBe(Number.MAX_SAFE_INTEGER);
+    expect(pnwResizeWorkbenchLayoutState(visibleState, "primary", 900.7)
+      .sizes.primaryWidth).toBe(901);
+    expect(pnwResizeWorkbenchLayoutState(visibleState, "primary", -Number.MAX_VALUE)
+      .sizes.primaryWidth).toBe(160);
+  });
+
+  it("隐藏 Primary 保留大屏偏好，显示时临时夹住并能在 View 变大后恢复", () => {
+    const preferred = {
+      ...visibleState,
+      sizes: { ...visibleState.sizes, primaryWidth: 2000 },
+    };
+    const hidden = {
+      ...preferred,
+      visibility: { ...preferred.visibility, primary: false },
+    };
+    expect(pnwResolveWorkbenchLayoutState(hidden, { width: 1000, height: 800 })
+      .sizes.primaryWidth).toBe(2000);
+    expect(pnwResolveWorkbenchLayoutState(preferred, { width: 1000, height: 800 })
+      .sizes.primaryWidth).toBe(520);
+    expect(pnwResolveWorkbenchLayoutState(preferred, { width: 3840, height: 2160 })
+      .sizes.primaryWidth).toBe(2000);
+    expect(preferred.sizes.primaryWidth).toBe(2000);
+  });
+
+  it("resolve 与 resize 不突变或共享输入的尺寸和显隐对象", () => {
+    const state = Object.freeze({
+      visibility: Object.freeze({ ...visibleState.visibility }),
+      sizes: Object.freeze({ ...visibleState.sizes, primaryWidth: 1400 }),
+    });
+    const viewport = Object.freeze({ width: 1000, height: 800 });
+    const resolved = pnwResolveWorkbenchLayoutState(state, viewport);
+    const resized = pnwResizeWorkbenchLayoutState(state, "primary", 900, viewport);
+    for (const result of [resolved, resized]) {
+      expect(result).not.toBe(state);
+      expect(result.visibility).not.toBe(state.visibility);
+      expect(result.sizes).not.toBe(state.sizes);
+      expect(result.sizes.primaryWidth).toBe(520);
+    }
+    expect(state).toEqual({
+      visibility: visibleState.visibility,
+      sizes: { ...visibleState.sizes, primaryWidth: 1400 },
+    });
   });
 });
 
@@ -140,13 +279,25 @@ describe("PnwWorkbench View 标签位置", () => {
       colorScheme: "system",
       layoutState: {
         visibility: { primary: true, bottom: false, secondary: false },
-        sizes: { primaryWidth: 560, secondaryWidth: 280, bottomHeight: 112 },
+        sizes: { primaryWidth: 900, secondaryWidth: 280, bottomHeight: 112 },
       },
       settingsPositions: {
         quick: { x: 16, y: 120 },
         full: { x: 44, y: 8 },
       },
     });
+  });
+
+  it("无 viewport 的显示偏好归一化往返保留超过旧上限的 Primary 宽度", () => {
+    const preferences = pnwNormalizeWorkbenchDisplayPreferences({
+      layoutState: {
+        visibility: { primary: true, bottom: false, secondary: false },
+        sizes: { primaryWidth: 900, secondaryWidth: 280, bottomHeight: 190 },
+      },
+    });
+    expect(preferences.layoutState.sizes.primaryWidth).toBe(900);
+    expect(pnwNormalizeWorkbenchDisplayPreferences(JSON.parse(JSON.stringify(preferences))))
+      .toEqual(preferences);
   });
 
   it("允许 consumer 的合法默认标签位置参与缺省回退", () => {

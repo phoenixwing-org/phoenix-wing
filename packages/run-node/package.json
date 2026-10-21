@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/run-node",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "Phoenix Run Node.js 工作区发现、tasks.json 导入与 launch plan adapter",
   "type": "module",
   "sideEffects": false,

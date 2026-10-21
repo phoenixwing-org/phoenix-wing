@@ -27,7 +27,7 @@ import type { PnwNavigationTreeModel } from "@phoenix-wing/code-core/ui/model";
 [`docs/Pnw通用NavigationTreeWebComponent.md`](../../docs/Pnw通用NavigationTreeWebComponent.md)和
 [`docs/Pnw可管理Combo与统一清理能力.md`](../../docs/Pnw可管理Combo与统一清理能力.md)。
 
-`kt-auto-code` 与 Desk Tools 应直接消费本包。旧 `phoenix-wing/code-core` subpath 仅保留兼容 re-export，不再持有算法真源。
+编辑器扩展与本地工作台应直接消费本包。旧 `phoenix-wing/code-core` subpath 仅保留兼容 re-export，不再持有算法真源。
 
 `@phoenix-wing/code-core/fixtures/pure-capabilities-v1.json` 是 UUID 与 workspace path 的跨宿主 golden。其 SHA-256 为 `1d894c5ccffb8d8840c2fcf8a032ed34c79e7c5d2e44ad95fe1bf84665b32e8c`；消费者应比较字节与行为，不复制正则、格式器或路径包含算法。
 
