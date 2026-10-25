@@ -14,7 +14,7 @@ import { KtCodegenReader } from "./KtCodegenReader.js";
 /**
  * 宿主编排层：维护共享 Param，并协调 Reader、Adapter 与 Core。
  *
- * `kt-auto-code` 或 `phoenix-desk-tools` 通常持有一个 Controller。界面、表格和
+ * 产品宿主通常持有一个 Controller。界面、表格和
  * 生成流程都通过 `param` 访问同一数据实例。Controller 不实现具体 CSV/JSON
  * 语法，也不包含目标代码生成算法。
  */

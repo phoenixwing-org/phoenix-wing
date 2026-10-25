@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TAG, PNW_CONTENT_BLOCK_TOGGLE, pnwDefineContentBlock } from "./elements/PnwContentBlock.js";
+
 import {
   pnwCodeNextReorderSelection,
   pnwCodeProjectReorderMembersPanel,
@@ -55,6 +57,11 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 :host([presentation="detailBlock"]) h2,:host([presentation="detailBlock"]) .summary,:host([presentation="results"]) h2,:host([presentation="results"]) .summary { display:none; }
 :host([presentation="results"]) .actions,:host([presentation="results"]) .options { display:none; }
 :host([presentation="results"]) .groups { max-height:min(58vh,520px); overflow:auto; scrollbar-gutter:stable; }
+:host([block-presentation]) .shell { margin:0; padding:0; border:0; border-radius:0; overflow:visible; }
+:host([block-presentation]) .group { border:0; }
+:host([block-presentation]) .groups { max-height:none; margin:0; overflow:visible; }
+:host([block-presentation]) .pnw-block-body { min-width:0; padding:4px 6px; }
+:host([block-presentation]) .group-header { display:contents; }
 `;
 
 export class PnwCodeReorderMembersPanel extends HTMLElement {
@@ -62,6 +69,16 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
   private currentModel: PnwCodeReorderMembersPanelModel | undefined;
   private selection: PnwCodeReorderMembersSelectionState = { selectedUris: [] };
   private resultFilter: "all" | "normal" | "error" = "all";
+  private unifiedBlocks = false;
+  private readonly groupExpanded = new Map<string, boolean>();
+
+  get blockPresentation(): boolean { return this.unifiedBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.unifiedBlocks === Boolean(value)) return;
+    this.unifiedBlocks = Boolean(value);
+    this.toggleAttribute("block-presentation", this.unifiedBlocks);
+    this.render();
+  }
 
   get model(): PnwCodeReorderMembersPanelModel | undefined { return this.currentModel; }
   set model(value: PnwCodeReorderMembersPanelModel | undefined) {
@@ -129,7 +146,20 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
         groups.append(this.group("错误 / 已阻止", projection.blockedRows, model));
       }
     }
-    shell.append(title, summary, actions, options, status, filters, groups); this.root.replaceChildren(style, shell);
+    if (this.unifiedBlocks) {
+      pnwDefineContentBlock();
+      if (model.presentation !== "results") {
+        const execution = document.createElement(PNW_CONTENT_BLOCK_TAG); execution.collapsible = false;
+        const heading = document.createElement("span"); heading.slot = "title"; heading.textContent = "执行";
+        const body = document.createElement("div"); body.slot = "body"; body.className = "pnw-block-body";
+        body.append(summary, actions, options); execution.append(heading, body); shell.append(execution);
+      }
+      const results = document.createElement(PNW_CONTENT_BLOCK_TAG); results.collapsible = false;
+      const heading = document.createElement("span"); heading.slot = "title"; heading.textContent = "排序结果";
+      const body = document.createElement("div"); body.slot = "body"; body.append(status, filters, groups);
+      results.append(heading, body); shell.append(results);
+    } else shell.append(title, summary, actions, options, status, filters, groups);
+    this.root.replaceChildren(style, shell);
     focusButton?.focus();
   }
 
@@ -146,7 +176,19 @@ export class PnwCodeReorderMembersPanel extends HTMLElement {
     const list = document.createElement("ul"); list.className = "list";
     for (const row of rows) list.append(this.row(row, model.status === "running", Boolean(selection) && this.enabled("selection"), model.reorderRevision));
     if (!rows.length) { const empty = document.createElement("li"); empty.className = "empty"; empty.textContent = "没有文件"; list.append(empty); }
-    group.append(list); return group;
+    if (this.unifiedBlocks) {
+      pnwDefineContentBlock();
+      const block = document.createElement(PNW_CONTENT_BLOCK_TAG); block.level = "secondary";
+      block.open = this.groupExpanded.get(titleText) ?? true;
+      block.addEventListener(PNW_CONTENT_BLOCK_TOGGLE, event => {
+        if (event.target === block) this.groupExpanded.set(titleText, block.open);
+      });
+      label.slot = "title"; detail.slot = "status"; list.slot = "body";
+      const selectAll = header.querySelector("input");
+      if (selectAll) { selectAll.slot = "actions"; block.append(selectAll); }
+      block.append(label, detail, list); group.replaceChildren(block);
+    } else group.append(list);
+    return group;
   }
 
   private row(row: PnwCodeReorderMembersPanelRow, running: boolean, selectable: boolean, reorderRevision?: number): HTMLElement {

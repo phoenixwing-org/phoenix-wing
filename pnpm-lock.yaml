@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@phoenix-wing/code-core':
-        specifier: workspace:0.6.8
+        specifier: workspace:0.6.9
         version: link:packages/code-core
       '@phoenix-wing/db-node':
         specifier: workspace:0.6.3
@@ -138,6 +138,10 @@ importers:
         version: 3.2.6(@types/node@22.20.0)(happy-dom@15.11.7)
 
   packages/kt-codegen:
+    dependencies:
+      '@phoenix-wing/code-core':
+        specifier: workspace:0.6.9
+        version: link:../code-core
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

@@ -9,6 +9,8 @@ const pwwModalStack = new URLSearchParams(window.location.search).get("example")
 const PwwWorkbench = defineAsyncComponent(() => import("./App.vue"));
 const PwwHeaderSlots = defineAsyncComponent(() => import("./validation/PwwHeaderSlotsValidation.vue"));
 const PwwTabMenu = defineAsyncComponent(() => import("./validation/PwwTabContextMenuValidation.vue"));
+const PwwContentBlocks = defineAsyncComponent(() => import("./validation/PwwContentBlockValidation.vue"));
+const pwwContentBlocks = new URLSearchParams(window.location.search).get("example") === "content-block";
 const pwwHeaderSlots = new URLSearchParams(window.location.search).get("example") === "header";
 const pwwTabMenu = new URLSearchParams(window.location.search).get("example") === "tab-menu";
 const PwwSidebarCards = defineAsyncComponent(() => import("./validation/PwwSidebarCardValidation.vue"));
@@ -23,12 +25,13 @@ onMounted(() => { document.title = `Wing 示例 · ${pwwSource.mode === "develop
   <PnwOverlayThemeProvider :color-scheme="pwwTheme">
     <div class="pww-example-app">
       <PwwVerificationBanner :source="pwwSource" :runtime-version="PNW_VERSION" />
-      <PnwPageHeader v-if="!pwwStandaloneWorkbench" :title="pwwModalStack ? '嵌套模态确认' : pwwSidebarCards ? 'Card 区块' : pwwTabMenu ? '工作台标签上下文菜单' : pwwHeaderSlots ? 'View Header 插槽' : '内部 Tab 与浮窗排列'">
+      <PnwPageHeader v-if="!pwwStandaloneWorkbench" :title="pwwContentBlocks ? 'Host-neutral 内容 Block' : pwwModalStack ? '嵌套模态确认' : pwwSidebarCards ? 'Card 区块' : pwwTabMenu ? '工作台标签上下文菜单' : pwwHeaderSlots ? 'View Header 插槽' : '内部 Tab 与浮窗排列'">
         <template #right>
           <a v-if="pwwTabMenu" class="pww-workbench-link" href="?">返回首页</a>
           <a v-else class="pww-workbench-link" href="?example=tab-menu">标签上下文菜单</a>
           <a class="pww-workbench-link" href="?example=modal-stack">嵌套模态确认</a>
           <a class="pww-workbench-link" href="?example=cards">Card 区块</a>
+          <a class="pww-workbench-link" :href="pwwContentBlocks ? '?' : '?example=content-block'">{{ pwwContentBlocks ? '返回首页' : '内容 Block' }}</a>
           <a class="pww-workbench-link" :href="pwwHeaderSlots ? '?' : '?example=header'">{{ pwwHeaderSlots ? '内部 Tab 与浮窗排列' : 'View Header 插槽' }}</a>
           <a class="pww-workbench-link" href="?example=workbench" target="_blank" rel="noopener noreferrer" title="在新标签页中打开完整工作台"><PnwIcon name="window-float" :size="16" />完整工作台示例 · 新标签打开</a>
           <PnwColorSchemeToggle v-model="pwwTheme" />
@@ -37,6 +40,7 @@ onMounted(() => { document.title = `Wing 示例 · ${pwwSource.mode === "develop
       </PnwPageHeader>
       <div class="pww-example-body" :data-example-page="pwwStandaloneWorkbench ? 'workbench' : 'validation'">
         <PwwWorkbench v-if="pwwStandaloneWorkbench" />
+        <PwwContentBlocks v-else-if="pwwContentBlocks" />
         <PwwModalStack v-else-if="pwwModalStack" />
         <PwwSidebarCards v-else-if="pwwSidebarCards" />
         <PwwHeaderSlots v-else-if="pwwHeaderSlots" />

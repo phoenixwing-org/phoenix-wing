@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TOGGLE, pnwDefineContentBlock, type PnwContentBlock } from "@phoenix-wing/code-core/ui";
+
 import { KT_CODEGEN_BLOCK_PRESENTATIONS } from "../KtCodegenBlockPresentation.js";
 import { KT_CODEGEN_BLOCK_HEADER_STYLE } from "./KtCodegenBlockHeader.js";
 import type { KtCodegenBlockKey } from "../blocks/legacy-blocks.js";
@@ -42,6 +44,7 @@ const STYLE = `
   background: var(--pnw-codegen-bg); font: 12px/1.35 var(--vscode-font-family, system-ui, sans-serif);
 }
 :host([collapsible]) { border: 1px solid var(--pnw-codegen-border); }
+:host([data-content-blocks]), :host([data-content-blocks][collapsible]) { border: 0; border-radius: 0; }
 * { box-sizing: border-box; }
 button, input { font: inherit; }
 button { cursor: pointer; }
@@ -106,6 +109,14 @@ export class KtCodegenControlPanel extends HTMLElement {
   private selectedResultKey: string | undefined;
   private currentSplitRatio = 42;
   private showResultPaths = false;
+  private useContentBlocks = false;
+  private contentBlock: PnwContentBlock | undefined;
+
+  get blockPresentation(): boolean { return this.useContentBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.useContentBlocks === Boolean(value)) return;
+    this.useContentBlocks = Boolean(value); this.toggleAttribute("data-content-blocks", this.useContentBlocks); this.render();
+  }
 
   get model(): KtCodegenControlUiModel | undefined { return this.currentModel; }
   set model(value: KtCodegenControlUiModel | undefined) {
@@ -135,9 +146,19 @@ export class KtCodegenControlPanel extends HTMLElement {
     this.render();
   }
 
-  connectedCallback(): void { this.render(); }
+  connectedCallback(): void {
+    if (Object.prototype.hasOwnProperty.call(this, "blockPresentation")) {
+      const value = this.blockPresentation; delete (this as Partial<KtCodegenControlPanel>).blockPresentation; this.blockPresentation = value;
+    }
+    this.render();
+  }
 
-  attributeChangedCallback(): void { this.render(); }
+  attributeChangedCallback(): void {
+    if (this.useContentBlocks && this.contentBlock) {
+      this.contentBlock.collapsible = this.collapsible;
+      this.contentBlock.open = !this.collapsed;
+    } else this.render();
+  }
 
   private render(): void {
     if (!this.isConnected) return;
@@ -150,7 +171,7 @@ export class KtCodegenControlPanel extends HTMLElement {
     name.className = "pnw-codegen-title-name";
     name.dataset.codegenBlockTitle = "";
     name.textContent = "预检结果";
-    if (this.collapsible) {
+    if (this.collapsible && !this.useContentBlocks) {
       const collapse = document.createElement("button");
       collapse.type = "button";
       collapse.className = "pnw-codegen-collapse";
@@ -183,8 +204,8 @@ export class KtCodegenControlPanel extends HTMLElement {
     }
     const plan = this.currentModel?.preflight?.plan;
     const issueCount = plan?.diagnostics.filter((item) => item.severity !== "info").length ?? 0;
-    const actions = this.collapsible ? document.createElement("div") : title;
-    if (this.collapsible) actions.dataset.codegenBlockActions = "";
+    const actions = this.collapsible || this.useContentBlocks ? document.createElement("div") : title;
+    if (actions !== title) actions.dataset.codegenBlockActions = "";
     actions.append(
       this.filterButton(`命中 ${plan?.markerRegions.length ?? 0}`, "hits"),
       this.filterButton(`问题 ${issueCount}`, "issues"),
@@ -218,7 +239,7 @@ export class KtCodegenControlPanel extends HTMLElement {
     if (!plan || !this.currentModel?.preflight) {
       summary.textContent = "尚未预检。可点击页面上方“预检”，或直接点击 Apply 自动预检并写入源码。";
       body.append(summary);
-      this.root.replaceChildren(style, title, body);
+      this.present(style, title, body);
       return;
     }
     summary.textContent = `${plan.markerRegions.length} 个区域 · ${plan.artifacts.length} 个产物 · ${plan.diagnostics.length} 条诊断`
@@ -241,7 +262,48 @@ export class KtCodegenControlPanel extends HTMLElement {
     detail.append(selected ? this.detailNode(selected) : this.empty("选择左侧条目查看详情。"));
     layout.append(master, this.resultSplitter(layout), detail);
     body.append(summary, layout);
-    this.root.replaceChildren(style, title, body);
+    this.present(style, title, body);
+  }
+
+  private present(style: HTMLStyleElement, title: HTMLElement, body: HTMLElement): void {
+    if (!this.useContentBlocks) { this.root.replaceChildren(style, title, body); return; }
+    pnwDefineContentBlock();
+    if (!this.contentBlock) {
+      const block = document.createElement("pnw-content-block");
+      block.addEventListener(PNW_CONTENT_BLOCK_TOGGLE, (event) => {
+        if (event.target !== block || !this.collapsible) return;
+        this.collapsed = !block.open;
+        this.dispatchEvent(new CustomEvent<KtCodegenControlCollapseChangeDetail>(KT_CODEGEN_CONTROL_COLLAPSE_CHANGE, {
+          bubbles: true, composed: true, detail: { collapsed: this.collapsed },
+        }));
+      });
+      this.contentBlock = block;
+    }
+    const block = this.contentBlock;
+    block.collapsible = this.collapsible;
+    block.open = !this.collapsed;
+    body.slot = "body"; body.hidden = false;
+    const actions = title.querySelector<HTMLElement>("[data-codegen-block-actions]")!;
+    const nextCache = actions.querySelector<HTMLElement>(".pnw-codegen-cache")!;
+    const previousActions = block.querySelector<HTMLElement>('[slot="actions"]');
+    if (previousActions) {
+      const oldFilters = previousActions.querySelectorAll<HTMLButtonElement>(".pnw-codegen-filter");
+      actions.querySelectorAll<HTMLButtonElement>(".pnw-codegen-filter").forEach((next, index) => {
+        const previous = oldFilters[index]!;
+        previous.textContent = next.textContent;
+        previous.setAttribute("aria-pressed", next.getAttribute("aria-pressed")!);
+      });
+      previousActions.querySelector<HTMLInputElement>("input")!.checked = this.showResultPaths;
+      const cache = block.querySelector<HTMLElement>('[slot="status"]')!;
+      cache.textContent = nextCache.textContent; cache.title = nextCache.title;
+      block.querySelector('[slot="body"]')?.replaceWith(body);
+    } else {
+      const name = title.querySelector<HTMLElement>(".pnw-codegen-title-name")!;
+      name.slot = "title"; actions.slot = "actions"; nextCache.slot = "status";
+      block.replaceChildren(name, nextCache, actions, body);
+    }
+    // Keep the shared Header and its original filter/checkbox handlers connected during refresh.
+    if (block.parentNode !== this.root) this.root.replaceChildren(style, block);
   }
 
   private cacheLabel(): string {

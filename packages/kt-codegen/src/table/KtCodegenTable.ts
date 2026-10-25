@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TOGGLE, pnwDefineContentBlock, type PnwContentBlock } from "@phoenix-wing/code-core/ui";
+
 import { KtCodegenOptions } from "../KtCodegenOptions.js";
 import { KtCodegenParam } from "../KtCodegenParam.js";
 import {
@@ -80,6 +82,9 @@ export class KtCodegenTable extends HTMLElement {
   private readonly core = new KtCodegenTableCore(this.param);
   private readonly root: ShadowRoot;
   private readonly fittedWidths = new Map<KtCodegenTableItemField, number>();
+  private useContentBlocks = false;
+  private contentBlock: PnwContentBlock | undefined;
+  private contentBody: HTMLElement | undefined;
   private columns: readonly KtCodegenTableColumn[] = KT_CODEGEN_TABLE_COLUMNS;
   private options: KtCodegenTableOptions = {
     tcKind: KtCodegenOptions.tcKinds,
@@ -94,7 +99,20 @@ export class KtCodegenTable extends HTMLElement {
   }
 
   connectedCallback(): void {
+    if (Object.prototype.hasOwnProperty.call(this, "blockPresentation")) {
+      const value = this.blockPresentation; delete (this as Partial<KtCodegenTable>).blockPresentation; this.blockPresentation = value;
+    }
     this.render();
+  }
+
+  /** Presentation only: move the existing header/body nodes without rebuilding cells or model state. */
+  get blockPresentation(): boolean { return this.useContentBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.useContentBlocks === Boolean(value)) return;
+    this.useContentBlocks = Boolean(value);
+    this.toggleAttribute("data-content-blocks", this.useContentBlocks);
+    this.syncBlockPresentation();
+    this.syncDisclosure();
   }
 
   attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
@@ -483,11 +501,56 @@ export class KtCodegenTable extends HTMLElement {
     toggle.setAttribute("aria-label", disclosure.label);
     toggle.setAttribute("aria-expanded", String(disclosure.expanded));
     indicator.textContent = "›";
+    if (this.useContentBlocks && this.contentBlock) {
+      plainCaption.hidden = true; toggle.hidden = true; toggle.disabled = true;
+      shell.hidden = false; statusbar.hidden = false;
+      this.contentBlock.collapsible = this.collapsible;
+      if (disclosure.hidden && active && (shell.contains(active) || statusbar.contains(active))) this.contentBlock.focusHeader({ preventScroll: true });
+      this.contentBlock.open = !this.collapsed;
+      return;
+    }
     shell.hidden = disclosure.hidden;
     statusbar.hidden = disclosure.hidden;
     if (disclosure.hidden && active && (shell.contains(active) || statusbar.contains(active))) {
       toggle.focus();
     }
+  }
+
+  private syncBlockPresentation(): void {
+    const toolbar = this.root.querySelector<HTMLElement>(`.${KT_CODEGEN_TABLE_CLASSES.toolbar}`);
+    const shell = this.root.querySelector<HTMLElement>("[data-role=table-shell]");
+    const statusbar = this.root.querySelector<HTMLElement>("[data-role=statusbar]");
+    if (!toolbar || !shell || !statusbar) return;
+    const active = this.root.activeElement as HTMLElement | null;
+    const selection = active instanceof HTMLInputElement && ["text", "search", "url", "tel", "password"].includes(active.type)
+      ? [active.selectionStart, active.selectionEnd] as const : undefined;
+    if (this.useContentBlocks) {
+      pnwDefineContentBlock();
+      if (!this.contentBlock) {
+        this.contentBlock = document.createElement("pnw-content-block");
+        const title = document.createElement("span"); title.slot = "title"; title.textContent = "参数表";
+        this.contentBody = document.createElement("div"); this.contentBody.slot = "body";
+        this.contentBody.className = "pnw-kt-codegen-content-body";
+        this.contentBlock.append(title);
+        const block = this.contentBlock;
+        block.addEventListener(PNW_CONTENT_BLOCK_TOGGLE, (event) => {
+          if (event.target === block) this.handleCollapseToggle();
+        });
+      }
+      toolbar.slot = "actions";
+      this.contentBody!.append(shell, statusbar);
+      this.contentBlock.append(toolbar, this.contentBody!);
+      this.root.append(this.contentBlock);
+    } else if (this.contentBlock?.parentNode === this.root) {
+      toolbar.removeAttribute("slot"); this.root.append(toolbar, shell, statusbar); this.contentBlock.remove();
+    }
+    if (active && this.root.contains(active)) {
+      if (this.useContentBlocks && active.getAttribute("data-role") === "collapse-toggle") this.contentBlock!.focusHeader({ preventScroll: true });
+      else {
+        active.focus({ preventScroll: true });
+        if (active instanceof HTMLInputElement && selection && selection[0] !== null && selection[1] !== null) active.setSelectionRange(selection[0], selection[1]);
+      }
+    } else if (active === this.contentBlock) this.root.querySelector<HTMLElement>("[data-role=collapse-toggle]")?.focus();
   }
 
   private syncSelection(): void {

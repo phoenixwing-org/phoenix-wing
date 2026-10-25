@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TOGGLE, pnwDefineContentBlock, type PnwContentBlock } from "@phoenix-wing/code-core/ui";
+
 import {
   ktCodegenDefineControlCatalogElement,
   type KtCodegenControlCatalog,
@@ -80,6 +82,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .pnw-codegen-report-directory { width: 100%; min-height: 25px; margin: 5px 0 0; padding: 2px 7px; color: inherit; background: var(--vscode-button-secondaryBackground, var(--btn-bg, transparent)); border: 1px solid var(--pnw-codegen-border); border-radius: 3px; }
 .pnw-codegen-overlay { position: absolute; z-index: 20; inset: 0; display: grid; place-content: center; gap: 6px; padding: 16px; background: color-mix(in srgb, var(--pnw-codegen-bg) 88%, transparent); border: 1px solid var(--pnw-codegen-focus); border-radius: 6px; text-align: center; cursor: progress; }
 .pnw-codegen-overlay[hidden] { display: none; }
+:host([data-content-blocks]) .pnw-codegen-current-file { flex: 1 1 auto; max-width: none; }
 `;
 
 export class KtCodegenPrimaryPanel extends HTMLElement {
@@ -89,10 +92,26 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
   private currentModel: KtCodegenPrimaryUiModel | undefined;
   private readonly expanded = new Map<string, boolean>([["current", true], ["documents", true], ["reports", true], ["controls", true], ["candidates", true]]);
   private readonly scrollOffsets = new Map<string, number>();
+  private useContentBlocks = false;
+  private readonly contentBlocks = new Map<string, PnwContentBlock>();
+  private propertyDocumentId = "";
+  private readonly propertyNodes = new Map<string, HTMLLabelElement>();
+
+  /** Opt-in presentation only; model, capability gates and semantic events are unchanged. */
+  get blockPresentation(): boolean { return this.useContentBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.useContentBlocks === Boolean(value)) return;
+    this.useContentBlocks = Boolean(value); this.toggleAttribute("data-content-blocks", this.useContentBlocks); this.render();
+  }
 
   get model(): KtCodegenPrimaryUiModel | undefined { return this.currentModel; }
   set model(value: KtCodegenPrimaryUiModel | undefined) { this.currentModel = value; this.render(); }
-  connectedCallback(): void { this.render(); }
+  connectedCallback(): void {
+    if (Object.prototype.hasOwnProperty.call(this, "blockPresentation")) {
+      const value = this.blockPresentation; delete (this as Partial<KtCodegenPrimaryPanel>).blockPresentation; this.blockPresentation = value;
+    }
+    this.render();
+  }
 
   private render(): void {
     if (!this.isConnected) return;
@@ -103,6 +122,8 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
       this.root.replaceChildren(style, this.empty("Codegen 尚未激活。"));
       return;
     }
+    const focused = this.root.activeElement as HTMLElement | null;
+    const selection = focused instanceof HTMLInputElement ? [focused.selectionStart, focused.selectionEnd] as const : undefined;
     const active = model.documents.find((item) => item.active || item.id === model.activeId);
     const batchLocked = model.operation === "batch-apply";
     const hostLocked = model.running && !model.operation;
@@ -127,7 +148,15 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     hint.className = "pnw-codegen-hint";
     hint.textContent = "一份 JSON 对应当前编辑区一个表格 View；Primary 与 JSON View 的控制符目录由 Host session 同步。";
     nodes.push(hint, this.overlay(model));
-    this.root.replaceChildren(...nodes);
+    const presented = nodes.map((node) => this.useContentBlocks && node instanceof HTMLDetailsElement ? this.contentBlock(node) : node);
+    if (this.useContentBlocks) {
+      for (const child of Array.from(this.root.childNodes)) if (!presented.includes(child)) child.remove();
+      presented.forEach((node, index) => { if (this.root.childNodes[index] !== node) this.root.insertBefore(node, this.root.childNodes[index] ?? null); });
+    } else this.root.replaceChildren(...presented);
+    if (focused && this.root.contains(focused)) {
+      focused.focus({ preventScroll: true });
+      if (focused instanceof HTMLInputElement && selection && selection[0] !== null && selection[1] !== null) focused.setSelectionRange(selection[0], selection[1]);
+    }
   }
 
   private actionButton(label: string, action: KtCodegenPrimaryAction, enabled: boolean, title: string): HTMLButtonElement {
@@ -143,6 +172,9 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
   }
 
   private currentConfig(active: KtCodegenPrimaryDocumentUiModel): HTMLDetailsElement {
+    if (this.useContentBlocks && this.propertyDocumentId !== active.id) {
+      this.propertyDocumentId = active.id; this.propertyNodes.clear();
+    }
     const details = this.details("current");
     const summary = document.createElement("summary");
     const identity = document.createElement("span");
@@ -168,6 +200,13 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
   }
 
   private property(label: string, field: "namePrefix" | "nameMiddle" | "nameSpace" | "appendFunction", active: KtCodegenPrimaryDocumentUiModel): HTMLLabelElement {
+    const cached = this.useContentBlocks ? this.propertyNodes.get(field) : undefined;
+    if (cached) {
+      const input = cached.querySelector("input")!;
+      if (this.root.activeElement !== input) input.value = active[field];
+      input.disabled = Boolean(this.currentModel?.running || this.currentModel?.operation);
+      return cached;
+    }
     const wrapper = document.createElement("label");
     wrapper.className = "pnw-codegen-property";
     const caption = document.createElement("span");
@@ -178,6 +217,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
     input.spellcheck = false;
     input.onchange = () => this.emit({ action: "updateMeta", id: active.id, field, value: input.value });
     wrapper.append(caption, input);
+    if (this.useContentBlocks) this.propertyNodes.set(field, wrapper);
     return wrapper;
   }
 
@@ -238,6 +278,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
       return details;
     }
     this.controlCatalog.setAttribute("mode", "compact");
+    this.controlCatalog.blockPresentation = this.useContentBlocks;
     this.controlCatalog.disabled = ktCodegenPrimaryControlsLocked(model);
     this.controlCatalog.outputEnabled = Boolean(model.capabilities.outputControlTemplates);
     this.controlCatalog.model = controls;
@@ -283,6 +324,7 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
   private details(key: string, title?: string, count = ""): HTMLDetailsElement {
     const details = document.createElement("details");
     details.className = "pnw-codegen-mini";
+    details.dataset.codegenBlockKey = key;
     details.open = this.expanded.get(key) ?? true;
     details.ontoggle = () => this.expanded.set(key, details.open);
     if (title) {
@@ -297,6 +339,34 @@ export class KtCodegenPrimaryPanel extends HTMLElement {
       details.append(summary);
     }
     return details;
+  }
+
+  private contentBlock(details: HTMLDetailsElement): PnwContentBlock {
+    pnwDefineContentBlock();
+    const key = details.dataset.codegenBlockKey!;
+    let block = this.contentBlocks.get(key);
+    if (!block) {
+      block = document.createElement("pnw-content-block");
+      block.dataset.codegenBlockKey = key;
+      block.open = this.expanded.get(key) ?? true;
+      const ownBlock = block;
+      block.addEventListener(PNW_CONTENT_BLOCK_TOGGLE, (event) => {
+        if (event.target === ownBlock) this.expanded.set(key, ownBlock.open);
+      });
+      this.contentBlocks.set(key, block);
+    }
+    block.open = this.expanded.get(key) ?? true;
+    details.ontoggle = null;
+    const summary = details.querySelector("summary")!;
+    const title = summary.querySelector<HTMLElement>(".pnw-codegen-mini-title,.pnw-codegen-current-identity")!;
+    const status = summary.querySelector<HTMLElement>(".pnw-codegen-mini-count,.pnw-codegen-current-meta");
+    title.slot = "title";
+    const children: Node[] = [title];
+    if (status) { status.slot = "status"; children.push(status); }
+    summary.remove();
+    children.push(...Array.from(details.childNodes));
+    block.replaceChildren(...children);
+    return block;
   }
 
   private list(key: string): HTMLDivElement {

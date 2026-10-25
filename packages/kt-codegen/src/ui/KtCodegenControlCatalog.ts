@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TOGGLE, pnwDefineContentBlock, type PnwContentBlock } from "@phoenix-wing/code-core/ui";
+
 import type { KtCodegenBlockKey } from "../blocks/legacy-blocks.js";
 import {
   KT_CODEGEN_CONTROL_CATALOG_GROUPS,
@@ -97,6 +99,14 @@ export class KtCodegenControlCatalog extends HTMLElement {
   private readonly expandedGroups = new Set<KtCodegenControlCatalogGroupId>(
     KT_CODEGEN_CONTROL_CATALOG_GROUPS.map((group) => group.id),
   );
+  private useContentBlocks = false;
+  private readonly contentBlocks = new Map<KtCodegenControlCatalogGroupId, PnwContentBlock>();
+
+  get blockPresentation(): boolean { return this.useContentBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.useContentBlocks === Boolean(value)) return;
+    this.useContentBlocks = Boolean(value); this.render();
+  }
 
   get model(): KtCodegenControlUiModel | undefined { return this.currentModel; }
   set model(value: KtCodegenControlUiModel | undefined) {
@@ -126,7 +136,12 @@ export class KtCodegenControlCatalog extends HTMLElement {
     this.render();
   }
 
-  connectedCallback(): void { this.render(); }
+  connectedCallback(): void {
+    if (Object.prototype.hasOwnProperty.call(this, "blockPresentation")) {
+      const value = this.blockPresentation; delete (this as Partial<KtCodegenControlCatalog>).blockPresentation; this.blockPresentation = value;
+    }
+    this.render();
+  }
 
   private render(): void {
     if (!this.isConnected) return;
@@ -236,7 +251,30 @@ export class KtCodegenControlCatalog extends HTMLElement {
       groupList.setAttribute("role", "group");
       for (const block of groupVisible) groupList.append(this.blockRow(block, selected, canonicalBlockKeys));
       details.append(header, groupList);
-      list.append(details);
+      if (this.useContentBlocks) {
+        pnwDefineContentBlock();
+        details.ontoggle = null;
+        let content = this.contentBlocks.get(group.id);
+        if (!content) {
+          content = document.createElement("pnw-content-block");
+          content.level = "secondary";
+          content.open = this.expandedGroups.has(group.id);
+          content.className = "pnw-codegen-catalog-group";
+          const ownContent = content;
+          content.addEventListener(PNW_CONTENT_BLOCK_TOGGLE, (event) => {
+            if (event.target !== ownContent) return;
+            if (ownContent.open) this.expandedGroups.add(group.id); else this.expandedGroups.delete(group.id);
+            ownContent.setAttribute("aria-expanded", String(ownContent.open));
+          });
+          this.contentBlocks.set(group.id, content);
+        }
+        content.open = this.expandedGroups.has(group.id);
+        content.setAttribute("role", "treeitem");
+        content.setAttribute("aria-expanded", String(content.open));
+        title.slot = "title"; count.slot = "status"; groupCheck.slot = "actions"; groupList.slot = "body";
+        content.replaceChildren(title, count, groupCheck, groupList);
+        list.append(content);
+      } else list.append(details);
     }
     if (!visibleBlocks.length) list.append(this.empty(
       model.preflight && this.filter.status === "hit"

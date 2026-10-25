@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TAG, PNW_CONTENT_BLOCK_TOGGLE, pnwDefineContentBlock } from "./elements/PnwContentBlock.js";
+
 import {
   pnwCodeGroupUuidHits,
   pnwCodeSelectUuidFileUris,
@@ -59,12 +61,22 @@ button:focus-visible,input:focus-visible{outline:1px solid var(--vscode-focusBor
 .actions{display:flex;flex:0 0 auto;gap:2px;opacity:0}.row:hover .actions,.actions:focus-within{opacity:1}.icon{width:26px;height:26px;padding:0;color:inherit;background:transparent;border:1px solid transparent;border-radius:3px}.icon:hover{background:var(--vscode-toolbar-hoverBackground,var(--hover,rgba(37,99,235,.08)));border-color:var(--vscode-panel-border,var(--border,#d7dde8))}
 .state{flex:0 0 auto;padding:1px 6px;border:1px solid currentColor;border-radius:999px;color:var(--vscode-descriptionForeground,var(--muted,#64748b));font-size:10px;white-space:nowrap}.state.pending{color:var(--vscode-gitDecoration-modifiedResourceForeground,#b45309)}.state.applied{color:var(--vscode-testing-iconPassed,#15803d)}.state.blocked{color:var(--vscode-errorForeground,var(--danger,#b91c1c))}
 .empty{padding:20px 10px;color:var(--vscode-descriptionForeground,var(--muted,#64748b));text-align:center}
+:host([block-presentation]) .panel{overflow:visible;border:0;border-radius:0}
+:host([block-presentation]) .group+.group{border:0}
 `;
 
 export class PnwCodeUuidResultsPanel extends HTMLElement {
   private readonly root = this.attachShadow({ mode: "open" });
   private currentModel: PnwCodeUuidResultsPanelModel | undefined;
   private selectedIds: readonly string[] = [];
+  private unifiedBlocks = false;
+  private readonly groupExpanded = new Map<string, boolean>();
+
+  get blockPresentation(): boolean { return this.unifiedBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.unifiedBlocks === Boolean(value)) return;
+    this.unifiedBlocks = Boolean(value); this.toggleAttribute("block-presentation", this.unifiedBlocks); this.render();
+  }
 
   get model(): PnwCodeUuidResultsPanelModel | undefined { return this.currentModel; }
   set model(value: PnwCodeUuidResultsPanelModel | undefined) {
@@ -94,6 +106,13 @@ export class PnwCodeUuidResultsPanel extends HTMLElement {
     if (!model) panel.append(this.empty("UUID 结果尚未激活。"));
     else if (model.presentation === "hits") this.renderHits(panel, model.hits ?? []);
     else this.renderFiles(panel, model.files ?? []);
+    if (this.unifiedBlocks) {
+      pnwDefineContentBlock();
+      const block = document.createElement(PNW_CONTENT_BLOCK_TAG); block.collapsible = false;
+      const title = this.span("UUID 扫描结果", "pnw-results-title"); title.slot = "title";
+      const body = document.createElement("div"); body.slot = "body";
+      body.append(...Array.from(panel.childNodes)); block.append(title, body); panel.append(block);
+    }
     this.root.replaceChildren(style, panel);
   }
 
@@ -106,7 +125,9 @@ export class PnwCodeUuidResultsPanel extends HTMLElement {
       head.append(this.span(`同值组 ${index + 1}`, "group-title"), this.span(group.displayValue, "identity"), this.span(`${group.hits.length} 处`, "count"));
       const list = document.createElement("ul"); list.className = "list";
       for (const hit of group.hits) list.append(this.hitRow(hit));
-      section.append(head, list); panel.append(section);
+      if (this.unifiedBlocks) this.appendGroupBlock(section, head, list, "hit:" + group.normalized);
+      else section.append(head, list);
+      panel.append(section);
     }
   }
 
@@ -118,7 +139,26 @@ export class PnwCodeUuidResultsPanel extends HTMLElement {
     head.append(this.span("命中文件", "group-title"), this.span(`${rows.length} 个`, "count"));
     const list = document.createElement("ul"); list.className = "list";
     for (const row of rows) list.append(this.fileRow(row));
-    section.append(head, list); panel.append(section);
+    if (this.unifiedBlocks) this.appendGroupBlock(section, head, list, "files");
+    else section.append(head, list);
+    panel.append(section);
+  }
+
+  private appendGroupBlock(section: HTMLElement, head: HTMLElement, list: HTMLElement, key: string): void {
+    pnwDefineContentBlock();
+    const block = document.createElement(PNW_CONTENT_BLOCK_TAG); block.level = "secondary";
+    block.open = this.groupExpanded.get(key) ?? true;
+    block.addEventListener(PNW_CONTENT_BLOCK_TOGGLE, event => {
+      if (event.target === block) this.groupExpanded.set(key, block.open);
+    });
+    for (const node of Array.from(head.children)) {
+      const child = node as HTMLElement;
+      child.slot = child.classList.contains("group-title") ? "title"
+        : child.classList.contains("identity") ? "context"
+          : child.classList.contains("count") ? "status" : "actions";
+      block.append(child);
+    }
+    list.slot = "body"; block.append(list); section.append(block);
   }
 
   private hitRow(hit: PnwCodeUuidResultHit): HTMLElement {
