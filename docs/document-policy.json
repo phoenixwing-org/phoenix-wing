@@ -5,6 +5,12 @@
   "appliesTo": "0.8.x",
   "rules": [
     {
+      "match": "^docs/releases/0\\.8\\.2发布候选\\.md$",
+      "status": "current",
+      "sourceOfTruth": "docs/releases/0.8.2发布候选.md",
+      "reason": "内容 Block UI 本地候选与分包验收入口，尚未公开发布"
+    },
+    {
       "match": "^docs/releases/0\\.8\\.1发布候选\\.md$",
       "status": "current",
       "sourceOfTruth": "docs/releases/0.8.1发布候选.md",

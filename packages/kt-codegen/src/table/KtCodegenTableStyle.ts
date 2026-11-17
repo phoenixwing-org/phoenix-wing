@@ -214,4 +214,13 @@ option.${KT_CODEGEN_TABLE_CLASSES.unknownOption} { color: var(--vscode-editorWar
 .${KT_CODEGEN_TABLE_CLASSES.status}.${KT_CODEGEN_TABLE_CLASSES.dirty} { color: var(--vscode-editorWarning-foreground, #b89500); }
 :host([collapsible][collapsed]) .${KT_CODEGEN_TABLE_CLASSES.toolbar} { border-bottom: 0; }
 ${KT_CODEGEN_BLOCK_HEADER_STYLE}
+:host([data-content-blocks]) { border: 0; border-radius: 0; }
+:host([data-content-blocks]) pnw-content-block { display: flex; flex: 1 1 auto; min-height: 0; height: 100%; }
+:host([data-content-blocks]) pnw-content-block::part(block) { display: flex; flex: 1 1 auto; min-height: 0; height: 100%; flex-direction: column; }
+:host([data-content-blocks]) pnw-content-block::part(header) { flex: 0 0 auto; }
+:host([data-content-blocks]) pnw-content-block::part(body) { display: flex; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+:host([data-content-blocks]) .pnw-kt-codegen-content-body { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; }
+:host([data-content-blocks]) .${KT_CODEGEN_TABLE_CLASSES.toolbar} { flex-wrap: wrap; min-width: 0; min-height: 26px; padding: 2px 0; background: transparent; border: 0; overflow: visible; }
+:host([data-content-blocks][layout="page"]) pnw-content-block,
+:host([data-content-blocks][layout="page"]) pnw-content-block::part(block) { height: auto; }
 `;

@@ -7,3 +7,4 @@ export * from "./PnwCodeRenameResultsPanel.js";
 export * from "./elements/PnwNavigationTreeView.js";
 export * from "./elements/PnwCombo.js";
 export * from "./elements/PnwCleanupDialog.js";
+export * from "./elements/PnwContentBlock.js";

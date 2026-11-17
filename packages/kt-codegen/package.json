@@ -1,6 +1,6 @@
 {
   "name": "@phoenix-wing/kt-codegen",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "CAA、Qt 与普通 C++ 的参数驱动代码生成核心",
   "type": "module",
   "sideEffects": false,
@@ -60,6 +60,9 @@
     "url": "https://gitee.com/phoenixwing/phoenix-wing.git"
   },
   "keywords": ["phoenix", "codegen", "caa", "qt", "cpp"],
+  "dependencies": {
+    "@phoenix-wing/code-core": "workspace:0.6.9"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0",

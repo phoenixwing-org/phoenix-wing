@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { pnwDefineContentBlock, type PnwContentBlock } from "@phoenix-wing/code-core/ui";
+
 import {
   ktCodegenApplyReportChangeLabel,
   ktCodegenApplyReportDuration,
@@ -76,16 +78,29 @@ td:last-child, th:last-child { border-right: 0; }
 .issues table { table-layout: fixed; min-width: 720px; }
 .issues th:nth-child(1) { width: 18%; } .issues th:nth-child(2) { width: 8%; } .issues th:nth-child(3) { width: 16%; } .issues th:nth-child(4) { width: 34%; } .issues th:nth-child(5) { width: 24%; }
 .issues td { overflow-wrap: anywhere; }
+:host([block-presentation]) .table-wrap { border-radius: 0; border-inline: 0; }
 @media (max-width: 640px) { .toolbar { align-items: stretch; flex-wrap: wrap; } .toolbar label { flex: 1 0 100%; } .toolbar select { max-width: none; } }
 `;
 
 export class KtCodegenApplyReportSummary extends HTMLElement {
   private readonly root = this.attachShadow({ mode: "open" });
   private currentModel: KtCodegenApplyReportSummaryModel | undefined;
+  private useContentBlocks = false;
+
+  get blockPresentation(): boolean { return this.useContentBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.useContentBlocks === Boolean(value)) return;
+    this.useContentBlocks = Boolean(value); this.render();
+  }
 
   get model(): KtCodegenApplyReportSummaryModel | undefined { return this.currentModel; }
   set model(value: KtCodegenApplyReportSummaryModel | undefined) { this.currentModel = value; this.render(); }
-  connectedCallback(): void { this.render(); }
+  connectedCallback(): void {
+    if (Object.prototype.hasOwnProperty.call(this, "blockPresentation")) {
+      const value = this.blockPresentation; delete (this as Partial<KtCodegenApplyReportSummary>).blockPresentation; this.blockPresentation = value;
+    }
+    this.render();
+  }
 
   private render(): void {
     if (!this.isConnected) return;
@@ -117,7 +132,18 @@ export class KtCodegenApplyReportSummary extends HTMLElement {
       );
     }
     summary.append(this.metric("耗时", ktCodegenApplyReportDuration(model.elapsedMilliseconds)));
-    this.root.replaceChildren(style, summary);
+    const previous = this.useContentBlocks ? this.root.querySelector<HTMLElement>(".summary") : undefined;
+    if (previous && previous.children.length === summary.children.length
+      && Array.from(summary.children).every((child, index) => child.querySelector("input")?.getAttribute("aria-label") === previous.children[index]?.querySelector("input")?.getAttribute("aria-label"))) {
+      Array.from(summary.children).forEach((child, index) => {
+        const current = previous.children[index]!;
+        current.className = child.className;
+        const currentInput = current.querySelector("input"), nextInput = child.querySelector("input");
+        if (currentInput && nextInput) currentInput.checked = nextInput.checked;
+        const labels = current.querySelectorAll("span,strong");
+        child.querySelectorAll("span,strong").forEach((label, labelIndex) => { labels[labelIndex]!.textContent = label.textContent; });
+      });
+    } else this.root.replaceChildren(style, summary);
   }
 
   private metric(label: string, value: string | number): HTMLElement {
@@ -164,6 +190,18 @@ export class KtCodegenApplyReport extends HTMLElement {
   private documentId = "";
   private readonly health = new Set<KtCodegenApplyReportHealth>(["success", "warning", "error"]);
   private readonly change = new Set<KtCodegenApplyReportChange>(["updated", "unchanged", "partial", "not-applied"]);
+  private useContentBlocks = false;
+  private readonly contentBlocks = new Map<string, PnwContentBlock>();
+  private currentToolbar: HTMLElement | undefined;
+
+  get blockPresentation(): boolean { return this.useContentBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.useContentBlocks === Boolean(value)) return;
+    this.useContentBlocks = Boolean(value);
+    this.toggleAttribute("block-presentation", this.useContentBlocks);
+    this.summary.blockPresentation = this.useContentBlocks;
+    this.render();
+  }
 
   constructor() {
     super();
@@ -182,7 +220,12 @@ export class KtCodegenApplyReport extends HTMLElement {
     if (this.documentId && !value?.items.some((item) => item.documentId === this.documentId)) this.documentId = "";
     this.render();
   }
-  connectedCallback(): void { this.render(); }
+  connectedCallback(): void {
+    if (Object.prototype.hasOwnProperty.call(this, "blockPresentation")) {
+      const value = this.blockPresentation; delete (this as Partial<KtCodegenApplyReport>).blockPresentation; this.blockPresentation = value;
+    }
+    this.render();
+  }
 
   private render(): void {
     if (!this.isConnected) return;
@@ -213,15 +256,44 @@ export class KtCodegenApplyReport extends HTMLElement {
       health: this.health,
       change: this.change,
     };
-    this.root.replaceChildren(
-      style,
-      this.toolbar(model),
-      this.summary,
-      this.sectionTitle("运行明细"),
-      this.itemTable(visibleItems),
-      this.sectionTitle("问题列表"),
-      this.issueTable(visibleItems),
+    if (this.useContentBlocks) {
+      const toolbar = this.patchToolbar(this.toolbar(model));
+      const nodes = [style, toolbar, this.summary,
+        this.contentBlock("items", "运行明细", this.itemTable(visibleItems)),
+        this.contentBlock("issues", "问题列表", this.issueTable(visibleItems))];
+      for (const child of Array.from(this.root.childNodes)) if (!nodes.includes(child as HTMLElement)) child.remove();
+      nodes.forEach((node, index) => { if (this.root.childNodes[index] !== node) this.root.insertBefore(node, this.root.childNodes[index] ?? null); });
+    } else this.root.replaceChildren(
+      style, this.toolbar(model), this.summary, this.sectionTitle("运行明细"), this.itemTable(visibleItems), this.sectionTitle("问题列表"), this.issueTable(visibleItems),
     );
+  }
+
+  private contentBlock(key: string, label: string, body: HTMLElement): PnwContentBlock {
+    pnwDefineContentBlock();
+    let block = this.contentBlocks.get(key);
+    if (!block) {
+      block = document.createElement("pnw-content-block"); block.collapsible = false;
+      const title = document.createElement("span"); title.slot = "title"; title.textContent = label;
+      block.append(title); this.contentBlocks.set(key, block);
+    }
+    body.slot = "body";
+    const previous = block.querySelector('[slot="body"]');
+    if (previous) previous.replaceWith(body); else block.append(body);
+    return block;
+  }
+
+  private patchToolbar(next: HTMLElement): HTMLElement {
+    const previous = this.currentToolbar;
+    const oldSelect = previous?.querySelector("select"), newSelect = next.querySelector("select");
+    if (!previous || !oldSelect || !newSelect) { this.currentToolbar = next; return next; }
+    const options = (select: HTMLSelectElement): string => JSON.stringify(Array.from(select.options, (option) => [option.value, option.textContent]));
+    if (options(oldSelect) !== options(newSelect)) oldSelect.replaceChildren(...Array.from(newSelect.children));
+    oldSelect.value = this.documentId;
+    const oldButtons = previous.querySelectorAll("button");
+    next.querySelectorAll("button").forEach((button, index) => {
+      oldButtons[index]!.disabled = button.disabled; oldButtons[index]!.onclick = button.onclick;
+    });
+    return previous;
   }
 
   private toolbar(model: KtCodegenApplyReportUiModel): HTMLElement {
@@ -260,7 +332,7 @@ export class KtCodegenApplyReport extends HTMLElement {
     button.textContent = label;
     button.title = offset < 0 ? "上一个 JSON" : "下一个 JSON";
     button.onclick = () => {
-      const ids = ["", ...model.items.map((item) => item.documentId)];
+      const ids = ["", ...(this.currentModel ?? model).items.map((item) => item.documentId)];
       const current = Math.max(0, ids.indexOf(this.documentId));
       this.documentId = ids[(current + offset + ids.length) % ids.length]!;
       this.render();

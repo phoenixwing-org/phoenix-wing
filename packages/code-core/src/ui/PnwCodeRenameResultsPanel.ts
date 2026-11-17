@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { PNW_CONTENT_BLOCK_TAG, pnwDefineContentBlock } from "./elements/PnwContentBlock.js";
+
 import type {
   PnwCodeRenameResultRow,
   PnwCodeRenameResultTone,
@@ -41,11 +43,20 @@ const STYLE = `
 .main{display:block;flex:1 1 auto;min-width:0;overflow:hidden}.main.open{cursor:pointer}.main.open:hover .path{text-decoration:underline}.path{display:block;overflow:hidden;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.detail{display:block;overflow:hidden;color:var(--vscode-descriptionForeground,var(--muted,#64748b));font-size:11px;text-overflow:ellipsis;white-space:nowrap}mark{padding:0;color:inherit;background:var(--vscode-editor-findMatchHighlightBackground,#fde68a)}
 .target{flex:0 1 34%;min-width:70px;overflow:hidden;color:var(--vscode-descriptionForeground,var(--muted,#64748b));font:11px/1.3 var(--vscode-editor-font-family,monospace);text-overflow:ellipsis;white-space:nowrap}.actions{display:flex;flex:0 0 auto;opacity:0}.row:hover .actions,.actions:focus-within{opacity:1}.icon{width:26px;height:26px;padding:0;color:inherit;background:transparent;border:1px solid transparent;border-radius:3px}.icon:hover{background:var(--vscode-toolbar-hoverBackground,var(--hover,rgba(37,99,235,.08)));border-color:var(--vscode-panel-border,var(--border,#d7dde8))}
 .status{flex:0 0 auto;padding:1px 6px;border:1px solid currentColor;border-radius:999px;font-size:10px;white-space:nowrap}.status.neutral{color:var(--vscode-descriptionForeground,var(--muted,#64748b))}.status.success{color:var(--vscode-testing-iconPassed,#15803d)}.status.warning{color:var(--vscode-gitDecoration-modifiedResourceForeground,#b45309)}.status.danger{color:var(--vscode-errorForeground,var(--danger,#b91c1c))}.empty{display:block;padding:20px 10px;color:var(--vscode-descriptionForeground,var(--muted,#64748b));text-align:center}
+:host([block-presentation]) .panel{overflow:visible;border:0;border-radius:0}
+:host([block-presentation]) .pnw-results-summary{padding:4px 8px}
 `;
 
 export class PnwCodeRenameResultsPanel extends HTMLElement {
   private readonly root = this.attachShadow({ mode: "open" });
   private currentModel: PnwCodeRenameResultsPanelModel | undefined;
+  private unifiedBlocks = false;
+
+  get blockPresentation(): boolean { return this.unifiedBlocks; }
+  set blockPresentation(value: boolean) {
+    if (this.unifiedBlocks === Boolean(value)) return;
+    this.unifiedBlocks = Boolean(value); this.toggleAttribute("block-presentation", this.unifiedBlocks); this.render();
+  }
 
   get model(): PnwCodeRenameResultsPanelModel | undefined { return this.currentModel; }
   set model(value: PnwCodeRenameResultsPanelModel | undefined) { this.currentModel = value; this.render(); }
@@ -66,7 +77,16 @@ export class PnwCodeRenameResultsPanel extends HTMLElement {
       );
       const list = document.createElement("ul"); list.className = "list";
       for (const row of model.rows) list.append(this.row(row));
-      panel.append(head, list);
+      if (this.unifiedBlocks) {
+        pnwDefineContentBlock();
+        const block = document.createElement(PNW_CONTENT_BLOCK_TAG); block.collapsible = false;
+        const title = head.querySelector<HTMLElement>(".title")!; title.slot = "title";
+        const count = head.querySelector<HTMLElement>(".count")!; count.slot = "status";
+        const body = document.createElement("div"); body.slot = "body";
+        const summary = head.querySelector<HTMLElement>(".summary")!; summary.className += " pnw-results-summary";
+        if (summary.textContent) body.append(summary);
+        body.append(list); block.append(title, count, body); panel.append(block);
+      } else panel.append(head, list);
     }
     this.root.replaceChildren(style, panel);
   }
